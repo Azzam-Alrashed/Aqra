@@ -40,7 +40,7 @@ struct ManazilPageView: View {
     var body: some View {
         OnboardingPageLayout(
             pageCount: pageCount, currentPage: currentPage, buttonTitle: "Continue", onButton: onContinue,
-            onHaveAccount: nil, actionsVisible: actionsIn,
+            actionsVisible: actionsIn,
             stage: { stage },
             copy: { scale in
                 OnboardingHeadline(

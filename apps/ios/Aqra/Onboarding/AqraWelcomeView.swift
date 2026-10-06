@@ -5,7 +5,6 @@ import UIKit
 struct AqraWelcomeView: View {
     var pageCount = 3
     var onBegin: () -> Void
-    var onHaveAccount: () -> Void
     /// Shows the finished scene without the entrance (snapshots and previews).
     var startsComplete = false
 
@@ -20,11 +19,10 @@ struct AqraWelcomeView: View {
     @State private var emphasisLit = false
     @State private var actionsIn = false
 
-    init(pageCount: Int = 3, startsComplete: Bool = false, onBegin: @escaping () -> Void, onHaveAccount: @escaping () -> Void) {
+    init(pageCount: Int = 3, startsComplete: Bool = false, onBegin: @escaping () -> Void) {
         self.pageCount = pageCount
         self.startsComplete = startsComplete
         self.onBegin = onBegin
-        self.onHaveAccount = onHaveAccount
         if startsComplete {
             _archReveal = State(initialValue: 1)
             _bookReveal = State(initialValue: 1)
@@ -39,7 +37,7 @@ struct AqraWelcomeView: View {
     var body: some View {
         OnboardingPageLayout(
             pageCount: pageCount, currentPage: 0, buttonTitle: "Begin", onButton: onBegin,
-            onHaveAccount: onHaveAccount, actionsVisible: actionsIn,
+            actionsVisible: actionsIn,
             stage: { stage },
             copy: { scale in hadith(scale: scale) }
         )
@@ -170,7 +168,7 @@ struct AqraWelcomeView: View {
 private typealias Palette = OnboardingPalette
 
 #Preview {
-    AqraWelcomeView(onBegin: {}, onHaveAccount: {})
+    AqraWelcomeView(onBegin: {})
         .environment(\.locale, Locale(identifier: "ar"))
         .environment(\.layoutDirection, .rightToLeft)
 }

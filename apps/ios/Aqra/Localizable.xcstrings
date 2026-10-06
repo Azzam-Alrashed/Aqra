@@ -21,16 +21,6 @@
         }
       }
     },
-    "I have an account": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "لديّ حساب"
-          }
-        }
-      }
-    },
     "Read and ascend": {
       "localizations": {
         "ar": {

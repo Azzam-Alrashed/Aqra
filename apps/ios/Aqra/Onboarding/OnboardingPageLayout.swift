@@ -24,9 +24,7 @@ struct OnboardingPageLayout<Stage: View, Copy: View>: View {
     var currentPage: Int
     var buttonTitle: LocalizedStringKey
     var onButton: () -> Void
-    /// Shows the «لديّ حساب» link when set.
-    var onHaveAccount: (() -> Void)?
-    /// Fades the link, dots and button in after the stage's entrance.
+    /// Fades the dots and button in after the stage's entrance.
     var actionsVisible: Bool
     /// Composed in a ~420×440pt box and scaled to fit.
     @ViewBuilder var stage: () -> Stage
@@ -41,7 +39,6 @@ struct OnboardingPageLayout<Stage: View, Copy: View>: View {
             let roomy = min(size.width, size.height) >= 600
 
             VStack(spacing: 0) {
-                topBar(large: roomy)
                 if landscape {
                     HStack(spacing: roomy ? 48 : 20) {
                         VStack(spacing: 0) {
@@ -68,22 +65,6 @@ struct OnboardingPageLayout<Stage: View, Copy: View>: View {
         .fontDesign(.rounded)
         .background(OnboardingPalette.surface.ignoresSafeArea())
         .environment(\.colorScheme, .light)
-    }
-
-    private func topBar(large: Bool) -> some View {
-        HStack {
-            Spacer()
-            if let onHaveAccount {
-                Button("I have an account", action: onHaveAccount)
-                    .font(large ? .title3.weight(.semibold) : .subheadline.weight(.semibold))
-                    .foregroundStyle(OnboardingPalette.brand)
-            }
-        }
-        .frame(minHeight: 22)
-        .padding(.horizontal, 24)
-        // Clears the window controls iPadOS draws in the top corner of a windowed app.
-        .padding(.top, large ? 34 : 6)
-        .opacity(actionsVisible ? 1 : 0)
     }
 
     private func fittedStage(maxScale: CGFloat) -> some View {

@@ -17,7 +17,7 @@ struct WelcomeSnapshotTests {
         guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }
         AqraFont.registerBundledFonts()
         for (name, size) in Self.sizes {
-            let view = AqraWelcomeView(startsComplete: true, onBegin: {}, onHaveAccount: {})
+            let view = AqraWelcomeView(startsComplete: true, onBegin: {})
                 .frame(width: size.width, height: size.height)
                 .environment(\.locale, Locale(identifier: "ar"))
                 .environment(\.layoutDirection, .rightToLeft)
