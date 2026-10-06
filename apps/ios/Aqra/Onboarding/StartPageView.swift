@@ -1,16 +1,14 @@
-import AuthenticationServices
 import SwiftUI
 import UIKit
 
-/// Onboarding page 4, the last: a gold star with rising sparkles, then optional sign-in.
-struct SignInPageView: View {
+/// Onboarding page 4, the last: a gold star with rising sparkles, and the start of the journey.
+/// There's no sign-in here: users start anonymously and are invited to sign in later.
+struct StartPageView: View {
     var pageCount: Int
     var currentPage: Int
     /// The entrance plays the first time the page becomes the visible one.
     var isActive: Bool
-    var onAppleSignIn: (ASAuthorization) -> Void
-    var onGoogleSignIn: () -> Void
-    var onContinueWithoutAccount: () -> Void
+    var onBegin: () -> Void
     /// Shows the finished scene without the entrance (snapshots and previews).
     var startsComplete = false
 
@@ -22,19 +20,12 @@ struct SignInPageView: View {
     @State private var actionsIn = false
     @State private var played = false
 
-    init(
-        pageCount: Int, currentPage: Int, isActive: Bool, startsComplete: Bool = false,
-        onAppleSignIn: @escaping (ASAuthorization) -> Void,
-        onGoogleSignIn: @escaping () -> Void,
-        onContinueWithoutAccount: @escaping () -> Void
-    ) {
+    init(pageCount: Int, currentPage: Int, isActive: Bool, startsComplete: Bool = false, onBegin: @escaping () -> Void) {
         self.pageCount = pageCount
         self.currentPage = currentPage
         self.isActive = isActive
         self.startsComplete = startsComplete
-        self.onAppleSignIn = onAppleSignIn
-        self.onGoogleSignIn = onGoogleSignIn
-        self.onContinueWithoutAccount = onContinueWithoutAccount
+        self.onBegin = onBegin
         if startsComplete {
             _glowIn = State(initialValue: true)
             _starIn = State(initialValue: true)
@@ -50,13 +41,13 @@ struct SignInPageView: View {
             stage: { stage },
             copy: { scale in
                 OnboardingHeadline(
-                    first: "Save your progress,",
-                    second: "and begin your journey.",
-                    detail: "Sign in to keep your revision and stations, and to book tasmee' with teachers.",
+                    first: "Everything is ready,",
+                    second: "begin your journey.",
+                    detail: "Your progress is saved on your device, and you can link it to your account anytime.",
                     scale: scale, visible: copyIn
                 )
             },
-            buttons: { metrics in signInButtons(metrics) }
+            buttons: { metrics in BrandButton("Begin", metrics: metrics, action: onBegin) }
         )
         .onChange(of: isActive, initial: true) {
             guard isActive, !played else { return }
@@ -102,37 +93,6 @@ struct SignInPageView: View {
             }
             .frame(width: 420, height: 440)
             .accessibilityHidden(true)
-        }
-    }
-
-    // MARK: - Buttons
-
-    @ViewBuilder private func signInButtons(_ metrics: OnboardingButtonMetrics) -> some View {
-        VStack(spacing: metrics.compact ? 8 : 12) {
-            SignInWithAppleButton(.continue) { request in
-                request.requestedScopes = [.fullName, .email]
-            } onCompletion: { result in
-                if case .success(let authorization) = result { onAppleSignIn(authorization) }
-            }
-            .signInWithAppleButtonStyle(.black)
-            .frame(height: metrics.height)
-            .clipShape(Capsule())
-
-            // TODO: use Google's official button and logo once the GoogleSignIn SDK is added.
-            Button(action: onGoogleSignIn) {
-                Text("Continue with Google")
-                    .font(.system(size: metrics.fontSize - 1, weight: .semibold))
-                    .foregroundStyle(Palette.ink)
-                    .frame(maxWidth: .infinity, minHeight: metrics.height)
-                    .background(.white, in: Capsule())
-                    .overlay(Capsule().strokeBorder(Palette.ink.opacity(0.12), lineWidth: 1))
-            }
-            .buttonStyle(.plain)
-
-            Button("Continue without an account", action: onContinueWithoutAccount)
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Palette.brand)
-                .padding(.top, metrics.compact ? 0 : 2)
         }
     }
 
@@ -190,7 +150,7 @@ private struct RisingSparkles: View {
 private typealias Palette = OnboardingPalette
 
 #Preview {
-    SignInPageView(pageCount: 4, currentPage: 3, isActive: true, onAppleSignIn: { _ in }, onGoogleSignIn: {}, onContinueWithoutAccount: {})
+    StartPageView(pageCount: 4, currentPage: 3, isActive: true, onBegin: {})
         .environment(\.locale, Locale(identifier: "ar"))
         .environment(\.layoutDirection, .rightToLeft)
 }

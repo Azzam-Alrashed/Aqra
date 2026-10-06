@@ -18,14 +18,8 @@ struct OnboardingView: View {
                     .tag(1)
                 FeaturesPageView(pageCount: pageCount, currentPage: 2, isActive: page == 2, onContinue: { withAnimation { page = 3 } })
                     .tag(2)
-                // TODO: sign in with Firebase Auth (Apple and Google); for now every path enters the app.
-                SignInPageView(
-                    pageCount: pageCount, currentPage: 3, isActive: page == 3,
-                    onAppleSignIn: { _ in onFinish() },
-                    onGoogleSignIn: onFinish,
-                    onContinueWithoutAccount: onFinish
-                )
-                .tag(3)
+                StartPageView(pageCount: pageCount, currentPage: 3, isActive: page == 3, onBegin: onFinish)
+                    .tag(3)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             // Extend the pager under the home indicator; each page still lays out inside the safe area.

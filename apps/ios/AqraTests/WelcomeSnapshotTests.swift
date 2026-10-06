@@ -44,17 +44,14 @@ struct WelcomeSnapshotTests {
             let featuresData = try #require(featuresRenderer.uiImage?.pngData())
             try featuresData.write(to: URL(fileURLWithPath: directory).appendingPathComponent("features-\(name).png"))
 
-            let signIn = SignInPageView(
-                pageCount: 4, currentPage: 3, isActive: false, startsComplete: true,
-                onAppleSignIn: { _ in }, onGoogleSignIn: {}, onContinueWithoutAccount: {}
-            )
-            .frame(width: size.width, height: size.height)
-            .environment(\.locale, Locale(identifier: "ar"))
-            .environment(\.layoutDirection, .rightToLeft)
-            let signInRenderer = ImageRenderer(content: signIn)
-            signInRenderer.scale = 2
-            let signInData = try #require(signInRenderer.uiImage?.pngData())
-            try signInData.write(to: URL(fileURLWithPath: directory).appendingPathComponent("signin-\(name).png"))
+            let start = StartPageView(pageCount: 4, currentPage: 3, isActive: false, startsComplete: true, onBegin: {})
+                .frame(width: size.width, height: size.height)
+                .environment(\.locale, Locale(identifier: "ar"))
+                .environment(\.layoutDirection, .rightToLeft)
+            let startRenderer = ImageRenderer(content: start)
+            startRenderer.scale = 2
+            let startData = try #require(startRenderer.uiImage?.pngData())
+            try startData.write(to: URL(fileURLWithPath: directory).appendingPathComponent("start-\(name).png"))
         }
     }
 }

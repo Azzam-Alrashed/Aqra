@@ -121,52 +121,32 @@
         }
       }
     },
-    "Save your progress,": {
+    "Everything is ready,": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "احفظ تقدّمك"
+            "value": "كل شيء جاهز،"
           }
         }
       }
     },
-    "and begin your journey.": {
+    "begin your journey.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "وابدأ رحلتك"
+            "value": "ابدأ رحلتك"
           }
         }
       }
     },
-    "Sign in to keep your revision and stations, and to book tasmee' with teachers.": {
+    "Your progress is saved on your device, and you can link it to your account anytime.": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
-            "value": "سجّل الدخول لتحفظ مراجعتك ومنازلك، وتحجز تسميعك مع الشيوخ."
-          }
-        }
-      }
-    },
-    "Continue with Google": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الاستمرار باستخدام Google"
-          }
-        }
-      }
-    },
-    "Continue without an account": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "المتابعة بدون حساب"
+            "value": "تقدّمك يُحفظ على جهازك، ويمكنك ربطه بحسابك متى شئت."
           }
         }
       }
