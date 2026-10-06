@@ -215,48 +215,77 @@ extension EnvironmentValues {
 }
 
 /// One Mushaf page: 15 lines in the page's own font, framed by the surah, juz' and page number.
+/// Memorized ayat sit on their topic section's color; in marking mode, taps and drags mark ayat.
 struct MushafPageView: View {
     var page: MushafPage
     var store: MushafStore
     @Environment(\.mushafTajweed) private var tajweed
     @Environment(\.mushafTopics) private var topics
-
-    /// The words of a full 1441H line add up to at most 17 em in the QCF V4 fonts; leave room for the word gaps.
-    private static let lineWidthInEm: CGFloat = 17.4
-    /// A surah header glyph is 3.3 em wide.
-    private static let headerWidthInEm: CGFloat = 3.303
-    private static let linesPerPage: CGFloat = 15
+    @Environment(MemorizationStore.self) private var memorization: MemorizationStore?
+    @Environment(MarkingSession.self) private var marking: MarkingSession?
 
     var body: some View {
         GeometryReader { geometry in
-            let roomy = geometry.size.width > 600
-            let margin: CGFloat = roomy ? 40 : 14
-            let textWidth = min(geometry.size.width - margin * 2, 620)
-            let chrome: CGFloat = 30
-            // Clears the window controls iPadOS draws in the top corner of a windowed app.
-            let topInset: CGFloat = roomy ? 26 : 0
-            let lineHeight = (geometry.size.height - chrome * 2 - topInset) / Self.linesPerPage
-            let fontSize = min(textWidth / Self.lineWidthInEm, lineHeight / 1.6)
-
+            let metrics = PageMetrics(size: geometry.size)
             VStack(spacing: 0) {
-                header.frame(height: chrome).padding(.top, topInset)
+                header.frame(height: PageMetrics.chrome).padding(.top, metrics.topInset)
                 VStack(spacing: 0) {
                     ForEach(page.lines, id: \.self) { line in
-                        lineView(line, fontSize: fontSize, width: textWidth, height: lineHeight)
-                            .frame(width: textWidth, height: lineHeight)
+                        lineView(line, metrics: metrics)
+                            .frame(width: metrics.textWidth, height: metrics.lineHeight)
                     }
                 }
                 .frame(maxHeight: .infinity)
-                footer.frame(height: chrome)
+                footer.frame(height: PageMetrics.chrome)
             }
-            .padding(.horizontal, margin)
+            .padding(.horizontal, metrics.margin)
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .background(MushafStyle.paper)
+        .overlay { if let marking { markingLayer(marking) } }
         .environment(\.layoutDirection, .rightToLeft)
         // The words are font glyphs that VoiceOver can't read; give it the page in plain text instead.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: accessibilityText))
+    }
+
+    /// Marking mode: a tap marks or unmarks an ayah; pressing a moment, then dragging, marks every ayah crossed.
+    private func markingLayer(_ marking: MarkingSession) -> some View {
+        GeometryReader { geometry in
+            // Both gestures run alongside the pager's swipe, so pages still turn in marking mode;
+            // the pager holds still only once a press has turned into a drag that marks.
+            Color.clear
+                .contentShape(Rectangle())
+                .simultaneousGesture(
+                    SpatialTapGesture().onEnded { value in
+                        if let ayah = Self.ayah(at: value.location, on: page, size: geometry.size) { marking.tap(ayah) }
+                    }
+                )
+        }
+        // Locations are measured from the page's left edge, like the lines' own layout.
+        .environment(\.layoutDirection, .leftToRight)
+    }
+
+    /// The ayah under a point on a page of the given size: the word on that line whose box holds the point,
+    /// or the nearest one. Nil off the ayah lines (headers, the basmala and the margins above and below).
+    static func ayah(at point: CGPoint, on page: MushafPage, size: CGSize) -> Int? {
+        let metrics = PageMetrics(size: size)
+        let top = metrics.linesTop(count: page.lines.count)
+        let index = Int(floor((point.y - top) / metrics.lineHeight))
+        guard page.lines.indices.contains(index), case .ayah(let words, let centered) = page.lines[index].kind else { return nil }
+        let glyphs = words.map { MushafFonts.word($0.glyph, page: page.number, size: metrics.fontSize) }
+        let widths = glyphs.map { $0?.size.width ?? 0 }
+        let lefts = AyahLineLayout.lefts(widths: widths, lineWidth: metrics.textWidth, centered: centered,
+                                          wordSpacing: metrics.wordSpacing)
+        let x = point.x - metrics.textLeft(in: size)
+        let nearest = words.indices.filter { widths[$0] > 0 }.min { a, b in
+            distance(x, from: lefts[a], width: widths[a]) < distance(x, from: lefts[b], width: widths[b])
+        }
+        return nearest.map { words[$0].ayah }
+    }
+
+    private static func distance(_ x: CGFloat, from left: CGFloat, width: CGFloat) -> CGFloat {
+        x < left ? left - x : x > left + width ? x - left - width : 0
     }
 
     private var accessibilityText: String {
@@ -270,16 +299,17 @@ struct MushafPageView: View {
     }
 
     @ViewBuilder
-    private func lineView(_ line: MushafLine, fontSize: CGFloat, width: CGFloat, height: CGFloat) -> some View {
+    private func lineView(_ line: MushafLine, metrics: PageMetrics) -> some View {
+        let fontSize = metrics.fontSize, height = metrics.lineHeight
         switch line.kind {
         case .surahName(let surah):
             Text(verbatim: store.surahHeaders[surah] ?? "")
-                .font(MushafFonts.surahHeader(size: width * 0.96 / Self.headerWidthInEm))
+                .font(MushafFonts.surahHeader(size: metrics.textWidth * 0.96 / PageMetrics.headerWidthInEm))
                 .foregroundStyle(MushafStyle.ornament)
                 .fixedSize()
         case .basmala:
-            // The basmala takes the color of the surah's first section, as in a printed colored Mushaf.
-            let color = topics ? topic(after: line).map(MushafStyle.topic) : nil
+            // The basmala takes the color of the surah's first section once its first ayah is memorized.
+            let color = topics ? highlight(for: firstWord(after: line))?.color : nil
             Text(verbatim: store.basmala)
                 .font(MushafFonts.hafsSmart(size: fontSize * 1.05))
                 .foregroundStyle(MushafStyle.ink)
@@ -289,16 +319,24 @@ struct MushafPageView: View {
                 .background { if let color { RoundedRectangle(cornerRadius: height * TopicHighlight.cornerRadius).fill(color) } }
         case .ayah(let words, let centered):
             let glyphs = words.compactMap { word in
-                MushafFonts.word(word.glyph, page: page.number, size: fontSize).map { (word.isAyahEnd, word.topic, $0) }
+                MushafFonts.word(word.glyph, page: page.number, size: fontSize).map {
+                    LineWord(isAyahEnd: word.isAyahEnd, highlight: topics ? highlight(for: word) : nil, glyph: $0)
+                }
             }
-            AyahLine(words: glyphs, centered: centered, tajweed: tajweed, topics: topics, wordSpacing: fontSize * 0.25)
+            AyahLine(words: glyphs, centered: centered, tajweed: tajweed, wordSpacing: metrics.wordSpacing)
         }
     }
 
-    /// The topic section of the first ayah after a line on this page.
-    private func topic(after line: MushafLine) -> Int? {
+    /// A memorized word's highlight; nil for words not memorized, which stay on plain paper.
+    private func highlight(for word: MushafWord?) -> TopicHighlight? {
+        guard let word, let topic = word.topic, let memory = memorization?.memory(ofAyah: word.ayah) else { return nil }
+        return TopicHighlight(topic: topic, strength: memory.strength)
+    }
+
+    /// The first word after a line on this page.
+    private func firstWord(after line: MushafLine) -> MushafWord? {
         for next in page.lines where next.number > line.number {
-            if case .ayah(let words, _) = next.kind { return words.first?.topic }
+            if case .ayah(let words, _) = next.kind { return words.first }
         }
         return nil
     }
@@ -324,22 +362,95 @@ struct MushafPageView: View {
     }
 }
 
-/// The soft highlight behind each topic section, as fractions of the line height.
-private enum TopicHighlight {
+/// Where everything sits on a page of a given size. The page view and its marking layer both use it,
+/// so a tap lands on exactly the ayah drawn under it.
+struct PageMetrics {
+    /// The words of a full 1441H line add up to at most 17 em in the QCF V4 fonts; leave room for the word gaps.
+    static let lineWidthInEm: CGFloat = 17.4
+    /// A surah header glyph is 3.3 em wide.
+    static let headerWidthInEm: CGFloat = 3.303
+    static let linesPerPage: CGFloat = 15
+    /// The header and footer bands.
+    static let chrome: CGFloat = 30
+
+    var margin: CGFloat
+    var textWidth: CGFloat
+    /// Clears the window controls iPadOS draws in the top corner of a windowed app.
+    var topInset: CGFloat
+    var lineHeight: CGFloat
+    var fontSize: CGFloat
+    var wordSpacing: CGFloat { fontSize * 0.25 }
+
+    init(size: CGSize) {
+        let roomy = size.width > 600
+        margin = roomy ? 40 : 14
+        textWidth = min(size.width - margin * 2, 620)
+        topInset = roomy ? 26 : 0
+        lineHeight = (size.height - Self.chrome * 2 - topInset) / Self.linesPerPage
+        fontSize = min(textWidth / Self.lineWidthInEm, lineHeight / 1.6)
+    }
+
+    /// The text block's left edge: it's centered when the page is wider than a line.
+    func textLeft(in size: CGSize) -> CGFloat {
+        (size.width - textWidth) / 2
+    }
+
+    /// The top of the first line. Pages with fewer than 15 lines (the first two) center them in the text block.
+    func linesTop(count: Int) -> CGFloat {
+        topInset + Self.chrome + (Self.linesPerPage - CGFloat(count)) * lineHeight / 2
+    }
+}
+
+/// How the words of a line are spaced, like the printed page: spread to fill the line, or together in the
+/// middle on a centered line.
+enum AyahLineLayout {
+    /// Each word's left edge from the line's left edge, given the words' widths in reading order (right to left).
+    /// A word of zero width is a mark that belongs over the word before it (a pause sign in Ghafir 40:77),
+    /// so it takes no gap of its own.
+    static func lefts(widths: [CGFloat], lineWidth: CGFloat, centered: Bool, wordSpacing: CGFloat) -> [CGFloat] {
+        let total = widths.reduce(0, +)
+        let gaps = CGFloat(max(widths.filter { $0 > 0 }.count - 1, 0))
+        let justified = !centered && gaps > 0
+        let spacing = justified ? (lineWidth - total) / gaps : wordSpacing
+        var x = (justified ? lineWidth : (lineWidth + total + spacing * gaps) / 2) + spacing
+        return widths.map { width in
+            if width > 0 { x -= spacing }
+            x -= width
+            return x
+        }
+    }
+}
+
+/// The soft highlight behind a memorized word: its topic section's color, faint when newly memorized and
+/// fuller as the memorization grows strong.
+private struct TopicHighlight: Equatable {
+    var topic: Int
+    var strength: Double
+
+    var color: Color {
+        MushafStyle.topic(topic).opacity(0.5 + 0.5 * min(max(strength, 0), 1))
+    }
+
+    /// Its size, as fractions of the line height.
     static let height: CGFloat = 0.76
     static let cornerRadius: CGFloat = 0.3
     /// The space left between two sections' highlights on one line, as a fraction of the word spacing.
     static let separation: CGFloat = 0.5
 }
 
-/// One line of ayat, drawn word by word from the page font's outlines and justified like the printed page:
-/// the words spread to fill the line, or sit together in the middle on a centered line.
+/// A word as a line draws it.
+private struct LineWord {
+    var isAyahEnd: Bool
+    /// Its highlight when memorized and topic colors are on.
+    var highlight: TopicHighlight?
+    var glyph: WordGlyph
+}
+
+/// One line of ayat, drawn word by word from the page font's outlines and spaced by `AyahLineLayout`.
 private struct AyahLine: View {
-    /// Each word: whether it's an ayah-end marker, its topic section, and its outlines.
-    var words: [(isAyahEnd: Bool, topic: Int?, glyph: WordGlyph)]
+    var words: [LineWord]
     var centered: Bool
     var tajweed: Bool
-    var topics: Bool
     var wordSpacing: CGFloat
 
     var body: some View {
@@ -347,23 +458,11 @@ private struct AyahLine: View {
             // Diacritics and markers can reach past the line's box, so the canvas gets room around it.
             let bleed = geometry.size.height
             Canvas { context, _ in
-                let width = geometry.size.width, height = geometry.size.height
-                let total = words.reduce(0) { $0 + $1.glyph.size.width }
-                // A word of zero width is a mark that belongs over the word before it (a pause sign in Ghafir 40:77),
-                // so it takes no gap of its own.
-                let gaps = CGFloat(max(words.filter { $0.glyph.size.width > 0 }.count - 1, 0))
-                let justified = !centered && gaps > 0
-                let spacing = justified ? (width - total) / gaps : wordSpacing
-                // Each word's left edge, reading right to left from the right edge of the line (or of a centered group).
-                var x = bleed + (justified ? width : (width + total + spacing * gaps) / 2) + spacing
-                var lefts: [CGFloat] = []
-                for word in words {
-                    if word.glyph.size.width > 0 { x -= spacing }
-                    x -= word.glyph.size.width
-                    lefts.append(x)
-                }
+                let height = geometry.size.height
+                let lefts = AyahLineLayout.lefts(widths: words.map(\.glyph.size.width), lineWidth: geometry.size.width,
+                                                 centered: centered, wordSpacing: wordSpacing).map { $0 + bleed }
 
-                if topics { drawTopics(in: context, lefts: lefts, top: bleed, height: height) }
+                drawHighlights(in: context, lefts: lefts, top: bleed, height: height)
 
                 for (word, left) in zip(words, lefts) {
                     var context = context
@@ -389,19 +488,19 @@ private struct AyahLine: View {
         }
         // The outlines are in left-to-right glyph coordinates; the reading order is laid out above.
         .environment(\.layoutDirection, .leftToRight)
-        // Taps go through to the page, which shows and hides the toolbar.
+        // Taps go through to the page: the toolbar, or the marking layer in marking mode.
         .allowsHitTesting(false)
     }
 
-    /// Colors each run of words from the same topic section with a soft highlight behind them.
-    private func drawTopics(in context: GraphicsContext, lefts: [CGFloat], top: CGFloat, height: CGFloat) {
-        // Runs of consecutive words in the same section; a zero-width mark stays with the word before it.
-        var runs: [(topic: Int?, first: Int, last: Int)] = []
+    /// Colors each run of memorized words from the same topic section with a soft highlight behind them.
+    private func drawHighlights(in context: GraphicsContext, lefts: [CGFloat], top: CGFloat, height: CGFloat) {
+        // Runs of consecutive words with the same highlight; a zero-width mark stays with the word before it.
+        var runs: [(highlight: TopicHighlight?, first: Int, last: Int)] = []
         for (index, word) in words.enumerated() {
-            if let run = runs.last, run.topic == word.topic || word.glyph.size.width == 0 {
+            if let run = runs.last, run.highlight == word.highlight || word.glyph.size.width == 0 {
                 runs[runs.count - 1].last = index
             } else {
-                runs.append((word.topic, index, index))
+                runs.append((word.highlight, index, index))
             }
         }
         let edges = runs.map { (right: lefts[$0.first] + words[$0.first].glyph.size.width, left: lefts[$0.last]) }
@@ -418,12 +517,11 @@ private struct AyahLine: View {
             return min(wordSpacing, max(gap - startReach(at: index + 1) - separation, 0))
         }
         for (index, run) in runs.enumerated() {
-            guard let topic = run.topic else { continue }
+            guard let highlight = run.highlight else { continue }
             let right = edges[index].right + startReach(at: index), left = edges[index].left - endReach(at: index)
             let box = CGRect(x: left, y: top + height * (1 - TopicHighlight.height) / 2,
                              width: right - left, height: height * TopicHighlight.height)
-            context.fill(Path(roundedRect: box, cornerRadius: height * TopicHighlight.cornerRadius),
-                         with: .color(MushafStyle.topic(topic)))
+            context.fill(Path(roundedRect: box, cornerRadius: height * TopicHighlight.cornerRadius), with: .color(highlight.color))
         }
     }
 }

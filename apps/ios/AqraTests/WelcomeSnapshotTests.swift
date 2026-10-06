@@ -73,7 +73,16 @@ struct WelcomeSnapshotTests {
             ("mushaf-iphone-plain", AnyView(MushafPageView(page: store.page(385), store: store).environment(\.mushafTajweed, false)), CGSize(width: 402, height: 874)),
             ("mushaf-iphone-plain-dark", AnyView(MushafPageView(page: store.page(385), store: store).environment(\.mushafTajweed, false).environment(\.colorScheme, .dark)), CGSize(width: 402, height: 874)),
         ]
-        for (name, view, size) in renders {
+        // Memorized ayat take their topic color, faint while newly memorized: al-Baqarah 1–3, and al-A'la 1–10.
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.mark(7...9, memorized: true)
+        if let alAla = store.surahAyahs[87] { memorization.mark(alAla.lowerBound..<(alAla.lowerBound + 10), memorized: true) }
+        let memorized: [(String, AnyView, CGSize)] = [
+            ("memorized-iphone-2", AnyView(MushafPageView(page: store.page(2), store: store).environment(memorization)), CGSize(width: 402, height: 874)),
+            ("memorized-iphone-2-dark", AnyView(MushafPageView(page: store.page(2), store: store).environment(memorization).environment(\.colorScheme, .dark)), CGSize(width: 402, height: 874)),
+            ("memorized-ipad-spread-591", AnyView(MushafSpreadView(spread: 296, store: store).environment(memorization)), CGSize(width: 1376, height: 1032)),
+        ]
+        for (name, view, size) in renders + memorized {
             let renderer = ImageRenderer(content: view.frame(width: size.width, height: size.height))
             renderer.scale = 2
             let data = try #require(renderer.uiImage?.pngData())

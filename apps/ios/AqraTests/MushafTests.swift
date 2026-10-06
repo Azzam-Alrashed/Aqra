@@ -162,6 +162,51 @@ struct MushafStoreTests {
         #expect(Set(ayahTopics).count == 1)
     }
 
+    /// Ayat are numbered 0..<6236 in Quran order; juz', surahs and pages know which they hold.
+    @Test func ayahNumbersAndRanges() {
+        #expect(store.juzAyahs[1] == 0...147)
+        #expect(store.juzAyahs[30]?.count == 564)
+        var next = 0
+        for juz in 1...30 {
+            let range = store.juzAyahs[juz]
+            #expect(range?.lowerBound == next, "juz' \(juz)")
+            next = (range?.upperBound ?? 0) + 1
+        }
+        #expect(next == MushafStore.ayahCount)
+        #expect(store.surahAyahs[1] == 0...6 && store.surahAyahs[2]?.count == 286)
+        #expect(store.surahAyahs[114]?.upperBound == MushafStore.ayahCount - 1)
+        #expect(store.page(1).ayahs == 0...6 && store.page(2).ayahs == 7...11)
+
+        // Words run in Quran order, each inside its page's range.
+        var previous = 0
+        for number in 1...MushafStore.pageCount {
+            let page = store.page(number)
+            for line in page.lines {
+                guard case .ayah(let words, _) = line.kind else { continue }
+                for word in words {
+                    #expect(word.ayah >= previous && page.ayahs.contains(word.ayah), "page \(number)")
+                    previous = word.ayah
+                }
+            }
+        }
+    }
+
+    /// A tap lands on the ayah drawn under it, or the nearest one on its line; headers have none.
+    @Test func findsTheAyahUnderAPoint() {
+        let size = CGSize(width: 402, height: 874)
+        let page = store.page(2)
+        let metrics = PageMetrics(size: size)
+        let top = metrics.linesTop(count: page.lines.count)
+        let left = metrics.textLeft(in: size)
+        // Line 3 opens al-Baqarah 1 (ayah 7, after al-Fatiha's seven) at its right end.
+        #expect(MushafPageView.ayah(at: CGPoint(x: left + metrics.textWidth - 4, y: top + 2.5 * metrics.lineHeight), on: page, size: size) == 7)
+        // The last line, al-Baqarah 5, is centered: a point in its empty left margin takes the nearest word.
+        #expect(MushafPageView.ayah(at: CGPoint(x: left + 2, y: top + 7.5 * metrics.lineHeight), on: page, size: size) == 11)
+        // The surah header and the basmala hold no ayah.
+        #expect(MushafPageView.ayah(at: CGPoint(x: size.width / 2, y: top + 0.5 * metrics.lineHeight), on: page, size: size) == nil)
+        #expect(MushafPageView.ayah(at: CGPoint(x: size.width / 2, y: top + 1.5 * metrics.lineHeight), on: page, size: size) == nil)
+    }
+
     @Test func indexCoversEverySurahAndJuz() {
         #expect(store.surahHeaders.count == 114)
         #expect(store.surahStartPages.count == 114)

@@ -200,6 +200,304 @@
           }
         }
       }
+    },
+    "What have you memorized": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ماذا تحفظ"
+          }
+        }
+      }
+    },
+    "of the Quran?": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "من القرآن؟"
+          }
+        }
+      }
+    },
+    "Choose the juz' and surahs you know. You can mark pages and ayat in the Mushaf anytime.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اختر الأجزاء والسور التي تحفظها، ويمكنك تحديد الصفحات والآيات في المصحف متى شئت."
+          }
+        }
+      }
+    },
+    "The whole Quran": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "القرآن كاملًا"
+          }
+        }
+      }
+    },
+    "I'm just starting": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "أبدأ من الصفر"
+          }
+        }
+      }
+    },
+    "Memorized by": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الحفظ حسب"
+          }
+        }
+      }
+    },
+    "Juz' %lld": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الجزء %lld"
+          }
+        }
+      }
+    },
+    "Nothing chosen yet": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لم تختر شيئًا بعد"
+          }
+        }
+      }
+    },
+    "%@ of the Quran": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "%@ من القرآن"
+          }
+        }
+      }
+    },
+    "Done": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تم"
+          }
+        }
+      }
+    },
+    "Mark pages and ayat in the Mushaf": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حدّد الصفحات والآيات في المصحف"
+          }
+        }
+      }
+    },
+    "Tap the ayat you've memorized": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اضغط على الآيات التي تحفظها"
+          }
+        }
+      }
+    },
+    "Press, then drag, to mark several": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اضغط مطوّلًا ثم اسحب لتحديد عدة آيات"
+          }
+        }
+      }
+    },
+    "Whole page": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصفحة كاملة"
+          }
+        }
+      }
+    },
+    "Both pages": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الصفحتان"
+          }
+        }
+      }
+    },
+    "Juz' & surahs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأجزاء والسور"
+          }
+        }
+      }
+    },
+    "My memorization": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "حفظي"
+          }
+        }
+      }
+    },
+    "%lld ayat": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld ayah"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld ayat"
+                }
+              }
+            }
+          }
+        },
+        "ar": {
+          "variations": {
+            "plural": {
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld آية"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "آية واحدة"
+                }
+              },
+              "two": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "آيتان"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld آيات"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld آية"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld آية"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld ayat memorized": {
+      "localizations": {
+        "en": {
+          "variations": {
+            "plural": {
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld ayah memorized"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld ayat memorized"
+                }
+              }
+            }
+          }
+        },
+        "ar": {
+          "variations": {
+            "plural": {
+              "zero": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "لا آيات محفوظة"
+                }
+              },
+              "one": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "آية واحدة محفوظة"
+                }
+              },
+              "two": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "آيتان محفوظتان"
+                }
+              },
+              "few": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld آيات محفوظة"
+                }
+              },
+              "many": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld آية محفوظة"
+                }
+              },
+              "other": {
+                "stringUnit": {
+                  "state": "translated",
+                  "value": "%lld آية محفوظة"
+                }
+              }
+            }
+          }
+        }
+      }
     }
   },
   "version": "1.1"

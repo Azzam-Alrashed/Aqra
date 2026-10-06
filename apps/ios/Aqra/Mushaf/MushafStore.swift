@@ -5,6 +5,8 @@ import SQLite3
 struct MushafWord: Hashable {
     var glyph: String
     var isAyahEnd: Bool
+    /// The ayah it belongs to, numbered 0..<6236 in Quran order.
+    var ayah = 0
     /// The topic section its ayah belongs to, numbered in Quran order.
     var topic: Int? = nil
 }
@@ -27,6 +29,8 @@ struct MushafPage: Hashable {
     var lines: [MushafLine]
     /// The page's ayat in the official Imla'i (plain) text, each followed by its number — for VoiceOver.
     var spokenAyat: [String] = []
+    /// Every ayah that appears on the page, including one that starts or ends on it.
+    var ayahs: ClosedRange<Int> = 0...0
     /// The surah the page starts in, and its juz'.
     var surah: Int
     var juz: Int
@@ -38,6 +42,7 @@ struct MushafPage: Hashable {
 /// King Fahd Complex's official data line for line; surah names, juz' and the basmala come from that official data.
 final class MushafStore: Sendable {
     static let pageCount = 604
+    static let ayahCount = 6236
 
     enum LoadError: Error, CustomStringConvertible {
         case missingResource(String)
@@ -62,6 +67,9 @@ final class MushafStore: Sendable {
     let surahStartPages: [Int: Int]
     /// The page each juz' starts on, by juz' number, from the official data.
     let juzStartPages: [Int: Int]
+    /// Each surah's ayat and each juz's ayat, numbered 0..<6236 in Quran order.
+    let surahAyahs: [Int: ClosedRange<Int>]
+    let juzAyahs: [Int: ClosedRange<Int>]
     /// «بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ» in the official Hafs Smart encoding — the words of al-Fatiha 1:1
     /// without its ayah-number marker.
     let basmala: String
@@ -103,6 +111,16 @@ final class MushafStore: Sendable {
         var firstAyahOnPage: [Int: OfficialAyah] = [:]
         var juzStarts: [Int: Int] = [:]
         var spoken = [[String]](repeating: [], count: Self.pageCount + 1)
+        // The official data lists the ayat in Quran order, so an ayah's position there is its number.
+        var indexOfAyah: [String: Int] = [:]
+        var surahRanges: [Int: ClosedRange<Int>] = [:], juzRanges: [Int: ClosedRange<Int>] = [:]
+        for (index, ayah) in official.enumerated() {
+            indexOfAyah["\(ayah.sura_no):\(ayah.aya_no)"] = index
+            surahRanges[ayah.sura_no] = (surahRanges[ayah.sura_no]?.lowerBound ?? index)...index
+            juzRanges[ayah.jozz] = (juzRanges[ayah.jozz]?.lowerBound ?? index)...index
+        }
+        surahAyahs = surahRanges
+        juzAyahs = juzRanges
         for ayah in official {
             if (1...Self.pageCount).contains(ayah.page) {
                 spoken[ayah.page].append("\(ayah.aya_text_emlaey) (\(ayah.aya_no))")
@@ -179,7 +197,8 @@ final class MushafStore: Sendable {
                 let first = Int(sqlite3_column_int(statement, 4)), last = Int(sqlite3_column_int(statement, 5))
                 kind = .ayah(
                     words: (first...last).map {
-                        MushafWord(glyph: glyph[$0], isAyahEnd: ayahEnds.contains($0), topic: topicOfAyah[ayahOfWord[$0]])
+                        MushafWord(glyph: glyph[$0], isAyahEnd: ayahEnds.contains($0),
+                                   ayah: indexOfAyah[ayahOfWord[$0]] ?? 0, topic: topicOfAyah[ayahOfWord[$0]])
                     },
                     centered: sqlite3_column_int(statement, 3) != 0
                 )
@@ -198,8 +217,12 @@ final class MushafStore: Sendable {
 
         pages = (1...Self.pageCount).map { number in
             let first = firstAyahOnPage[number]
+            let ayahs = linesByPage[number].flatMap { line -> [Int] in
+                if case .ayah(let words, _) = line.kind { return words.map(\.ayah) } else { return [] }
+            }
             return MushafPage(
                 number: number, lines: linesByPage[number], spokenAyat: spoken[number],
+                ayahs: (ayahs.min() ?? 0)...(ayahs.max() ?? 0),
                 surah: first?.sura_no ?? 1, juz: first?.jozz ?? 1
             )
         }
