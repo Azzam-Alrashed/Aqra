@@ -54,4 +54,20 @@ struct WelcomeSnapshotTests {
             try startData.write(to: URL(fileURLWithPath: directory).appendingPathComponent("start-\(name).png"))
         }
     }
+
+    /// Renders Mushaf page 385 on iPhone, and pages 385–386 as a full-screen iPad landscape spread.
+    @Test func renderMushafLayouts() throws {
+        guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }
+        let store = try MushafStore()
+        let renders: [(String, AnyView, CGSize)] = [
+            ("mushaf-iphone", AnyView(MushafPageView(page: store.page(385), store: store)), CGSize(width: 402, height: 874)),
+            ("mushaf-ipad-spread", AnyView(MushafSpreadView(spread: 193, store: store)), CGSize(width: 1376, height: 1032)),
+        ]
+        for (name, view, size) in renders {
+            let renderer = ImageRenderer(content: view.frame(width: size.width, height: size.height))
+            renderer.scale = 2
+            let data = try #require(renderer.uiImage?.pngData())
+            try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("\(name).png"))
+        }
+    }
 }

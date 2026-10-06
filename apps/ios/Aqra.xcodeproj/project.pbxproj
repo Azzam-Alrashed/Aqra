@@ -8,6 +8,7 @@
 
 /* Begin PBXBuildFile section */
 		028487F5A6C0BED60172B546 /* OnboardingPageLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D871D9287AF47EBED70889 /* OnboardingPageLayout.swift */; };
+		065BF80A3008FD7DC76BF935 /* MushafIndexView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 94E4E27C2A024A8688C0B012 /* MushafIndexView.swift */; };
 		0B3D2921336B533833058829 /* quran in Resources */ = {isa = PBXBuildFile; fileRef = 7AB948E93ABED6504E87449D /* quran */; };
 		12D590DA34A191EB5674BEFE /* WelcomeSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */; };
 		1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01744F945BA643B14B7465BE /* AqraWelcomeView.swift */; };
@@ -63,6 +64,7 @@
 		708045EEA73D597E66035897 /* AqraLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraLogo.swift; sourceTree = "<group>"; };
 		7AB948E93ABED6504E87449D /* quran */ = {isa = PBXFileReference; lastKnownFileType = folder; name = quran; path = ../../shared/quran; sourceTree = SOURCE_ROOT; };
 		836D08619011973FB71AEFC1 /* MushafStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafStore.swift; sourceTree = "<group>"; };
+		94E4E27C2A024A8688C0B012 /* MushafIndexView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafIndexView.swift; sourceTree = "<group>"; };
 		99C540650E9663B5B728582A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafPageView.swift; sourceTree = "<group>"; };
 		B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSnapshotTests.swift; sourceTree = "<group>"; };
@@ -122,6 +124,7 @@
 		88636D0AF183BBA7F8083935 /* Mushaf */ = {
 			isa = PBXGroup;
 			children = (
+				94E4E27C2A024A8688C0B012 /* MushafIndexView.swift */,
 				A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */,
 				836D08619011973FB71AEFC1 /* MushafStore.swift */,
 				5374F6DB7F1FFAF810B695C4 /* MushafView.swift */,
@@ -314,6 +317,7 @@
 				95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */,
 				9B6609EC32D686618171D356 /* FeaturesPageView.swift in Sources */,
 				C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */,
+				065BF80A3008FD7DC76BF935 /* MushafIndexView.swift in Sources */,
 				EAEBCFF615FEDD24A42B8A43 /* MushafPageView.swift in Sources */,
 				BDEC10886391E806B355B426 /* MushafStore.swift in Sources */,
 				B385724117B3DF0FF21962B3 /* MushafView.swift in Sources */,

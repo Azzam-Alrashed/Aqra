@@ -140,6 +140,36 @@
           }
         }
       }
+    },
+    "Index": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الفهرس"
+          }
+        }
+      }
+    },
+    "Surahs": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "السور"
+          }
+        }
+      }
+    },
+    "Juz'": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الأجزاء"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

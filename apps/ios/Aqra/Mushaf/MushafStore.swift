@@ -1,13 +1,19 @@
 import Foundation
 import SQLite3
 
+/// A word on a Mushaf page: its glyph in the page font, and whether it's an ayah-end marker.
+struct MushafWord: Hashable {
+    var glyph: String
+    var isAyahEnd: Bool
+}
+
 /// One line of a Mushaf page, as laid out in the 1421H Madinah print.
 struct MushafLine: Hashable {
     enum Kind: Hashable {
         case surahName(surah: Int)
         case basmala
-        /// The line's words in reading order, each as its glyph in the page font.
-        case ayah(words: [String], centered: Bool)
+        /// The line's words in reading order.
+        case ayah(words: [MushafWord], centered: Bool)
     }
 
     var number: Int
@@ -36,6 +42,12 @@ final class MushafStore {
 
     /// Official Arabic surah names, indexed by surah number.
     let surahNames: [Int: String]
+    /// Each surah's header glyph in the surah header font, indexed by surah number.
+    let surahHeaders: [Int: String]
+    /// The page each surah starts on, in surah order.
+    let surahStartPages: [Int: Int]
+    /// The page each juz' starts on, by juz' number, from the official data.
+    let juzStartPages: [Int: Int]
     /// «بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ» in the official Hafs Smart encoding — the words of al-Fatiha 1:1
     /// without its ayah-number marker.
     let basmala: String
@@ -67,19 +79,38 @@ final class MushafStore {
         let official = try JSONDecoder().decode([OfficialAyah].self, from: Data(contentsOf: url("kfgqpc/hafs_smart_v8.json")))
         var names: [Int: String] = [:]
         var firstAyahOnPage: [Int: OfficialAyah] = [:]
+        var juzStarts: [Int: Int] = [:]
         for ayah in official {
             names[ayah.sura_no] = names[ayah.sura_no] ?? ayah.sura_name_ar
             firstAyahOnPage[ayah.page] = firstAyahOnPage[ayah.page] ?? ayah
+            juzStarts[ayah.jozz] = juzStarts[ayah.jozz] ?? ayah.page
         }
         surahNames = names
+        juzStartPages = juzStarts
+
+        // Surah header glyphs: "surah-N" → glyph (with a trailing space in the source file).
+        let headerMap = try JSONDecoder().decode([String: String].self, from: Data(contentsOf: url("qul/surah-header-ligatures.json")))
+        var headers: [Int: String] = [:]
+        for (key, value) in headerMap {
+            if let number = Int(key.replacingOccurrences(of: "surah-", with: "")) {
+                headers[number] = value.trimmingCharacters(in: .whitespaces)
+            }
+        }
+        surahHeaders = headers
         let fatiha = official.first { $0.sura_no == 1 && $0.aya_no == 1 }?.aya_text ?? ""
         basmala = fatiha.split(separator: " ").dropLast().joined(separator: " ")
 
-        // QUL glyphs: word id → glyph.
-        struct Word: Decodable { var id: Int; var text: String }
+        // QUL glyphs: word id → glyph. The last word of each ayah is its ayah-end marker.
+        struct Word: Decodable { var id: Int; var surah: String; var ayah: String; var word: String; var text: String }
         let words = try JSONDecoder().decode([String: Word].self, from: Data(contentsOf: url("qul/qpc-v2.json")))
         var glyph = [String](repeating: "", count: words.count + 1)
-        for word in words.values where word.id < glyph.count { glyph[word.id] = word.text }
+        var lastWordOfAyah: [String: (position: Int, id: Int)] = [:]
+        for word in words.values where word.id < glyph.count {
+            glyph[word.id] = word.text
+            let key = "\(word.surah):\(word.ayah)", position = Int(word.word) ?? 0
+            if position > (lastWordOfAyah[key]?.position ?? 0) { lastWordOfAyah[key] = (position, word.id) }
+        }
+        let ayahEnds = Set(lastWordOfAyah.values.map(\.id))
 
         // QUL layout: 15 lines per page.
         var linesByPage = [[MushafLine]](repeating: [], count: Self.pageCount + 1)
@@ -104,11 +135,22 @@ final class MushafStore {
                 kind = .basmala
             default:
                 let first = Int(sqlite3_column_int(statement, 4)), last = Int(sqlite3_column_int(statement, 5))
-                kind = .ayah(words: (first...last).map { glyph[$0] }, centered: sqlite3_column_int(statement, 3) != 0)
+                kind = .ayah(
+                    words: (first...last).map { MushafWord(glyph: glyph[$0], isAyahEnd: ayahEnds.contains($0)) },
+                    centered: sqlite3_column_int(statement, 3) != 0
+                )
             }
             guard (1...Self.pageCount).contains(page) else { continue }
             linesByPage[page].append(MushafLine(number: number, kind: kind))
         }
+
+        var surahStarts: [Int: Int] = [:]
+        for page in 1...Self.pageCount {
+            for line in linesByPage[page] {
+                if case .surahName(let surah) = line.kind { surahStarts[surah] = surahStarts[surah] ?? page }
+            }
+        }
+        surahStartPages = surahStarts
 
         pages = (1...Self.pageCount).map { number in
             let first = firstAyahOnPage[number]

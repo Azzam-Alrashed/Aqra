@@ -1,12 +1,50 @@
 import SwiftUI
 
 /// The main screen: the Mushaf, opening on the last page read and turned like a book (right to left).
+/// On a wide iPad it shows two facing pages, odd on the right, as in the printed Madinah Mushaf.
 struct MushafView: View {
     var store: MushafStore
 
     @AppStorage("mushaf.lastPage") private var lastPage = 1
+    @State private var toolbarVisible = false
+    @State private var showingIndex = false
 
     var body: some View {
+        GeometryReader { geometry in
+            let facingPages = geometry.size.width > geometry.size.height && geometry.size.width >= 900
+            ZStack {
+                Group {
+                    if facingPages { spreadPager } else { pagePager }
+                }
+                .onTapGesture {
+                    withAnimation(.easeInOut(duration: 0.2)) { toolbarVisible.toggle() }
+                }
+
+                if toolbarVisible {
+                    VStack(spacing: 0) {
+                        topBar
+                        Spacer()
+                        bottomBar
+                    }
+                    .transition(.opacity)
+                }
+            }
+        }
+        .background(MushafStyle.paper.ignoresSafeArea())
+        // A light tick as each page turns, and a firmer one on entering a new juz'.
+        .sensoryFeedback(.selection, trigger: lastPage)
+        .sensoryFeedback(.impact(weight: .medium), trigger: store.page(lastPage).juz)
+        .sheet(isPresented: $showingIndex) {
+            MushafIndexView(store: store, currentPage: lastPage) { page in
+                lastPage = page
+                showingIndex = false
+            }
+        }
+    }
+
+    // MARK: - Pagers
+
+    private var pagePager: some View {
         TabView(selection: $lastPage) {
             ForEach(1...MushafStore.pageCount, id: \.self) { number in
                 MushafPageView(page: store.page(number), store: store)
@@ -16,7 +54,92 @@ struct MushafView: View {
         .tabViewStyle(.page(indexDisplayMode: .never))
         // Page 1 sits on the right; the next page comes in from the left, as in a printed Mushaf.
         .environment(\.layoutDirection, .rightToLeft)
-        .background(MushafStyle.paper.ignoresSafeArea())
+    }
+
+    private var spreadPager: some View {
+        let spread = Binding<Int>(
+            get: { (lastPage + 1) / 2 },
+            set: { lastPage = $0 * 2 - 1 }
+        )
+        return TabView(selection: spread) {
+            ForEach(1...(MushafStore.pageCount / 2), id: \.self) { number in
+                MushafSpreadView(spread: number, store: store)
+                    .tag(number)
+            }
+        }
+        .tabViewStyle(.page(indexDisplayMode: .never))
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    // MARK: - Toolbar
+
+    private var topBar: some View {
+        let page = store.page(lastPage)
+        return HStack {
+            Button {
+                showingIndex = true
+            } label: {
+                Label("Index", systemImage: "list.bullet")
+                    .labelStyle(.iconOnly)
+                    .font(.system(size: 18, weight: .semibold))
+                    .frame(width: 44, height: 44)
+            }
+            Spacer()
+            VStack(spacing: 2) {
+                Text(verbatim: store.surahNames[page.surah] ?? "")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                Text(verbatim: "الجزء \(arabic(page.juz)) · الصفحة \(arabic(page.number))")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(MushafStyle.chrome)
+            }
+            Spacer()
+            Color.clear.frame(width: 44, height: 44)
+        }
+        .foregroundStyle(MushafStyle.ink)
+        .tint(MushafStyle.marker)
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
+        .background(.ultraThinMaterial)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private var bottomBar: some View {
+        let position = Binding<Double>(
+            get: { Double(lastPage) },
+            set: { lastPage = Int($0.rounded()) }
+        )
+        return HStack(spacing: 14) {
+            Text(verbatim: arabic(lastPage))
+                .font(.system(size: 15, weight: .bold, design: .rounded).monospacedDigit())
+                .frame(minWidth: 36)
+            Slider(value: position, in: 1...Double(MushafStore.pageCount), step: 1)
+                .tint(MushafStyle.marker)
+        }
+        .foregroundStyle(MushafStyle.ink)
+        .padding(.horizontal, 20)
+        .padding(.vertical, 14)
+        .background(.ultraThinMaterial)
+        // Page 1 at the right end of the slider, matching the direction pages turn.
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private func arabic(_ number: Int) -> String {
+        number.formatted(.number.locale(Locale(identifier: "ar@numbers=arab")))
+    }
+}
+
+/// Two facing pages: the odd page on the right and the even page on the left, as in the printed Mushaf.
+struct MushafSpreadView: View {
+    var spread: Int
+    var store: MushafStore
+
+    var body: some View {
+        HStack(spacing: 0) {
+            MushafPageView(page: store.page(spread * 2 - 1), store: store)
+            Rectangle().fill(MushafStyle.chrome.opacity(0.18)).frame(width: 1)
+            MushafPageView(page: store.page(spread * 2), store: store)
+        }
+        .environment(\.layoutDirection, .rightToLeft)
     }
 }
 

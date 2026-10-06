@@ -28,6 +28,8 @@ From [qul.tarteel.ai](https://qul.tarteel.ai), downloaded with a QUL account on 
 |---|---|
 | `qpc-v2-15-lines.db` — "KFGQPC V2 layout (1421H print)": 604 pages × 15 lines | `e4df98f35dd3b8927ff096337c8739e0f0b12c8ba622834c345eaa4c3e28dd8c` |
 | `qpc-v2.json` — "QPC V2 Glyph – Word by Word": each word's glyph in the page fonts | `40964a1b7932e9a69e0dfc0d58dce3b73e30a803febda119fd6828bcb75fac98` |
+| `QCF_SurahHeader_COLOR-Regular.ttf` — "Surah header font": each surah's framed calligraphic title (name field: "King Fahad Complex, All rights reserved.") | `de261a309bdd42262e1a268d5ead56b6ea8366cd59124baedea3903561d7370b` |
+| `surah-header-ligatures.json` — which character draws each surah's header | `c4480a1fb616685421ada1f9cbd36187c1c27c01d8d78d27a866858fdaf5c4f7` |
 
 **License:** not stated on these resources; QUL's FAQ says commercial use is allowed but some resources require
 attribution. **Must be confirmed before release.**

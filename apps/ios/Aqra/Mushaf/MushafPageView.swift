@@ -1,13 +1,17 @@
 import CoreText
 import SwiftUI
 
-/// The Mushaf's look: warm paper, dark ink, and gold-trimmed surah headers.
+/// The Mushaf's look: warm paper, dark ink, gold ornament.
 enum MushafStyle {
     static let paper = Color(light: 0xFBF7EE, dark: 0xFBF7EE)
     static let ink = Color(light: 0x1C1712, dark: 0x1C1712)
     static let chrome = Color(light: 0x8A7A64, dark: 0x8A7A64)
-    static let headerFill = Color(light: 0xF4EAD5, dark: 0xF4EAD5)
     static let gold = Color(light: 0xC9A24A, dark: 0xC9A24A)
+    /// The surah header frame and calligraphy.
+    static let ornament = Color(light: 0x9A7440, dark: 0x9A7440)
+    /// Ayah-end markers: a soft disc behind a brown-gold rosette and number.
+    static let markerFill = Color(light: 0xF1E4C8, dark: 0xF1E4C8)
+    static let marker = Color(light: 0x8C6A3F, dark: 0x8C6A3F)
 }
 
 /// Loads the Mushaf fonts straight from the bundle, without registering them system-wide.
@@ -23,6 +27,11 @@ enum MushafFonts {
     /// The Complex's Hafs Smart font, used for the basmala lines.
     static func hafsSmart(size: CGFloat) -> Font? {
         font(at: "kfgqpc/HafsSmart_08.ttf", size: size)
+    }
+
+    /// The surah header font: one glyph draws a surah's whole framed title.
+    static func surahHeader(size: CGFloat) -> Font? {
+        font(at: "qul/QCF_SurahHeader_COLOR-Regular.ttf", size: size)
     }
 
     private static func font(at path: String, size: CGFloat) -> Font? {
@@ -44,18 +53,23 @@ struct MushafPageView: View {
 
     /// A full Madinah line is about 15.6 em wide in the QCF V2 fonts; leave room for the word gaps.
     private static let lineWidthInEm: CGFloat = 16.4
+    /// A surah header glyph is 3.3 em wide.
+    private static let headerWidthInEm: CGFloat = 3.303
     private static let linesPerPage: CGFloat = 15
 
     var body: some View {
         GeometryReader { geometry in
-            let margin: CGFloat = geometry.size.width > 600 ? 40 : 14
+            let roomy = geometry.size.width > 600
+            let margin: CGFloat = roomy ? 40 : 14
             let textWidth = min(geometry.size.width - margin * 2, 620)
             let chrome: CGFloat = 30
-            let lineHeight = (geometry.size.height - chrome * 2) / Self.linesPerPage
+            // Clears the window controls iPadOS draws in the top corner of a windowed app.
+            let topInset: CGFloat = roomy ? 26 : 0
+            let lineHeight = (geometry.size.height - chrome * 2 - topInset) / Self.linesPerPage
             let fontSize = min(textWidth / Self.lineWidthInEm, lineHeight / 1.6)
 
             VStack(spacing: 0) {
-                header.frame(height: chrome)
+                header.frame(height: chrome).padding(.top, topInset)
                 VStack(spacing: 0) {
                     ForEach(page.lines, id: \.self) { line in
                         lineView(line, fontSize: fontSize, width: textWidth)
@@ -76,7 +90,10 @@ struct MushafPageView: View {
     private func lineView(_ line: MushafLine, fontSize: CGFloat, width: CGFloat) -> some View {
         switch line.kind {
         case .surahName(let surah):
-            SurahHeader(name: store.surahNames[surah] ?? "", width: width * 0.86, fontSize: fontSize)
+            Text(verbatim: store.surahHeaders[surah] ?? "")
+                .font(MushafFonts.surahHeader(size: width * 0.96 / Self.headerWidthInEm))
+                .foregroundStyle(MushafStyle.ornament)
+                .fixedSize()
         case .basmala:
             Text(verbatim: store.basmala)
                 .font(MushafFonts.hafsSmart(size: fontSize * 1.05))
@@ -87,20 +104,38 @@ struct MushafPageView: View {
             if centered {
                 HStack(spacing: fontSize * 0.25) {
                     ForEach(Array(words.enumerated()), id: \.offset) { _, word in
-                        Text(verbatim: word).font(font).fixedSize()
+                        wordView(word, font: font, fontSize: fontSize)
                     }
                 }
-                .foregroundStyle(MushafStyle.ink)
             } else {
                 // Justified like the printed page: the words spread to fill the line.
                 HStack(spacing: 0) {
                     ForEach(Array(words.enumerated()), id: \.offset) { index, word in
                         if index > 0 { Spacer(minLength: 0) }
-                        Text(verbatim: word).font(font).fixedSize()
+                        wordView(word, font: font, fontSize: fontSize)
                     }
                 }
-                .foregroundStyle(MushafStyle.ink)
             }
+        }
+    }
+
+    @ViewBuilder
+    private func wordView(_ word: MushafWord, font: Font?, fontSize: CGFloat) -> some View {
+        if word.isAyahEnd {
+            Text(verbatim: word.glyph)
+                .font(font)
+                .foregroundStyle(MushafStyle.marker)
+                .fixedSize()
+                .background {
+                    Circle()
+                        .fill(MushafStyle.markerFill)
+                        .frame(width: fontSize * 0.86, height: fontSize * 0.86)
+                }
+        } else {
+            Text(verbatim: word.glyph)
+                .font(font)
+                .foregroundStyle(MushafStyle.ink)
+                .fixedSize()
         }
     }
 
@@ -122,26 +157,5 @@ struct MushafPageView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 3)
             .overlay(Capsule().stroke(MushafStyle.gold.opacity(0.6), lineWidth: 1))
-    }
-}
-
-/// A surah title inside a gold-trimmed band.
-private struct SurahHeader: View {
-    var name: String
-    var width: CGFloat
-    var fontSize: CGFloat
-
-    var body: some View {
-        Text(verbatim: "سورة \(name)")
-            .font(AqraFont.hadith(size: fontSize * 0.95, bold: true))
-            .fontDesign(nil)
-            .foregroundStyle(MushafStyle.ink)
-            .frame(width: width, height: fontSize * 1.55)
-            .background(MushafStyle.headerFill, in: RoundedRectangle(cornerRadius: fontSize * 0.4, style: .continuous))
-            .overlay {
-                RoundedRectangle(cornerRadius: fontSize * 0.4, style: .continuous)
-                    .strokeBorder(MushafStyle.gold, lineWidth: 1.5)
-                    .padding(2)
-            }
     }
 }
