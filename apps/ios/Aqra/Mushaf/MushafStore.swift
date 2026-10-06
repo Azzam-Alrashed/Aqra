@@ -23,6 +23,8 @@ struct MushafLine: Hashable {
 struct MushafPage: Hashable {
     var number: Int
     var lines: [MushafLine]
+    /// The page's ayat in the official Imla'i (plain) text, each followed by its number — for VoiceOver.
+    var spokenAyat: [String] = []
     /// The surah the page starts in, and its juz'.
     var surah: Int
     var juz: Int
@@ -32,12 +34,22 @@ struct MushafPage: Hashable {
 ///
 /// Pages and words come from the QUL "KFGQPC V2 layout (1421H print)" and its glyphs;
 /// surah names, juz' and the basmala come from the King Fahd Complex's official data.
-final class MushafStore {
+final class MushafStore: Sendable {
     static let pageCount = 604
 
-    enum LoadError: Error {
+    enum LoadError: Error, CustomStringConvertible {
         case missingResource(String)
+        case missingPageFonts(found: Int)
         case database(String)
+
+        var description: String {
+            switch self {
+            case .missingResource(let path): "Missing Quran data file: \(path)"
+            case .missingPageFonts(let found):
+                "Only \(found) of 604 Mushaf page fonts are in the app. Run scripts/fetch-mushaf-fonts.sh, then rebuild."
+            case .database(let step): "Couldn't read the Mushaf layout (\(step))."
+            }
+        }
     }
 
     /// Official Arabic surah names, indexed by surah number.
@@ -67,7 +79,14 @@ final class MushafStore {
             return url
         }
 
-        // Official data: surah names, juz' per page, and the basmala.
+        // The 604 page fonts aren't in git; catch a build made without them before any page renders.
+        let pageFonts = (1...Self.pageCount).filter { page in
+            Self.resourceURL(String(format: "qcf2/QCF2%03d.ttf", page), in: bundle)
+                .map { FileManager.default.fileExists(atPath: $0.path) } ?? false
+        }.count
+        guard pageFonts == Self.pageCount else { throw LoadError.missingPageFonts(found: pageFonts) }
+
+        // Official data: surah names, juz' per page, the basmala, and plain text for VoiceOver.
         struct OfficialAyah: Decodable {
             var sura_no: Int
             var sura_name_ar: String
@@ -75,12 +94,17 @@ final class MushafStore {
             var page: Int
             var jozz: Int
             var aya_text: String
+            var aya_text_emlaey: String
         }
         let official = try JSONDecoder().decode([OfficialAyah].self, from: Data(contentsOf: url("kfgqpc/hafs_smart_v8.json")))
         var names: [Int: String] = [:]
         var firstAyahOnPage: [Int: OfficialAyah] = [:]
         var juzStarts: [Int: Int] = [:]
+        var spoken = [[String]](repeating: [], count: Self.pageCount + 1)
         for ayah in official {
+            if (1...Self.pageCount).contains(ayah.page) {
+                spoken[ayah.page].append("\(ayah.aya_text_emlaey) (\(ayah.aya_no))")
+            }
             names[ayah.sura_no] = names[ayah.sura_no] ?? ayah.sura_name_ar
             firstAyahOnPage[ayah.page] = firstAyahOnPage[ayah.page] ?? ayah
             juzStarts[ayah.jozz] = juzStarts[ayah.jozz] ?? ayah.page
@@ -154,8 +178,21 @@ final class MushafStore {
 
         pages = (1...Self.pageCount).map { number in
             let first = firstAyahOnPage[number]
-            return MushafPage(number: number, lines: linesByPage[number], surah: first?.sura_no ?? 1, juz: first?.jozz ?? 1)
+            return MushafPage(
+                number: number, lines: linesByPage[number], spokenAyat: spoken[number],
+                surah: first?.sura_no ?? 1, juz: first?.jozz ?? 1
+            )
         }
+    }
+
+    /// The surah being read on a page: the last surah that starts on or before it.
+    func surah(containing page: Int) -> Int {
+        surahStartPages.filter { $0.value <= page }.max { ($0.value, $0.key) < ($1.value, $1.key) }?.key ?? 1
+    }
+
+    /// The juz' a page belongs to: the last juz' that starts on or before it.
+    func juz(containing page: Int) -> Int {
+        juzStartPages.filter { $0.value <= page }.max { ($0.value, $0.key) < ($1.value, $1.key) }?.key ?? 1
     }
 
     func page(_ number: Int) -> MushafPage {

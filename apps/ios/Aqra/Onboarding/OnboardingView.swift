@@ -12,7 +12,7 @@ struct OnboardingView: View {
             // The pager doesn't paint the safe areas itself; the surface behind it does.
             OnboardingPalette.surface.ignoresSafeArea()
             TabView(selection: $page) {
-                AqraWelcomeView(pageCount: pageCount, onBegin: { withAnimation { page = 1 } })
+                AqraWelcomeView(pageCount: pageCount, isActive: page == 0, onBegin: { withAnimation { page = 1 } })
                     .tag(0)
                 ManazilPageView(pageCount: pageCount, currentPage: 1, isActive: page == 1, onContinue: { withAnimation { page = 2 } })
                     .tag(1)

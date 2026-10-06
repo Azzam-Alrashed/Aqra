@@ -10,23 +10,34 @@ struct MushafIndexView: View {
     @State private var section = Section.surahs
 
     var body: some View {
+        let currentSurah = store.surah(containing: currentPage)
+        let currentJuz = store.juz(containing: currentPage)
         NavigationStack {
-            List {
-                switch section {
-                case .surahs:
-                    ForEach(1...114, id: \.self) { surah in
-                        let page = store.surahStartPages[surah] ?? 1
-                        row(number: surah, title: store.surahNames[surah] ?? "", page: page)
-                    }
-                case .juz:
-                    ForEach(1...30, id: \.self) { juz in
-                        let page = store.juzStartPages[juz] ?? 1
-                        row(number: juz, title: "الجزء \(arabic(juz))", page: page,
-                            subtitle: store.surahNames[store.page(page).surah])
+            ScrollViewReader { proxy in
+                List {
+                    switch section {
+                    case .surahs:
+                        ForEach(1...114, id: \.self) { surah in
+                            let page = store.surahStartPages[surah] ?? 1
+                            row(number: surah, title: store.surahNames[surah] ?? "", page: page, isCurrent: surah == currentSurah)
+                                .id(surah)
+                        }
+                    case .juz:
+                        ForEach(1...30, id: \.self) { juz in
+                            let page = store.juzStartPages[juz] ?? 1
+                            row(number: juz, title: "الجزء \(arabic(juz))", page: page,
+                                subtitle: store.surahNames[store.page(page).surah], isCurrent: juz == currentJuz)
+                                .id(juz)
+                        }
                     }
                 }
+                .listStyle(.plain)
+                // Open on the surah (or juz') being read.
+                .onAppear { proxy.scrollTo(currentSurah, anchor: .center) }
+                .onChange(of: section) {
+                    proxy.scrollTo(section == .surahs ? currentSurah : currentJuz, anchor: .center)
+                }
             }
-            .listStyle(.plain)
             .safeAreaInset(edge: .top) {
                 Picker("Index", selection: $section) {
                     Text("Surahs").tag(Section.surahs)
@@ -45,7 +56,7 @@ struct MushafIndexView: View {
         .presentationDetents([.medium, .large])
     }
 
-    private func row(number: Int, title: String, page: Int, subtitle: String? = nil) -> some View {
+    private func row(number: Int, title: String, page: Int, subtitle: String? = nil, isCurrent: Bool) -> some View {
         Button {
             onSelect(page)
         } label: {
@@ -73,7 +84,7 @@ struct MushafIndexView: View {
             .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
-        .listRowBackground(page == currentPage ? MushafStyle.markerFill.opacity(0.5) : Color.clear)
+        .listRowBackground(isCurrent ? MushafStyle.markerFill.opacity(0.6) : Color.clear)
     }
 
     private func arabic(_ number: Int) -> String {

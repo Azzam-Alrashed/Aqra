@@ -1,23 +1,26 @@
 import CoreText
 import SwiftUI
 
-/// The Mushaf's look: warm paper, dark ink, gold ornament.
+/// The Mushaf's look: warm paper, dark ink, gold ornament — and in dark mode,
+/// a deep warm page (not pure black) with cream ink and lighter gold.
 enum MushafStyle {
-    static let paper = Color(light: 0xFBF7EE, dark: 0xFBF7EE)
-    static let ink = Color(light: 0x1C1712, dark: 0x1C1712)
-    static let chrome = Color(light: 0x8A7A64, dark: 0x8A7A64)
-    static let gold = Color(light: 0xC9A24A, dark: 0xC9A24A)
+    static let paper = Color(light: 0xFBF7EE, dark: 0x1A1612)
+    static let ink = Color(light: 0x1C1712, dark: 0xEFE6D4)
+    static let chrome = Color(light: 0x8A7A64, dark: 0xA8977B)
+    static let gold = Color(light: 0xC9A24A, dark: 0xD4B160)
     /// The surah header frame and calligraphy.
-    static let ornament = Color(light: 0x9A7440, dark: 0x9A7440)
+    static let ornament = Color(light: 0x9A7440, dark: 0xC9A35E)
     /// Ayah-end markers: a soft disc behind a brown-gold rosette and number.
-    static let markerFill = Color(light: 0xF1E4C8, dark: 0xF1E4C8)
-    static let marker = Color(light: 0x8C6A3F, dark: 0x8C6A3F)
+    static let markerFill = Color(light: 0xF1E4C8, dark: 0x3A2F22)
+    static let marker = Color(light: 0x8C6A3F, dark: 0xD9BC82)
 }
 
 /// Loads the Mushaf fonts straight from the bundle, without registering them system-wide.
 @MainActor
 enum MushafFonts {
     private static var descriptors: [String: CTFontDescriptor] = [:]
+    /// Fonts already made, by path and size, so pages don't create a new font on every render.
+    private static var fonts: [String: Font] = [:]
 
     /// The page's own QCF V2 font, whose glyphs are that page's words.
     static func page(_ number: Int, size: CGFloat) -> Font? {
@@ -35,6 +38,8 @@ enum MushafFonts {
     }
 
     private static func font(at path: String, size: CGFloat) -> Font? {
+        let key = "\(path)@\(size)"
+        if let cached = fonts[key] { return cached }
         if descriptors[path] == nil,
            let url = MushafStore.resourceURL(path),
            let found = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor],
@@ -42,7 +47,9 @@ enum MushafFonts {
             descriptors[path] = first
         }
         guard let descriptor = descriptors[path] else { return nil }
-        return Font(CTFontCreateWithFontDescriptor(descriptor, size, nil))
+        let font = Font(CTFontCreateWithFontDescriptor(descriptor, size, nil))
+        fonts[key] = font
+        return font
     }
 }
 
@@ -84,6 +91,19 @@ struct MushafPageView: View {
         }
         .background(MushafStyle.paper)
         .environment(\.layoutDirection, .rightToLeft)
+        // The words are font glyphs that VoiceOver can't read; give it the page in plain text instead.
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text(verbatim: accessibilityText))
+    }
+
+    private var accessibilityText: String {
+        let surah = store.surahNames[page.surah] ?? ""
+        let heading = "سورة \(surah)، الجزء \(arabic(page.juz))، الصفحة \(arabic(page.number))."
+        return ([heading] + page.spokenAyat).joined(separator: " ")
+    }
+
+    private func arabic(_ number: Int) -> String {
+        number.formatted(.number.locale(Locale(identifier: "ar@numbers=arab")))
     }
 
     @ViewBuilder

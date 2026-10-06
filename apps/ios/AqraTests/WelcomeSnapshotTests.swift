@@ -62,6 +62,7 @@ struct WelcomeSnapshotTests {
         let renders: [(String, AnyView, CGSize)] = [
             ("mushaf-iphone", AnyView(MushafPageView(page: store.page(385), store: store)), CGSize(width: 402, height: 874)),
             ("mushaf-ipad-spread", AnyView(MushafSpreadView(spread: 193, store: store)), CGSize(width: 1376, height: 1032)),
+            ("mushaf-iphone-dark", AnyView(MushafPageView(page: store.page(385), store: store).environment(\.colorScheme, .dark)), CGSize(width: 402, height: 874)),
         ]
         for (name, view, size) in renders {
             let renderer = ImageRenderer(content: view.frame(width: size.width, height: size.height))

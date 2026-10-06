@@ -8,6 +8,10 @@ struct MushafView: View {
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @State private var toolbarVisible = false
     @State private var showingIndex = false
+    /// The page shown while the slider is being dragged; committed to `lastPage` on release.
+    @State private var sliderPage: Double?
+    /// Set when the toolbar itself moves the page, so the toolbar stays open.
+    @State private var movedByToolbar = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -31,11 +35,21 @@ struct MushafView: View {
             }
         }
         .background(MushafStyle.paper.ignoresSafeArea())
+        .statusBarHidden(!toolbarVisible)
+        // Swiping to another page hides the toolbar; jumps made from the toolbar keep it open.
+        .onChange(of: lastPage) {
+            if movedByToolbar {
+                movedByToolbar = false
+            } else if toolbarVisible {
+                withAnimation(.easeInOut(duration: 0.2)) { toolbarVisible = false }
+            }
+        }
         // A light tick as each page turns, and a firmer one on entering a new juz'.
         .sensoryFeedback(.selection, trigger: lastPage)
         .sensoryFeedback(.impact(weight: .medium), trigger: store.page(lastPage).juz)
         .sheet(isPresented: $showingIndex) {
             MushafIndexView(store: store, currentPage: lastPage) { page in
+                movedByToolbar = page != lastPage
                 lastPage = page
                 showingIndex = false
             }
@@ -57,9 +71,10 @@ struct MushafView: View {
     }
 
     private var spreadPager: some View {
+        // Only a turn to another spread moves the page, so the left (even) page survives rotation.
         let spread = Binding<Int>(
             get: { (lastPage + 1) / 2 },
-            set: { lastPage = $0 * 2 - 1 }
+            set: { if $0 != (lastPage + 1) / 2 { lastPage = $0 * 2 - 1 } }
         )
         return TabView(selection: spread) {
             ForEach(1...(MushafStore.pageCount / 2), id: \.self) { number in
@@ -104,16 +119,23 @@ struct MushafView: View {
     }
 
     private var bottomBar: some View {
+        // Dragging only moves the number; the Mushaf turns once, to the page you let go on.
         let position = Binding<Double>(
-            get: { Double(lastPage) },
-            set: { lastPage = Int($0.rounded()) }
+            get: { sliderPage ?? Double(lastPage) },
+            set: { sliderPage = $0 }
         )
         return HStack(spacing: 14) {
-            Text(verbatim: arabic(lastPage))
+            Text(verbatim: arabic(Int(position.wrappedValue.rounded())))
                 .font(.system(size: 15, weight: .bold, design: .rounded).monospacedDigit())
                 .frame(minWidth: 36)
-            Slider(value: position, in: 1...Double(MushafStore.pageCount), step: 1)
-                .tint(MushafStyle.marker)
+            Slider(value: position, in: 1...Double(MushafStore.pageCount), step: 1) { editing in
+                guard !editing, let target = sliderPage else { return }
+                let page = Int(target.rounded())
+                movedByToolbar = page != lastPage
+                lastPage = page
+                sliderPage = nil
+            }
+            .tint(MushafStyle.marker)
         }
         .foregroundStyle(MushafStyle.ink)
         .padding(.horizontal, 20)
@@ -155,12 +177,16 @@ struct MushafRootView: View {
             case .failure(let error):
                 ContentUnavailableView("The Mushaf couldn't be loaded", systemImage: "book.closed", description: Text(verbatim: "\(error)"))
             case nil:
-                MushafStyle.paper.ignoresSafeArea()
+                ZStack {
+                    MushafStyle.paper.ignoresSafeArea()
+                    ProgressView().tint(MushafStyle.chrome)
+                }
             }
         }
         .task {
             guard store == nil else { return }
-            store = Result { try MushafStore() }
+            // Decoding the Quran data takes a moment; keep it off the main thread so the app stays responsive.
+            store = await Task.detached(priority: .userInitiated) { Result { try MushafStore() } }.value
         }
     }
 }

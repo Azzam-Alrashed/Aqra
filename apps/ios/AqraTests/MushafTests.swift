@@ -38,6 +38,18 @@ struct MushafDataTests {
     }
 }
 
+/// How long it takes to load the Mushaf; printed so changes can be compared.
+struct MushafLoadTimeTests {
+    @Test func loadsQuickly() throws {
+        let clock = ContinuousClock()
+        var store: MushafStore?
+        let elapsed = try clock.measure { store = try MushafStore() }
+        print("MushafStore load time: \(elapsed.formatted(.units(allowed: [.milliseconds])))")
+        #expect(store != nil)
+        #expect(elapsed < .seconds(2))
+    }
+}
+
 @MainActor
 struct MushafStoreTests {
     private let store: MushafStore
@@ -116,6 +128,42 @@ struct MushafStoreTests {
             let units = Array((store.surahHeaders[surah] ?? "").utf16)
             var glyphs = [CGGlyph](repeating: 0, count: units.count)
             #expect(!units.isEmpty && CTFontGetGlyphsForCharacters(font, units, &glyphs, units.count) && !glyphs.contains(0), "surah \(surah)")
+        }
+    }
+
+    @Test func findsTheSurahAndJuzOfAnyPage() {
+        #expect(store.surah(containing: 1) == 1)
+        #expect(store.surah(containing: 49) == 2)   // still al-Baqarah
+        #expect(store.surah(containing: 50) == 3)   // Al 'Imran starts here
+        #expect(store.surah(containing: 384) == 27) // an-Naml
+        #expect(store.surah(containing: 385) == 28) // al-Qasas starts mid-page
+        #expect(store.surah(containing: 604) == 114)
+        #expect(store.juz(containing: 1) == 1)
+        #expect(store.juz(containing: 385) == 20)
+        #expect(store.juz(containing: 604) == 30)
+    }
+
+    /// VoiceOver reads each page from the official plain text, one entry per ayah on the page.
+    @Test func pagesCarryTheirAyatAsPlainText() {
+        #expect(store.page(1).spokenAyat.count == 7)
+        #expect(store.page(1).spokenAyat.first?.hasPrefix("بسم الله الرحمن الرحيم") == true)
+        let total = (1...MushafStore.pageCount).reduce(0) { $0 + store.page($1).spokenAyat.count }
+        #expect(total == 6_236)
+    }
+}
+
+/// A build without the page fonts must explain itself instead of drawing missing glyphs.
+struct MushafMissingFontsTests {
+    private final class TestBundleMarker {}
+
+    @Test func explainsMissingPageFonts() {
+        // The test bundle has no Quran data, so no page fonts either.
+        let bundle = Bundle(for: TestBundleMarker.self)
+        #expect {
+            _ = try MushafStore(bundle: bundle)
+        } throws: { error in
+            guard case MushafStore.LoadError.missingPageFonts(let found) = error else { return false }
+            return found == 0 && "\(error)".contains("fetch-mushaf-fonts.sh")
         }
     }
 }

@@ -59,7 +59,7 @@ struct StartPageView: View {
     // MARK: - Stage
 
     private var stage: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !isActive || reduceMotion)) { timeline in
             let time = timeline.date.timeIntervalSinceReferenceDate
             ZStack {
                 Circle()
@@ -92,6 +92,8 @@ struct StartPageView: View {
                     .opacity(starIn ? 1 : 0)
             }
             .frame(width: 420, height: 440)
+            // Render the gradients and glow on the GPU instead of redrawing them on the CPU every frame.
+            .drawingGroup()
             .accessibilityHidden(true)
         }
     }

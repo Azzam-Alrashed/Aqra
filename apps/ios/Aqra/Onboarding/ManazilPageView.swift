@@ -61,7 +61,7 @@ struct ManazilPageView: View {
     // MARK: - Stage
 
     private var stage: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !isActive || reduceMotion)) { timeline in
             let time = timeline.date.timeIntervalSinceReferenceDate
             ZStack {
                 AqraGlowRings(open: ringsOpen, breath: sin(time * 0.9))

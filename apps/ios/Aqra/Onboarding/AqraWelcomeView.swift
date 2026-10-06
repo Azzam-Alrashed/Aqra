@@ -5,6 +5,8 @@ import UIKit
 struct AqraWelcomeView: View {
     var pageCount = 4
     var onBegin: () -> Void
+    /// The entrance plays the first time the page is visible; animation pauses while it's hidden.
+    var isActive = true
     /// Shows the finished scene without the entrance (snapshots and previews).
     var startsComplete = false
 
@@ -18,9 +20,11 @@ struct AqraWelcomeView: View {
     @State private var headlineIn = false
     @State private var emphasisLit = false
     @State private var actionsIn = false
+    @State private var played = false
 
-    init(pageCount: Int = 4, startsComplete: Bool = false, onBegin: @escaping () -> Void) {
+    init(pageCount: Int = 4, isActive: Bool = true, startsComplete: Bool = false, onBegin: @escaping () -> Void) {
         self.pageCount = pageCount
+        self.isActive = isActive
         self.startsComplete = startsComplete
         self.onBegin = onBegin
         if startsComplete {
@@ -41,13 +45,17 @@ struct AqraWelcomeView: View {
             copy: { scale in hadith(scale: scale) },
             buttons: { metrics in BrandButton("Begin", metrics: metrics, action: onBegin) }
         )
-        .task { await playEntrance() }
+        .onChange(of: isActive, initial: true) {
+            guard isActive, !played else { return }
+            played = true
+            Task { await playEntrance() }
+        }
     }
 
     // MARK: - Stage
 
     private var stage: some View {
-        TimelineView(.animation) { timeline in
+        TimelineView(.animation(minimumInterval: 1.0 / 30, paused: !isActive || reduceMotion)) { timeline in
             AqraArchLogo(
                 withBackground: false,
                 archReveal: archReveal, bookReveal: bookReveal, doorReveal: doorReveal, starReveal: starReveal,
@@ -55,6 +63,8 @@ struct AqraWelcomeView: View {
             )
             .scaleEffect(Self.logoScale)
             .frame(width: 1024 * Self.logoScale, height: 1024 * Self.logoScale)
+            // Render the gradients and blur on the GPU instead of redrawing them on the CPU every frame.
+            .drawingGroup()
         }
     }
 
