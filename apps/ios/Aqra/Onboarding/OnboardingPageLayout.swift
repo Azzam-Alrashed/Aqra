@@ -108,6 +108,34 @@ struct OnboardingPageLayout<Stage: View, Copy: View>: View {
     }
 }
 
+/// A two-line headline, the second line in the brand color, with a detail line beneath.
+struct OnboardingHeadline: View {
+    var first: LocalizedStringKey
+    var second: LocalizedStringKey
+    var detail: LocalizedStringKey
+    var scale: CGFloat
+    var visible: Bool
+
+    var body: some View {
+        VStack(spacing: 10 * scale) {
+            VStack(spacing: 2) {
+                Text(first).foregroundStyle(OnboardingPalette.ink)
+                Text(second).foregroundStyle(OnboardingPalette.brand)
+            }
+            .font(.system(size: 31 * scale, weight: .heavy))
+            .lineLimit(1)
+            .minimumScaleFactor(0.7)
+            Text(detail)
+                .font(.system(size: 16 * scale, weight: .medium))
+                .foregroundStyle(OnboardingPalette.inkSoft)
+        }
+        .multilineTextAlignment(.center)
+        .opacity(visible ? 1 : 0)
+        .offset(y: visible ? 0 : 14)
+        .animation(.spring(response: 0.6, dampingFraction: 0.85), value: visible)
+    }
+}
+
 struct BrandButtonStyle: ButtonStyle {
     var height: CGFloat = 56
     var fontSize: CGFloat = 18

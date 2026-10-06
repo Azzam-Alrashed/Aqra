@@ -26,7 +26,7 @@ struct WelcomeSnapshotTests {
             let data = try #require(renderer.uiImage?.pngData())
             try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("welcome-\(name).png"))
 
-            let manazil = ManazilPageView(pageCount: 2, currentPage: 1, isActive: false, startsComplete: true, onContinue: {})
+            let manazil = ManazilPageView(pageCount: 3, currentPage: 1, isActive: false, startsComplete: true, onContinue: {})
                 .frame(width: size.width, height: size.height)
                 .environment(\.locale, Locale(identifier: "ar"))
                 .environment(\.layoutDirection, .rightToLeft)
@@ -34,6 +34,15 @@ struct WelcomeSnapshotTests {
             manazilRenderer.scale = 2
             let manazilData = try #require(manazilRenderer.uiImage?.pngData())
             try manazilData.write(to: URL(fileURLWithPath: directory).appendingPathComponent("manazil-\(name).png"))
+
+            let features = FeaturesPageView(pageCount: 3, currentPage: 2, isActive: false, startsComplete: true, onContinue: {})
+                .frame(width: size.width, height: size.height)
+                .environment(\.locale, Locale(identifier: "ar"))
+                .environment(\.layoutDirection, .rightToLeft)
+            let featuresRenderer = ImageRenderer(content: features)
+            featuresRenderer.scale = 2
+            let featuresData = try #require(featuresRenderer.uiImage?.pngData())
+            try featuresData.write(to: URL(fileURLWithPath: directory).appendingPathComponent("features-\(name).png"))
         }
     }
 }

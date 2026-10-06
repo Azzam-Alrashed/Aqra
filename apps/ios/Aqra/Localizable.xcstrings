@@ -100,6 +100,36 @@
           }
         }
       }
+    },
+    "Everything that helps your memorization,": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "كل ما يُعينك على حفظك"
+          }
+        }
+      }
+    },
+    "in one place.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "في مكان واحد"
+          }
+        }
+      }
+    },
+    "Daily revision, tasmee' with qualified teachers, and rewards that motivate you.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "مراجعة يومية، وتسميع على شيوخ مُجازين، ومكافآت تحفّزك."
+          }
+        }
+      }
     }
   },
   "version": "1.1"

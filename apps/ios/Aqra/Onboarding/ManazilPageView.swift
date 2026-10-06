@@ -42,7 +42,14 @@ struct ManazilPageView: View {
             pageCount: pageCount, currentPage: currentPage, buttonTitle: "Continue", onButton: onContinue,
             onHaveAccount: nil, actionsVisible: actionsIn,
             stage: { stage },
-            copy: { scale in promise(scale: scale) }
+            copy: { scale in
+                OnboardingHeadline(
+                    first: "Strengthen your memorization,",
+                    second: "and rise, ayah by ayah.",
+                    detail: "Revise every day, and climb your stations in Aqra.",
+                    scale: scale, visible: copyIn
+                )
+            }
         )
         .onChange(of: isActive, initial: true) {
             guard isActive, !played else { return }
@@ -65,29 +72,6 @@ struct ManazilPageView: View {
             }
             .frame(width: 420, height: 440)
         }
-    }
-
-    // MARK: - Copy
-
-    private func promise(scale: CGFloat) -> some View {
-        VStack(spacing: 10 * scale) {
-            VStack(spacing: 2) {
-                Text("Strengthen your memorization,")
-                    .foregroundStyle(OnboardingPalette.ink)
-                Text("and rise, ayah by ayah.")
-                    .foregroundStyle(OnboardingPalette.brand)
-            }
-            .font(.system(size: 31 * scale, weight: .heavy))
-            .lineLimit(1)
-            .minimumScaleFactor(0.7)
-            Text("Revise every day, and climb your stations in Aqra.")
-                .font(.system(size: 16 * scale, weight: .medium))
-                .foregroundStyle(OnboardingPalette.inkSoft)
-        }
-        .multilineTextAlignment(.center)
-        .opacity(copyIn ? 1 : 0)
-        .offset(y: copyIn ? 0 : 14)
-        .animation(.spring(response: 0.6, dampingFraction: 0.85), value: copyIn)
     }
 
     // MARK: - Choreography
