@@ -1,0 +1,16 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Aqra" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اقرأ" } }
+      }
+    },
+    "Read and ascend" : {
+      "localizations" : {
+        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اقرأ وارتقِ" } }
+      }
+    }
+  },
+  "version" : "1.0"
+}
