@@ -66,6 +66,7 @@ struct WelcomeSnapshotTests {
             ("mushaf-iphone-45", AnyView(MushafPageView(page: store.page(45), store: store)), CGSize(width: 402, height: 874)),
             ("mushaf-iphone-475", AnyView(MushafPageView(page: store.page(475), store: store)), CGSize(width: 402, height: 874)),
             ("mushaf-iphone-2", AnyView(MushafPageView(page: store.page(2), store: store)), CGSize(width: 402, height: 874)),
+            ("mushaf-iphone-91", AnyView(MushafPageView(page: store.page(91), store: store)), CGSize(width: 402, height: 874)),
             ("mushaf-ipad-spread-533", AnyView(MushafSpreadView(spread: 267, store: store)), CGSize(width: 1376, height: 1032)),
             ("mushaf-ipad-spread-591", AnyView(MushafSpreadView(spread: 296, store: store)), CGSize(width: 1376, height: 1032)),
             ("mushaf-iphone-no-topics", AnyView(MushafPageView(page: store.page(385), store: store).environment(\.mushafTopics, false)), CGSize(width: 402, height: 874)),

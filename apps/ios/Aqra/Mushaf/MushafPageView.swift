@@ -328,6 +328,8 @@ struct MushafPageView: View {
 private enum TopicHighlight {
     static let height: CGFloat = 0.76
     static let cornerRadius: CGFloat = 0.3
+    /// The space left between two sections' highlights on one line, as a fraction of the word spacing.
+    static let separation: CGFloat = 0.5
 }
 
 /// One line of ayat, drawn word by word from the page font's outlines and justified like the printed page:
@@ -402,11 +404,24 @@ private struct AyahLine: View {
                 runs.append((word.topic, index, index))
             }
         }
-        for run in runs {
+        let edges = runs.map { (right: lefts[$0.first] + words[$0.first].glyph.size.width, left: lefts[$0.last]) }
+        // Each highlight reaches a little past its words. Where one section ends and the next begins on a line,
+        // the starting section keeps its reach and the ending one gives way, leaving a small space between them.
+        let separation = TopicHighlight.separation * wordSpacing
+        func startReach(at index: Int) -> CGFloat {
+            guard index > 0 else { return wordSpacing }
+            return min(wordSpacing, max(edges[index - 1].left - edges[index].right - separation, 0))
+        }
+        func endReach(at index: Int) -> CGFloat {
+            guard index < runs.count - 1 else { return wordSpacing }
+            let gap = edges[index].left - edges[index + 1].right
+            return min(wordSpacing, max(gap - startReach(at: index + 1) - separation, 0))
+        }
+        for (index, run) in runs.enumerated() {
             guard let topic = run.topic else { continue }
-            let right = lefts[run.first] + words[run.first].glyph.size.width, left = lefts[run.last]
-            let box = CGRect(x: left - wordSpacing, y: top + height * (1 - TopicHighlight.height) / 2,
-                             width: right - left + wordSpacing * 2, height: height * TopicHighlight.height)
+            let right = edges[index].right + startReach(at: index), left = edges[index].left - endReach(at: index)
+            let box = CGRect(x: left, y: top + height * (1 - TopicHighlight.height) / 2,
+                             width: right - left, height: height * TopicHighlight.height)
             context.fill(Path(roundedRect: box, cornerRadius: height * TopicHighlight.cornerRadius),
                          with: .color(MushafStyle.topic(topic)))
         }
