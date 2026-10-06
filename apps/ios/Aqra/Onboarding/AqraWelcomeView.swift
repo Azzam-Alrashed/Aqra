@@ -3,7 +3,7 @@ import UIKit
 
 /// Onboarding page 1: the Aqra logo coming alive, and the hadith «اقرَأ وارقَ» beneath.
 struct AqraWelcomeView: View {
-    var pageCount = 3
+    var pageCount = 4
     var onBegin: () -> Void
     /// Shows the finished scene without the entrance (snapshots and previews).
     var startsComplete = false
@@ -19,7 +19,7 @@ struct AqraWelcomeView: View {
     @State private var emphasisLit = false
     @State private var actionsIn = false
 
-    init(pageCount: Int = 3, startsComplete: Bool = false, onBegin: @escaping () -> Void) {
+    init(pageCount: Int = 4, startsComplete: Bool = false, onBegin: @escaping () -> Void) {
         self.pageCount = pageCount
         self.startsComplete = startsComplete
         self.onBegin = onBegin
@@ -36,10 +36,10 @@ struct AqraWelcomeView: View {
 
     var body: some View {
         OnboardingPageLayout(
-            pageCount: pageCount, currentPage: 0, buttonTitle: "Begin", onButton: onBegin,
-            actionsVisible: actionsIn,
+            pageCount: pageCount, currentPage: 0, actionsVisible: actionsIn,
             stage: { stage },
-            copy: { scale in hadith(scale: scale) }
+            copy: { scale in hadith(scale: scale) },
+            buttons: { metrics in BrandButton("Begin", metrics: metrics, action: onBegin) }
         )
         .task { await playEntrance() }
     }

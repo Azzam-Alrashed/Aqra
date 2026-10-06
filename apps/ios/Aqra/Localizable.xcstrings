@@ -120,6 +120,56 @@
           }
         }
       }
+    },
+    "Save your progress,": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "احفظ تقدّمك"
+          }
+        }
+      }
+    },
+    "and begin your journey.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وابدأ رحلتك"
+          }
+        }
+      }
+    },
+    "Sign in to keep your revision and stations, and to book tasmee' with teachers.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "سجّل الدخول لتحفظ مراجعتك ومنازلك، وتحجز تسميعك مع الشيوخ."
+          }
+        }
+      }
+    },
+    "Continue with Google": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الاستمرار باستخدام Google"
+          }
+        }
+      }
+    },
+    "Continue without an account": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "المتابعة بدون حساب"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

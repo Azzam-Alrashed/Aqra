@@ -5,7 +5,7 @@ struct OnboardingView: View {
     var onFinish: () -> Void
 
     @State private var page = 0
-    private let pageCount = 3
+    private let pageCount = 4
 
     var body: some View {
         ZStack {
@@ -16,8 +16,16 @@ struct OnboardingView: View {
                     .tag(0)
                 ManazilPageView(pageCount: pageCount, currentPage: 1, isActive: page == 1, onContinue: { withAnimation { page = 2 } })
                     .tag(1)
-                FeaturesPageView(pageCount: pageCount, currentPage: 2, isActive: page == 2, onContinue: onFinish)
+                FeaturesPageView(pageCount: pageCount, currentPage: 2, isActive: page == 2, onContinue: { withAnimation { page = 3 } })
                     .tag(2)
+                // TODO: sign in with Firebase Auth (Apple and Google); for now every path enters the app.
+                SignInPageView(
+                    pageCount: pageCount, currentPage: 3, isActive: page == 3,
+                    onAppleSignIn: { _ in onFinish() },
+                    onGoogleSignIn: onFinish,
+                    onContinueWithoutAccount: onFinish
+                )
+                .tag(3)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             // Extend the pager under the home indicator; each page still lays out inside the safe area.

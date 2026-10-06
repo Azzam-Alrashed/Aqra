@@ -17,19 +17,25 @@ enum OnboardingPalette {
     static let shadow = Color(light: 0x5B2D91, dark: 0x5B2D91)
 }
 
-/// Shared layout for onboarding pages: an animated stage, the page's copy, page dots and a button.
+/// Button sizing for the space a page has: compact in iPhone landscape, large on iPad.
+struct OnboardingButtonMetrics {
+    var height: CGFloat
+    var fontSize: CGFloat
+    var compact: Bool
+}
+
+/// Shared layout for onboarding pages: an animated stage, the page's copy, page dots and buttons.
 /// Portrait stacks them; landscape puts the copy beside the stage; iPad scales everything up.
-struct OnboardingPageLayout<Stage: View, Copy: View>: View {
+struct OnboardingPageLayout<Stage: View, Copy: View, Buttons: View>: View {
     var pageCount: Int
     var currentPage: Int
-    var buttonTitle: LocalizedStringKey
-    var onButton: () -> Void
-    /// Fades the dots and button in after the stage's entrance.
+    /// Fades the dots and buttons in after the stage's entrance.
     var actionsVisible: Bool
     /// Composed in a ~420×440pt box and scaled to fit.
     @ViewBuilder var stage: () -> Stage
     /// Receives a type scale: 1 on iPhone portrait, larger on iPad, smaller in iPhone landscape.
     @ViewBuilder var copy: (_ scale: CGFloat) -> Copy
+    @ViewBuilder var buttons: (OnboardingButtonMetrics) -> Buttons
 
     var body: some View {
         GeometryReader { geometry in
@@ -78,8 +84,7 @@ struct OnboardingPageLayout<Stage: View, Copy: View>: View {
     private func actions(compact: Bool, large: Bool) -> some View {
         VStack(spacing: compact ? 12 : 20) {
             PageDots(count: pageCount, current: currentPage)
-            Button(buttonTitle, action: onButton)
-                .buttonStyle(BrandButtonStyle(height: large ? 64 : compact ? 48 : 56, fontSize: large ? 21 : 18))
+            buttons(OnboardingButtonMetrics(height: large ? 64 : compact ? 48 : 56, fontSize: large ? 21 : 18, compact: compact))
         }
         .padding(.horizontal, 24)
         .padding(.top, compact ? 14 : 26)
@@ -114,6 +119,24 @@ struct OnboardingHeadline: View {
         .opacity(visible ? 1 : 0)
         .offset(y: visible ? 0 : 14)
         .animation(.spring(response: 0.6, dampingFraction: 0.85), value: visible)
+    }
+}
+
+/// The onboarding's primary button.
+struct BrandButton: View {
+    var title: LocalizedStringKey
+    var metrics: OnboardingButtonMetrics
+    var action: () -> Void
+
+    init(_ title: LocalizedStringKey, metrics: OnboardingButtonMetrics, action: @escaping () -> Void) {
+        self.title = title
+        self.metrics = metrics
+        self.action = action
+    }
+
+    var body: some View {
+        Button(title, action: action)
+            .buttonStyle(BrandButtonStyle(height: metrics.height, fontSize: metrics.fontSize))
     }
 }
 

@@ -26,7 +26,7 @@ struct WelcomeSnapshotTests {
             let data = try #require(renderer.uiImage?.pngData())
             try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("welcome-\(name).png"))
 
-            let manazil = ManazilPageView(pageCount: 3, currentPage: 1, isActive: false, startsComplete: true, onContinue: {})
+            let manazil = ManazilPageView(pageCount: 4, currentPage: 1, isActive: false, startsComplete: true, onContinue: {})
                 .frame(width: size.width, height: size.height)
                 .environment(\.locale, Locale(identifier: "ar"))
                 .environment(\.layoutDirection, .rightToLeft)
@@ -35,7 +35,7 @@ struct WelcomeSnapshotTests {
             let manazilData = try #require(manazilRenderer.uiImage?.pngData())
             try manazilData.write(to: URL(fileURLWithPath: directory).appendingPathComponent("manazil-\(name).png"))
 
-            let features = FeaturesPageView(pageCount: 3, currentPage: 2, isActive: false, startsComplete: true, onContinue: {})
+            let features = FeaturesPageView(pageCount: 4, currentPage: 2, isActive: false, startsComplete: true, onContinue: {})
                 .frame(width: size.width, height: size.height)
                 .environment(\.locale, Locale(identifier: "ar"))
                 .environment(\.layoutDirection, .rightToLeft)
@@ -43,6 +43,18 @@ struct WelcomeSnapshotTests {
             featuresRenderer.scale = 2
             let featuresData = try #require(featuresRenderer.uiImage?.pngData())
             try featuresData.write(to: URL(fileURLWithPath: directory).appendingPathComponent("features-\(name).png"))
+
+            let signIn = SignInPageView(
+                pageCount: 4, currentPage: 3, isActive: false, startsComplete: true,
+                onAppleSignIn: { _ in }, onGoogleSignIn: {}, onContinueWithoutAccount: {}
+            )
+            .frame(width: size.width, height: size.height)
+            .environment(\.locale, Locale(identifier: "ar"))
+            .environment(\.layoutDirection, .rightToLeft)
+            let signInRenderer = ImageRenderer(content: signIn)
+            signInRenderer.scale = 2
+            let signInData = try #require(signInRenderer.uiImage?.pngData())
+            try signInData.write(to: URL(fileURLWithPath: directory).appendingPathComponent("signin-\(name).png"))
         }
     }
 }

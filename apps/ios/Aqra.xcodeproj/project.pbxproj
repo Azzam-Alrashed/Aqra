@@ -28,6 +28,7 @@
 		E8E74CAA0E7A5D828639A8D3 /* AqraArchLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057E8C550F33565A3E785512 /* AqraArchLogo.swift */; };
 		EB8C8031FA7C371C1FFA38C8 /* AqraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4971E9222377B2D0AE1D25DD /* AqraApp.swift */; };
 		EF4765262D5AA2C27811E483 /* AqraFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4936D1082FB73C3638CB969 /* AqraFont.swift */; };
+		F4441CBBB788F3D23BFD0128 /* SignInPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B2D7E45E3463C23372327A1 /* SignInPageView.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -49,6 +50,7 @@
 		2CF7CA2416343BC4067921C5 /* PageDots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageDots.swift; sourceTree = "<group>"; };
 		35F03A505062D433A0B82952 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		39A293266365B6803A2BE985 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
+		3B2D7E45E3463C23372327A1 /* SignInPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SignInPageView.swift; sourceTree = "<group>"; };
 		4971E9222377B2D0AE1D25DD /* AqraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraApp.swift; sourceTree = "<group>"; };
 		4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraTests.swift; sourceTree = "<group>"; };
@@ -76,6 +78,7 @@
 				C3D871D9287AF47EBED70889 /* OnboardingPageLayout.swift */,
 				4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */,
 				2CF7CA2416343BC4067921C5 /* PageDots.swift */,
+				3B2D7E45E3463C23372327A1 /* SignInPageView.swift */,
 			);
 			path = Onboarding;
 			sourceTree = "<group>";
@@ -277,6 +280,7 @@
 				B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */,
 				A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */,
 				C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */,
+				F4441CBBB788F3D23BFD0128 /* SignInPageView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

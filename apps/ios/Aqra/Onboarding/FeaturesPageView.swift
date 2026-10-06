@@ -41,8 +41,7 @@ struct FeaturesPageView: View {
 
     var body: some View {
         OnboardingPageLayout(
-            pageCount: pageCount, currentPage: currentPage, buttonTitle: "Continue", onButton: onContinue,
-            actionsVisible: actionsIn,
+            pageCount: pageCount, currentPage: currentPage, actionsVisible: actionsIn,
             stage: { stage },
             copy: { scale in
                 OnboardingHeadline(
@@ -51,7 +50,8 @@ struct FeaturesPageView: View {
                     detail: "Daily revision, tasmee' with qualified teachers, and rewards that motivate you.",
                     scale: scale, visible: copyIn
                 )
-            }
+            },
+            buttons: { metrics in BrandButton("Continue", metrics: metrics, action: onContinue) }
         )
         .onChange(of: isActive, initial: true) {
             guard isActive, !played else { return }

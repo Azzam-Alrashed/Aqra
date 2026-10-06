@@ -39,8 +39,7 @@ struct ManazilPageView: View {
 
     var body: some View {
         OnboardingPageLayout(
-            pageCount: pageCount, currentPage: currentPage, buttonTitle: "Continue", onButton: onContinue,
-            actionsVisible: actionsIn,
+            pageCount: pageCount, currentPage: currentPage, actionsVisible: actionsIn,
             stage: { stage },
             copy: { scale in
                 OnboardingHeadline(
@@ -49,7 +48,8 @@ struct ManazilPageView: View {
                     detail: "Revise every day, and climb your stations in Aqra.",
                     scale: scale, visible: copyIn
                 )
-            }
+            },
+            buttons: { metrics in BrandButton("Continue", metrics: metrics, action: onContinue) }
         )
         .onChange(of: isActive, initial: true) {
             guard isActive, !played else { return }
