@@ -55,7 +55,7 @@ struct WelcomeSnapshotTests {
         }
     }
 
-    /// Renders Mushaf page 385 on iPhone (with and without tajweed, light and dark), and pages 385–386 as a full-screen iPad landscape spread.
+    /// Renders Mushaf pages on iPhone (with and without tajweed and topic colors, light and dark), and full-screen iPad landscape spreads.
     @Test func renderMushafLayouts() throws {
         guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }
         let store = try MushafStore()
@@ -65,6 +65,10 @@ struct WelcomeSnapshotTests {
             ("mushaf-iphone-dark", AnyView(MushafPageView(page: store.page(385), store: store).environment(\.colorScheme, .dark)), CGSize(width: 402, height: 874)),
             ("mushaf-iphone-45", AnyView(MushafPageView(page: store.page(45), store: store)), CGSize(width: 402, height: 874)),
             ("mushaf-iphone-475", AnyView(MushafPageView(page: store.page(475), store: store)), CGSize(width: 402, height: 874)),
+            ("mushaf-iphone-2", AnyView(MushafPageView(page: store.page(2), store: store)), CGSize(width: 402, height: 874)),
+            ("mushaf-ipad-spread-533", AnyView(MushafSpreadView(spread: 267, store: store)), CGSize(width: 1376, height: 1032)),
+            ("mushaf-ipad-spread-591", AnyView(MushafSpreadView(spread: 296, store: store)), CGSize(width: 1376, height: 1032)),
+            ("mushaf-iphone-no-topics", AnyView(MushafPageView(page: store.page(385), store: store).environment(\.mushafTopics, false)), CGSize(width: 402, height: 874)),
             ("mushaf-iphone-plain", AnyView(MushafPageView(page: store.page(385), store: store).environment(\.mushafTajweed, false)), CGSize(width: 402, height: 874)),
             ("mushaf-iphone-plain-dark", AnyView(MushafPageView(page: store.page(385), store: store).environment(\.mushafTajweed, false).environment(\.colorScheme, .dark)), CGSize(width: 402, height: 874)),
         ]

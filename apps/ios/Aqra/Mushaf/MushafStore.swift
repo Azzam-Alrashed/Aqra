@@ -5,6 +5,8 @@ import SQLite3
 struct MushafWord: Hashable {
     var glyph: String
     var isAyahEnd: Bool
+    /// The topic section its ayah belongs to, numbered in Quran order.
+    var topic: Int? = nil
 }
 
 /// One line of a Mushaf page, as laid out in the 1441H Madinah print.
@@ -128,26 +130,42 @@ final class MushafStore: Sendable {
         struct Word: Decodable { var id: Int; var surah: String; var ayah: String; var word: String; var text: String }
         let words = try JSONDecoder().decode([String: Word].self, from: Data(contentsOf: url("qul/qpc-v4.json")))
         var glyph = [String](repeating: "", count: words.count + 1)
+        var ayahOfWord = [String](repeating: "", count: words.count + 1)
         var lastWordOfAyah: [String: (position: Int, id: Int)] = [:]
         for word in words.values where word.id < glyph.count {
             glyph[word.id] = word.text
             let key = "\(word.surah):\(word.ayah)", position = Int(word.word) ?? 0
+            ayahOfWord[word.id] = key
             if position > (lastWordOfAyah[key]?.position ?? 0) { lastWordOfAyah[key] = (position, word.id) }
         }
         let ayahEnds = Set(lastWordOfAyah.values.map(\.id))
 
+        // Topic sections (QUL "Ayah theme", a provisional stand-in): ayah ranges. The source lists every section
+        // twice (DISTINCT keeps one of each) and leaves 36 ayat in four gaps outside any section; each gap
+        // becomes a section of its own, so every ayah is colored without moving a boundary the source draws.
+        var sectionOfAyah: [String: String] = [:]
+        try Self.query(url("qul/ayah-themes.db"),
+                       "SELECT DISTINCT surah_number, ayah_from, ayah_to FROM themes ORDER BY surah_number, ayah_from") { row in
+            let surah = Int(sqlite3_column_int(row, 0)), from = Int(sqlite3_column_int(row, 1))
+            for ayah in from...max(Int(sqlite3_column_int(row, 2)), from) {
+                sectionOfAyah["\(surah):\(ayah)"] = "\(surah):\(from)"
+            }
+        }
+        // Numbered in Quran order, so neighboring sections never share a color.
+        var topicOfAyah: [String: Int] = [:]
+        var topic = -1, previousSection: String?
+        for ayah in official {
+            let key = "\(ayah.sura_no):\(ayah.aya_no)"
+            let section = sectionOfAyah[key] ?? "gap in \(ayah.sura_no)"
+            if section != previousSection { topic += 1 }
+            previousSection = section
+            topicOfAyah[key] = topic
+        }
+
         // QUL layout: 15 lines per page.
         var linesByPage = [[MushafLine]](repeating: [], count: Self.pageCount + 1)
-        var db: OpaquePointer?
-        guard sqlite3_open_v2(try url("qul/qpc-v4-tajweed-15-lines.db").path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
-            throw LoadError.database("open")
-        }
-        defer { sqlite3_close(db) }
-        var statement: OpaquePointer?
         let sql = "SELECT page_number, line_number, line_type, is_centered, first_word_id, last_word_id, surah_number FROM pages ORDER BY page_number, line_number"
-        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK else { throw LoadError.database("prepare") }
-        defer { sqlite3_finalize(statement) }
-        while sqlite3_step(statement) == SQLITE_ROW {
+        try Self.query(url("qul/qpc-v4-tajweed-15-lines.db"), sql) { statement in
             let page = Int(sqlite3_column_int(statement, 0))
             let number = Int(sqlite3_column_int(statement, 1))
             let type = String(cString: sqlite3_column_text(statement, 2))
@@ -160,11 +178,13 @@ final class MushafStore: Sendable {
             default:
                 let first = Int(sqlite3_column_int(statement, 4)), last = Int(sqlite3_column_int(statement, 5))
                 kind = .ayah(
-                    words: (first...last).map { MushafWord(glyph: glyph[$0], isAyahEnd: ayahEnds.contains($0)) },
+                    words: (first...last).map {
+                        MushafWord(glyph: glyph[$0], isAyahEnd: ayahEnds.contains($0), topic: topicOfAyah[ayahOfWord[$0]])
+                    },
                     centered: sqlite3_column_int(statement, 3) != 0
                 )
             }
-            guard (1...Self.pageCount).contains(page) else { continue }
+            guard (1...Self.pageCount).contains(page) else { return }
             linesByPage[page].append(MushafLine(number: number, kind: kind))
         }
 
@@ -183,6 +203,22 @@ final class MushafStore: Sendable {
                 surah: first?.sura_no ?? 1, juz: first?.jozz ?? 1
             )
         }
+    }
+
+    /// Runs a query on a bundled SQLite file, calling `row` for each result row.
+    private static func query(_ url: URL, _ sql: String, row: (OpaquePointer) throws -> Void) throws {
+        var db: OpaquePointer?
+        guard sqlite3_open_v2(url.path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
+            sqlite3_close(db)
+            throw LoadError.database("open \(url.lastPathComponent)")
+        }
+        defer { sqlite3_close(db) }
+        var statement: OpaquePointer?
+        guard sqlite3_prepare_v2(db, sql, -1, &statement, nil) == SQLITE_OK, let statement else {
+            throw LoadError.database("prepare \(url.lastPathComponent)")
+        }
+        defer { sqlite3_finalize(statement) }
+        while sqlite3_step(statement) == SQLITE_ROW { try row(statement) }
     }
 
     /// The surah being read on a page: the last surah that starts on or before it.

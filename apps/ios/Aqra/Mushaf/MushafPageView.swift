@@ -13,6 +13,17 @@ enum MushafStyle {
     /// Ayah-end markers: a soft disc behind a brown-gold rosette and number.
     static let markerFill = Color(light: 0xF1E4C8, dark: 0x3A2F22)
     static let marker = Color(light: 0x8C6A3F, dark: 0xD9BC82)
+    /// Topic sections, in the soft pastels of a colored Mushaf: mint, sky, rose, lavender, butter and peach.
+    /// Neighboring sections always take different colors.
+    static let topics = [
+        Color(light: 0xD9F0E0, dark: 0x22382B), Color(light: 0xD7EAF6, dark: 0x1F3243),
+        Color(light: 0xF6DCE3, dark: 0x3F252D), Color(light: 0xE5DEF3, dark: 0x2D2843),
+        Color(light: 0xF6EBC6, dark: 0x3B3320), Color(light: 0xF8DFCE, dark: 0x40291E),
+    ]
+
+    static func topic(_ section: Int) -> Color {
+        topics[section % topics.count]
+    }
 }
 
 /// Loads the Mushaf fonts straight from the bundle, without registering them system-wide.
@@ -199,6 +210,8 @@ struct TajweedColors {
 extension EnvironmentValues {
     /// Whether the Mushaf shows the page fonts' tajweed colors.
     @Entry var mushafTajweed = true
+    /// Whether the Mushaf colors each topic section with a soft highlight behind its words.
+    @Entry var mushafTopics = true
 }
 
 /// One Mushaf page: 15 lines in the page's own font, framed by the surah, juz' and page number.
@@ -206,6 +219,7 @@ struct MushafPageView: View {
     var page: MushafPage
     var store: MushafStore
     @Environment(\.mushafTajweed) private var tajweed
+    @Environment(\.mushafTopics) private var topics
 
     /// The words of a full 1441H line add up to at most 17 em in the QCF V4 fonts; leave room for the word gaps.
     private static let lineWidthInEm: CGFloat = 17.4
@@ -228,7 +242,7 @@ struct MushafPageView: View {
                 header.frame(height: chrome).padding(.top, topInset)
                 VStack(spacing: 0) {
                     ForEach(page.lines, id: \.self) { line in
-                        lineView(line, fontSize: fontSize, width: textWidth)
+                        lineView(line, fontSize: fontSize, width: textWidth, height: lineHeight)
                             .frame(width: textWidth, height: lineHeight)
                     }
                 }
@@ -256,7 +270,7 @@ struct MushafPageView: View {
     }
 
     @ViewBuilder
-    private func lineView(_ line: MushafLine, fontSize: CGFloat, width: CGFloat) -> some View {
+    private func lineView(_ line: MushafLine, fontSize: CGFloat, width: CGFloat, height: CGFloat) -> some View {
         switch line.kind {
         case .surahName(let surah):
             Text(verbatim: store.surahHeaders[surah] ?? "")
@@ -264,16 +278,29 @@ struct MushafPageView: View {
                 .foregroundStyle(MushafStyle.ornament)
                 .fixedSize()
         case .basmala:
+            // The basmala takes the color of the surah's first section, as in a printed colored Mushaf.
+            let color = topics ? topic(after: line).map(MushafStyle.topic) : nil
             Text(verbatim: store.basmala)
                 .font(MushafFonts.hafsSmart(size: fontSize * 1.05))
                 .foregroundStyle(MushafStyle.ink)
                 .fixedSize()
+                .padding(.horizontal, color == nil ? 0 : fontSize * 0.5)
+                .frame(height: color == nil ? nil : height * TopicHighlight.height)
+                .background { if let color { RoundedRectangle(cornerRadius: height * TopicHighlight.cornerRadius).fill(color) } }
         case .ayah(let words, let centered):
             let glyphs = words.compactMap { word in
-                MushafFonts.word(word.glyph, page: page.number, size: fontSize).map { (word.isAyahEnd, $0) }
+                MushafFonts.word(word.glyph, page: page.number, size: fontSize).map { (word.isAyahEnd, word.topic, $0) }
             }
-            AyahLine(words: glyphs, centered: centered, tajweed: tajweed, wordSpacing: fontSize * 0.25)
+            AyahLine(words: glyphs, centered: centered, tajweed: tajweed, topics: topics, wordSpacing: fontSize * 0.25)
         }
+    }
+
+    /// The topic section of the first ayah after a line on this page.
+    private func topic(after line: MushafLine) -> Int? {
+        for next in page.lines where next.number > line.number {
+            if case .ayah(let words, _) = next.kind { return words.first?.topic }
+        }
+        return nil
     }
 
     private var header: some View {
@@ -297,13 +324,20 @@ struct MushafPageView: View {
     }
 }
 
+/// The soft highlight behind each topic section, as fractions of the line height.
+private enum TopicHighlight {
+    static let height: CGFloat = 0.76
+    static let cornerRadius: CGFloat = 0.3
+}
+
 /// One line of ayat, drawn word by word from the page font's outlines and justified like the printed page:
 /// the words spread to fill the line, or sit together in the middle on a centered line.
 private struct AyahLine: View {
-    /// Each word, and whether it's an ayah-end marker.
-    var words: [(isAyahEnd: Bool, glyph: WordGlyph)]
+    /// Each word: whether it's an ayah-end marker, its topic section, and its outlines.
+    var words: [(isAyahEnd: Bool, topic: Int?, glyph: WordGlyph)]
     var centered: Bool
     var tajweed: Bool
+    var topics: Bool
     var wordSpacing: CGFloat
 
     var body: some View {
@@ -318,25 +352,32 @@ private struct AyahLine: View {
                 let gaps = CGFloat(max(words.filter { $0.glyph.size.width > 0 }.count - 1, 0))
                 let justified = !centered && gaps > 0
                 let spacing = justified ? (width - total) / gaps : wordSpacing
-                // Reading right to left: the first word starts at the right edge of the line (or of a centered group).
+                // Each word's left edge, reading right to left from the right edge of the line (or of a centered group).
                 var x = bleed + (justified ? width : (width + total + spacing * gaps) / 2) + spacing
-                for (isAyahEnd, glyph) in words {
-                    if glyph.size.width > 0 { x -= spacing }
-                    x -= glyph.size.width
-                    var word = context
-                    word.translateBy(x: x, y: bleed + (height - glyph.size.height) / 2)
-                    if isAyahEnd {
+                var lefts: [CGFloat] = []
+                for word in words {
+                    if word.glyph.size.width > 0 { x -= spacing }
+                    x -= word.glyph.size.width
+                    lefts.append(x)
+                }
+
+                if topics { drawTopics(in: context, lefts: lefts, top: bleed, height: height) }
+
+                for (word, left) in zip(words, lefts) {
+                    var context = context
+                    context.translateBy(x: left, y: bleed + (height - word.glyph.size.height) / 2)
+                    if word.isAyahEnd {
                         // A soft oval laid exactly behind the marker's rosette.
-                        let box = glyph.inkBox
-                        word.fill(Path(ellipseIn: box.insetBy(dx: box.width * 0.07, dy: box.height * 0.08)),
-                                  with: .color(MushafStyle.markerFill))
-                        word.fill(glyph.outline, with: .color(MushafStyle.marker))
+                        let box = word.glyph.inkBox
+                        context.fill(Path(ellipseIn: box.insetBy(dx: box.width * 0.07, dy: box.height * 0.08)),
+                                     with: .color(MushafStyle.markerFill))
+                        context.fill(word.glyph.outline, with: .color(MushafStyle.marker))
                     } else {
-                        word.fill(glyph.outline, with: .color(MushafStyle.ink))
-                        if tajweed && !glyph.layers.isEmpty {
+                        context.fill(word.glyph.outline, with: .color(MushafStyle.ink))
+                        if tajweed && !word.glyph.layers.isEmpty {
                             // The colors tint the letters they belong to and nothing outside them.
-                            word.clip(to: glyph.outline)
-                            for layer in glyph.layers { word.fill(layer.path, with: .color(layer.color)) }
+                            context.clip(to: word.glyph.outline)
+                            for layer in word.glyph.layers { context.fill(layer.path, with: .color(layer.color)) }
                         }
                     }
                 }
@@ -348,5 +389,26 @@ private struct AyahLine: View {
         .environment(\.layoutDirection, .leftToRight)
         // Taps go through to the page, which shows and hides the toolbar.
         .allowsHitTesting(false)
+    }
+
+    /// Colors each run of words from the same topic section with a soft highlight behind them.
+    private func drawTopics(in context: GraphicsContext, lefts: [CGFloat], top: CGFloat, height: CGFloat) {
+        // Runs of consecutive words in the same section; a zero-width mark stays with the word before it.
+        var runs: [(topic: Int?, first: Int, last: Int)] = []
+        for (index, word) in words.enumerated() {
+            if let run = runs.last, run.topic == word.topic || word.glyph.size.width == 0 {
+                runs[runs.count - 1].last = index
+            } else {
+                runs.append((word.topic, index, index))
+            }
+        }
+        for run in runs {
+            guard let topic = run.topic else { continue }
+            let right = lefts[run.first] + words[run.first].glyph.size.width, left = lefts[run.last]
+            let box = CGRect(x: left - wordSpacing, y: top + height * (1 - TopicHighlight.height) / 2,
+                             width: right - left + wordSpacing * 2, height: height * TopicHighlight.height)
+            context.fill(Path(roundedRect: box, cornerRadius: height * TopicHighlight.cornerRadius),
+                         with: .color(MushafStyle.topic(topic)))
+        }
     }
 }

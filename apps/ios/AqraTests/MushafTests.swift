@@ -19,6 +19,7 @@ struct MushafDataTests {
         ("qul/qpc-v4.json", "40964a1b7932e9a69e0dfc0d58dce3b73e30a803febda119fd6828bcb75fac98"),
         ("qul/QCF_SurahHeader_COLOR-Regular.ttf", "de261a309bdd42262e1a268d5ead56b6ea8366cd59124baedea3903561d7370b"),
         ("qul/surah-header-ligatures.json", "c4480a1fb616685421ada1f9cbd36187c1c27c01d8d78d27a866858fdaf5c4f7"),
+        ("qul/ayah-themes.db", "b3c20c4fab472586904543ed12c87e2ac616ce629ac18a125357408e50927a42"),
         ("qcf4.sha256", "7d2034c4e65b69b01337be804c9fb5934dee6b03b1b2e05f4fe9ec69810f28e2"),
     ])
     func fileMatchesRecordedChecksum(path: String, expected: String) throws {
@@ -135,6 +136,30 @@ struct MushafStoreTests {
             #expect(colors.colors.count == 16, "page \(number)")
             #expect(!colors.layers.isEmpty, "page \(number)")
         }
+    }
+
+    /// Words carry their ayah's topic section: al-Baqarah opens with 1–5, then 6–7. The stand-in topic data
+    /// has 1,049 sections; its four gaps (2:134, 40:61, 54:45–55, 55:56–78) become sections of their own.
+    @Test func wordsCarryTheirTopicSection() {
+        var topics = Set<Int>(), wordsWithout = 0
+        for number in 1...MushafStore.pageCount {
+            for line in store.page(number).lines {
+                guard case .ayah(let words, _) = line.kind else { continue }
+                for word in words {
+                    if let topic = word.topic { topics.insert(topic) } else { wordsWithout += 1 }
+                }
+            }
+        }
+        #expect(topics.count == 1_053)
+        #expect(wordsWithout == 0)
+
+        // Page 2: al-Baqarah 1–5 is one section and 6–7 the next.
+        let pageTwo = store.page(2).lines.compactMap { line -> [MushafWord]? in
+            if case .ayah(let words, _) = line.kind { return words } else { return nil }
+        }.flatMap { $0 }
+        let ayahTopics = pageTwo.filter(\.isAyahEnd).map(\.topic)
+        #expect(ayahTopics.count == 5)
+        #expect(Set(ayahTopics).count == 1)
     }
 
     @Test func indexCoversEverySurahAndJuz() {

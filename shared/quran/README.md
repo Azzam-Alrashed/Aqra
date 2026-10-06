@@ -30,9 +30,14 @@ From [qul.tarteel.ai](https://qul.tarteel.ai), downloaded with a QUL account on 
 | `qpc-v4.json` — "V4 Glyphs (With Tajweed) – Word by word": each word's glyph in the page fonts (byte-identical to QUL's V2 glyph file) | `40964a1b7932e9a69e0dfc0d58dce3b73e30a803febda119fd6828bcb75fac98` |
 | `QCF_SurahHeader_COLOR-Regular.ttf` — "Surah header font": each surah's framed calligraphic title (name field: "King Fahad Complex, All rights reserved.") | `de261a309bdd42262e1a268d5ead56b6ea8366cd59124baedea3903561d7370b` |
 | `surah-header-ligatures.json` — which character draws each surah's header | `c4480a1fb616685421ada1f9cbd36187c1c27c01d8d78d27a866858fdaf5c4f7` |
+| `ayah-themes.db` — "Ayah theme" (credited to "Ayah by Ayah"): English topic summaries over ayah ranges; **a temporary stand-in for the topic colors** until a published thematic Mushaf's division can be used with permission | `b3c20c4fab472586904543ed12c87e2ac616ce629ac18a125357408e50927a42` |
 
 **License:** not stated on these resources; QUL's FAQ says commercial use is allowed but some resources require
 attribution. **Must be confirmed before release.**
+
+`ayah-themes.db` lists each of its 1,049 sections twice and leaves 36 ayat outside any section (al-Baqarah 2:134,
+Ghafir 40:61, al-Qamar 54:45–55, ar-Rahman 55:56–78). Aqra colors each of those four gaps as a section of its own,
+which keeps every boundary the source draws. Its scholarly source isn't stated, so it must be replaced before release.
 
 ### `qcf4/` — Mushaf page fonts with tajweed (QCF V4, 1441H print) — ⚠️ provisional
 

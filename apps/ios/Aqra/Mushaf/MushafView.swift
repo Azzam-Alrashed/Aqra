@@ -7,6 +7,7 @@ struct MushafView: View {
 
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @AppStorage("mushaf.tajweed") private var tajweed = true
+    @AppStorage("mushaf.topics") private var topicColors = true
     @State private var toolbarVisible = false
     @State private var showingIndex = false
     /// The page shown while the slider is being dragged; committed to `lastPage` on release.
@@ -22,6 +23,7 @@ struct MushafView: View {
                     if facingPages { spreadPager } else { pagePager }
                 }
                 .environment(\.mushafTajweed, tajweed)
+                .environment(\.mushafTopics, topicColors)
                 .onTapGesture {
                     withAnimation(.easeInOut(duration: 0.2)) { toolbarVisible.toggle() }
                 }
@@ -112,6 +114,7 @@ struct MushafView: View {
             Spacer()
             Menu {
                 Toggle("Tajweed colors", isOn: $tajweed)
+                Toggle("Topic colors", isOn: $topicColors)
             } label: {
                 Label("Colors", systemImage: "paintpalette")
                     .labelStyle(.iconOnly)

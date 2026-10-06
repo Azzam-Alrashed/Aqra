@@ -190,6 +190,16 @@
           }
         }
       }
+    },
+    "Topic colors": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ألوان المواضيع"
+          }
+        }
+      }
     }
   },
   "version": "1.1"
