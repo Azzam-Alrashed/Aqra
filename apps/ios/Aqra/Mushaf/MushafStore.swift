@@ -7,7 +7,7 @@ struct MushafWord: Hashable {
     var isAyahEnd: Bool
 }
 
-/// One line of a Mushaf page, as laid out in the 1421H Madinah print.
+/// One line of a Mushaf page, as laid out in the 1441H Madinah print.
 struct MushafLine: Hashable {
     enum Kind: Hashable {
         case surahName(surah: Int)
@@ -32,8 +32,8 @@ struct MushafPage: Hashable {
 
 /// Reads the bundled Quran data (`shared/quran`) and builds Mushaf pages.
 ///
-/// Pages and words come from the QUL "KFGQPC V2 layout (1421H print)" and its glyphs;
-/// surah names, juz' and the basmala come from the King Fahd Complex's official data.
+/// Pages and words come from the QUL "KFGQPC V4 layout (1441H print)" and its glyphs, which match the
+/// King Fahd Complex's official data line for line; surah names, juz' and the basmala come from that official data.
 final class MushafStore: Sendable {
     static let pageCount = 604
 
@@ -81,7 +81,7 @@ final class MushafStore: Sendable {
 
         // The 604 page fonts aren't in git; catch a build made without them before any page renders.
         let pageFonts = (1...Self.pageCount).filter { page in
-            Self.resourceURL(String(format: "qcf2/QCF2%03d.ttf", page), in: bundle)
+            Self.resourceURL(MushafFonts.pageFontPath(page), in: bundle)
                 .map { FileManager.default.fileExists(atPath: $0.path) } ?? false
         }.count
         guard pageFonts == Self.pageCount else { throw LoadError.missingPageFonts(found: pageFonts) }
@@ -126,7 +126,7 @@ final class MushafStore: Sendable {
 
         // QUL glyphs: word id → glyph. The last word of each ayah is its ayah-end marker.
         struct Word: Decodable { var id: Int; var surah: String; var ayah: String; var word: String; var text: String }
-        let words = try JSONDecoder().decode([String: Word].self, from: Data(contentsOf: url("qul/qpc-v2.json")))
+        let words = try JSONDecoder().decode([String: Word].self, from: Data(contentsOf: url("qul/qpc-v4.json")))
         var glyph = [String](repeating: "", count: words.count + 1)
         var lastWordOfAyah: [String: (position: Int, id: Int)] = [:]
         for word in words.values where word.id < glyph.count {
@@ -139,7 +139,7 @@ final class MushafStore: Sendable {
         // QUL layout: 15 lines per page.
         var linesByPage = [[MushafLine]](repeating: [], count: Self.pageCount + 1)
         var db: OpaquePointer?
-        guard sqlite3_open_v2(try url("qul/qpc-v2-15-lines.db").path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
+        guard sqlite3_open_v2(try url("qul/qpc-v4-tajweed-15-lines.db").path, &db, SQLITE_OPEN_READONLY, nil) == SQLITE_OK else {
             throw LoadError.database("open")
         }
         defer { sqlite3_close(db) }

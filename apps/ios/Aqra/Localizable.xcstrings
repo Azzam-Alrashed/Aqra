@@ -170,6 +170,26 @@
           }
         }
       }
+    },
+    "Tajweed colors": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ألوان التجويد"
+          }
+        }
+      }
+    },
+    "Colors": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الألوان"
+          }
+        }
+      }
     }
   },
   "version": "1.1"

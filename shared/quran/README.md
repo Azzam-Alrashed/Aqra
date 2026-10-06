@@ -26,32 +26,48 @@ From [qul.tarteel.ai](https://qul.tarteel.ai), downloaded with a QUL account on 
 
 | File | SHA-256 |
 |---|---|
-| `qpc-v2-15-lines.db` — "KFGQPC V2 layout (1421H print)": 604 pages × 15 lines | `e4df98f35dd3b8927ff096337c8739e0f0b12c8ba622834c345eaa4c3e28dd8c` |
-| `qpc-v2.json` — "QPC V2 Glyph – Word by Word": each word's glyph in the page fonts | `40964a1b7932e9a69e0dfc0d58dce3b73e30a803febda119fd6828bcb75fac98` |
+| `qpc-v4-tajweed-15-lines.db` — "KFGQPC V4 layout (1441H print)": 604 pages × 15 lines | `4b3fb1cbe8dff749ab0173c4b86cb40fe3c48dd072f41d3c7e715654a9f843cd` |
+| `qpc-v4.json` — "V4 Glyphs (With Tajweed) – Word by word": each word's glyph in the page fonts (byte-identical to QUL's V2 glyph file) | `40964a1b7932e9a69e0dfc0d58dce3b73e30a803febda119fd6828bcb75fac98` |
 | `QCF_SurahHeader_COLOR-Regular.ttf` — "Surah header font": each surah's framed calligraphic title (name field: "King Fahad Complex, All rights reserved.") | `de261a309bdd42262e1a268d5ead56b6ea8366cd59124baedea3903561d7370b` |
 | `surah-header-ligatures.json` — which character draws each surah's header | `c4480a1fb616685421ada1f9cbd36187c1c27c01d8d78d27a866858fdaf5c4f7` |
 
 **License:** not stated on these resources; QUL's FAQ says commercial use is allowed but some resources require
 attribution. **Must be confirmed before release.**
 
-### `qcf2/` — Mushaf page fonts (QCF V2, 1421H print) — ⚠️ provisional
+### `qcf4/` — Mushaf page fonts with tajweed (QCF V4, 1441H print) — ⚠️ provisional
 
-Not committed to git (~205 MB). Restore and verify with `scripts/fetch-mushaf-fonts.sh`, which downloads
-`2013.zip` (MD5 `8570796a7d683b71c17ff17d923e6da7`) from [archive.org/details/qcf.fonts](https://archive.org/details/qcf.fonts)
-and checks each font against `qcf2.sha256` (SHA-256 `1897276392759f73839ee1b1255c4b6bf97c6c36e108ed6172d560f2f09b34c3`).
+Not committed to git (~50 MB). Restore and verify with `scripts/fetch-mushaf-fonts.sh`, which downloads the 604
+fonts from Quran Foundation's font CDN (`verses.quran.foundation/fonts/quran/hafs/v4/colrv1/woff2/pN.woff2`) and
+checks each against `qcf4.sha256` (SHA-256 `7d2034c4e65b69b01337be804c9fb5934dee6b03b1b2e05f4fe9ec69810f28e2`).
 
-These fonts were uploaded to the Internet Archive by an individual, not by the Complex. They carry no digital
-signature, are labelled "Test Font, KFGQPC", and were saved with FontForge. **They must be replaced with an
-official copy from the Complex before the App Store release.**
+Each font is named `QCF4NNN_COLOR` ("King Fahad Complex, All rights reserved."). It holds the page's words as plain
+outlines, plus color layers (COLR version 0) and six palettes (CPAL) for tajweed: light, dark and sepia, with and
+without tajweed colors. Aqra reads the fonts as they are and never modifies them.
+
+**Terms:** Quran Foundation allows bundling these fonts in an app if the developer keeps an active account in its
+Developer Console and credits Quran Foundation in the app. **The account and the credit are needed before release.**
+
+**Proofreading:** QUL lists these fonts as disabled "while we're proofreading them". Aqra's own team must proofread
+the text and the tajweed colors before release. Automated checks (2026-10-06) found:
+
+- Every page font has every glyph its page needs, and every word has a plain outline.
+- The color layers don't always match the plain outlines. Over 88,206 colored glyphs on 578 pages:
+  2,166 add hairline boxes or ellipses around marks; 32 are shifted from the plain outline; 2 lack part of
+  the word, including the pause sign on word 10 of al-Baqarah 2:268. quran.com shows the same layers.
+  **Aqra therefore draws every word from its plain outline and uses the color layers only to tint it.**
+- 8 glyphs are intentionally empty: the second character of the disjointed letters on pages 208, 249, 262, 377,
+  453, 518 and 564, whose first glyph draws the whole word.
+- One word has no width of its own: the pause sign after word 4 of Ghafir 40:77 (page 475, line 14), which sits
+  over the word before it.
 
 ## Verification (2026-10-06)
 
-The QUL layout and glyphs were checked against the Complex's official data and the page fonts:
+The 1441H layout was checked against the Complex's official data (`kfgqpc/hafs_smart_v8.json`):
 
-- All 6236 ayat present; every ayah on the same page as the official data; every word on exactly one line;
-  every glyph present in its page font.
-- 8787 of 8790 justified lines fill the same width within 3% (88% within 1%).
-- Line numbers differ from the official data by one line on 355 pages — the official data most likely follows a
-  later printing than 1421H. Pages match exactly.
-- 60 ayat have one fewer word than the official Imla'i text, all from Uthmani joined words such as «أَوَلَا».
-- **For a hafiz to review against the printed Mushaf:** page 254 lines 6–7, page 575 line 12.
+- All 6236 ayat present; every ayah on the same page, starting and ending on the same lines, as the official data
+  (`everyAyahEndsWhereTheOfficialDataSays` keeps this checked). The earlier 1421H layout differed on 869 ayat
+  across 355 pages: the official data follows the 1441H print.
+- Every word on exactly one line, and every glyph present in its page font.
+- Where the prints differ, the 1441H fonts follow the official text: for example, the 1441H print drops the
+  pause sign after word 5 of Maryam 19:38, and so do the official data and the V4 font.
+- **For a hafiz to review against the printed Mushaf:** all 604 pages, with and without tajweed colors.

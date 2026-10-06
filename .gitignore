@@ -4,5 +4,5 @@ DerivedData/
 build/
 *.xcuserstate
 
-# Mushaf page fonts (~205 MB): restore with scripts/fetch-mushaf-fonts.sh
-shared/quran/qcf2/
+# Mushaf page fonts with tajweed (QCF V4, 1441H print, ~50 MB): restore with scripts/fetch-mushaf-fonts.sh
+shared/quran/qcf4/

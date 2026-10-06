@@ -15,11 +15,11 @@ struct MushafDataTests {
     @Test(arguments: [
         ("kfgqpc/hafs_smart_v8.json", "a272a119a4272f10cf42d8e389857b469183d3217fa23aa38b6a7331d0ac4aa2"),
         ("kfgqpc/HafsSmart_08.ttf", "18c5641d1a9433499660122eccc6388bf89b9c8b752e5957aff41a2bed2c976b"),
-        ("qul/qpc-v2-15-lines.db", "e4df98f35dd3b8927ff096337c8739e0f0b12c8ba622834c345eaa4c3e28dd8c"),
-        ("qul/qpc-v2.json", "40964a1b7932e9a69e0dfc0d58dce3b73e30a803febda119fd6828bcb75fac98"),
+        ("qul/qpc-v4-tajweed-15-lines.db", "4b3fb1cbe8dff749ab0173c4b86cb40fe3c48dd072f41d3c7e715654a9f843cd"),
+        ("qul/qpc-v4.json", "40964a1b7932e9a69e0dfc0d58dce3b73e30a803febda119fd6828bcb75fac98"),
         ("qul/QCF_SurahHeader_COLOR-Regular.ttf", "de261a309bdd42262e1a268d5ead56b6ea8366cd59124baedea3903561d7370b"),
         ("qul/surah-header-ligatures.json", "c4480a1fb616685421ada1f9cbd36187c1c27c01d8d78d27a866858fdaf5c4f7"),
-        ("qcf2.sha256", "1897276392759f73839ee1b1255c4b6bf97c6c36e108ed6172d560f2f09b34c3"),
+        ("qcf4.sha256", "7d2034c4e65b69b01337be804c9fb5934dee6b03b1b2e05f4fe9ec69810f28e2"),
     ])
     func fileMatchesRecordedChecksum(path: String, expected: String) throws {
         #expect(try sha256(of: path) == expected)
@@ -27,13 +27,13 @@ struct MushafDataTests {
 
     /// Every page font matches the manifest, and all 604 are present.
     @Test func pageFontsMatchManifest() throws {
-        let manifestURL = try #require(MushafStore.resourceURL("qcf2.sha256"))
+        let manifestURL = try #require(MushafStore.resourceURL("qcf4.sha256"))
         let entries = try String(contentsOf: manifestURL, encoding: .utf8)
             .split(separator: "\n")
             .map { $0.split(separator: " ", omittingEmptySubsequences: true) }
         #expect(entries.count == MushafStore.pageCount)
         for entry in entries {
-            #expect(try sha256(of: "qcf2/\(entry[1])") == String(entry[0]), "\(entry[1])")
+            #expect(try sha256(of: "qcf4/\(entry[1])") == String(entry[0]), "\(entry[1])")
         }
     }
 }
@@ -87,6 +87,56 @@ struct MushafStoreTests {
         #expect(ayahEnds == 6_236)
     }
 
+    /// The 1441H layout puts every ayah on the same page, and ends it on the same line, as the King Fahd Complex's official data.
+    @Test func everyAyahEndsWhereTheOfficialDataSays() throws {
+        struct OfficialAyah: Decodable { var page: Int; var line_end: Int }
+        let url = try #require(MushafStore.resourceURL("kfgqpc/hafs_smart_v8.json"))
+        var official: [String: Int] = [:]
+        for ayah in try JSONDecoder().decode([OfficialAyah].self, from: Data(contentsOf: url)) {
+            official["\(ayah.page):\(ayah.line_end)", default: 0] += 1
+        }
+        var layout: [String: Int] = [:]
+        for number in 1...MushafStore.pageCount {
+            for line in store.page(number).lines {
+                guard case .ayah(let words, _) = line.kind else { continue }
+                let ends = words.filter(\.isAyahEnd).count
+                if ends > 0 { layout["\(number):\(line.number)", default: 0] += ends }
+            }
+        }
+        #expect(layout == official)
+    }
+
+    /// Every word has an outline to draw, and every page has tajweed colors to tint it with.
+    /// Only one word has no width of its own: the pause sign after word 4 of Ghafir 40:77, page 475 line 14.
+    @Test func everyWordHasOutlineAndEveryPageHasTajweed() throws {
+        var zeroWidth: [String] = []
+        for number in 1...MushafStore.pageCount {
+            var colored = 0
+            for line in store.page(number).lines {
+                guard case .ayah(let words, _) = line.kind else { continue }
+                for word in words {
+                    let glyph = try #require(MushafFonts.word(word.glyph, page: number, size: 20), "page \(number) line \(line.number)")
+                    #expect(!glyph.outline.isEmpty, "page \(number) line \(line.number)")
+                    if !glyph.layers.isEmpty { colored += 1 }
+                    if glyph.size.width <= 0 { zeroWidth.append("\(number):\(line.number)") }
+                }
+            }
+            #expect(colored > 0, "page \(number) has no tajweed colors")
+        }
+        #expect(zeroWidth == ["475:14"])
+    }
+
+    /// The page fonts carry their own light and dark tajweed palettes; Aqra reads them rather than hardcoding colors.
+    @Test func pageFontsCarryTajweedPalettes() throws {
+        for number in [1, 300, 604] {
+            let url = try #require(MushafStore.resourceURL(MushafFonts.pageFontPath(number)))
+            let descriptor = try #require((CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor])?.first)
+            let colors = TajweedColors(font: CTFontCreateWithFontDescriptor(descriptor, 20, nil))
+            #expect(colors.colors.count == 16, "page \(number)")
+            #expect(!colors.layers.isEmpty, "page \(number)")
+        }
+    }
+
     @Test func indexCoversEverySurahAndJuz() {
         #expect(store.surahHeaders.count == 114)
         #expect(store.surahStartPages.count == 114)
@@ -104,7 +154,7 @@ struct MushafStoreTests {
     /// Every word's glyph exists in its own page font, so no word can render as a missing-glyph box.
     @Test func everyWordRendersInItsPageFont() throws {
         for number in 1...MushafStore.pageCount {
-            let url = try #require(MushafStore.resourceURL(String(format: "qcf2/QCF2%03d.ttf", number)))
+            let url = try #require(MushafStore.resourceURL(MushafFonts.pageFontPath(number)))
             let descriptor = try #require((CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor])?.first)
             let font = CTFontCreateWithFontDescriptor(descriptor, 20, nil)
             for line in store.page(number).lines {

@@ -19,14 +19,18 @@ enum MushafStyle {
 @MainActor
 enum MushafFonts {
     private static var descriptors: [String: CTFontDescriptor] = [:]
-    /// Fonts already made, by path and size, so pages don't create a new font on every render.
+    /// Fonts and words already made, by path and size, so pages don't rebuild them on every render.
     private static var fonts: [String: Font] = [:]
     private static var coreTextFonts: [String: CTFont] = [:]
-    private static var glyphGeometries: [String: GlyphGeometry] = [:]
+    private static var colorTables: [String: TajweedColors] = [:]
+    /// The words of the pages read most recently; older pages are let go so reading the whole Mushaf stays light.
+    private static var pageWords: [Int: [String: WordGlyph]] = [:]
+    private static var recentPages: [Int] = []
+    private static let pagesKept = 12
 
-    /// The page's own QCF V2 font, whose glyphs are that page's words.
-    static func page(_ number: Int, size: CGFloat) -> Font? {
-        font(at: String(format: "qcf2/QCF2%03d.ttf", number), size: size)
+    /// The page's own QCF V4 font (1441H print), whose glyphs are that page's words, with the tajweed colors built in.
+    nonisolated static func pageFontPath(_ number: Int) -> String {
+        "qcf4/p\(number).woff2"
     }
 
     /// The Complex's Hafs Smart font, used for the basmala lines.
@@ -39,29 +43,64 @@ enum MushafFonts {
         font(at: "qul/QCF_SurahHeader_COLOR-Regular.ttf", size: size)
     }
 
-    /// A single glyph's outline and ink box, laid out as Text would place it (baseline at the font's ascent).
-    /// Used for ayah markers, which sit at different heights in the print and need a backdrop drawn exactly behind them.
-    static func glyphGeometry(_ text: String, page: Int, size: CGFloat) -> GlyphGeometry? {
-        let key = "\(page)@\(size)#\(text)"
-        if let cached = glyphGeometries[key] { return cached }
-        guard let font = coreTextFont(at: String(format: "qcf2/QCF2%03d.ttf", page), size: size) else { return nil }
-        let units = Array(text.utf16)
-        var glyphs = [CGGlyph](repeating: 0, count: units.count)
-        guard CTFontGetGlyphsForCharacters(font, units, &glyphs, units.count), glyphs.count == 1,
-              let outline = CTFontCreatePathForGlyph(font, glyphs[0], nil) else { return nil }
-        var advance = CGSize.zero
-        CTFontGetAdvancesForGlyphs(font, .horizontal, glyphs, &advance, 1)
+    /// A word of a page, built from its page font's outlines and laid out as Text would place it
+    /// (baseline at the font's ascent). Words are drawn from outlines rather than as Text because the
+    /// page fonts carry their own colors, which Text would always draw in black on the light palette.
+    static func word(_ text: String, page: Int, size: CGFloat) -> WordGlyph? {
+        keep(page)
+        let key = "\(size)#\(text)"
+        if let cached = pageWords[page]?[key] { return cached }
+        let path = pageFontPath(page)
+        guard let font = coreTextFont(at: path, size: size) else { return nil }
+        let colors = colorTables[path] ?? TajweedColors(font: font)
+        colorTables[path] = colors
+
+        let line = CTLineCreateWithAttributedString(
+            NSAttributedString(string: text, attributes: [NSAttributedString.Key(kCTFontAttributeName as String): font]))
         let ascent = CTFontGetAscent(font)
-        let height = ascent + CTFontGetDescent(font) + CTFontGetLeading(font)
         // Font coordinates have y up from the baseline; views have y down from the top.
         let flip = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: ascent)
-        let geometry = GlyphGeometry(
-            outline: Path(outline).applying(flip),
-            inkBox: CTFontGetBoundingRectsForGlyphs(font, .horizontal, glyphs, nil, 1).applying(flip),
-            size: CGSize(width: advance.width, height: height)
+        let outline = CGMutablePath()
+        var layers: [TajweedLayer] = []
+        for run in CTLineGetGlyphRuns(line) as? [CTRun] ?? [] {
+            let count = CTRunGetGlyphCount(run)
+            var glyphs = [CGGlyph](repeating: 0, count: count), positions = [CGPoint](repeating: .zero, count: count)
+            CTRunGetGlyphs(run, CFRange(), &glyphs)
+            CTRunGetPositions(run, CFRange(), &positions)
+            for (glyph, position) in zip(glyphs, positions) {
+                let place = CGAffineTransform(translationX: position.x, y: position.y).concatenating(flip)
+                if let path = CTFontCreatePathForGlyph(font, glyph, nil) { outline.addPath(path, transform: place) }
+                // Only the colored layers are kept; the text itself is always the plain outline.
+                for layer in colors.layers[glyph] ?? [] {
+                    guard let entry = layer.entry, colors.colors.indices.contains(entry), let color = colors.colors[entry],
+                          let path = CTFontCreatePathForGlyph(font, layer.glyph, nil) else { continue }
+                    layers.append(TajweedLayer(color: color, path: Path(path).applying(place)))
+                }
+            }
+        }
+        let word = WordGlyph(
+            outline: Path(outline),
+            layers: layers,
+            inkBox: outline.boundingBoxOfPath,
+            size: CGSize(width: CTLineGetTypographicBounds(line, nil, nil, nil),
+                         height: ascent + CTFontGetDescent(font) + CTFontGetLeading(font))
         )
-        glyphGeometries[key] = geometry
-        return geometry
+        pageWords[page, default: [:]][key] = word
+        return word
+    }
+
+    /// Marks a page as just read, and lets go of the words and fonts of pages read long ago.
+    private static func keep(_ page: Int) {
+        guard recentPages.last != page else { return }
+        recentPages.removeAll { $0 == page }
+        recentPages.append(page)
+        while recentPages.count > pagesKept {
+            let dropped = recentPages.removeFirst(), path = pageFontPath(dropped)
+            pageWords[dropped] = nil
+            descriptors[path] = nil
+            colorTables[path] = nil
+            coreTextFonts = coreTextFonts.filter { !$0.key.hasPrefix("\(path)@") }
+        }
     }
 
     private static func font(at path: String, size: CGFloat) -> Font? {
@@ -89,13 +128,87 @@ enum MushafFonts {
     }
 }
 
+/// A word in view coordinates, inside a frame the size Text would give it.
+struct WordGlyph {
+    /// The whole word as one outline. This is the text as drawn, with or without tajweed.
+    var outline: Path
+    /// The word's colored tajweed layers in drawing order, painted only inside the outline.
+    var layers: [TajweedLayer]
+    var inkBox: CGRect
+    var size: CGSize
+}
+
+struct TajweedLayer {
+    var color: Color
+    var path: Path
+}
+
+/// A page font's tajweed coloring, read from the font itself: which colored layers make up each glyph
+/// (its COLR table) and the colors of its palettes (its CPAL table). The fonts aren't modified.
+///
+/// The color layers are only used to tint the plain outline, never drawn as text on their own: in these
+/// fonts (still being proofread) they add hairline boxes and ellipses around some marks on most pages,
+/// drop the pause sign on word 10 of al-Baqarah 2:268, and sit slightly off the plain outline in a few words.
+struct TajweedColors {
+    /// Each colored glyph's layers, bottom first, with the palette entry each is painted in.
+    private(set) var layers: [CGGlyph: [(glyph: CGGlyph, entry: Int?)]] = [:]
+    /// Each palette entry's tajweed color, from the font's light palette (0) and dark palette (1);
+    /// nil for the entries that are the text's own black, which stay in Aqra's ink.
+    private(set) var colors: [Color?] = []
+
+    init(font: CTFont) {
+        guard let colr = CTFontCopyTable(font, CTFontTableTag(kCTFontTableCOLR), []) as Data?,
+              let cpal = CTFontCopyTable(font, CTFontTableTag(kCTFontTableCPAL), []) as Data?,
+              colr.count >= 14, cpal.count >= 12 else { return }
+        func u16(_ data: Data, _ offset: Int) -> Int {
+            guard offset + 2 <= data.count else { return 0 }
+            return Int(data[data.startIndex + offset]) << 8 | Int(data[data.startIndex + offset + 1])
+        }
+        func u32(_ data: Data, _ offset: Int) -> Int { u16(data, offset) << 16 | u16(data, offset + 2) }
+
+        // CPAL: palettes of BGRA color records.
+        let entries = u16(cpal, 2), palettes = u16(cpal, 4), records = u32(cpal, 8)
+        func color(palette: Int, entry: Int) -> UInt32 {
+            let record = records + 4 * (u16(cpal, 12 + 2 * palette) + entry)
+            guard record + 4 <= cpal.count else { return 0 }
+            let b = UInt32(cpal[cpal.startIndex + record]), g = UInt32(cpal[cpal.startIndex + record + 1]),
+                r = UInt32(cpal[cpal.startIndex + record + 2])
+            return r << 16 | g << 8 | b
+        }
+        guard palettes >= 2 else { return }
+        colors = (0..<entries).map { entry in
+            let light = color(palette: 0, entry: entry), dark = color(palette: 1, entry: entry)
+            let isText = (light >> 16) & 0xFF < 0x20 && (light >> 8) & 0xFF < 0x20 && light & 0xFF < 0x20
+            return isText ? nil : Color(light: light, dark: dark)
+        }
+
+        // COLR version 0: base glyph records, each pointing at a run of layer records.
+        let baseCount = u16(colr, 2), baseOffset = u32(colr, 4), layerOffset = u32(colr, 8)
+        for index in 0..<baseCount {
+            let record = baseOffset + 6 * index
+            let first = u16(colr, record + 2), count = u16(colr, record + 4)
+            layers[CGGlyph(u16(colr, record))] = (0..<count).map { layer in
+                let entry = u16(colr, layerOffset + 4 * (first + layer) + 2)
+                // 0xFFFF means "the text color".
+                return (CGGlyph(u16(colr, layerOffset + 4 * (first + layer))), entry == 0xFFFF ? nil : entry)
+            }
+        }
+    }
+}
+
+extension EnvironmentValues {
+    /// Whether the Mushaf shows the page fonts' tajweed colors.
+    @Entry var mushafTajweed = true
+}
+
 /// One Mushaf page: 15 lines in the page's own font, framed by the surah, juz' and page number.
 struct MushafPageView: View {
     var page: MushafPage
     var store: MushafStore
+    @Environment(\.mushafTajweed) private var tajweed
 
-    /// A full Madinah line is about 15.6 em wide in the QCF V2 fonts; leave room for the word gaps.
-    private static let lineWidthInEm: CGFloat = 16.4
+    /// The words of a full 1441H line add up to at most 17 em in the QCF V4 fonts; leave room for the word gaps.
+    private static let lineWidthInEm: CGFloat = 17.4
     /// A surah header glyph is 3.3 em wide.
     private static let headerWidthInEm: CGFloat = 3.303
     private static let linesPerPage: CGFloat = 15
@@ -156,36 +269,10 @@ struct MushafPageView: View {
                 .foregroundStyle(MushafStyle.ink)
                 .fixedSize()
         case .ayah(let words, let centered):
-            let font = MushafFonts.page(page.number, size: fontSize)
-            if centered {
-                HStack(spacing: fontSize * 0.25) {
-                    ForEach(Array(words.enumerated()), id: \.offset) { _, word in
-                        wordView(word, font: font, fontSize: fontSize)
-                    }
-                }
-            } else {
-                // Justified like the printed page: the words spread to fill the line.
-                HStack(spacing: 0) {
-                    ForEach(Array(words.enumerated()), id: \.offset) { index, word in
-                        if index > 0 { Spacer(minLength: 0) }
-                        wordView(word, font: font, fontSize: fontSize)
-                    }
-                }
+            let glyphs = words.compactMap { word in
+                MushafFonts.word(word.glyph, page: page.number, size: fontSize).map { (word.isAyahEnd, $0) }
             }
-        }
-    }
-
-    @ViewBuilder
-    private func wordView(_ word: MushafWord, font: Font?, fontSize: CGFloat) -> some View {
-        if word.isAyahEnd, let geometry = MushafFonts.glyphGeometry(word.glyph, page: page.number, size: fontSize) {
-            AyahMarker(geometry: geometry)
-        } else if word.isAyahEnd {
-            Text(verbatim: word.glyph).font(font).foregroundStyle(MushafStyle.marker).fixedSize()
-        } else {
-            Text(verbatim: word.glyph)
-                .font(font)
-                .foregroundStyle(MushafStyle.ink)
-                .fixedSize()
+            AyahLine(words: glyphs, centered: centered, tajweed: tajweed, wordSpacing: fontSize * 0.25)
         }
     }
 
@@ -210,30 +297,56 @@ struct MushafPageView: View {
     }
 }
 
-/// A glyph's outline and ink box in view coordinates, inside a frame the size Text would give it.
-struct GlyphGeometry {
-    var outline: Path
-    var inkBox: CGRect
-    var size: CGSize
-}
-
-/// An ayah-end marker drawn from the font's own outline, over a soft oval laid exactly behind its rosette.
-/// Drawing the glyph directly keeps the two aligned; Text can pad a glyph's box unevenly.
-private struct AyahMarker: View {
-    var geometry: GlyphGeometry
+/// One line of ayat, drawn word by word from the page font's outlines and justified like the printed page:
+/// the words spread to fill the line, or sit together in the middle on a centered line.
+private struct AyahLine: View {
+    /// Each word, and whether it's an ayah-end marker.
+    var words: [(isAyahEnd: Bool, glyph: WordGlyph)]
+    var centered: Bool
+    var tajweed: Bool
+    var wordSpacing: CGFloat
 
     var body: some View {
-        let box = geometry.inkBox
-        let inset = CGSize(width: box.width * 0.07, height: box.height * 0.08)
-        ZStack(alignment: .topLeading) {
-            Ellipse()
-                .fill(MushafStyle.markerFill)
-                .frame(width: box.width - inset.width * 2, height: box.height - inset.height * 2)
-                .offset(x: box.minX + inset.width, y: box.minY + inset.height)
-            geometry.outline.fill(MushafStyle.marker)
+        GeometryReader { geometry in
+            // Diacritics and markers can reach past the line's box, so the canvas gets room around it.
+            let bleed = geometry.size.height
+            Canvas { context, _ in
+                let width = geometry.size.width, height = geometry.size.height
+                let total = words.reduce(0) { $0 + $1.glyph.size.width }
+                // A word of zero width is a mark that belongs over the word before it (a pause sign in Ghafir 40:77),
+                // so it takes no gap of its own.
+                let gaps = CGFloat(max(words.filter { $0.glyph.size.width > 0 }.count - 1, 0))
+                let justified = !centered && gaps > 0
+                let spacing = justified ? (width - total) / gaps : wordSpacing
+                // Reading right to left: the first word starts at the right edge of the line (or of a centered group).
+                var x = bleed + (justified ? width : (width + total + spacing * gaps) / 2) + spacing
+                for (isAyahEnd, glyph) in words {
+                    if glyph.size.width > 0 { x -= spacing }
+                    x -= glyph.size.width
+                    var word = context
+                    word.translateBy(x: x, y: bleed + (height - glyph.size.height) / 2)
+                    if isAyahEnd {
+                        // A soft oval laid exactly behind the marker's rosette.
+                        let box = glyph.inkBox
+                        word.fill(Path(ellipseIn: box.insetBy(dx: box.width * 0.07, dy: box.height * 0.08)),
+                                  with: .color(MushafStyle.markerFill))
+                        word.fill(glyph.outline, with: .color(MushafStyle.marker))
+                    } else {
+                        word.fill(glyph.outline, with: .color(MushafStyle.ink))
+                        if tajweed && !glyph.layers.isEmpty {
+                            // The colors tint the letters they belong to and nothing outside them.
+                            word.clip(to: glyph.outline)
+                            for layer in glyph.layers { word.fill(layer.path, with: .color(layer.color)) }
+                        }
+                    }
+                }
+            }
+            .frame(width: geometry.size.width + bleed * 2, height: geometry.size.height + bleed * 2)
+            .offset(x: -bleed, y: -bleed)
         }
-        .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
-        // The outline is in left-to-right glyph coordinates.
+        // The outlines are in left-to-right glyph coordinates; the reading order is laid out above.
         .environment(\.layoutDirection, .leftToRight)
+        // Taps go through to the page, which shows and hides the toolbar.
+        .allowsHitTesting(false)
     }
 }
