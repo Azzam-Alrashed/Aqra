@@ -21,6 +21,8 @@ enum MushafFonts {
     private static var descriptors: [String: CTFontDescriptor] = [:]
     /// Fonts already made, by path and size, so pages don't create a new font on every render.
     private static var fonts: [String: Font] = [:]
+    private static var coreTextFonts: [String: CTFont] = [:]
+    private static var glyphGeometries: [String: GlyphGeometry] = [:]
 
     /// The page's own QCF V2 font, whose glyphs are that page's words.
     static func page(_ number: Int, size: CGFloat) -> Font? {
@@ -37,9 +39,43 @@ enum MushafFonts {
         font(at: "qul/QCF_SurahHeader_COLOR-Regular.ttf", size: size)
     }
 
+    /// A single glyph's outline and ink box, laid out as Text would place it (baseline at the font's ascent).
+    /// Used for ayah markers, which sit at different heights in the print and need a backdrop drawn exactly behind them.
+    static func glyphGeometry(_ text: String, page: Int, size: CGFloat) -> GlyphGeometry? {
+        let key = "\(page)@\(size)#\(text)"
+        if let cached = glyphGeometries[key] { return cached }
+        guard let font = coreTextFont(at: String(format: "qcf2/QCF2%03d.ttf", page), size: size) else { return nil }
+        let units = Array(text.utf16)
+        var glyphs = [CGGlyph](repeating: 0, count: units.count)
+        guard CTFontGetGlyphsForCharacters(font, units, &glyphs, units.count), glyphs.count == 1,
+              let outline = CTFontCreatePathForGlyph(font, glyphs[0], nil) else { return nil }
+        var advance = CGSize.zero
+        CTFontGetAdvancesForGlyphs(font, .horizontal, glyphs, &advance, 1)
+        let ascent = CTFontGetAscent(font)
+        let height = ascent + CTFontGetDescent(font) + CTFontGetLeading(font)
+        // Font coordinates have y up from the baseline; views have y down from the top.
+        let flip = CGAffineTransform(a: 1, b: 0, c: 0, d: -1, tx: 0, ty: ascent)
+        let geometry = GlyphGeometry(
+            outline: Path(outline).applying(flip),
+            inkBox: CTFontGetBoundingRectsForGlyphs(font, .horizontal, glyphs, nil, 1).applying(flip),
+            size: CGSize(width: advance.width, height: height)
+        )
+        glyphGeometries[key] = geometry
+        return geometry
+    }
+
     private static func font(at path: String, size: CGFloat) -> Font? {
         let key = "\(path)@\(size)"
         if let cached = fonts[key] { return cached }
+        guard let coreText = coreTextFont(at: path, size: size) else { return nil }
+        let font = Font(coreText)
+        fonts[key] = font
+        return font
+    }
+
+    private static func coreTextFont(at path: String, size: CGFloat) -> CTFont? {
+        let key = "\(path)@\(size)"
+        if let cached = coreTextFonts[key] { return cached }
         if descriptors[path] == nil,
            let url = MushafStore.resourceURL(path),
            let found = CTFontManagerCreateFontDescriptorsFromURL(url as CFURL) as? [CTFontDescriptor],
@@ -47,8 +83,8 @@ enum MushafFonts {
             descriptors[path] = first
         }
         guard let descriptor = descriptors[path] else { return nil }
-        let font = Font(CTFontCreateWithFontDescriptor(descriptor, size, nil))
-        fonts[key] = font
+        let font = CTFontCreateWithFontDescriptor(descriptor, size, nil)
+        coreTextFonts[key] = font
         return font
     }
 }
@@ -141,16 +177,10 @@ struct MushafPageView: View {
 
     @ViewBuilder
     private func wordView(_ word: MushafWord, font: Font?, fontSize: CGFloat) -> some View {
-        if word.isAyahEnd {
-            Text(verbatim: word.glyph)
-                .font(font)
-                .foregroundStyle(MushafStyle.marker)
-                .fixedSize()
-                .background {
-                    Circle()
-                        .fill(MushafStyle.markerFill)
-                        .frame(width: fontSize * 0.86, height: fontSize * 0.86)
-                }
+        if word.isAyahEnd, let geometry = MushafFonts.glyphGeometry(word.glyph, page: page.number, size: fontSize) {
+            AyahMarker(geometry: geometry)
+        } else if word.isAyahEnd {
+            Text(verbatim: word.glyph).font(font).foregroundStyle(MushafStyle.marker).fixedSize()
         } else {
             Text(verbatim: word.glyph)
                 .font(font)
@@ -177,5 +207,33 @@ struct MushafPageView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 3)
             .overlay(Capsule().stroke(MushafStyle.gold.opacity(0.6), lineWidth: 1))
+    }
+}
+
+/// A glyph's outline and ink box in view coordinates, inside a frame the size Text would give it.
+struct GlyphGeometry {
+    var outline: Path
+    var inkBox: CGRect
+    var size: CGSize
+}
+
+/// An ayah-end marker drawn from the font's own outline, over a soft oval laid exactly behind its rosette.
+/// Drawing the glyph directly keeps the two aligned; Text can pad a glyph's box unevenly.
+private struct AyahMarker: View {
+    var geometry: GlyphGeometry
+
+    var body: some View {
+        let box = geometry.inkBox
+        let inset = CGSize(width: box.width * 0.07, height: box.height * 0.08)
+        ZStack(alignment: .topLeading) {
+            Ellipse()
+                .fill(MushafStyle.markerFill)
+                .frame(width: box.width - inset.width * 2, height: box.height - inset.height * 2)
+                .offset(x: box.minX + inset.width, y: box.minY + inset.height)
+            geometry.outline.fill(MushafStyle.marker)
+        }
+        .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+        // The outline is in left-to-right glyph coordinates.
+        .environment(\.layoutDirection, .leftToRight)
     }
 }
