@@ -8,25 +8,29 @@
 
 /* Begin PBXBuildFile section */
 		028487F5A6C0BED60172B546 /* OnboardingPageLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D871D9287AF47EBED70889 /* OnboardingPageLayout.swift */; };
+		0B3D2921336B533833058829 /* quran in Resources */ = {isa = PBXBuildFile; fileRef = 7AB948E93ABED6504E87449D /* quran */; };
 		12D590DA34A191EB5674BEFE /* WelcomeSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */; };
 		1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01744F945BA643B14B7465BE /* AqraWelcomeView.swift */; };
+		1C5F4BA3851DEFBE3DEFC906 /* MushafTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */; };
 		1EAB7A71C09ABF42DFDB12DF /* Amiri-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6E6984583BED0004A203DABB /* Amiri-Bold.ttf */; };
 		263DCB34D497E7EBE0794B0F /* Amiri-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */; };
 		57DEC10A3EC756442E353877 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 35F03A505062D433A0B82952 /* Localizable.xcstrings */; };
 		6FFAE34E3F9E52CC10B92D53 /* AppIconRenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */; };
 		713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */; };
-		932CC370BA0AEAC5EBC661FC /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A293266365B6803A2BE985 /* ContentView.swift */; };
 		95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CB3948E085F254CF36BF182 /* Color+Hex.swift */; };
 		9B6609EC32D686618171D356 /* FeaturesPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D44E6BE584D0B5057F1DD97B /* FeaturesPageView.swift */; };
 		9D6D88E273E4885187DC9823 /* AqraLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708045EEA73D597E66035897 /* AqraLogo.swift */; };
 		A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CF7CA2416343BC4067921C5 /* PageDots.swift */; };
+		B385724117B3DF0FF21962B3 /* MushafView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5374F6DB7F1FFAF810B695C4 /* MushafView.swift */; };
 		B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */; };
+		BDEC10886391E806B355B426 /* MushafStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836D08619011973FB71AEFC1 /* MushafStore.swift */; };
 		C07E4DA1A47CB3F5AD4F1A84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99C540650E9663B5B728582A /* Assets.xcassets */; };
 		C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */; };
 		C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF793C12D16FB36F80C61903 /* SacredText.swift */; };
 		CA36F4A0D29DE63EAD73FA60 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 69FA526BC35C31760E96760B /* OFL.txt */; };
 		DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A5BD4368E1C3CCFCDBDB66 /* StartPageView.swift */; };
 		E8E74CAA0E7A5D828639A8D3 /* AqraArchLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057E8C550F33565A3E785512 /* AqraArchLogo.swift */; };
+		EAEBCFF615FEDD24A42B8A43 /* MushafPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */; };
 		EB8C8031FA7C371C1FFA38C8 /* AqraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4971E9222377B2D0AE1D25DD /* AqraApp.swift */; };
 		EF4765262D5AA2C27811E483 /* AqraFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4936D1082FB73C3638CB969 /* AqraFont.swift */; };
 /* End PBXBuildFile section */
@@ -46,17 +50,21 @@
 		057E8C550F33565A3E785512 /* AqraArchLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraArchLogo.swift; sourceTree = "<group>"; };
 		0CB3948E085F254CF36BF182 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		197C7240EA806A2E4643B0F4 /* Aqra.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Aqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafTests.swift; sourceTree = "<group>"; };
 		269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManazilPageView.swift; sourceTree = "<group>"; };
 		2CF7CA2416343BC4067921C5 /* PageDots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageDots.swift; sourceTree = "<group>"; };
 		35F03A505062D433A0B82952 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
-		39A293266365B6803A2BE985 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4971E9222377B2D0AE1D25DD /* AqraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraApp.swift; sourceTree = "<group>"; };
 		4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		5374F6DB7F1FFAF810B695C4 /* MushafView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafView.swift; sourceTree = "<group>"; };
 		56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraTests.swift; sourceTree = "<group>"; };
 		69FA526BC35C31760E96760B /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
 		6E6984583BED0004A203DABB /* Amiri-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Amiri-Bold.ttf"; sourceTree = "<group>"; };
 		708045EEA73D597E66035897 /* AqraLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraLogo.swift; sourceTree = "<group>"; };
+		7AB948E93ABED6504E87449D /* quran */ = {isa = PBXFileReference; lastKnownFileType = folder; name = quran; path = ../../shared/quran; sourceTree = SOURCE_ROOT; };
+		836D08619011973FB71AEFC1 /* MushafStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafStore.swift; sourceTree = "<group>"; };
 		99C540650E9663B5B728582A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafPageView.swift; sourceTree = "<group>"; };
 		B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSnapshotTests.swift; sourceTree = "<group>"; };
 		C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconRenderTests.swift; sourceTree = "<group>"; };
 		C3D871D9287AF47EBED70889 /* OnboardingPageLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageLayout.swift; sourceTree = "<group>"; };
@@ -83,10 +91,20 @@
 			path = Onboarding;
 			sourceTree = "<group>";
 		};
+		28E1913F081F6C788EE5B202 /* Aqra */ = {
+			isa = PBXGroup;
+			children = (
+				F23E82B1E3CC8F124F30EC8D /* shared */,
+			);
+			name = Aqra;
+			path = ../..;
+			sourceTree = "<group>";
+		};
 		35C4FA37164CED27D576671C = {
 			isa = PBXGroup;
 			children = (
 				AE92FC988321CE55CA9CF8C2 /* Aqra */,
+				28E1913F081F6C788EE5B202 /* Aqra */,
 				BCA97CDCE4BDA45886DF3282 /* AqraTests */,
 				7CB4E00B6ED4E140218F3DEE /* Products */,
 			);
@@ -99,6 +117,16 @@
 				C3D8F702F0E08B9E7214A07A /* AqraTests.xctest */,
 			);
 			name = Products;
+			sourceTree = "<group>";
+		};
+		88636D0AF183BBA7F8083935 /* Mushaf */ = {
+			isa = PBXGroup;
+			children = (
+				A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */,
+				836D08619011973FB71AEFC1 /* MushafStore.swift */,
+				5374F6DB7F1FFAF810B695C4 /* MushafView.swift */,
+			);
+			path = Mushaf;
 			sourceTree = "<group>";
 		};
 		9C8F178663BAA7E3C4CCCF64 /* Resources */ = {
@@ -114,9 +142,9 @@
 			children = (
 				4971E9222377B2D0AE1D25DD /* AqraApp.swift */,
 				99C540650E9663B5B728582A /* Assets.xcassets */,
-				39A293266365B6803A2BE985 /* ContentView.swift */,
 				35F03A505062D433A0B82952 /* Localizable.xcstrings */,
 				FC29328FD3B6841D595DB0AC /* DesignSystem */,
+				88636D0AF183BBA7F8083935 /* Mushaf */,
 				1549276E68F0E369A83EEED1 /* Onboarding */,
 				9C8F178663BAA7E3C4CCCF64 /* Resources */,
 				FE352AD1935C1FB58065078E /* SacredText */,
@@ -129,6 +157,7 @@
 			children = (
 				C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */,
 				56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */,
+				264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */,
 				B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */,
 			);
 			path = AqraTests;
@@ -142,6 +171,14 @@
 				69FA526BC35C31760E96760B /* OFL.txt */,
 			);
 			path = Fonts;
+			sourceTree = "<group>";
+		};
+		F23E82B1E3CC8F124F30EC8D /* shared */ = {
+			isa = PBXGroup;
+			children = (
+				7AB948E93ABED6504E87449D /* quran */,
+			);
+			path = shared;
 			sourceTree = "<group>";
 		};
 		FC29328FD3B6841D595DB0AC /* DesignSystem */ = {
@@ -247,6 +284,7 @@
 				C07E4DA1A47CB3F5AD4F1A84 /* Assets.xcassets in Resources */,
 				57DEC10A3EC756442E353877 /* Localizable.xcstrings in Resources */,
 				CA36F4A0D29DE63EAD73FA60 /* OFL.txt in Resources */,
+				0B3D2921336B533833058829 /* quran in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -259,6 +297,7 @@
 			files = (
 				6FFAE34E3F9E52CC10B92D53 /* AppIconRenderTests.swift in Sources */,
 				713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */,
+				1C5F4BA3851DEFBE3DEFC906 /* MushafTests.swift in Sources */,
 				12D590DA34A191EB5674BEFE /* WelcomeSnapshotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -273,9 +312,11 @@
 				9D6D88E273E4885187DC9823 /* AqraLogo.swift in Sources */,
 				1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */,
 				95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */,
-				932CC370BA0AEAC5EBC661FC /* ContentView.swift in Sources */,
 				9B6609EC32D686618171D356 /* FeaturesPageView.swift in Sources */,
 				C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */,
+				EAEBCFF615FEDD24A42B8A43 /* MushafPageView.swift in Sources */,
+				BDEC10886391E806B355B426 /* MushafStore.swift in Sources */,
+				B385724117B3DF0FF21962B3 /* MushafView.swift in Sources */,
 				028487F5A6C0BED60172B546 /* OnboardingPageLayout.swift in Sources */,
 				B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */,
 				A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */,

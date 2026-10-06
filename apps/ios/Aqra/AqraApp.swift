@@ -11,7 +11,7 @@ struct AqraApp: App {
     var body: some Scene {
         WindowGroup {
             if hasSeenOnboarding {
-                ContentView()
+                MushafRootView()
             } else {
                 OnboardingView { withAnimation { hasSeenOnboarding = true } }
             }

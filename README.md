@@ -12,3 +12,12 @@ backend/      Firebase: Cloud Functions, Firestore rules and indexes (planned)
 shared/       Platform-neutral data, e.g. the verified Quran text and its checksums (planned)
 docs/         Product and technical documentation, see docs/VISION.md
 ```
+
+## Setup
+
+The 604 Mushaf page fonts (~205 MB) aren't in git. After cloning, restore and verify them before building:
+
+```
+scripts/fetch-mushaf-fonts.sh
+```
+

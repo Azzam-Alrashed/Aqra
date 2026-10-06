@@ -3,3 +3,6 @@ xcuserdata/
 DerivedData/
 build/
 *.xcuserstate
+
+# Mushaf page fonts (~205 MB): restore with scripts/fetch-mushaf-fonts.sh
+shared/quran/qcf2/

@@ -14,7 +14,12 @@ targets:
   Aqra:
     type: application
     platform: iOS
-    sources: [Aqra]
+    sources:
+      - Aqra
+      # The shared Quran data, bundled as a "quran" folder (see shared/quran/README.md).
+      - path: ../../shared/quran
+        type: folder
+        buildPhase: resources
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.azzamalrashed.aqra

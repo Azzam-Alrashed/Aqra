@@ -1,5 +1,6 @@
 # Aqra — Shared
 
-Planned. Platform-neutral data used by every app, including the verified Quran text (King Fahd Complex, Hafs) and its checksums.
+Platform-neutral data used by every app.
 
-The Quran text must never be edited by hand. See [docs/VISION.md](../docs/VISION.md#quran-text).
+- [`quran/`](quran/README.md) — the Quran text, Mushaf layout and page fonts, with their sources, licenses and
+  checksums. Never edited by hand.

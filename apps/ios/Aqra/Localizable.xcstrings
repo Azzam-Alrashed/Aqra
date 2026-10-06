@@ -1,32 +1,12 @@
 {
   "sourceLanguage": "en",
   "strings": {
-    "Aqra": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اقرأ"
-          }
-        }
-      }
-    },
     "Begin": {
       "localizations": {
         "ar": {
           "stringUnit": {
             "state": "translated",
             "value": "ابدأ"
-          }
-        }
-      }
-    },
-    "Read and ascend": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اقرأ وارتقِ"
           }
         }
       }
@@ -147,6 +127,16 @@
           "stringUnit": {
             "state": "translated",
             "value": "تقدّمك يُحفظ على جهازك، ويمكنك ربطه بحسابك متى شئت."
+          }
+        }
+      }
+    },
+    "The Mushaf couldn't be loaded": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "تعذّر تحميل المصحف"
           }
         }
       }
