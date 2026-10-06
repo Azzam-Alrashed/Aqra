@@ -1,6 +1,8 @@
 # Aqra — Vision
 
-> «يُقَالُ لِصَاحِبِ القُرْآنِ: اقْرَأْ وَارْتَقِ، وَرَتِّلْ كَمَا كُنْتَ تُرَتِّلُ في الدُّنْيَا؛ فإنَّ مَنْزِلَكَ عِنْدَ آخِرِ آيةٍ تَقرَؤُها»
+> «يقالُ لصاحِبِ القرآنِ اقرَأ وارقَ ورتِّل كما كُنتَ ترتِّلُ في الدُّنيا فإنَّ منزلتَكَ عندَ آخرِ آيةٍ تقرؤُها»
+>
+> رواه أحمد
 
 This document records the product decisions agreed so far. It is a living document: update it as open questions are settled.
 

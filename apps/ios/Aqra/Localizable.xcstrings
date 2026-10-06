@@ -1,16 +1,106 @@
 {
-  "sourceLanguage" : "en",
-  "strings" : {
-    "Aqra" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اقرأ" } }
+  "sourceLanguage": "en",
+  "strings": {
+    "Aqra": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اقرأ"
+          }
+        }
       }
     },
-    "Read and ascend" : {
-      "localizations" : {
-        "ar" : { "stringUnit" : { "state" : "translated", "value" : "اقرأ وارتقِ" } }
+    "Begin": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ابدأ"
+          }
+        }
+      }
+    },
+    "I have an account": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "لديّ حساب"
+          }
+        }
+      }
+    },
+    "Read and ascend": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "اقرأ وارتقِ"
+          }
+        }
+      }
+    },
+    "Reported by Ahmad": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "رواه أحمد"
+          }
+        }
+      }
+    },
+    "Translation: Jami' at-Tirmidhi 2914, Darussalam": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "الترجمة: جامع الترمذي 2914، دار السلام"
+          }
+        }
+      }
+    },
+    "Strengthen your memorization,": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "ثبِّت حفظك،"
+          }
+        }
+      }
+    },
+    "and rise, ayah by ayah.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "وارتقِ آيةً بعد آية"
+          }
+        }
+      }
+    },
+    "Revise every day, and climb your stations in Aqra.": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "راجِع كل يوم، وارتقِ في منازلك على اقرأ."
+          }
+        }
+      }
+    },
+    "Continue": {
+      "localizations": {
+        "ar": {
+          "stringUnit": {
+            "state": "translated",
+            "value": "متابعة"
+          }
+        }
       }
     }
   },
-  "version" : "1.0"
+  "version": "1.1"
 }

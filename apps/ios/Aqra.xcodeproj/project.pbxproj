@@ -7,11 +7,26 @@
 	objects = {
 
 /* Begin PBXBuildFile section */
+		028487F5A6C0BED60172B546 /* OnboardingPageLayout.swift in Sources */ = {isa = PBXBuildFile; fileRef = C3D871D9287AF47EBED70889 /* OnboardingPageLayout.swift */; };
+		12D590DA34A191EB5674BEFE /* WelcomeSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */; };
+		1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01744F945BA643B14B7465BE /* AqraWelcomeView.swift */; };
+		1EAB7A71C09ABF42DFDB12DF /* Amiri-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6E6984583BED0004A203DABB /* Amiri-Bold.ttf */; };
+		263DCB34D497E7EBE0794B0F /* Amiri-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */; };
 		57DEC10A3EC756442E353877 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 35F03A505062D433A0B82952 /* Localizable.xcstrings */; };
+		6FFAE34E3F9E52CC10B92D53 /* AppIconRenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */; };
 		713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */; };
 		932CC370BA0AEAC5EBC661FC /* ContentView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 39A293266365B6803A2BE985 /* ContentView.swift */; };
+		95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CB3948E085F254CF36BF182 /* Color+Hex.swift */; };
+		9D6D88E273E4885187DC9823 /* AqraLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708045EEA73D597E66035897 /* AqraLogo.swift */; };
+		A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CF7CA2416343BC4067921C5 /* PageDots.swift */; };
+		B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */; };
 		C07E4DA1A47CB3F5AD4F1A84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99C540650E9663B5B728582A /* Assets.xcassets */; };
+		C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */; };
+		C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF793C12D16FB36F80C61903 /* SacredText.swift */; };
+		CA36F4A0D29DE63EAD73FA60 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 69FA526BC35C31760E96760B /* OFL.txt */; };
+		E8E74CAA0E7A5D828639A8D3 /* AqraArchLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057E8C550F33565A3E785512 /* AqraArchLogo.swift */; };
 		EB8C8031FA7C371C1FFA38C8 /* AqraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4971E9222377B2D0AE1D25DD /* AqraApp.swift */; };
+		EF4765262D5AA2C27811E483 /* AqraFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4936D1082FB73C3638CB969 /* AqraFont.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -25,16 +40,43 @@
 /* End PBXContainerItemProxy section */
 
 /* Begin PBXFileReference section */
-		197C7240EA806A2E4643B0F4 /* Aqra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		01744F945BA643B14B7465BE /* AqraWelcomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraWelcomeView.swift; sourceTree = "<group>"; };
+		057E8C550F33565A3E785512 /* AqraArchLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraArchLogo.swift; sourceTree = "<group>"; };
+		0CB3948E085F254CF36BF182 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		197C7240EA806A2E4643B0F4 /* Aqra.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Aqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManazilPageView.swift; sourceTree = "<group>"; };
+		2CF7CA2416343BC4067921C5 /* PageDots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageDots.swift; sourceTree = "<group>"; };
 		35F03A505062D433A0B82952 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		39A293266365B6803A2BE985 /* ContentView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ContentView.swift; sourceTree = "<group>"; };
 		4971E9222377B2D0AE1D25DD /* AqraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraApp.swift; sourceTree = "<group>"; };
+		4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraTests.swift; sourceTree = "<group>"; };
+		69FA526BC35C31760E96760B /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
+		6E6984583BED0004A203DABB /* Amiri-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Amiri-Bold.ttf"; sourceTree = "<group>"; };
+		708045EEA73D597E66035897 /* AqraLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraLogo.swift; sourceTree = "<group>"; };
 		99C540650E9663B5B728582A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSnapshotTests.swift; sourceTree = "<group>"; };
+		C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconRenderTests.swift; sourceTree = "<group>"; };
+		C3D871D9287AF47EBED70889 /* OnboardingPageLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageLayout.swift; sourceTree = "<group>"; };
 		C3D8F702F0E08B9E7214A07A /* AqraTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AqraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Amiri-Regular.ttf"; sourceTree = "<group>"; };
+		F4936D1082FB73C3638CB969 /* AqraFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraFont.swift; sourceTree = "<group>"; };
+		FF793C12D16FB36F80C61903 /* SacredText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SacredText.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
 /* Begin PBXGroup section */
+		1549276E68F0E369A83EEED1 /* Onboarding */ = {
+			isa = PBXGroup;
+			children = (
+				01744F945BA643B14B7465BE /* AqraWelcomeView.swift */,
+				269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */,
+				C3D871D9287AF47EBED70889 /* OnboardingPageLayout.swift */,
+				4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */,
+				2CF7CA2416343BC4067921C5 /* PageDots.swift */,
+			);
+			path = Onboarding;
+			sourceTree = "<group>";
+		};
 		35C4FA37164CED27D576671C = {
 			isa = PBXGroup;
 			children = (
@@ -53,6 +95,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		9C8F178663BAA7E3C4CCCF64 /* Resources */ = {
+			isa = PBXGroup;
+			children = (
+				D47E496FF7FBA1F255B372A9 /* Fonts */,
+			);
+			path = Resources;
+			sourceTree = "<group>";
+		};
 		AE92FC988321CE55CA9CF8C2 /* Aqra */ = {
 			isa = PBXGroup;
 			children = (
@@ -60,6 +110,10 @@
 				99C540650E9663B5B728582A /* Assets.xcassets */,
 				39A293266365B6803A2BE985 /* ContentView.swift */,
 				35F03A505062D433A0B82952 /* Localizable.xcstrings */,
+				FC29328FD3B6841D595DB0AC /* DesignSystem */,
+				1549276E68F0E369A83EEED1 /* Onboarding */,
+				9C8F178663BAA7E3C4CCCF64 /* Resources */,
+				FE352AD1935C1FB58065078E /* SacredText */,
 			);
 			path = Aqra;
 			sourceTree = "<group>";
@@ -67,9 +121,40 @@
 		BCA97CDCE4BDA45886DF3282 /* AqraTests */ = {
 			isa = PBXGroup;
 			children = (
+				C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */,
 				56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */,
+				B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */,
 			);
 			path = AqraTests;
+			sourceTree = "<group>";
+		};
+		D47E496FF7FBA1F255B372A9 /* Fonts */ = {
+			isa = PBXGroup;
+			children = (
+				6E6984583BED0004A203DABB /* Amiri-Bold.ttf */,
+				CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */,
+				69FA526BC35C31760E96760B /* OFL.txt */,
+			);
+			path = Fonts;
+			sourceTree = "<group>";
+		};
+		FC29328FD3B6841D595DB0AC /* DesignSystem */ = {
+			isa = PBXGroup;
+			children = (
+				057E8C550F33565A3E785512 /* AqraArchLogo.swift */,
+				F4936D1082FB73C3638CB969 /* AqraFont.swift */,
+				708045EEA73D597E66035897 /* AqraLogo.swift */,
+				0CB3948E085F254CF36BF182 /* Color+Hex.swift */,
+			);
+			path = DesignSystem;
+			sourceTree = "<group>";
+		};
+		FE352AD1935C1FB58065078E /* SacredText */ = {
+			isa = PBXGroup;
+			children = (
+				FF793C12D16FB36F80C61903 /* SacredText.swift */,
+			);
+			path = SacredText;
 			sourceTree = "<group>";
 		};
 /* End PBXGroup section */
@@ -119,6 +204,11 @@
 			attributes = {
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
+				TargetAttributes = {
+					9A7857D210E571C3443F915D = {
+						DevelopmentTeam = 6QYT6GJB4Z;
+					};
+				};
 			};
 			buildConfigurationList = 6DE457977ED11E777BDDE4B2 /* Build configuration list for PBXProject "Aqra" */;
 			developmentRegion = en;
@@ -146,8 +236,11 @@
 			isa = PBXResourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1EAB7A71C09ABF42DFDB12DF /* Amiri-Bold.ttf in Resources */,
+				263DCB34D497E7EBE0794B0F /* Amiri-Regular.ttf in Resources */,
 				C07E4DA1A47CB3F5AD4F1A84 /* Assets.xcassets in Resources */,
 				57DEC10A3EC756442E353877 /* Localizable.xcstrings in Resources */,
+				CA36F4A0D29DE63EAD73FA60 /* OFL.txt in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -158,7 +251,9 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				6FFAE34E3F9E52CC10B92D53 /* AppIconRenderTests.swift in Sources */,
 				713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */,
+				12D590DA34A191EB5674BEFE /* WelcomeSnapshotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -167,7 +262,17 @@
 			buildActionMask = 2147483647;
 			files = (
 				EB8C8031FA7C371C1FFA38C8 /* AqraApp.swift in Sources */,
+				E8E74CAA0E7A5D828639A8D3 /* AqraArchLogo.swift in Sources */,
+				EF4765262D5AA2C27811E483 /* AqraFont.swift in Sources */,
+				9D6D88E273E4885187DC9823 /* AqraLogo.swift in Sources */,
+				1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */,
+				95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */,
 				932CC370BA0AEAC5EBC661FC /* ContentView.swift in Sources */,
+				C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */,
+				028487F5A6C0BED60172B546 /* OnboardingPageLayout.swift in Sources */,
+				B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */,
+				A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */,
+				C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -194,7 +299,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -202,8 +307,10 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.aqra;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Release;
 		};
@@ -318,7 +425,7 @@
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
-				INFOPLIST_KEY_UISupportedInterfaceOrientations = UIInterfaceOrientationPortrait;
+				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
 					"@executable_path/Frameworks",
@@ -326,8 +433,10 @@
 				LOCALIZATION_PREFERS_STRING_CATALOGS = YES;
 				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.aqra;
 				SDKROOT = iphoneos;
+				SUPPORTED_PLATFORMS = "iphoneos iphonesimulator";
+				SUPPORTS_MACCATALYST = NO;
 				SWIFT_EMIT_LOC_STRINGS = YES;
-				TARGETED_DEVICE_FAMILY = 1;
+				TARGETED_DEVICE_FAMILY = "1,2";
 			};
 			name = Debug;
 		};
