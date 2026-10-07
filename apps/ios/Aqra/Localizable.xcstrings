@@ -193,6 +193,208 @@
         }
       }
     },
+    "%lld of %lld" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld من %2$lld"
+          }
+        }
+      }
+    },
+    "%lld pages a day" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld صفحات يوميًا"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld صفحة يوميًا"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صفحة واحدة يوميًا"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld صفحة يوميًا"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صفحتان يوميًا"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld صفحة يوميًا"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld page a day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pages a day"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld stumbles" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تعثّرات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تعثّرًا"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تعثّر واحد"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تعثّر"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تعثّران"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا تعثّر"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld stumble"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld stumbles"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "A full revision every %lld days" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ختمة مراجعة كل %lld أيام"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ختمة مراجعة كل %lld يومًا"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ختمة مراجعة كل يوم"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ختمة مراجعة كل %lld يوم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ختمة مراجعة كل يومين"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ختمة مراجعة كل %lld يوم"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A full revision every day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A full revision every %lld days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Begin" : {
       "localizations" : {
         "ar" : {
@@ -209,6 +411,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الصفحتان"
+          }
+        }
+      }
+    },
+    "Choose what you've memorized" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حدّد ما تحفظه"
           }
         }
       }
@@ -283,6 +495,26 @@
         }
       }
     },
+    "Follow-up" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متابعة"
+          }
+        }
+      }
+    },
+    "How much will you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كم تراجع"
+          }
+        }
+      }
+    },
     "I'm just starting" : {
       "localizations" : {
         "ar" : {
@@ -333,6 +565,16 @@
         }
       }
     },
+    "Leave revision" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنهاء المراجعة"
+          }
+        }
+      }
+    },
     "Mark pages and ayat in the Mushaf" : {
       "localizations" : {
         "ar" : {
@@ -353,12 +595,32 @@
         }
       }
     },
+    "Next ayah" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآية التالية"
+          }
+        }
+      }
+    },
     "Now tap the last ayah of the range" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "اضغط الآن على آخر آية في المدى"
+          }
+        }
+      }
+    },
+    "Page %lld" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصفحة %lld"
           }
         }
       }
@@ -393,12 +655,82 @@
         }
       }
     },
+    "Revised a page outside the app? Press and hold it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجعت صفحة خارج التطبيق؟ اضغط عليها مطوّلًا."
+          }
+        }
+      }
+    },
+    "Revised outside the app" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجعتها خارج التطبيق"
+          }
+        }
+      }
+    },
+    "Rotation" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الوِرد"
+          }
+        }
+      }
+    },
+    "Save" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ"
+          }
+        }
+      }
+    },
+    "Show page" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أظهر الصفحة"
+          }
+        }
+      }
+    },
+    "Start" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ"
+          }
+        }
+      }
+    },
     "Strengthen your memorization," : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ثبِّت حفظك،"
+          }
+        }
+      }
+    },
+    "Suggested: %lld" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المقترح: %lld"
           }
         }
       }
@@ -433,6 +765,16 @@
         }
       }
     },
+    "Tap to reveal the next ayah, and tap a revealed ayah if you stumbled on it" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط لإظهار الآية التالية، واضغط على آية ظاهرة إن تعثّرت فيها"
+          }
+        }
+      }
+    },
     "The Mushaf couldn't be loaded" : {
       "localizations" : {
         "ar" : {
@@ -449,6 +791,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "القرآن كاملًا"
+          }
+        }
+      }
+    },
+    "Today's revision" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وِرد اليوم"
+          }
+        }
+      }
+    },
+    "Today's revision is done" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أتممت وِرد اليوم"
           }
         }
       }
@@ -549,6 +911,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "من القرآن؟"
+          }
+        }
+      }
+    },
+    "pages a day" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صفحة في اليوم"
+          }
+        }
+      }
+    },
+    "revise each day?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل يوم؟"
           }
         }
       }

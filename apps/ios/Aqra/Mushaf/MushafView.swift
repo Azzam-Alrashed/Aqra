@@ -8,6 +8,8 @@ struct MushafView: View {
     var startsMarking = false
 
     @Environment(MemorizationStore.self) private var memorization
+    @Environment(RevisionStore.self) private var revision
+    @Environment(\.scenePhase) private var scenePhase
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @AppStorage("mushaf.topics") private var topicColors = true
@@ -20,34 +22,58 @@ struct MushafView: View {
     /// Marking mode, while the student marks the ayat they've memorized.
     @State private var marking: MarkingSession?
     @State private var showingSetup = false
+    /// Revision of one page, started from today's plan.
+    @State private var revising: RevisionSession?
+    @State private var showingToday = false
 
     var body: some View {
         GeometryReader { geometry in
             let facingPages = geometry.size.width > geometry.size.height && geometry.size.width >= 900
             ZStack {
                 Group {
-                    if facingPages { spreadPager } else { pagePager }
+                    if let revising {
+                        // A revision holds its page still: no turning until it's done.
+                        revisionPages(revising, facingPages: facingPages)
+                    } else if facingPages {
+                        spreadPager
+                    } else {
+                        pagePager
+                    }
                 }
                 .environment(\.mushafTajweed, tajweed)
                 .environment(\.mushafTopics, topicColors)
                 .environment(marking)
+                .environment(revising)
                 .onTapGesture {
-                    // In marking mode, taps mark ayat and the toolbar stays.
-                    guard marking == nil else { return }
+                    // In marking mode and in revision, taps belong to the page and the toolbar stays.
+                    guard marking == nil, revising == nil else { return }
                     withAnimation(.easeInOut(duration: 0.2)) { toolbarVisible.toggle() }
                 }
 
-                if toolbarVisible {
-                    VStack(spacing: 0) {
-                        topBar
-                        Spacer()
-                        if let marking {
-                            markingBar(marking, pages: facingPages ? spreadPages : [lastPage])
-                        } else {
-                            bottomBar
-                        }
+                VStack(spacing: 0) {
+                    if toolbarVisible {
+                        topBar.transition(.opacity)
                     }
-                    .transition(.opacity)
+                    Spacer()
+                    if marking == nil, revising == nil {
+                        // The pill sits on the page's footer row beside the page number, or above the bottom bar.
+                        TodayPill(plan: revision.plan) { openToday() }
+                            .frame(maxWidth: .infinity, alignment: .leading)
+                            .padding(.horizontal, facingPages ? 40 : 14)
+                            .padding(.bottom, toolbarVisible ? 10 : 0)
+                    }
+                    if toolbarVisible {
+                        Group {
+                            if let marking {
+                                markingBar(marking, pages: facingPages ? spreadPages : [lastPage])
+                            } else if let revising {
+                                revisionBar(revising)
+                            } else {
+                                bottomBar
+                            }
+                        }
+                        .transition(.opacity)
+                    }
                 }
             }
         }
@@ -64,6 +90,11 @@ struct MushafView: View {
         .onAppear {
             if startsMarking && marking == nil { startMarking() }
         }
+        // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
+        .task { refreshPlan() }
+        .onChange(of: memorization.count) { refreshPlan() }
+        .onChange(of: scenePhase) { if scenePhase == .active { refreshPlan() } }
+        .sensoryFeedback(.success, trigger: revision.plan?.isComplete == true) { _, isComplete in isComplete }
         // A light tick as each page turns, and a firmer one on entering a new juz'.
         .sensoryFeedback(.selection, trigger: lastPage)
         .sensoryFeedback(.impact(weight: .medium), trigger: store.page(lastPage).juz)
@@ -72,6 +103,11 @@ struct MushafView: View {
         .sheet(isPresented: $showingSetup) {
             MemorizationSetupView(store: store, isSheet: true) { _ in showingSetup = false }
                 .environment(memorization)
+        }
+        .sheet(isPresented: $showingToday) {
+            TodayView(store: store, onStart: startRevision(of:))
+                .environment(memorization)
+                .environment(revision)
         }
         .sheet(isPresented: $showingIndex) {
             MushafIndexView(store: store, currentPage: lastPage) { page in
@@ -109,6 +145,109 @@ struct MushafView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    // MARK: - Today and revision
+
+    private func refreshPlan() {
+        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization))
+    }
+
+    /// The pill opens today's plan, or, with nothing memorized yet, the screen to choose it.
+    private func openToday() {
+        if revision.plan?.items.isEmpty ?? true {
+            showingSetup = true
+        } else {
+            showingToday = true
+        }
+    }
+
+    private func startRevision(of page: Int) {
+        showingToday = false
+        marking = nil
+        let ayahs = store.page(page).ayahs.filter { memorization.isMemorized($0) }
+        movedByToolbar = page != lastPage
+        lastPage = page
+        withAnimation(.easeInOut(duration: 0.25)) {
+            revising = RevisionSession(page: page, ayahs: ayahs)
+            toolbarVisible = true
+        }
+    }
+
+    private func finishRevision(_ session: RevisionSession, record: Bool) {
+        if record {
+            revision.record(page: session.page, ayahs: session.ayahs, stumbles: session.stumbles,
+                            source: .app, memorization: memorization)
+        }
+        withAnimation(.easeInOut(duration: 0.25)) { revising = nil }
+        if record { showingToday = true }
+    }
+
+    @ViewBuilder
+    private func revisionPages(_ session: RevisionSession, facingPages: Bool) -> some View {
+        if facingPages {
+            MushafSpreadView(spread: (session.page + 1) / 2, store: store)
+        } else {
+            MushafPageView(page: store.page(session.page), store: store)
+        }
+    }
+
+    private func revisionBar(_ session: RevisionSession) -> some View {
+        VStack(spacing: 12) {
+            HStack(alignment: .center, spacing: 12) {
+                Button {
+                    finishRevision(session, record: false)
+                } label: {
+                    Label("Leave revision", systemImage: "xmark")
+                        .labelStyle(.iconOnly)
+                        .font(.system(size: 15, weight: .bold))
+                        .frame(width: 36, height: 36)
+                        .background(MushafStyle.markerFill, in: Circle())
+                }
+                VStack(alignment: .leading, spacing: 2) {
+                    Text("Page \(session.page)")
+                        .font(.system(size: 16, weight: .bold, design: .rounded))
+                    Text("\(min(session.revealed, session.ayahs.count)) of \(session.ayahs.count)")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(MushafStyle.chrome)
+                        .contentTransition(.numericText())
+                }
+                Spacer()
+                if !session.stumbles.isEmpty {
+                    Text("\(session.stumbles.count) stumbles")
+                        .font(.system(size: 13, weight: .bold, design: .rounded))
+                        .padding(.horizontal, 12)
+                        .frame(height: 30)
+                        .background(MushafStyle.stumble, in: Capsule())
+                        .transition(.scale.combined(with: .opacity))
+                }
+            }
+            Text("Tap to reveal the next ayah, and tap a revealed ayah if you stumbled on it")
+                .font(.system(size: 12, weight: .medium, design: .rounded))
+                .foregroundStyle(MushafStyle.chrome)
+                .lineLimit(2)
+                .multilineTextAlignment(.center)
+                .frame(maxWidth: .infinity)
+            HStack(spacing: 10) {
+                Button("Next ayah") { withAnimation(.easeOut(duration: 0.2)) { session.revealNext() } }
+                    .buttonStyle(MarkingButtonStyle())
+                    .disabled(session.isComplete)
+                Button("Show page") { withAnimation(.easeOut(duration: 0.2)) { session.revealAll() } }
+                    .buttonStyle(MarkingButtonStyle())
+                    .disabled(session.isComplete)
+                Button("Done") { finishRevision(session, record: true) }
+                    .buttonStyle(MarkingButtonStyle(prominent: true))
+            }
+        }
+        .animation(.snappy, value: session.stumbles.count)
+        .sensoryFeedback(.selection, trigger: session.revealed)
+        .sensoryFeedback(.impact(weight: .light), trigger: session.stumbles.count)
+        .foregroundStyle(MushafStyle.ink)
+        .padding(.horizontal, 16)
+        .padding(.vertical, 14)
+        .frame(maxWidth: .infinity)
+        .background(.ultraThinMaterial)
         .environment(\.layoutDirection, .rightToLeft)
     }
 
@@ -266,17 +405,31 @@ struct MushafSpreadView: View {
 struct MushafRootView: View {
     @State private var store: Result<MushafStore, Error>?
     @State private var memorization = MemorizationStore()
+    @State private var revision = RevisionStore()
     /// Whether the student has said what they've memorized (or that they're just starting).
     @AppStorage("memorization.hasDeclared") private var hasDeclared = false
     @State private var startsMarking = false
+    /// After choosing what they've memorized, the student chooses how much to revise each day.
+    @State private var askingDailyAmount = false
 
     var body: some View {
         Group {
             switch store {
+            case .success(let store) where !hasDeclared && askingDailyAmount:
+                let pages = RevisionStore.memorizedPages(in: store, memorization: memorization).count
+                DailyAmountView(memorizedPages: pages, initial: revision.effectiveDailyPages(memorizedPages: pages)) { amount in
+                    revision.setDailyPages(amount)
+                    withAnimation { hasDeclared = true }
+                }
+                .transition(.move(edge: .leading).combined(with: .opacity))
             case .success(let store) where !hasDeclared:
                 MemorizationSetupView(store: store) { markInMushaf in
                     startsMarking = markInMushaf
-                    withAnimation { hasDeclared = true }
+                    if !markInMushaf && memorization.count > 0 {
+                        withAnimation { askingDailyAmount = true }
+                    } else {
+                        withAnimation { hasDeclared = true }
+                    }
                 }
             case .success(let store):
                 MushafView(store: store, startsMarking: startsMarking)
@@ -290,6 +443,7 @@ struct MushafRootView: View {
             }
         }
         .environment(memorization)
+        .environment(revision)
         .task {
             guard store == nil else { return }
             // Decoding the Quran data takes a moment; keep it off the main thread so the app stays responsive.
@@ -313,5 +467,53 @@ private struct MarkingButtonStyle: ButtonStyle {
             .background(prominent ? MushafStyle.marker : MushafStyle.markerFill, in: Capsule())
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
+    }
+}
+
+/// «وِرد اليوم» on the Mushaf: how much of today's plan is done, a tap away from the plan itself.
+private struct TodayPill: View {
+    var plan: DayPlan?
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            HStack(spacing: 7) {
+                if let plan, !plan.items.isEmpty {
+                    if plan.isComplete {
+                        StarShape(points: 8, innerRatio: 0.42, cornerRadius: 0.05)
+                            .fill(MushafStyle.gold)
+                            .frame(width: 15, height: 15)
+                        Text("Today's revision is done")
+                    } else {
+                        ZStack {
+                            Circle().stroke(MushafStyle.marker.opacity(0.25), lineWidth: 2.5)
+                            Circle()
+                                .trim(from: 0, to: Double(plan.doneCount) / Double(plan.items.count))
+                                .stroke(MushafStyle.marker, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
+                                .rotationEffect(.degrees(-90))
+                        }
+                        .frame(width: 15, height: 15)
+                        Text("Today's revision")
+                        Text("\(plan.doneCount) of \(plan.items.count)")
+                            .monospacedDigit()
+                            .foregroundStyle(MushafStyle.chrome)
+                    }
+                } else {
+                    Image(systemName: "plus")
+                        .font(.system(size: 11, weight: .heavy))
+                    Text("Choose what you've memorized")
+                }
+            }
+            .font(.system(size: 13, weight: .bold, design: .rounded))
+            .foregroundStyle(MushafStyle.ink)
+            .lineLimit(1)
+            .padding(.horizontal, 12)
+            .frame(height: 30)
+            .background(plan?.isComplete == true ? MushafStyle.markerFill : MushafStyle.paper, in: Capsule())
+            .overlay(Capsule().strokeBorder(MushafStyle.gold.opacity(0.6), lineWidth: 1))
+            .animation(.snappy, value: plan?.doneCount)
+        }
+        .buttonStyle(.plain)
+        .environment(\.layoutDirection, .rightToLeft)
     }
 }

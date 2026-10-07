@@ -13,6 +13,9 @@ enum MushafStyle {
     /// Ayah-end markers: a soft disc behind a brown-gold rosette and number.
     static let markerFill = Color(light: 0xF1E4C8, dark: 0x3A2F22)
     static let marker = Color(light: 0x8C6A3F, dark: 0xD9BC82)
+    /// In revision, the soft bars that veil words not yet revealed, and the wash behind an ayah stumbled on.
+    static let veil = Color(light: 0xE6DAC2, dark: 0x3C3228)
+    static let stumble = Color(light: 0xF4BFAE, dark: 0x7C3B2D)
     /// Topic sections, in the soft pastels of a colored Mushaf: mint, sky, rose, lavender, butter and peach.
     /// Neighboring sections always take different colors.
     static let topics = [
@@ -93,6 +96,7 @@ enum MushafFonts {
             outline: Path(outline),
             layers: layers,
             inkBox: outline.boundingBoxOfPath,
+            baseline: ascent,
             size: CGSize(width: CTLineGetTypographicBounds(line, nil, nil, nil),
                          height: ascent + CTFontGetDescent(font) + CTFontGetLeading(font))
         )
@@ -146,6 +150,8 @@ struct WordGlyph {
     /// The word's colored tajweed layers in drawing order, painted only inside the outline.
     var layers: [TajweedLayer]
     var inkBox: CGRect
+    /// The baseline's distance from the top.
+    var baseline: CGFloat
     var size: CGSize
 }
 
@@ -215,7 +221,8 @@ extension EnvironmentValues {
 }
 
 /// One Mushaf page: 15 lines in the page's own font, framed by the surah, juz' and page number.
-/// Memorized ayat sit on their topic section's color; in marking mode, taps and drags mark ayat.
+/// Memorized ayat sit on their topic section's color; in marking mode, taps mark ayat; in revision, the page's
+/// memorized ayat are veiled and revealed one at a time.
 struct MushafPageView: View {
     var page: MushafPage
     var store: MushafStore
@@ -223,6 +230,7 @@ struct MushafPageView: View {
     @Environment(\.mushafTopics) private var topics
     @Environment(MemorizationStore.self) private var memorization: MemorizationStore?
     @Environment(MarkingSession.self) private var marking: MarkingSession?
+    @Environment(RevisionSession.self) private var revisionSession: RevisionSession?
     /// Set when a press in marking mode lasts long enough to start a range.
     @State private var pressedLong = false
 
@@ -244,7 +252,9 @@ struct MushafPageView: View {
             .frame(width: geometry.size.width, height: geometry.size.height)
         }
         .background(MushafStyle.paper)
-        .overlay { if let marking { markingLayer(marking) } }
+        .overlay {
+            if let revision { revisionLayer(revision) } else if let marking { markingLayer(marking) }
+        }
         .environment(\.layoutDirection, .rightToLeft)
         // The words are font glyphs that VoiceOver can't read; give it the page in plain text instead.
         .accessibilityElement(children: .ignore)
@@ -268,6 +278,23 @@ struct MushafPageView: View {
                 )
         }
         // Locations are measured from the page's left edge, like the lines' own layout.
+        .environment(\.layoutDirection, .leftToRight)
+    }
+
+    /// The revision under way on this page, if any.
+    private var revision: RevisionSession? {
+        revisionSession.flatMap { $0.page == page.number ? $0 : nil }
+    }
+
+    /// Revision: a tap reveals the next ayah, or marks a stumble on an ayah already revealed.
+    private func revisionLayer(_ revision: RevisionSession) -> some View {
+        GeometryReader { geometry in
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture { location in
+                    revision.tap(Self.ayah(at: location, on: page, size: geometry.size))
+                }
+        }
         .environment(\.layoutDirection, .leftToRight)
     }
 
@@ -325,17 +352,26 @@ struct MushafPageView: View {
         case .ayah(let words, let centered):
             let glyphs = words.compactMap { word in
                 MushafFonts.word(word.glyph, page: page.number, size: fontSize).map {
-                    LineWord(isAyahEnd: word.isAyahEnd, highlight: topics ? highlight(for: word) : nil, glyph: $0)
+                    LineWord(isAyahEnd: word.isAyahEnd, highlight: topics ? highlight(for: word) : nil,
+                             state: state(of: word), glyph: $0)
                 }
             }
-            AyahLine(words: glyphs, centered: centered, tajweed: tajweed, wordSpacing: metrics.wordSpacing)
+            AyahLine(words: glyphs, centered: centered, tajweed: tajweed, fontSize: fontSize)
         }
     }
 
     /// A memorized word's highlight; nil for words not memorized, which stay on plain paper.
     private func highlight(for word: MushafWord?) -> TopicHighlight? {
-        guard let word, let topic = word.topic, let memory = memorization?.memory(ofAyah: word.ayah) else { return nil }
-        return TopicHighlight(topic: topic, strength: memory.strength)
+        guard let word, let topic = word.topic, let strength = memorization?.strength(ofAyah: word.ayah) else { return nil }
+        return TopicHighlight(topic: topic, strength: strength)
+    }
+
+    /// How a word draws during a revision of this page.
+    private func state(of word: MushafWord) -> LineWord.State {
+        guard let revision else { return .normal }
+        guard revision.covers(word.ayah) else { return .dimmed }
+        if revision.isVeiled(word.ayah) { return .veiled }
+        return revision.stumbles.contains(word.ayah) ? .stumbled : .normal
     }
 
     /// The first word after a line on this page.
@@ -428,12 +464,17 @@ enum AyahLineLayout {
 
 /// The soft highlight behind a memorized word: its topic section's color, faint when newly memorized and
 /// fuller as the memorization grows strong.
-private struct TopicHighlight: Equatable {
+private struct TopicHighlight {
     var topic: Int
     var strength: Double
 
-    var color: Color {
-        MushafStyle.topic(topic).opacity(0.5 + 0.5 * min(max(strength, 0), 1))
+    /// The strength in five steps, so ayat of nearly equal strength share one shade.
+    var level: Int { Int((min(max(strength, 0), 1) * 4).rounded()) }
+
+    var color: Color { Self.color(topic: topic, level: level) }
+
+    static func color(topic: Int, level: Int) -> Color {
+        MushafStyle.topic(topic).opacity(0.5 + 0.5 * Double(level) / 4)
     }
 
     /// Its size, as fractions of the line height.
@@ -445,9 +486,20 @@ private struct TopicHighlight: Equatable {
 
 /// A word as a line draws it.
 private struct LineWord {
+    enum State {
+        case normal
+        /// Not yet revealed in a revision: a soft bar where the word sits.
+        case veiled
+        /// Revealed and marked as stumbled on.
+        case stumbled
+        /// Not memorized, so not part of the revision under way.
+        case dimmed
+    }
+
     var isAyahEnd: Bool
     /// Its highlight when memorized and topic colors are on.
     var highlight: TopicHighlight?
+    var state = State.normal
     var glyph: WordGlyph
 }
 
@@ -456,7 +508,15 @@ private struct AyahLine: View {
     var words: [LineWord]
     var centered: Bool
     var tajweed: Bool
-    var wordSpacing: CGFloat
+    var fontSize: CGFloat
+    private var wordSpacing: CGFloat { fontSize * 0.25 }
+
+    init(words: [LineWord], centered: Bool, tajweed: Bool, fontSize: CGFloat) {
+        self.words = words
+        self.centered = centered
+        self.tajweed = tajweed
+        self.fontSize = fontSize
+    }
 
     var body: some View {
         GeometryReader { geometry in
@@ -468,17 +528,30 @@ private struct AyahLine: View {
                                                  centered: centered, wordSpacing: wordSpacing).map { $0 + bleed }
 
                 drawHighlights(in: context, lefts: lefts, top: bleed, height: height)
+                drawStumbles(in: context, lefts: lefts, top: bleed, height: height)
 
                 for (word, left) in zip(words, lefts) {
                     var context = context
                     context.translateBy(x: left, y: bleed + (height - word.glyph.size.height) / 2)
+                    let box = word.glyph.inkBox
                     if word.isAyahEnd {
-                        // A soft oval laid exactly behind the marker's rosette.
-                        let box = word.glyph.inkBox
+                        // A soft oval laid exactly behind the marker's rosette; an ayah stumbled on shows it in coral.
+                        if word.state == .dimmed { context.opacity = 0.35 }
                         context.fill(Path(ellipseIn: box.insetBy(dx: box.width * 0.07, dy: box.height * 0.08)),
-                                     with: .color(MushafStyle.markerFill))
+                                     with: .color(word.state == .stumbled ? MushafStyle.stumble : MushafStyle.markerFill))
                         context.fill(word.glyph.outline, with: .color(MushafStyle.marker))
-                    } else {
+                        continue
+                    }
+                    switch word.state {
+                    case .veiled:
+                        // A soft bar in the word's own place and width, around the body of its letters.
+                        let barHeight = fontSize * 0.62
+                        let bar = CGRect(x: box.minX, y: word.glyph.baseline - fontSize * 0.3 - barHeight / 2,
+                                         width: box.width, height: barHeight)
+                        context.fill(Path(roundedRect: bar, cornerRadius: barHeight / 2), with: .color(MushafStyle.veil))
+                    case .dimmed:
+                        context.fill(word.glyph.outline, with: .color(MushafStyle.ink.opacity(0.3)))
+                    case .normal, .stumbled:
                         context.fill(word.glyph.outline, with: .color(MushafStyle.ink))
                         if tajweed && !word.glyph.layers.isEmpty {
                             // The colors tint the letters they belong to and nothing outside them.
@@ -493,19 +566,36 @@ private struct AyahLine: View {
         }
         // The outlines are in left-to-right glyph coordinates; the reading order is laid out above.
         .environment(\.layoutDirection, .leftToRight)
-        // Taps go through to the page: the toolbar, or the marking layer in marking mode.
+        // Taps go through to the page: the toolbar, or the marking or revision layer.
         .allowsHitTesting(false)
     }
 
-    /// Colors each run of memorized words from the same topic section with a soft highlight behind them.
+    /// A coral wash behind each run of words the student stumbled on, joined across the gaps between them.
+    private func drawStumbles(in context: GraphicsContext, lefts: [CGFloat], top: CGFloat, height: CGFloat) {
+        var index = 0
+        while index < words.count {
+            guard words[index].state == .stumbled else { index += 1; continue }
+            var end = index
+            while end + 1 < words.count, words[end + 1].state == .stumbled { end += 1 }
+            let glyph = words[index].glyph
+            let wordTop = top + (height - glyph.size.height) / 2
+            let right = lefts[index] + glyph.size.width + fontSize * 0.1, left = lefts[end] - fontSize * 0.1
+            let wash = CGRect(x: left, y: wordTop + glyph.baseline - fontSize * 0.95, width: right - left, height: fontSize * 1.3)
+            context.fill(Path(roundedRect: wash, cornerRadius: fontSize * 0.35), with: .color(MushafStyle.stumble))
+            index = end + 1
+        }
+    }
+
+    /// Colors each run of memorized words from the same topic section with one soft highlight, shaded within it
+    /// ayah by ayah by how strong each one's memorization is.
     private func drawHighlights(in context: GraphicsContext, lefts: [CGFloat], top: CGFloat, height: CGFloat) {
-        // Runs of consecutive words with the same highlight; a zero-width mark stays with the word before it.
-        var runs: [(highlight: TopicHighlight?, first: Int, last: Int)] = []
+        // Runs of consecutive words in the same section; a zero-width mark stays with the word before it.
+        var runs: [(topic: Int?, first: Int, last: Int)] = []
         for (index, word) in words.enumerated() {
-            if let run = runs.last, run.highlight == word.highlight || word.glyph.size.width == 0 {
+            if let run = runs.last, run.topic == word.highlight?.topic || word.glyph.size.width == 0 {
                 runs[runs.count - 1].last = index
             } else {
-                runs.append((word.highlight, index, index))
+                runs.append((word.highlight?.topic, index, index))
             }
         }
         let edges = runs.map { (right: lefts[$0.first] + words[$0.first].glyph.size.width, left: lefts[$0.last]) }
@@ -522,11 +612,28 @@ private struct AyahLine: View {
             return min(wordSpacing, max(gap - startReach(at: index + 1) - separation, 0))
         }
         for (index, run) in runs.enumerated() {
-            guard let highlight = run.highlight else { continue }
+            guard let topic = run.topic else { continue }
             let right = edges[index].right + startReach(at: index), left = edges[index].left - endReach(at: index)
             let box = CGRect(x: left, y: top + height * (1 - TopicHighlight.height) / 2,
                              width: right - left, height: height * TopicHighlight.height)
-            context.fill(Path(roundedRect: box, cornerRadius: height * TopicHighlight.cornerRadius), with: .color(highlight.color))
+            var section = context
+            section.clip(to: Path(roundedRect: box, cornerRadius: height * TopicHighlight.cornerRadius))
+            // Within the section, each stretch of words at one strength gets its shade, meeting its neighbor
+            // halfway across the gap between them.
+            var segmentRight = right
+            var wordIndex = run.first
+            while wordIndex <= run.last {
+                let level = words[wordIndex].highlight?.level ?? 0
+                var end = wordIndex
+                while end < run.last, (words[end + 1].highlight?.level ?? level) == level || words[end + 1].glyph.size.width == 0 {
+                    end += 1
+                }
+                let segmentLeft = end < run.last ? (lefts[end] + lefts[end + 1] + words[end + 1].glyph.size.width) / 2 : left
+                section.fill(Path(CGRect(x: segmentLeft, y: box.minY, width: segmentRight - segmentLeft, height: box.height)),
+                             with: .color(TopicHighlight.color(topic: topic, level: level)))
+                segmentRight = segmentLeft
+                wordIndex = end + 1
+            }
         }
     }
 }

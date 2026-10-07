@@ -70,6 +70,30 @@ struct WelcomeSnapshotTests {
         }
     }
 
+    /// Revising al-Baqarah 1–5 on page 2: two ayat revealed, the second marked as stumbled, the rest veiled;
+    /// and the daily-amount step.
+    @Test func renderRevision() throws {
+        guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }
+        let store = try MushafStore()
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.mark(7...11, memorized: true)
+        let session = RevisionSession(page: 2, ayahs: Array(7...11))
+        session.revealNext()
+        session.revealNext()
+        session.tap(8)
+        let renders: [(String, AnyView, CGSize)] = [
+            ("revision-iphone-2", AnyView(MushafPageView(page: store.page(2), store: store).environment(memorization).environment(session)), CGSize(width: 402, height: 874)),
+            ("revision-iphone-2-dark", AnyView(MushafPageView(page: store.page(2), store: store).environment(memorization).environment(session).environment(\.colorScheme, .dark)), CGSize(width: 402, height: 874)),
+            ("daily-amount-iphone", AnyView(DailyAmountView(memorizedPages: 23, initial: 2) { _ in }.environment(\.locale, Locale(identifier: "ar")).environment(\.layoutDirection, .rightToLeft)), CGSize(width: 402, height: 874)),
+        ]
+        for (name, view, size) in renders {
+            let renderer = ImageRenderer(content: view.frame(width: size.width, height: size.height))
+            renderer.scale = 2
+            let data = try #require(renderer.uiImage?.pngData())
+            try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("\(name).png"))
+        }
+    }
+
     /// Renders Mushaf pages on iPhone (with and without tajweed and topic colors, light and dark), and full-screen iPad landscape spreads.
     @Test func renderMushafLayouts() throws {
         guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }

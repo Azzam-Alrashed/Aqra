@@ -1,13 +1,61 @@
 import Foundation
 import Observation
 
-/// What the student has memorized of one ayah.
+/// What the student has memorized of one ayah, and how firmly.
 struct AyahMemory: Codable, Hashable {
-    /// How strong it is, from 0 (newly memorized or just declared) to 1; revision will raise it.
-    var strength: Double = 0
+    /// The memorization's half-life in days: how long until the chance of recalling it falls to half.
+    /// It starts modest for declared ayat, grows with each clean revision and shrinks with each stumble.
+    var stability: Double
+    /// The last revision, or nil if it hasn't been revised in Aqra yet (then `since` counts instead).
+    var lastReviewed: Date?
+    /// How many times it was stumbled on in revision.
+    var lapses = 0
     /// Whether a teacher has confirmed it in a tasmee'.
     var verified = false
     var since: Date
+
+    init(since: Date, stability: Double = ReviewPolicy.standard.declaredStability) {
+        self.since = since
+        self.stability = stability
+    }
+
+    /// How strong it is now, from 0 to 1: how established it is (its stability, up to the policy's mature level)
+    /// times how fresh it is (the chance of recalling it after the days since it was last revised).
+    /// A just-declared ayah is faint, clean revisions brighten it, and time without revision fades it.
+    func strength(at date: Date, policy: ReviewPolicy = .standard) -> Double {
+        let days = max(date.timeIntervalSince(lastReviewed ?? since) / 86_400, 0)
+        let recall = pow(2, -days / max(stability, 0.1))
+        return min(stability / policy.matureStability, 1) * recall
+    }
+
+    /// The memory after a revision: a clean one strengthens it (more so the longer it waited), a stumble weakens it.
+    func revised(stumbled: Bool, at date: Date, policy: ReviewPolicy) -> AyahMemory {
+        var next = self
+        if stumbled {
+            next.stability = max(stability * policy.lapseFactor, policy.minStability)
+            next.lapses += 1
+        } else {
+            // Revising again before it has had time to slip strengthens it less (the spacing effect). The first
+            // revision of a declared ayah counts in full: it was memorized long before, when isn't known.
+            let days = max(date.timeIntervalSince(lastReviewed ?? since) / 86_400, 0)
+            let spacing = lastReviewed == nil ? 1 : min(max(days / max(stability, 0.1), 0.1), 1)
+            next.stability = min(stability * (1 + (policy.growth - 1) * spacing), policy.maxStability)
+        }
+        next.lastReviewed = date
+        return next
+    }
+
+    // Files from before revision existed (version 1) hold only `strength`, `verified` and `since`.
+    private enum CodingKeys: String, CodingKey { case stability, lastReviewed, lapses, verified, since }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        since = try container.decode(Date.self, forKey: .since)
+        stability = try container.decodeIfPresent(Double.self, forKey: .stability) ?? ReviewPolicy.standard.declaredStability
+        lastReviewed = try container.decodeIfPresent(Date.self, forKey: .lastReviewed)
+        lapses = try container.decodeIfPresent(Int.self, forKey: .lapses) ?? 0
+        verified = try container.decodeIfPresent(Bool.self, forKey: .verified) ?? false
+    }
 }
 
 /// The ayat the student has memorized, numbered 0..<6236 in Quran order, kept on the device.
@@ -43,6 +91,25 @@ final class MemorizationStore {
         range.reduce(0) { $0 + (ayahs[$1] == nil ? 0 : 1) }
     }
 
+    /// How strong an ayah's memorization is now, or nil if it isn't memorized.
+    func strength(ofAyah ayah: Int, at date: Date = .now, policy: ReviewPolicy = .standard) -> Double? {
+        ayahs[ayah]?.strength(at: date, policy: policy)
+    }
+
+    /// Records a revision of memorized ayat: the stumbled ones weaken, the rest grow stronger.
+    func recordRevision(ayahs revised: some Sequence<Int>, stumbled: Set<Int>, at date: Date, policy: ReviewPolicy) {
+        var changed = false
+        for ayah in revised {
+            guard let memory = ayahs[ayah] else { continue }
+            ayahs[ayah] = memory.revised(stumbled: stumbled.contains(ayah), at: date, policy: policy)
+            changed = true
+        }
+        if changed {
+            scheduleSave()
+            saveNow()
+        }
+    }
+
     func toggle(ayah: Int) {
         mark([ayah], memorized: !isMemorized(ayah))
     }
@@ -64,7 +131,7 @@ final class MemorizationStore {
             var ayah: Int
             var memory: AyahMemory
         }
-        var version = 1
+        var version = 2
         var ayahs: [Record]
     }
 

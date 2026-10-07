@@ -17,6 +17,8 @@
 		263DCB34D497E7EBE0794B0F /* Amiri-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */; };
 		2A203B4FCA716C993ACC5786 /* MemorizationSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBAD12111AE3902F992CCFF /* MemorizationSetupView.swift */; };
 		3FDBDC2BEE2EA9E82D76CF50 /* MemorizationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED2439632E5AA260610DF87 /* MemorizationStore.swift */; };
+		43FE8C753FC35112A4DD9442 /* TodayView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 7596DFBD7EA8C33E24B8AAF6 /* TodayView.swift */; };
+		46321E94CC83A24568ABCFCC /* RevisionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCCD71BF466B07DDD06D84E /* RevisionEngine.swift */; };
 		4964D378F5949856F3745F53 /* ManazilStairs.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B68B0A48A1816211271B2B /* ManazilStairs.swift */; };
 		57DEC10A3EC756442E353877 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 35F03A505062D433A0B82952 /* Localizable.xcstrings */; };
 		6FFAE34E3F9E52CC10B92D53 /* AppIconRenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */; };
@@ -34,9 +36,11 @@
 		C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF793C12D16FB36F80C61903 /* SacredText.swift */; };
 		CA36F4A0D29DE63EAD73FA60 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 69FA526BC35C31760E96760B /* OFL.txt */; };
 		DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A5BD4368E1C3CCFCDBDB66 /* StartPageView.swift */; };
+		E4D2E9755861CE6A0FBE2A8E /* RevisionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */; };
 		E8E74CAA0E7A5D828639A8D3 /* AqraArchLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 057E8C550F33565A3E785512 /* AqraArchLogo.swift */; };
 		EAEBCFF615FEDD24A42B8A43 /* MushafPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */; };
 		EB8C8031FA7C371C1FFA38C8 /* AqraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4971E9222377B2D0AE1D25DD /* AqraApp.swift */; };
+		EBC979E0483FB969B99B4D03 /* DailyAmountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76EBE0EB6CE652A1ECAD40BB /* DailyAmountView.swift */; };
 		EF4765262D5AA2C27811E483 /* AqraFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4936D1082FB73C3638CB969 /* AqraFont.swift */; };
 /* End PBXBuildFile section */
 
@@ -67,6 +71,8 @@
 		69FA526BC35C31760E96760B /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
 		6E6984583BED0004A203DABB /* Amiri-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Amiri-Bold.ttf"; sourceTree = "<group>"; };
 		708045EEA73D597E66035897 /* AqraLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraLogo.swift; sourceTree = "<group>"; };
+		7596DFBD7EA8C33E24B8AAF6 /* TodayView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TodayView.swift; sourceTree = "<group>"; };
+		76EBE0EB6CE652A1ECAD40BB /* DailyAmountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyAmountView.swift; sourceTree = "<group>"; };
 		7AB948E93ABED6504E87449D /* quran */ = {isa = PBXFileReference; lastKnownFileType = folder; name = quran; path = ../../shared/quran; sourceTree = SOURCE_ROOT; };
 		836D08619011973FB71AEFC1 /* MushafStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafStore.swift; sourceTree = "<group>"; };
 		94E4E27C2A024A8688C0B012 /* MushafIndexView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafIndexView.swift; sourceTree = "<group>"; };
@@ -78,9 +84,11 @@
 		C3D8F702F0E08B9E7214A07A /* AqraTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AqraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
 		CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Amiri-Regular.ttf"; sourceTree = "<group>"; };
 		CCBAD12111AE3902F992CCFF /* MemorizationSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizationSetupView.swift; sourceTree = "<group>"; };
+		CFCCD71BF466B07DDD06D84E /* RevisionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevisionEngine.swift; sourceTree = "<group>"; };
 		D44E6BE584D0B5057F1DD97B /* FeaturesPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturesPageView.swift; sourceTree = "<group>"; };
 		D4A5BD4368E1C3CCFCDBDB66 /* StartPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StartPageView.swift; sourceTree = "<group>"; };
 		E3B68B0A48A1816211271B2B /* ManazilStairs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManazilStairs.swift; sourceTree = "<group>"; };
+		E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevisionTests.swift; sourceTree = "<group>"; };
 		EA10A8241619208EBC8A9E56 /* MemorizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizationTests.swift; sourceTree = "<group>"; };
 		F4936D1082FB73C3638CB969 /* AqraFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraFont.swift; sourceTree = "<group>"; };
 		FF793C12D16FB36F80C61903 /* SacredText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SacredText.swift; sourceTree = "<group>"; };
@@ -118,6 +126,16 @@
 				BCA97CDCE4BDA45886DF3282 /* AqraTests */,
 				7CB4E00B6ED4E140218F3DEE /* Products */,
 			);
+			sourceTree = "<group>";
+		};
+		3AB17583EB887E2AA2431A98 /* Revision */ = {
+			isa = PBXGroup;
+			children = (
+				76EBE0EB6CE652A1ECAD40BB /* DailyAmountView.swift */,
+				CFCCD71BF466B07DDD06D84E /* RevisionEngine.swift */,
+				7596DFBD7EA8C33E24B8AAF6 /* TodayView.swift */,
+			);
+			path = Revision;
 			sourceTree = "<group>";
 		};
 		414E566AE95DAE89ECEB90A3 /* Memorization */ = {
@@ -168,6 +186,7 @@
 				88636D0AF183BBA7F8083935 /* Mushaf */,
 				1549276E68F0E369A83EEED1 /* Onboarding */,
 				9C8F178663BAA7E3C4CCCF64 /* Resources */,
+				3AB17583EB887E2AA2431A98 /* Revision */,
 				FE352AD1935C1FB58065078E /* SacredText */,
 			);
 			path = Aqra;
@@ -180,6 +199,7 @@
 				56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */,
 				EA10A8241619208EBC8A9E56 /* MemorizationTests.swift */,
 				264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */,
+				E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */,
 				B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */,
 			);
 			path = AqraTests;
@@ -322,6 +342,7 @@
 				713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */,
 				916DEA5DC95A5438E364AEDB /* MemorizationTests.swift in Sources */,
 				1C5F4BA3851DEFBE3DEFC906 /* MushafTests.swift in Sources */,
+				E4D2E9755861CE6A0FBE2A8E /* RevisionTests.swift in Sources */,
 				12D590DA34A191EB5674BEFE /* WelcomeSnapshotTests.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -336,6 +357,7 @@
 				9D6D88E273E4885187DC9823 /* AqraLogo.swift in Sources */,
 				1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */,
 				95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */,
+				EBC979E0483FB969B99B4D03 /* DailyAmountView.swift in Sources */,
 				9B6609EC32D686618171D356 /* FeaturesPageView.swift in Sources */,
 				C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */,
 				4964D378F5949856F3745F53 /* ManazilStairs.swift in Sources */,
@@ -348,8 +370,10 @@
 				028487F5A6C0BED60172B546 /* OnboardingPageLayout.swift in Sources */,
 				B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */,
 				A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */,
+				46321E94CC83A24568ABCFCC /* RevisionEngine.swift in Sources */,
 				C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */,
 				DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */,
+				43FE8C753FC35112A4DD9442 /* TodayView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

@@ -16,8 +16,10 @@ struct MemorizationStoreTests {
         // Numbers outside the Quran's 6,236 ayat are ignored.
         memorization.mark([-1, MushafStore.ayahCount], memorized: true)
         #expect(memorization.count == 7)
-        // Newly marked ayat start faint and unverified.
-        #expect(memorization.memory(ofAyah: 0)?.strength == 0 && memorization.memory(ofAyah: 0)?.verified == false)
+        // Newly marked ayat start faint (a modest half-life, not yet revised) and unverified.
+        let memory = memorization.memory(ofAyah: 0)
+        #expect(memory?.stability == ReviewPolicy.standard.declaredStability && memory?.lastReviewed == nil && memory?.verified == false)
+        #expect((memorization.strength(ofAyah: 0) ?? 1) < 0.2)
     }
 
     @Test func savesAndReloads() throws {
