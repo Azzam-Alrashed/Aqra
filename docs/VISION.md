@@ -30,8 +30,10 @@ Each wave is complete and usable on its own, and each depends on the one before 
 | Wave | Scope | Status |
 |---|---|---|
 | **1. The student alone** | Offline, no account: the Mushaf, the memorization map, the revision engine, and today's wird. | Built (2026-10-07) |
-| **2. The student with others** | Accounts, teachers and tasmee', the "verified" mark, peer tasmee'. | In progress: accounts, backup, teachers and in-person tasmee' built (2026-10-07); video and peer tasmee' to come |
-| **3. The full journey** | The personal plan with new memorization and a completion date, stages and tests, competitions, the seat auction, payments. | Later |
+| **2. The student with others** | Accounts, teachers and tasmee' (in person and by video), the "verified" mark, peer tasmee', applications to teach. | Built (2026-10-07); video needs a LiveKit Cloud project |
+| **3. The full journey** | The personal plan with new memorization and a completion date, stages and tests, rewards and competitions, credits, the seat auction, teacher earnings. | Built (2026-10-07), provisionally (see [SRS.md](SRS.md), Appendix A); payments need App Store Connect |
+
+The requirements, their status and the provisional defaults adopted to build waves 2 and 3 are in [SRS.md](SRS.md).
 
 ## Platform
 
@@ -72,28 +74,32 @@ A floating tab bar holds الرئيسية, التسميع, تقدّمي and حس
 ### Home
 
 The home answers «وش علي اليوم؟». It shows:
-- **The stage:** the منازل stairs (ten glossy steps of three juz' each) inside glowing rings, with chips for the share of the Quran memorized and the memorization's strength, and the revision streak above.
+- **The stage:** the منازل stairs (ten glossy steps of three juz' each) inside glowing rings, with chips for the share of the Quran memorized and the memorization's strength, and the revision streak and a bell for messages above.
 - **Today's wird:** a headline with the pages left and the length of a full revision, and one button to start.
+- **Today's new portion:** from the personal plan, with «احفظ» and the expected completion date (or an invitation to make a plan).
+- **The current stage:** how much of it is memorized and mastered; it opens the stage.
+- **Pages that keep slipping,** suggested for extra follow-up, to take or dismiss.
 - **The Mushaf:** a miniature of the page last read, which opens it.
-- **Today's pages:** each page as a tile in its juz's color; tap to revise it, press and hold if it was revised outside the app.
+- **Today's pages:** each page as a tile in its juz's color; tap to revise it, press and hold if it was revised outside the app (clean, or with stumbles).
 - **What's memorized and the daily amount,** each opening its editor.
 
-The home also shows the next tasmee' booked (or that its teacher cancelled it), leading to the التسميع tab, and, after the first revision, a calm invitation to sign in.
+The home also shows what a teacher or a friend just heard (applied to the progress), the next tasmee' booked (or that its teacher cancelled it), leading to the التسميع tab, and, after the first revision, a calm invitation to sign in.
 
 ### Progress (تقدّمي)
 
-The share of the Quran memorized, the revision streak over the last seven days, a few numbers, and every juz' at a glance: how much of it is memorized and how strong.
+The share of the Quran memorized, beside the shares mastered and verified (kept apart, as Etqan asks); the revision streak over the last seven days, a few numbers, and every juz' at a glance: how much of it is memorized and how strong. Below: the personal plan, the ten stages, the rewards (points, achievements and the week's challenges), and «مع الآخرين» (friends and competitions).
 
 ### Account (حسابي)
 
-Where the progress lives (on the device, until accounts come in wave 2), the Mushaf's colors, a daily reminder, the app's language, and the sources Aqra is built on, credited as their terms ask. What's memorized and the daily amount are edited from the home only.
+The account the progress is backed up to and the name others see, credits, the Mushaf's colors, a daily reminder, sounds, the app's language, and the sources Aqra is built on, credited as their terms ask. What's memorized and the daily amount are edited from the home only.
 
 ### Tasmee' (التسميع)
 
 The same tab serves both roles.
 
-- **Every student** sees their next booked session (with "Cancel booking"), then the vetted teachers. A teacher's page shows their profile and upcoming sessions, each with "Book" (or "Full"); an anonymous student is asked to sign in before booking.
-- **A teacher** sees "My sessions" above that: each upcoming session with its seat count, and "New session" (when, where, how many seats). A session's page lists the students who booked, with their name and what they've memorized; tapping a student opens the **marking screen**: the Mushaf on the teacher's phone, turned page by page as the student recites, a tap on an ayah marks a stumble, a button marks each page heard, and «سجّل التسميع» records it all. The teacher's own memorization colors stay off the page.
+- **Every student** sees their next booked session (with "Cancel booking", and "Join the call" for a video session), reciting to or hearing a friend, the vetted teachers, what others heard, and "Teach on Aqra". A teacher's page shows their profile and upcoming sessions, each with "Book" (or "Full"), and "Bid" for seats by auction; an anonymous student is asked to sign in before booking.
+- **A teacher** sees their profile (editable), their earnings, "My sessions" and "My students" above that: each upcoming session with its seat count, and "New session" (when, in person or by video, how many free seats, and seats by auction). A session's page lists the students who booked (and the bids), with their name and what they've memorized; tapping a student opens the **marking screen**: the Mushaf on the teacher's phone, turned page by page as the student recites, a tap on an ayah marks a stumble, pressing and holding it says what kind of mistake it was, a button marks each page heard, a menu makes it a stage test, and «سجّل التسميع» records it all. The teacher's own memorization colors stay off the page. Each student has a file the teacher keeps: what they heard, and private notes.
+- **A friend** hears a student with the code the student shows (or its QR), on the same marking screen; the record lands in the student's account as a peer's tasmee'.
 
 The record lands in the student's account, and the **student's app applies it**: a sheikh's revision of the pages heard, and the "verified" mark on the clean ayat (see [REVISION.md](REVISION.md)). The teacher never reads the student's progress; the booked seat carries a small summary (pages memorized, whole juz') so the teacher can choose what to hear.
 
@@ -108,6 +114,14 @@ The Mushaf is where the student reads and marks what they have memorized. It ope
 ### Today's wird
 
 The wird goes through its pages one after another, each held still with its memorized ayat veiled and revealed one at a time, then returns home when it's done.
+
+## The personal plan
+
+The student chooses how much new memorization a day (a quarter page to a page and a half, in lines of the page), on which days, and in which order (from juz' ʿAmma back toward al-Baqarah, or from the beginning; by default the order continues what's already memorized). Each study day proposes today's portion: the next ayat not yet memorized, whole ayat, finishing a surah before the next. On the memorize screen the portion stands out on its pages; the student repeats it, hides ayat to recite them, and «حفظته» (or just the part memorized) starts them faint in the revision engine, back for follow-up the next day. Planned and actual portions and every change of the plan are kept. The expected completion date follows the plan's pace, then the student's recent one.
+
+## Stages, mastery and tests
+
+The ten stairs are Etqan's ten stages of three juz' each. Each shows how much of it is memorized, **mastered** (half-life of at least 60 days, clean since the last stumble) and verified. Passing a stage asks for all of it memorized, 80% mastered, the stage's test in the app ("which ayah comes next?", "which surah?", shown in the Complex's own text and font) and a teacher's stage test (mistakes within one per page heard). All of it is provisional, in one policy (see [SRS.md](SRS.md)). Etqan's 240 stars wait for an authoritative source of the rub' boundaries.
 
 ## Memorization
 
@@ -132,7 +146,7 @@ A revision is recorded in one of three ways:
 2. **Outside the app** (in prayer, or to a friend): the page is checked off from the wird.
 3. **With a sheikh** during tasmee': the teacher marks the pages heard and the stumbles on their own phone, and the student's app records them as a sheikh's revision.
 
-A sheikh's tasmee' counts more than self-revision (1.5 times, provisionally); a peer's tasmee', when it comes, will sit between the two.
+A sheikh's tasmee' counts more than self-revision (1.5 times, provisionally); a peer's sits between the two (1.25). The rotation learns: pages that keep slipping are suggested for extra follow-up, and the student decides.
 
 See [REVISION.md](REVISION.md) for the policy, its defaults, and the open questions.
 
@@ -169,14 +183,14 @@ Teachers use the same app. A teacher is enabled by hand once vetted (a `teachers
 ## Tasmee' sessions
 
 - **Booking:** the student chooses any vetted teacher and books a seat in one of their sessions. In wave 2 seats are free, first come first served; the auction adds paid seats in wave 3. Booking needs a signed-in (not anonymous) account. The seat, the student's own copy of the session and the seat count are written in one transaction, so a session never takes more students than it has seats.
-- **In person or by video:** in person, the teacher marks each student's mistakes on his own phone during the session (built); remotely, a live video call (to come).
+- **In person or by video:** in person, the teacher marks each student's mistakes on his own phone during the session; remotely, a live video call in the session's room, with the reciting student's video floating over the teacher's Mushaf.
 - **By video:** a live audio and video call in which the student recites and the teacher corrects, marking mistakes on the ayat.
 - **Video provider:** LiveKit Cloud. Self-hosting is an option later if costs grow.
 - **Access:** room tokens are issued by Cloud Functions only after verifying that the user holds a seat in that session.
 
 ### Seat auction
 
-Each session has a limited number of seats.
+Each session has a limited number of free seats, first come first served, and may add seats by auction.
 
 **Biddable seats:**
 1. **Start free:** a seat can initially be reserved at no cost.
@@ -184,7 +198,9 @@ Each session has a limited number of seats.
 3. **Close:** bidding closes shortly before the session starts.
 4. **Winners:** the highest bidders win the seats.
 
-**Reserved free seats:** each session has free seats that cannot be bid on. They are given first come, first served.
+**Reserved free seats:** each session has free seats that cannot be bid on (at least one). They are given first come, first served.
+
+Bidding closes three hours before the session (provisional). A session cancelled while bidding releases every hold; once settled, the credits are refunded and the teacher's share reversed.
 
 **Integrity:** all bids go through Cloud Functions with Firestore transactions, so a seat can never be won twice.
 
@@ -202,7 +218,7 @@ Because Apple In-App Purchase only sells fixed-price products, the app uses **cr
 
 ### Teachers
 
-- **Revenue split:** the teacher receives most of each winning bid, and the app keeps a commission to cover servers and video calls. Apple's fee also applies on top of this, at 15% under the Small Business Program or 30% otherwise.
+- **Revenue split:** the teacher receives most of each winning bid (80%, provisionally), and the app keeps a commission to cover servers and video calls. Apple's fee also applies on top of this, at 15% under the Small Business Program or 30% otherwise.
 - **Earnings:** each teacher's share accrues as earnings visible in their account.
 - **Payouts:** teachers are paid traditionally, by bank transfer, since there are few teachers at first.
 
@@ -210,15 +226,16 @@ Because Apple In-App Purchase only sells fixed-price products, the app uses **cr
 
 Stripe does not currently support Saudi-based businesses directly. Revisit Stripe Connect or a regional gateway such as Tap if the company structure changes.
 
-## Competitions
+## Rewards and competitions
 
-Competitions must be constructive and motivating, consistent with the [guiding principles](#guiding-principles). They may include:
-- **Personal challenges,** where the student competes only with themselves.
-- **Group goals,** such as a shared khatmah.
-- **Private competitions between friends.**
-- **Teacher-run competitions** for a teacher's own students.
+Competitions must be constructive and motivating, consistent with the [guiding principles](#guiding-principles). Built, provisionally:
+- **Rewards:** private points for each step (revising, memorizing, completing the wird, streaks, stages), achievements, and small celebrations with a soft chime.
+- **Personal challenges,** where the student competes only with themselves, for a week.
+- **Private races between friends:** pages revised, days revised or ayat memorized within their dates; friends are added by a code, and see only each other's names in the competitions they share.
+- **Group khatmahs:** thirty parts, claimed and finished by the group's members.
+- **Teacher-run competitions** for a teacher's own students, scored by the server from the pages the teacher heard clean.
 
-Public standing should rest on verified evidence (a sheikh's tasmee'), not on self-reports. The exact scope is TBD.
+Public standing should rest on verified evidence (a sheikh's tasmee'), not on self-reports: there is no public leaderboard.
 
 ## Backend
 
@@ -236,9 +253,12 @@ Public standing should rest on verified evidence (a sheikh's tasmee'), not on se
 
 ## Open questions
 
+The full list, with the provisional defaults adopted to build them, is in [SRS.md](SRS.md), Appendix A.
+
+- **Dark mode for the app's own screens:** the Mushaf follows the system's dark mode; the rest of the app keeps its light look until a dark palette for it is reviewed.
 - **Topic sections:** the stand-in data must be replaced by a published thematic Mushaf's division, with the publisher's permission.
 - **Revision policy:** the numbers in [REVISION.md](REVISION.md), the sheikh's weight among them, need trying with real huffaz and sheikhs.
-- **Stages and tests:** how Etqan's ten stages and tests map onto Aqra's منازل (the ten stairs match the ten stages).
+- **Stages and tests:** the stage requirements and their numbers; the 240 stars' boundaries.
 - **Free seats:** how many reserved free seats each session has.
 - **Commission:** the app's commission percentage.
 - **Teacher vetting:** the full acceptance procedure beyond the ijazah and interview.

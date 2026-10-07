@@ -36,6 +36,8 @@ struct AppTabView: View {
     @Environment(TasmeeStore.self) private var tasmee
     @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
+    @AppStorage("reminder.on") private var reminderOn = false
+    @AppStorage("reminder.minutes") private var reminderMinutes = 5 * 60 + 30
 
     var body: some View {
         @Bindable var router = router
@@ -74,6 +76,11 @@ struct AppTabView: View {
         }
         // A reminder an hour before each booked session.
         .onChange(of: tasmee.upcomingBookings, initial: true) { SessionReminders.schedule(tasmee.upcomingBookings) }
+        // The daily reminder mentions the new portion on the plan's study days.
+        .onChange(of: plan.plan) {
+            guard reminderOn else { return }
+            DailyReminder.schedule(minutes: reminderMinutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays })
+        }
     }
 
     private func refreshPlan() {

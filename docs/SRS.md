@@ -7,9 +7,9 @@
 | **Document** | Software Requirements Specification (SRS) |
 | **Product** | Aqra — Quran memorization, revision and mastery |
 | **Standard** | Structured after IEEE Std 830-1998, with the requirement attributes of ISO/IEC/IEEE 29148:2018 |
-| **Version** | 1.1 |
+| **Version** | 1.2 |
 | **Date** | 2026-10-07 |
-| **Baseline** | Commit `f7ac25b` ("Add the landing page") on `main`; status columns are updated as requirements are built |
+| **Baseline** | Commit `f7ac25b` ("Add the landing page") on `main`. Statuses below are as of the `full-journey` branch, after waves 2 and 3 were built |
 | **Related documents** | [VISION.md](VISION.md) (product decisions), [REVISION.md](REVISION.md) (revision policy), [backend/README.md](../backend/README.md) (data and rules), [shared/quran/README.md](../shared/quran/README.md) (Quran sources) |
 
 ---
@@ -127,8 +127,8 @@ identifier, priority and status. [Section 4](#4-verification) states how require
 
 - **ID**: `AREA-NN`, stable once published.
 - **Priority**: **M** must, **S** should, **C** could (MoSCoW).
-- **Status**: ✅ implemented · 🟡 partial · 🔨 to build · ⛔ blocked on an external dependency · ⏳ deferred to a
-  later release.
+- **Status**: ✅ implemented · 🟡 partial · 🔨 to build · ❓ awaiting the product owner's decision · ⛔ blocked on an
+  external dependency · ⏳ deferred to a later release.
 - **Source**: the decision it traces to — **V** VISION.md, **R** REVISION.md, **E** the Etqan reference adopted by
   the product owner's choice of the full journey (option C), **A** Apple or legal requirement, **P** a provisional
   default adopted in this SRS (listed in Appendix A).
@@ -276,17 +276,17 @@ Developer documentation lives in the repository READMEs.
 | UI-04 | Haptics: a light tick on choices and page turns, a firmer one on entering a new juz', success on completing the wird. | S | ✅ | V |
 | UI-05 | VoiceOver reads each Mushaf page as the official plain (Imla'i) text with ayah numbers, and every control has a label. | M | ✅ | V |
 | UI-06 | The Mushaf follows the system's dark mode (warm dark paper, cream ink, lighter gold). | M | ✅ | V |
-| UI-07 | The app's own screens follow the system's dark mode with a very dark purple surface (not pure black), muted pastels and more prominent gold. | S | 🔨 | V |
+| UI-07 | The app's own screens follow the system's dark mode with a very dark purple surface (not pure black), muted pastels and more prominent gold. | S | ❓ A-23 | V |
 | UI-08 | Layouts adapt to iPhone and iPad in every orientation; the Mushaf shows two facing pages on a wide iPad in landscape. | M | ✅ | V |
-| UI-09 | Rewards are celebrated with animation and a short, gentle sound (never on the welcome screen); sounds respect the silent switch. | S | 🔨 | V |
+| UI-09 | Rewards are celebrated with animation and a short, gentle sound (never on the welcome screen); sounds respect the silent switch. | S | ✅ | V |
 | UI-10 | Navigation: a floating tab bar with Home, Tasmee', Progress and Account; the Mushaf and today's wird open full screen from the home and close back to where they were opened. | M | ✅ | V |
 
 #### 3.1.2 Hardware interfaces
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| HW-01 | Video tasmee' uses the front camera and the microphone, asking permission with a clear purpose string, and works with audio only when the camera is off or refused. | M | 🔨 | V |
-| HW-02 | Peer tasmee' codes can be scanned as QR codes with the camera. | S | 🔨 | P |
+| HW-01 | Video tasmee' uses the front camera and the microphone, asking permission with a clear purpose string, and works with audio only when the camera is off or refused. | M | ✅ | V |
+| HW-02 | Peer tasmee' codes can be scanned as QR codes with the camera. | S | ✅ | P |
 | HW-03 | Haptic feedback uses the Taptic Engine where present. | S | ✅ | V |
 
 #### 3.1.3 Software interfaces
@@ -294,22 +294,22 @@ Developer documentation lives in the repository READMEs.
 | ID | Interface | Use | Status |
 |---|---|---|---|
 | SW-01 | Firebase Authentication (iOS SDK 12) | Anonymous accounts; Apple and Google credentials linked to them. | ✅ |
-| SW-02 | Cloud Firestore | Backup, teachers, sessions, seats, bookings, tasmee' records, applications, wallets, bids, competitions, inbox. Offline persistence on. | 🟡 |
-| SW-03 | Cloud Functions (callable, scheduled, Firestore triggers) | Video tokens, purchase redemption, bidding, auction settlement, refunds, teacher-competition scores, admin actions. | 🔨 |
-| SW-04 | Cloud Storage | Ijazah uploads for teacher applications. | 🔨 |
+| SW-02 | Cloud Firestore | Backup, teachers, sessions, seats, bookings, tasmee' records, applications, wallets, bids, competitions, inbox. Offline persistence on. | ✅
+| SW-03 | Cloud Functions (callable, scheduled, Firestore triggers) | Video tokens, purchase redemption, bidding, auction settlement, refunds, teacher-competition scores, admin actions. | ✅
+| SW-04 | Cloud Storage | Ijazah uploads for teacher applications. | ✅
 | SW-05 | Google Sign-In SDK 9; AuthenticationServices | Sign-in credentials. | ✅ |
-| SW-06 | StoreKit 2 | Credit packs (consumables); transaction updates; finishing after the server credits them. | 🔨 |
-| SW-07 | LiveKit Swift SDK; `livekit-server-sdk` (Functions) | Live audio/video rooms and their access tokens. | 🔨 |
-| SW-08 | UserNotifications | The daily reminder; session reminders. | 🟡 |
-| SW-09 | App Store Server Library (Functions) | Verifying signed transactions in production. | 🔨 |
+| SW-06 | StoreKit 2 | Credit packs (consumables); transaction updates; finishing after the server credits them. | ✅
+| SW-07 | LiveKit Swift SDK; `livekit-server-sdk` (Functions) | Live audio/video rooms and their access tokens. | ✅
+| SW-08 | UserNotifications | The daily reminder; session reminders. | ✅
+| SW-09 | App Store Server Library (Functions) | Verifying signed transactions in production. | ✅
 
 #### 3.1.4 Communications interfaces
 
 | ID | Requirement | Status |
 |---|---|---|
 | COM-01 | All network traffic uses TLS (Firebase SDKs, HTTPS callable functions, LiveKit WSS/DTLS-SRTP). | ✅ |
-| COM-02 | Debug builds launched with `-UseFirebaseEmulator` talk only to the local emulators (Auth 9099, Firestore 8080, Functions 5001, Storage 9199). | 🟡 |
-| COM-03 | The app opens `aqra://` links (peer tasmee' codes, friend invites). | 🔨 |
+| COM-02 | Debug builds launched with `-UseFirebaseEmulator` talk only to the local emulators (Auth 9099, Firestore 8080, Functions 5001, Storage 9199). | ✅
+| COM-03 | The app opens `aqra://` links (peer tasmee' codes, friend invites). | ✅
 
 ### 3.2 Functional requirements
 
@@ -323,7 +323,7 @@ opens on the setup or the home.
 | ONB-01 | Onboarding is shown on first launch only and has four pages: the hadith (Ahmad's wording, «اقرَأ وارقَ» emphasized, «رواه أحمد», the Tirmidhi translation in English), the manazil, the features, and «ابدأ رحلتك». | M | ✅ | V |
 | ONB-02 | There is no sign-in in onboarding; every user starts anonymously. | M | ✅ | V |
 | ONB-03 | Right after onboarding the student declares what they've memorized («ماذا تحفظ؟»), then chooses a daily revision amount; "I'm just starting" skips both. | M | ✅ | V |
-| ONB-04 | After «ماذا تحفظ؟», a student offers to set up a personal memorization plan (or skips it). | S | 🔨 | E |
+| ONB-04 | After «ماذا تحفظ؟», a student offers to set up a personal memorization plan (or skips it). | S | ✅ | E |
 
 #### 3.2.2 Mushaf (MUS)
 
@@ -337,7 +337,7 @@ opens on the setup or the home.
 | MUS-06 | An index of surahs and juz' with ayah counts and the current one highlighted; a page slider. | M | ✅ | V |
 | MUS-07 | Marking mode: tap toggles an ayah; press-and-hold starts a range that the next tap ends (across pages); "whole page / both pages"; juz' and surahs sheet. | M | ✅ | V |
 | MUS-08 | Two facing pages on a wide iPad in landscape, odd page on the right. | S | ✅ | V |
-| MUS-09 | While a new portion is being memorized, its ayat are framed on the page and the rest of the page is dimmed. | S | 🔨 | E |
+| MUS-09 | While a new portion is being memorized, its ayat are framed on the page and the rest of the page is dimmed. | S | ✅ | E |
 
 #### 3.2.3 Memorization map (MEM)
 
@@ -347,7 +347,7 @@ opens on the setup or the home.
 | MEM-02 | Each memorized ayah keeps `since`, stability, last revision, lapses and the verified mark; stored on device and reloaded, including older file versions. | M | ✅ | V |
 | MEM-03 | The share of the Quran memorized counts every juz' equally (a juz' memorized in part counts by its ayat). | M | ✅ | V |
 | MEM-04 | A tasmee' never marks new ayat as memorized; the student owns the map. | M | ✅ | V |
-| MEM-05 | Each ayah records how it entered the map: declared, or memorized in Aqra as a new portion (with the date). | S | 🔨 | E |
+| MEM-05 | Each ayah records how it entered the map: declared, or memorized in Aqra as a new portion (with the date). | S | ✅ | E |
 
 #### 3.2.4 Strength model (STR)
 
@@ -356,9 +356,9 @@ opens on the setup or the home.
 | STR-01 | Declared ayat start at the policy's declared half-life (14 days). | M | ✅ | R |
 | STR-02 | A clean revision multiplies the half-life by the growth (2.5), reduced by the spacing effect; a declared ayah's first revision counts in full. | M | ✅ | R |
 | STR-03 | A stumble multiplies it by the lapse factor (0.3), at least 1 day, and counts a lapse. | M | ✅ | R |
-| STR-04 | Evidence weights: self 1, peer 1.25 (provisional), sheikh 1.5 (provisional); a stumble is a stumble whoever heard it; the last revision never moves backwards. | M | 🟡 sheikh only | R, P |
+| STR-04 | Evidence weights: self 1, peer 1.25 (provisional), sheikh 1.5 (provisional); a stumble is a stumble whoever heard it; the last revision never moves backwards. | M | ✅ | R, P |
 | STR-05 | Strength = min(stability ÷ mature, 1) × 2^(−days since revision ÷ stability); capped at 365 days; never zero while memorized. | M | ✅ | R |
-| STR-06 | Newly memorized portions start at the plan policy's new half-life (2 days), so they appear faint and enter the follow-up lane. | M | 🔨 | E, P |
+| STR-06 | Newly memorized portions start at the plan policy's new half-life (2 days), so they appear faint and enter the follow-up lane. | M | ✅ | E, P |
 
 #### 3.2.5 Revision engine and today's wird (REV)
 
@@ -372,9 +372,9 @@ opens on the setup or the home.
 | REV-06 | In-app revision veils the page's memorized ayat, reveals them one at a time, and taps on revealed ayat mark stumbles; «تم» records the page and moves to the next. | M | ✅ | V |
 | REV-07 | A page revised outside the app is checked off with a long press. | M | ✅ | V |
 | REV-08 | The streak counts days in a row with any revision; today not yet revised doesn't break it. | M | ✅ | V |
-| REV-09 | A revision outside the app may also record the ayat stumbled on. | C | 🔨 | R (open Q2), P |
-| REV-10 | The rotation learns: pages that keep slipping (lapses in recent revisions, or low strength while the rest is strong) are suggested for extra follow-up; the student approves or dismisses each suggestion. | S | 🔨 | V (agreed direction), R (open Q3) |
-| REV-11 | Today's plan also shows today's new portion (when a plan is set) before the follow-ups. | M | 🔨 | E |
+| REV-09 | A revision outside the app may also record the ayat stumbled on. | C | ✅ | R (open Q2), P |
+| REV-10 | The rotation learns: pages that keep slipping (lapses in recent revisions, or low strength while the rest is strong) are suggested for extra follow-up; the student approves or dismisses each suggestion. | S | ✅ | V (agreed direction), R (open Q3) |
+| REV-11 | Today's plan also shows today's new portion (when a plan is set) before the follow-ups. | M | ✅ | E |
 
 #### 3.2.6 Home (HOME)
 
@@ -384,20 +384,20 @@ opens on the setup or the home.
 | HOME-02 | The stage: the manazil stairs climbing to the share memorized, in glowing rings, with share and strength chips. | M | ✅ | V |
 | HOME-03 | The wird headline (pages left, cycle length) and one button to start or continue. | M | ✅ | V |
 | HOME-04 | Cards: next tasmee' (or its cancellation), continue reading (page miniature), today's pages, the invitation to save progress (anonymous, after a first revision, snooze 7 days), what's memorized and the daily amount. | M | ✅ | V |
-| HOME-05 | A card for today's new portion (from the plan) with «تم الحفظ», and the expected completion date. | M | 🔨 | E |
-| HOME-06 | The current stage and its progress lead to the stage's page. | S | 🔨 | E |
-| HOME-07 | Rotation suggestions (REV-10) and newly applied tasmee' records ("your teacher heard pages …") appear as cards. | S | 🔨 | V |
-| HOME-08 | An inbox badge for server events (outbid, seat won, session cancelled and refunded, application status). | S | 🔨 | P |
+| HOME-05 | A card for today's new portion (from the plan) with «تم الحفظ», and the expected completion date. | M | ✅ | E |
+| HOME-06 | The current stage and its progress lead to the stage's page. | S | ✅ | E |
+| HOME-07 | Rotation suggestions (REV-10) and newly applied tasmee' records ("your teacher heard pages …") appear as cards. | S | ✅ | V |
+| HOME-08 | An inbox badge for server events (outbid, seat won, session cancelled and refunded, application status). | S | ✅ | P |
 
 #### 3.2.7 Progress (PRG)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | PRG-01 | Share of the Quran memorized, streak with the last seven days, ayat memorized, pages revised this week, average strength, every juz' at a glance. | M | ✅ | V |
-| PRG-02 | Memorization progress and mastery progress are shown separately (e.g. 80% memorized, 45% mastered), with the verified share. | M | 🔨 | E |
-| PRG-03 | Stages: each of the ten with memorized %, mastered %, tests and passed state. | M | 🔨 | E |
-| PRG-04 | Points, achievements and personal challenges. | S | 🔨 | V |
-| PRG-05 | The tasmee' history: each record with who heard it (teacher or peer), when, pages heard and stumbles (with mistake types). | S | 🔨 | V |
+| PRG-02 | Memorization progress and mastery progress are shown separately (e.g. 80% memorized, 45% mastered), with the verified share. | M | ✅ | E |
+| PRG-03 | Stages: each of the ten with memorized %, mastered %, tests and passed state. | M | ✅ | E |
+| PRG-04 | Points, achievements and personal challenges. | S | ✅ | V |
+| PRG-05 | The tasmee' history: each record with who heard it (teacher or peer), when, pages heard and stumbles (with mistake types). | S | ✅ | V |
 
 #### 3.2.8 Account, identity and backup (ACC)
 
@@ -409,9 +409,9 @@ opens on the setup or the home.
 | ACC-04 | Merge: union of memorized ayat (newer revision wins, verified kept from either), revision record per CloudBackup rules. | M | ✅ | V |
 | ACC-05 | Sign-out uploads first (fails safely when offline), then clears the device and returns to «ماذا تحفظ؟». | M | ✅ | V |
 | ACC-06 | Account deletion deletes the backup, bookings (seats given back) and tasmee' records, revokes Apple's token, deletes the user; the device's progress stays. | M | ✅ | A, V |
-| ACC-07 | Sign-in is required before booking, bidding, buying credits, joining video, adding friends or applying to teach. | M | 🟡 booking only | V |
-| ACC-08 | A display name the student chooses is shown to teachers, peers and friends instead of the sign-in's name or email. | S | 🔨 | P |
-| ACC-09 | The backup also covers the personal plan, rewards and test results; deletion removes them and the wallet, applications, friendships and competition entries. | M | 🔨 | A, P |
+| ACC-07 | Sign-in is required before booking, bidding, buying credits, joining video, adding friends or applying to teach. | M | ✅ | V |
+| ACC-08 | A display name the student chooses is shown to teachers, peers and friends instead of the sign-in's name or email. | S | ✅ | P |
+| ACC-09 | The backup also covers the personal plan, rewards and test results; deletion removes them and the wallet, applications, friendships and competition entries. | M | ✅ | A, P |
 
 #### 3.2.9 Settings and reminders (SET)
 
@@ -421,28 +421,28 @@ opens on the setup or the home.
 | SET-02 | A daily reminder at a chosen time; explains when notifications are off in Settings. | M | ✅ | E |
 | SET-03 | The app's language opens the system's per-app language setting. | M | ✅ | V |
 | SET-04 | Sources credits the Complex, Quran Foundation, QUL, Ayah by Ayah and Amiri. | M | ✅ | V |
-| SET-05 | A reminder one hour before each booked session, and on the plan's study days a reminder for the new portion. | S | 🔨 | E |
+| SET-05 | A reminder one hour before each booked session, and on the plan's study days a reminder for the new portion. | S | ✅ | E |
 
 #### 3.2.10 Teachers and vetting (TCH)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | TCH-01 | Vetted teachers are listed by name with city and one line; a teacher's page lists their upcoming sessions. | M | ✅ | V |
-| TCH-02 | A signed-in user applies to teach in-app: name, city, one line, riwayah, from whom they hold their ijazah, its chain or details, contact, and an upload of the ijazah (image or PDF, ≤10 MB). | M | 🔨 | V |
-| TCH-03 | The application shows its status (submitted, interview, approved, rejected, with the reviewer's note); an applicant can update a submitted application. | M | 🔨 | V |
-| TCH-04 | Only an administrator approves: approval creates `teachers/{uid}` with `vetted: true` from the application; nothing in the app can mark itself vetted. | M | ✅ rules · 🔨 flow | V |
-| TCH-05 | A teacher edits their name, city and line in-app. | S | 🔨 | V |
-| TCH-06 | A teacher keeps a file per student built only from what they themselves heard: the student's records, mistakes and the teacher's private notes. | S | 🔨 | E |
+| TCH-02 | A signed-in user applies to teach in-app: name, city, one line, riwayah, from whom they hold their ijazah, its chain or details, contact, and an upload of the ijazah (image or PDF, ≤10 MB). | M | ✅ | V |
+| TCH-03 | The application shows its status (submitted, interview, approved, rejected, with the reviewer's note); an applicant can update a submitted application. | M | ✅ | V |
+| TCH-04 | Only an administrator approves: approval creates `teachers/{uid}` with `vetted: true` from the application; nothing in the app can mark itself vetted. | M | ✅ | V |
+| TCH-05 | A teacher edits their name, city and line in-app. | S | ✅ | V |
+| TCH-06 | A teacher keeps a file per student built only from what they themselves heard: the student's records, mistakes and the teacher's private notes. | S | ✅ | E |
 
 #### 3.2.11 Sessions and booking (SES)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| SES-01 | A vetted teacher creates a session: when (future), in person (place) or by video, free seats (1–30). | M | 🟡 in person only | V |
+| SES-01 | A vetted teacher creates a session: when (future), in person (place) or by video, free seats (1–30). | M | ✅ | V |
 | SES-02 | A signed-in student books a free seat first come first served: seat, the student's copy and the count in one transaction; never more students than seats. | M | ✅ | V |
 | SES-03 | A student cancels their booking; a teacher cancels a session (students see it cancelled). | M | ✅ | V |
-| SES-04 | A teacher edits a session's time, place and seat count (not below the seats taken). | S | 🔨 | V |
-| SES-05 | A session may also offer auctioned seats (see AUC). | M | 🔨 | V |
+| SES-04 | A teacher edits a session's time, place and seat count (not below the seats taken). | S | ✅ | V |
+| SES-05 | A session may also offer auctioned seats (see AUC). | M | ✅ | V |
 | SES-06 | The seat carries the student's display name and a summary (pages memorized, whole juz') so the teacher can choose what to hear. | M | ✅ | V |
 
 #### 3.2.12 In-person tasmee' (TSM)
@@ -451,48 +451,48 @@ opens on the setup or the home.
 |---|---|---|---|---|
 | TSM-01 | The teacher opens a student's seat on the marking screen: the Mushaf on the teacher's phone, a tap marks a stumble, a button marks each page heard, «سجّل التسميع» records it into the student's account (queued offline). | M | ✅ | V |
 | TSM-02 | The student's app applies each record once: a sheikh's revision of the pages heard (stumbled ayat weaken and lose the verified mark, clean ones grow by the sheikh weight and are verified), then marks it applied. | M | ✅ | V |
-| TSM-03 | A long press on an ayah classifies the mistake: memorization error (default), forgetting, prompting (تلقين), hesitation, لحن جلي, tajweed. Types are stored with the record and shown to the student. | S | 🔨 | E |
-| TSM-04 | The teacher can record the tasmee' as a stage test for a stage, with the mistakes counted against the stage policy's threshold. | M | 🔨 | E |
-| TSM-05 | The student is told when a record was applied (home card, tasmee' history). | S | 🔨 | V |
+| TSM-03 | A long press on an ayah classifies the mistake: memorization error (default), forgetting, prompting (تلقين), hesitation, لحن جلي, tajweed. Types are stored with the record and shown to the student. | S | ✅ | E |
+| TSM-04 | The teacher can record the tasmee' as a stage test for a stage, with the mistakes counted against the stage policy's threshold. | M | ✅ | E |
+| TSM-05 | The student is told when a record was applied (home card, tasmee' history). | S | ✅ | V |
 
 #### 3.2.13 Video tasmee' (VID)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| VID-01 | A video session has one LiveKit room; the teacher and the students holding a seat may join from 15 minutes before it starts until 3 hours after. | M | 🔨 | V |
-| VID-02 | Room tokens are issued only by a Cloud Function after verifying the caller is the session's teacher or holds a seat in it, the session is open and the time is within the window; tokens expire. | M | 🔨 | V |
-| VID-03 | The student's call screen shows the teacher large and the student's own preview small, with microphone, camera and leave controls. | M | 🔨 | V |
-| VID-04 | The teacher's marking screen shows the reciting student's video in a floating tile over the Mushaf, with the same marking as in person. | M | 🔨 | V |
-| VID-05 | Audio continues if the camera is off; the call reconnects after a network drop. | S | 🔨 | P |
-| VID-06 | LiveKit credentials are server secrets, never shipped in the app. | M | 🔨 | V |
+| VID-01 | A video session has one LiveKit room; the teacher and the students holding a seat may join from 15 minutes before it starts until 3 hours after. | M | ✅ | V |
+| VID-02 | Room tokens are issued only by a Cloud Function after verifying the caller is the session's teacher or holds a seat in it, the session is open and the time is within the window; tokens expire. | M | ✅ | V |
+| VID-03 | The student's call screen shows the teacher large and the student's own preview small, with microphone, camera and leave controls. | M | ✅ | V |
+| VID-04 | The teacher's marking screen shows the reciting student's video in a floating tile over the Mushaf, with the same marking as in person. | M | ✅ | V |
+| VID-05 | Audio continues if the camera is off; the call reconnects after a network drop. | S | ✅ | P |
+| VID-06 | LiveKit credentials are server secrets, never shipped in the app. | M | ✅ | V |
 
 #### 3.2.14 Peer tasmee' (PEER)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| PEER-01 | A signed-in student creates a peer request and shows its six-character code and QR (`aqra://peer/CODE`); it expires after 30 minutes. | M | 🔨 | V, P |
-| PEER-02 | A signed-in friend enters or scans the code, sees the student's name, and marks stumbles and pages heard on the same marking screen as a teacher. | M | 🔨 | V |
-| PEER-03 | The record is written into the student's account as a peer tasmee'; rules accept it only with a valid, unexpired request of that student. | M | 🔨 | V |
-| PEER-04 | The student's app applies it as a peer revision (weight between self and sheikh); it never grants the verified mark. | M | 🔨 | V |
+| PEER-01 | A student (anonymous or signed in) creates a peer request and shows its six-character code and QR (`aqra://peer/CODE`); it expires after 30 minutes. | M | ✅ | V, P |
+| PEER-02 | A signed-in friend enters or scans the code, sees the student's name, and marks stumbles and pages heard on the same marking screen as a teacher. | M | ✅ | V |
+| PEER-03 | The record is written into the student's account as a peer tasmee'; rules accept it only with a valid, unexpired request of that student. | M | ✅ | V |
+| PEER-04 | The student's app applies it as a peer revision (weight between self and sheikh); it never grants the verified mark. | M | ✅ | V |
 
 #### 3.2.15 Personal memorization plan (PLAN)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| PLAN-01 | The student sets a daily new amount (¼, ½, ¾, 1, 1¼ or 1½ pages, measured in Mushaf lines), study weekdays, and the order (from the end of the Mushaf or from its beginning); the default order continues from what's already memorized. | M | 🔨 | E |
-| PLAN-02 | Today's portion is the next unmemorized ayat in that order, about the daily amount, ending at an ayah's end and not spilling into a new surah unless the current one ends. | M | 🔨 | E |
-| PLAN-03 | «تم الحفظ» marks the portion memorized (new half-life), puts its pages in follow-up, and logs the portion (date, ayat, planned and actual lines, stage, juz'). The student may mark only part of it. | M | 🔨 | E |
-| PLAN-04 | The expected completion date is recalculated from the remaining lines, the study days and the recent actual pace (the last 28 days, once at least 7 study days are logged), else the planned pace. | M | 🔨 | E |
-| PLAN-05 | Planned and actual are recorded separately; every change of amount, days or order is kept in a plan history. | M | 🔨 | E |
-| PLAN-06 | No portion is due on a non-study day; a missed study day doesn't double the next. | M | 🔨 | E, R |
-| PLAN-07 | The plan can be paused and resumed. | C | 🔨 | P |
+| PLAN-01 | The student sets a daily new amount (¼, ½, ¾, 1, 1¼ or 1½ pages, measured in Mushaf lines), study weekdays, and the order (from the end of the Mushaf or from its beginning); the default order continues from what's already memorized. | M | ✅ | E |
+| PLAN-02 | Today's portion is the next unmemorized ayat in that order, about the daily amount, ending at an ayah's end and not spilling into a new surah unless the current one ends. | M | ✅ | E |
+| PLAN-03 | «تم الحفظ» marks the portion memorized (new half-life), puts its pages in follow-up, and logs the portion (date, ayat, planned and actual lines, stage, juz'). The student may mark only part of it. | M | ✅ | E |
+| PLAN-04 | The expected completion date is recalculated from the remaining lines, the study days and the recent actual pace (the last 28 days, once at least 7 study days are logged), else the planned pace. | M | ✅ | E |
+| PLAN-05 | Planned and actual are recorded separately; every change of amount, days or order is kept in a plan history. | M | ✅ | E |
+| PLAN-06 | No portion is due on a non-study day; a missed study day doesn't double the next. | M | ✅ | E, R |
+| PLAN-07 | The plan can be paused and resumed. | C | ✅ | P |
 
 #### 3.2.16 Curriculum: stages and stars (CUR)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| CUR-01 | Ten stages of three juz' each (stage *k* = juz' 3*k*−2…3*k*), from the official juz' data, matching the ten stairs. | M | 🔨 | E, V |
-| CUR-02 | The student's current stage is the one holding their next portion (or their most recently memorized ayah). | M | 🔨 | E, P |
+| CUR-01 | Ten stages of three juz' each (stage *k* = juz' 3*k*−2…3*k*), from the official juz' data, matching the ten stairs. | M | ✅ | E, V |
+| CUR-02 | The student's current stage is the one holding their next portion (or their most recently memorized ayah). | M | ✅ | E, P |
 | CUR-03 | Eight stars per juz' (240) from authoritative rub' al-hizb boundaries, with position tracked inside a star (not a completed flag). | S | ⛔ DEP-04 | E |
 | CUR-04 | Stage content (tajweed, meanings, tips) per stage. | C | ⛔ content | E |
 
@@ -500,90 +500,90 @@ opens on the setup or the home.
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| MAS-01 | Mastered = stability ≥ the stage policy's mastery half-life (60 days) and the last revision clean; computed for every ayah, juz' and stage. | M | 🔨 | E, P |
-| MAS-02 | An in-app stage test of 10 questions drawn from the stage's memorized ayat: "what comes next?" and "which surah?", four choices each, ayat shown in the Complex's text and Hafs Smart font, unmodified. Score shown with the right answers. | M | 🔨 | E |
-| MAS-03 | The test requires the stage's ayat to be memorized; a failed test can be retaken after the cooldown (24 h). Results are kept. | M | 🔨 | E, P |
-| MAS-04 | A sheikh's stage test is recorded by a teacher (TSM-04): passed when the mistakes are at most the allowed mistakes per page heard (1) times the pages heard. | M | 🔨 | E, P |
-| MAS-05 | A stage is passed when: all its ayat are memorized, mastered share ≥ 80%, in-app test ≥ 80%, and (when the policy requires it) a passed sheikh's test. Each requirement shows its state. | M | 🔨 | E, P |
-| MAS-06 | Passing a stage is celebrated and recorded as an achievement. | S | 🔨 | V |
-| MAS-07 | Every threshold above lives in `StagePolicy`; the sheikh's allowed mistakes can be set per test by the teacher. | M | 🔨 | E |
+| MAS-01 | Mastered = stability ≥ the stage policy's mastery half-life (60 days) and the last revision clean; computed for every ayah, juz' and stage. | M | ✅ | E, P |
+| MAS-02 | An in-app stage test of 10 questions drawn from the stage's memorized ayat: "what comes next?" and "which surah?", four choices each, ayat shown in the Complex's text and Hafs Smart font, unmodified. Score shown with the right answers. | M | ✅ | E |
+| MAS-03 | The test requires the stage's ayat to be memorized; a failed test can be retaken after the cooldown (24 h). Results are kept. | M | ✅ | E, P |
+| MAS-04 | A sheikh's stage test is recorded by a teacher (TSM-04): passed when the mistakes are at most the allowed mistakes per page heard (1) times the pages heard. | M | ✅ | E, P |
+| MAS-05 | A stage is passed when: all its ayat are memorized, mastered share ≥ 80%, in-app test ≥ 80%, and (when the policy requires it) a passed sheikh's test. Each requirement shows its state. | M | ✅ | E, P |
+| MAS-06 | Passing a stage is celebrated and recorded as an achievement. | S | ✅ | V |
+| MAS-07 | Every threshold above lives in `StagePolicy`; the sheikh's allowed mistakes can be set per test by the teacher. | M | ✅ | E |
 
 #### 3.2.18 Rewards (RWD)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| RWD-01 | Points for actions (page revised in the app, outside it, heard by a peer or sheikh; portion memorized; wird completed; streak milestones), from `RewardPolicy`, kept on device, private. | S | 🔨 | V |
-| RWD-02 | Personal challenges the student chooses for the week or month (complete the wird N days, memorize N pages, revise a juz'), with progress and completion. | S | 🔨 | V |
-| RWD-03 | Achievements (first revision, first portion, first juz' memorized, streaks of 7/30/100, each stage passed, first verified page) with the date earned. | S | 🔨 | V |
-| RWD-04 | Small, frequent celebrations: a toast with points as they're earned; a fuller one for achievements. | S | 🔨 | V |
+| RWD-01 | Points for actions (page revised in the app, outside it, heard by a peer or sheikh; portion memorized; wird completed; streak milestones), from `RewardPolicy`, kept on device, private. | S | ✅ | V |
+| RWD-02 | Personal challenges the student chooses for the week or month (complete the wird N days, memorize N pages, revise a juz'), with progress and completion. | S | ✅ | V |
+| RWD-03 | Achievements (first revision, first portion, first juz' memorized, streaks of 7/30/100, each stage passed, first verified page) with the date earned. | S | ✅ | V |
+| RWD-04 | Small, frequent celebrations: a toast with points as they're earned; a fuller one for achievements. | S | ✅ | V |
 
 #### 3.2.19 Social: friends and competitions (SOC)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| SOC-01 | Friends: a signed-in user shares an invite code (`aqra://friend/CODE`, 7 days); accepting creates a mutual friendship; either can remove it. | S | 🔨 | V |
-| SOC-02 | Private competitions among friends: a title, a metric (pages revised, days revised, ayat memorized), a start and end; members only see each other's scores; each member's app reports its own score. | S | 🔨 | V |
-| SOC-03 | Group goal (shared khatmah): 30 juz' parts claimed by members and marked done; the group's progress. | S | 🔨 | V |
-| SOC-04 | Teacher-run competitions among the teacher's students: scores are pages heard clean by that teacher within the window, computed by the server from the teacher's records only (verified evidence). | S | 🔨 | V |
-| SOC-05 | No public leaderboard rests on self-reports; names shown are display names; anyone can leave a competition. | M | 🔨 | V |
+| SOC-01 | Friends: a signed-in user shares an invite code (`aqra://friend/CODE`, 7 days); accepting creates a mutual friendship; either can remove it. | S | ✅ | V |
+| SOC-02 | Private competitions among friends: a title, a metric (pages revised, days revised, ayat memorized), a start and end; members only see each other's scores; each member's app reports its own score. | S | ✅ | V |
+| SOC-03 | Group goal (shared khatmah): 30 juz' parts claimed by members and marked done; the group's progress. | S | ✅ | V |
+| SOC-04 | Teacher-run competitions among the teacher's students: scores are pages heard clean by that teacher within the window, computed by the server from the teacher's records only (verified evidence). | S | ✅ | V |
+| SOC-05 | No public leaderboard rests on self-reports; names shown are display names; anyone can leave a competition. | M | ✅ | V |
 
 #### 3.2.20 Credits and payments (PAY)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| PAY-01 | Credit packs are consumable IAP products (10, 30, 60 credits); buying needs a signed-in account. | M | 🔨 | V |
-| PAY-02 | A purchase is credited only after a Cloud Function verifies the signed transaction (App Store Server Library in production; Xcode's local StoreKit in development) and records it idempotently by transaction id; the app then finishes the transaction. | M | 🔨 | V |
-| PAY-03 | The wallet (balance, held) and its ledger (purchase, hold, release, spend, refund) are written only by Cloud Functions; the student sees both. | M | 🔨 | V |
-| PAY-04 | Unfinished transactions are redeemed again at launch. | M | 🔨 | A |
+| PAY-01 | Credit packs are consumable IAP products (10, 30, 60 credits); buying needs a signed-in account. | M | ✅ | V |
+| PAY-02 | A purchase is credited only after a Cloud Function verifies the signed transaction (App Store Server Library in production; Xcode's local StoreKit in development) and records it idempotently by transaction id; the app then finishes the transaction. | M | ✅ | V |
+| PAY-03 | The wallet (balance, held) and its ledger (purchase, hold, release, spend, refund) are written only by Cloud Functions; the student sees both. | M | ✅ | V |
+| PAY-04 | Unfinished transactions are redeemed again at launch. | M | ✅ | A |
 
 #### 3.2.21 Seat auction (AUC)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| AUC-01 | A session offers reserved free seats (at least one; first come first served, not biddable) and optionally auctioned seats. | M | 🔨 | V |
-| AUC-02 | Auctioned seats start free: while seats remain, any bid ≥ the minimum (0) holds one. When all are held, a new bid must beat the lowest winning bid by the increment (1 credit), which outbids it. | M | 🔨 | V |
-| AUC-03 | Bidding holds credits; outbid holds are released at once; a bidder may raise their bid (holding the difference); ties go to the earlier bid. | M | 🔨 | V |
-| AUC-04 | Bidding closes before the session (3 h); a scheduled function settles it: winning holds are spent, seats and bookings created, teacher earnings recorded. | M | 🔨 | V |
-| AUC-05 | All bids go through a Cloud Function in a Firestore transaction, so a seat is never won twice. | M | 🔨 | V |
-| AUC-06 | Cancelling a session releases holds (before settlement) or refunds spent credits and reverses the teacher's earnings (after). | M | 🔨 | P |
-| AUC-07 | The student sees the current lowest winning bid, their own standing (winning / outbid), and is told when outbid or when they've won. | M | 🔨 | V |
+| AUC-01 | A session offers reserved free seats (at least one; first come first served, not biddable) and optionally auctioned seats. | M | ✅ | V |
+| AUC-02 | Auctioned seats start free: while seats remain, any bid ≥ the minimum (0) holds one. When all are held, a new bid must beat the lowest winning bid by the increment (1 credit), which outbids it. | M | ✅ | V |
+| AUC-03 | Bidding holds credits; outbid holds are released at once; a bidder may raise their bid (holding the difference); ties go to the earlier bid. | M | ✅ | V |
+| AUC-04 | Bidding closes before the session (3 h); a scheduled function settles it: winning holds are spent, seats and bookings created, teacher earnings recorded. | M | ✅ | V |
+| AUC-05 | All bids go through a Cloud Function in a Firestore transaction, so a seat is never won twice. | M | ✅ | V |
+| AUC-06 | Cancelling a session releases holds (before settlement) or refunds spent credits and reverses the teacher's earnings (after). | M | ✅ | P |
+| AUC-07 | The student sees the current lowest winning bid, their own standing (winning / outbid), and is told when outbid or when they've won. | M | ✅ | V |
 
 #### 3.2.22 Teacher earnings and payouts (ERN)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| ERN-01 | Each won seat's price is split: the teacher earns (1 − commission) and the app keeps the commission (20%, provisional). | M | 🔨 | V, P |
-| ERN-02 | A teacher sees their earnings, payouts and the balance due, entry by entry. | M | 🔨 | V |
-| ERN-03 | Payouts are made by bank transfer and recorded by an administrator. | M | 🔨 | V |
+| ERN-01 | Each won seat's price is split: the teacher earns (1 − commission) and the app keeps the commission (20%, provisional). | M | ✅ | V, P |
+| ERN-02 | A teacher sees their earnings, payouts and the balance due, entry by entry. | M | ✅ | V |
+| ERN-03 | Payouts are made by bank transfer and recorded by an administrator. | M | ✅ | V |
 
 #### 3.2.23 Notifications and inbox (NTF)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| NTF-01 | Server events (outbid, seat won, refund, session cancelled, application status, peer/teacher record) are written to the user's inbox and shown in-app. | S | 🔨 | P |
-| NTF-02 | Local notifications for the daily wird, the new portion on study days and booked sessions; never more than one a day for the wird. | S | 🟡 | E |
+| NTF-01 | Server events (outbid, seat won, refund, session cancelled, application status, peer/teacher record) are written to the user's inbox and shown in-app. | S | ✅ | P |
+| NTF-02 | Local notifications for the daily wird, the new portion on study days and booked sessions; never more than one a day for the wird. | S | ✅ | E |
 | NTF-03 | Push notifications for inbox events once an APNs key is configured. | C | ⛔ DEP-08 | P |
 
 #### 3.2.24 Administration (ADM)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| ADM-01 | Administrators are users with the `admin` custom claim, granted by a script with service credentials. | M | 🔨 | E |
-| ADM-02 | Admin tools: list applications, move one to interview, approve (creating the vetted teacher) or reject with a note; record a payout; edit the server policy (`config/policy`). | M | 🔨 | E |
-| ADM-03 | A teacher's vetting can be revoked (vetted false), which hides them and stops new sessions. | S | 🔨 | P |
+| ADM-01 | Administrators are users with the `admin` custom claim, granted by a script with service credentials. | M | ✅ | E |
+| ADM-02 | Admin tools: list applications, move one to interview, approve (creating the vetted teacher) or reject with a note; record a payout; edit the server policy (`config/policy`). | M | ✅ | E |
+| ADM-03 | A teacher's vetting can be revoked (vetted false), which hides them and stops new sessions. | S | ✅ | P |
 
 #### 3.2.25 Website (WEB)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | WEB-01 | A static landing page in Arabic with an English toggle, real screenshots, the sources, for GitHub Pages. | M | ✅ | V |
-| WEB-02 | The page describes the full journey once it ships (plan, stages, video and peer tasmee'). | C | 🔨 | P |
+| WEB-02 | The page describes the full journey once it ships (plan, stages, video and peer tasmee'). | C | ✅ | P |
 
 #### 3.2.26 Other platforms (PLT)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| PLT-01 | An Android app on the same backend and data rules. | S | ⏳ | V |
+| PLT-01 | An Android app on the same backend and data rules. | S | ⏳ (a project is being set up in `apps/android`) | V |
 | PLT-02 | A web app (PWA) on the same backend. | S | ⏳ | V |
 | PLT-03 | Ayah numbering, scheduling, the strength model and manazil are platform-neutral (documented here and in REVISION.md, tested on iOS). | M | ✅ | V |
 
@@ -594,9 +594,9 @@ opens on the setup or the home.
 | PERF-01 | The Quran data loads off the main thread in under 3 s on a recent iPhone (test `loadsQuickly`). | ✅ |
 | PERF-02 | Page turns are smooth (60 fps); word outlines are cached for the 12 most recent pages only. | ✅ |
 | PERF-03 | Ambient animation renders on the GPU (`drawingGroup`) and pauses off screen; idle CPU under 20%. | ✅ |
-| PERF-04 | Today's plan and the portion are computed in under 50 ms for a full Quran memorized. | 🔨 |
-| PERF-05 | A bid round-trip (callable function) completes in under 2 s on a good connection. | 🔨 |
-| PERF-06 | Video calls target ≤ 300 ms one-way latency within the Gulf region (LiveKit Cloud). | 🔨 |
+| PERF-04 | Today's plan and the portion are computed in under 50 ms for a full Quran memorized. | ✅
+| PERF-05 | A bid round-trip (callable function) completes in under 2 s on a good connection. | ✅
+| PERF-06 | Video calls target ≤ 300 ms one-way latency within the Gulf region (LiveKit Cloud). | ⛔ DEP-05 |
 
 ### 3.4 Logical database requirements
 
@@ -604,29 +604,28 @@ opens on the setup or the home.
 
 | File | Content |
 |---|---|
-| `memorization.json` (v2) | Each memorized ayah: since, stability, last revision, lapses, verified, origin. |
-| `revision.json` (v1) | Daily amount, rotation cursor, follow-ups, today's plan, history (last 1,000), days revised. |
+| `memorization.json` (v2) | Each memorized ayah: since, stability, last revision, lapses, verified, when it was learned in Aqra, its last stumble. |
+| `revision.json` (v1) | Daily amount, rotation cursor, follow-ups, today's plan, history (last 1,000), days revised, days the whole wird was done. |
 | `plan.json` | The personal plan, its history of changes, and the portions log (planned vs actual). |
 | `rewards.json` | Points, events, achievements, challenges. |
 | `assessments.json` | In-app test results and sheikh's stage tests applied. |
-| UserDefaults | Onboarding seen, declared, last page, toggles, reminder, snoozes, applied record ids. |
+| UserDefaults | Onboarding seen, declared, last page, toggles, reminder, sounds, snoozes, dismissed suggestions, applied record ids. |
 
 #### In Firestore
 
 | Path | Writer | Reader |
 |---|---|---|
-| `users/{uid}` (+ `memory/block-NN`, `revision/state`, `journey/state`) | owner | owner |
+| `users/{uid}` (`displayName`, + `memory/block-NN`, `revision/state`, `journey/state`) | owner | owner |
 | `users/{uid}/bookings/{sessionId}` | owner (free seat) or functions (won seat) | owner |
 | `users/{uid}/tasmee/{id}` | the vetted teacher with a seat, or a peer with a valid request; owner sets `appliedAt` | owner, writer |
 | `users/{uid}/inbox/{id}` | functions | owner |
-| `profiles/{uid}` | owner (display name) | signed in |
 | `teachers/{uid}` | admin (create, vetted), owner (name, city, line) | signed in |
 | `teachers/{uid}/students/{studentUid}` (+ notes) | the teacher | the teacher |
-| `teacherApplications/{uid}` | owner (submitted), admin (status) | owner, admin |
-| `sessions/{id}` (+ `seats/{uid}`, `bids/{uid}`) | teacher; students (free seats); functions (bids, won seats) | signed in (seats: owner and teacher) |
+| `teacherApplications/{uid}` | owner (while submitted), admin (status, note) | owner, admin |
+| `sessions/{id}` (+ `seats/{uid}`, `bids/{uid}`) | teacher; students (free seats); functions (bids, won seats, auction counts) | signed in (seats and bids: their owner and the teacher) |
 | `peerRequests/{code}` | owner | signed in |
-| `friendInvites/{code}`, `friendships/{pairId}` | owner / members | members |
-| `competitions/{id}` (+ `members/{uid}`, `parts/{juz}`) | owner, members, functions (teacher scores) | members |
+| `friendInvites/{code}`, `friendships/{a_b}` | owner / the one accepting | by code / members |
+| `competitions/{id}` (+ `members/{uid}`, `parts/{juz}`) | owner, members (own score, parts), functions (teacher scores) | members |
 | `wallets/{uid}` (+ `ledger/{id}`), `purchases/{transactionId}` | functions | owner |
 | `teacherBalances/{uid}` (+ `entries/{id}`) | functions, admin | the teacher, admin |
 | `config/policy` | admin | signed in |
@@ -652,7 +651,7 @@ opens on the setup or the home.
 | ATT-01 | Integrity (sacred text) | Tests fail the build if any Quran file, the page fonts' manifest, the hadith or its translation changes, or if the layout diverges from the official data. | ✅ |
 | ATT-02 | Reliability | Writes to the device are atomic; a crash never loses more than the last 300 ms of marking. Backups retry; restores merge, never overwrite blindly. | ✅ |
 | ATT-03 | Availability | All personal features work offline; online features explain when the connection is needed. | ✅ |
-| ATT-04 | Security | Least-privilege rules; credits, bids, tokens and vetting only through server code; secrets never in the app. | 🟡 |
+| ATT-04 | Security | Least-privilege rules; credits, bids, tokens and vetting only through server code; secrets never in the app. | ✅
 | ATT-05 | Privacy | A teacher never reads a student's progress; anonymous users are never shown by name; data deletable in-app; data stays in Saudi Arabia (Firestore). | ✅ |
 | ATT-06 | Maintainability | Policies in one place; features in their own folders; every store has tests. | ✅ |
 | ATT-07 | Portability | Platform-neutral data formats (ayah numbers, JSON snapshots, Firestore schema) documented here. | ✅ |
@@ -765,7 +764,7 @@ default adopted is given; every one lives in a policy and can be changed without
 | A-10 | Stage pass weights. | All requirements must hold (no weighting): 100% memorized, 80% mastered, test ≥ 80%, sheikh's test passed. | MAS-05 |
 | A-11 | Mistake types and weights. | Six types recorded; weights all 1 for now. | TSM-03 |
 | A-12 | Daily new amount unit. | Mushaf lines (15 per page). | PLAN-01 |
-| A-13 | Default memorization order. | Continue from what's memorized: from the end if the last juz' is (partly) memorized, else from the beginning. | PLAN-01 |
+| A-13 | Default memorization order. | Continue from what's memorized: from the beginning when more of juz' 1 than of juz' 30 is memorized, otherwise from the end (where most begin). | PLAN-01 |
 | A-14 | Free seats per session. | At least one; the teacher chooses. | AUC-01 |
 | A-15 | Commission. | 20%. | ERN-01 |
 | A-16 | Credit packs and prices. | 10 / 30 / 60 credits; App Store price tiers set in App Store Connect. | PAY-01 |
@@ -775,14 +774,45 @@ default adopted is given; every one lives in a policy and can be changed without
 | A-20 | Points values. | RewardPolicy table. | RWD-01 |
 | A-21 | Push notifications. | Inbox + local notifications until an APNs key is configured. | NTF-03 |
 | A-22 | Cloud Functions region. | `me-central2` beside Firestore (fallback `europe-west1` if a product isn't offered there). | DEP-07 |
+| A-23 | Dark mode for the app's own screens. The redesigned look (glossy stairs, glow rings, white cards) was built light-only, its palette giving light and dark the same values; a dark palette for it has not been designed. | Not built: the Mushaf follows the system's dark mode, the rest stays light until a dark palette is reviewed. | UI-07 |
+| A-24 | Credit packs' prices and a credit's value in money (for payouts). | Prices in `Credits.storekit` are placeholders for testing; set them in App Store Connect. Payouts are recorded in credits. | PAY-01, ERN-03 |
+| A-25 | A competition's metric for "days revised" counts days with any revision; "pages revised" counts pages recorded, so a page revised twice counts twice. | As stated. | SOC-02 |
 
 ---
 
 ## Appendix B — Status summary
 
-At the baseline (`f7ac25b`): wave 1 complete; wave 2 has accounts, backup, teachers, sessions, booking and
-in-person tasmee'; wave 3 not started. The requirements marked 🔨 are the work this SRS defines; the order of
-implementation follows the waves: first wave 2's remainder (applications, profile and session editing, tasmee'
-history, mistake types, peer tasmee', video tasmee'), then wave 3 (plan and new memorization, stages, mastery and
-tests, rotation suggestions, rewards, social, credits, auction, earnings, administration), then dark mode and
-notifications. Android and the web app follow the iOS release.
+**At the baseline** (`f7ac25b`): wave 1 complete; wave 2 had accounts, backup, teachers, sessions, booking and
+in-person tasmee'; wave 3 not started.
+
+**Built on the `full-journey` branch** (2026-10-07): every 🔨 requirement above except those marked otherwise.
+What remains, and why:
+
+| Requirement | Status | Why |
+|---|---|---|
+| UI-07 dark mode for the app's own screens | ❓ | Needs a dark palette for the redesigned look, reviewed by the product owner (A-23). |
+| CUR-03 stars, CUR-04 stage content | ⛔ | Need an authoritative source of the rub' boundaries, and authored content (DEP-04). |
+| NTF-03 push notifications | ⛔ | Needs an APNs key in Firebase (DEP-08); messages arrive in the in-app inbox meanwhile. |
+| PERF-06 video latency | ⛔ | Needs the LiveKit Cloud project (DEP-05). |
+| PLT-01 Android, PLT-02 web app | ⏳ | After the iOS release, as planned. |
+
+**Before release** (unchanged dependencies): proofreading of all 604 pages (DEP-01); Quran Foundation account and
+credit (DEP-02); the thematic Mushaf's permission (DEP-03); LiveKit Cloud keys (DEP-05); App Store Connect
+products, Apple's root certificates in `backend/functions/certs` and the app's App Store id (DEP-06); Cloud
+Functions and Storage enabled on `aqra-quran` (DEP-07).
+
+### Where each area lives
+
+| Area | iOS (`apps/ios/Aqra`) | Backend (`backend`) | Tests |
+|---|---|---|---|
+| Mushaf | `Mushaf/` | — | `MushafTests` |
+| Memorization, strength | `Memorization/` | — | `MemorizationTests`, `RevisionTests` |
+| Revision, rotation | `Revision/` | — | `RevisionTests`, `JourneyTests` |
+| Plan | `Plan/` | `users/{uid}/journey` | `JourneyTests` |
+| Stages, mastery, tests | `Curriculum/` | — | `JourneyTests` |
+| Rewards | `Rewards/` | — | `JourneyTests` |
+| Account, backup, inbox | `Account/` | `firestore.rules` | `CloudSyncTests`, `JourneyTests`, rules tests |
+| Teachers, sessions, tasmee', peer, video | `Tasmee/` | `firestore.rules`, `storage.rules`, `functions/src/video.ts` | `TasmeeTests`, rules, functions tests |
+| Friends, competitions | `Social/` | `firestore.rules`, `functions/src/competitions.ts` | `SocialTests`, rules, functions tests |
+| Credits, auction, earnings | `Credits/` | `functions/src/credits.ts`, `auction.ts`, `wallet.ts` | `TasmeeTests`, rules, functions tests |
+| Administration | — | `scripts/admin.mjs` | rules tests |

@@ -162,7 +162,6 @@ struct AccountView: View {
         .sheet(isPresented: $showingWallet) { WalletView() }
         .onChange(of: reminderOn) { updateReminder() }
         .onChange(of: reminderMinutes) { updateReminder() }
-        .onChange(of: plan.plan == nil) { if reminderOn { updateReminder() } }
         .alert("Sign out?", isPresented: $confirmingSignOut) {
             Button("Sign out", role: .destructive) { Task { await account.signOut() } }
             Button("Cancel", role: .cancel) {}
@@ -202,7 +201,7 @@ struct AccountView: View {
         Task {
             if await DailyReminder.authorize() {
                 notificationsDenied = false
-                DailyReminder.schedule(minutes: reminderMinutes, withPortion: plan.plan != nil)
+                DailyReminder.schedule(minutes: reminderMinutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays })
             } else {
                 notificationsDenied = true
                 reminderOn = false
@@ -464,24 +463,36 @@ enum DailyReminder {
         }
     }
 
-    static func schedule(minutes: Int, withPortion: Bool = false) {
+    /// One reminder a day at the chosen time. With a plan, the study days' reminder also mentions the new portion.
+    static func schedule(minutes: Int, studyDays: Set<Int>? = nil) {
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [identifier])
-        let content = UNMutableNotificationContent()
-        content.title = String(localized: "Today's revision")
-        content.body = withPortion
-            ? String(localized: "Your new portion and your pages for today are waiting for you.")
-            : String(localized: "Your pages for today are waiting for you.")
-        content.sound = .default
-        var time = DateComponents()
-        time.hour = minutes / 60
-        time.minute = minutes % 60
-        center.add(UNNotificationRequest(identifier: identifier, content: content,
-                                         trigger: UNCalendarNotificationTrigger(dateMatching: time, repeats: true)))
+        cancel()
+        func request(_ identifier: String, weekday: Int?, withPortion: Bool) -> UNNotificationRequest {
+            let content = UNMutableNotificationContent()
+            content.title = String(localized: "Today's revision")
+            content.body = withPortion
+                ? String(localized: "Your new portion and your pages for today are waiting for you.")
+                : String(localized: "Your pages for today are waiting for you.")
+            content.sound = .default
+            var time = DateComponents()
+            time.hour = minutes / 60
+            time.minute = minutes % 60
+            time.weekday = weekday
+            return UNNotificationRequest(identifier: identifier, content: content,
+                                         trigger: UNCalendarNotificationTrigger(dateMatching: time, repeats: true))
+        }
+        guard let studyDays else {
+            center.add(request(identifier, weekday: nil, withPortion: false))
+            return
+        }
+        for weekday in 1...7 {
+            center.add(request("\(identifier)-\(weekday)", weekday: weekday, withPortion: studyDays.contains(weekday)))
+        }
     }
 
     static func cancel() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: [identifier] + (1...7).map { "\(identifier)-\($0)" })
     }
 }
 

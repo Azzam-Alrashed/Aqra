@@ -245,6 +245,7 @@ struct BidSheet: View {
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundStyle(Palette.brand)
                         }
+                        .frame(maxWidth: .infinity, alignment: .leading)
                     }
                 }
 
