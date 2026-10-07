@@ -19,7 +19,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ألغى %1$@ جلسة: عادت إليك %2$lld عملة."
+            "value" : "ألغى %1$@ جلسة، فعاد إليك ما دفعته من عملات (%2$lld)."
           }
         }
       }
@@ -49,7 +49,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "سجّل %1$@ تسميعك لـ%2$lld صفحة."
+            "value" : "سجّل %1$@ تسميعك؛ عدد الصفحات: %2$lld."
           }
         }
       }
@@ -833,7 +833,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld من الأخطاء، والمسموح %2$lld في كل صفحة مسموعة"
+            "value" : "الأخطاء: %1$lld، والمسموح: %2$lld في كل صفحة مسموعة"
           }
         }
       }
@@ -855,7 +855,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld من %2$lld آية"
+            "value" : "الآيات: %1$lld من %2$lld"
           }
         }
       }
@@ -867,7 +867,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld من %2$lld إجابات صحيحة. بارك الله فيك."
+            "value" : "الإجابات الصحيحة: %1$lld من %2$lld. بارك الله فيك."
           }
         }
       }
@@ -879,7 +879,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld من %2$lld إجابات صحيحة. راجع المرحلة وحاول مرة أخرى غدًا."
+            "value" : "الإجابات الصحيحة: %1$lld من %2$lld. راجع المرحلة وحاول مرة أخرى غدًا."
           }
         }
       }
@@ -889,7 +889,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%lld من %lld مقاعد"
+            "value" : "المقاعد: %1$lld من %2$lld"
           }
         }
       }
@@ -1263,7 +1263,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld مقاعد بالمزايدة · %2$lld عروض"
+            "value" : "مقاعد بالمزايدة: %1$lld · العروض: %2$lld"
           }
         }
       }
@@ -1551,9 +1551,63 @@
     "A bid now needs at least %lld credits." : {
       "localizations" : {
         "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "يلزم العرض الآن %lld عملة على الأقل."
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يلزم العرض الآن %lld عملات على الأقل."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يلزم العرض الآن %lld عملة على الأقل."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يلزم العرض الآن عملة واحدة على الأقل."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يلزم العرض الآن %lld عملة على الأقل."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يلزم العرض الآن عملتين على الأقل."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يلزم العرض الآن %lld عملة على الأقل."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A bid now needs at least %lld credit."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A bid now needs at least %lld credits."
+                }
+              }
+            }
           }
         }
       }
@@ -1755,9 +1809,63 @@
     "A payout of %lld credits was sent to you." : {
       "localizations" : {
         "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "حُوّلت إليك دفعة بقيمة %lld عملة."
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حُوّلت إليك دفعة بقيمة %lld عملات."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حُوّلت إليك دفعة بقيمة %lld عملة."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حُوّلت إليك دفعة بقيمة عملة واحدة."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حُوّلت إليك دفعة بقيمة %lld عملة."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حُوّلت إليك دفعة بقيمة عملتين."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "حُوّلت إليك دفعة بقيمة %lld عملة."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A payout of %lld credit was sent to you."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A payout of %lld credits was sent to you."
+                }
+              }
+            }
           }
         }
       }
@@ -3930,9 +4038,63 @@
     "Next bid from %lld credits" : {
       "localizations" : {
         "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "العرض التالي من %lld عملة"
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "العرض التالي من %lld عملات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "العرض التالي من %lld عملة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "العرض التالي من عملة واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "العرض التالي من %lld عملة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "العرض التالي من عملتين"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "العرض التالي من %lld عملة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Next bid from %lld credit"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Next bid from %lld credits"
+                }
+              }
+            }
           }
         }
       }
@@ -6447,9 +6609,63 @@
     "You need %lld more credits." : {
       "localizations" : {
         "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تحتاج %lld عملة أخرى."
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتاج %lld عملات أخرى."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتاج %lld عملة أخرى."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتاج عملة واحدة أخرى."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتاج %lld عملة أخرى."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتاج عملتين أخرى."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تحتاج %lld عملة أخرى."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "You need %lld more credit."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "You need %lld more credits."
+                }
+              }
+            }
           }
         }
       }
@@ -6489,7 +6705,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "زايد عليك أحد في جلسة %1$@. عادت إليك %2$lld عملة."
+            "value" : "زايد عليك أحد في جلسة %1$@، فعاد إليك ما حجزته من عملات (%2$lld)."
           }
         }
       }
@@ -6649,7 +6865,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "عرضك بـ%lld يحجز مقعدًا"
+            "value" : "عرضك (%lld) يحجز مقعدًا"
           }
         }
       }
