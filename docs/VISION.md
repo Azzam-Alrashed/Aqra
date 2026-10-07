@@ -8,21 +8,36 @@ This document records the product decisions agreed so far. It is a living docume
 
 ## Goal
 
-Help Quran memorizers (حفّاظ) revise and consolidate what they have memorized.
+Help Quran memorizers through the whole journey: memorizing, revising, and mastering what they have memorized, from the first ayah to lasting mastery.
 
-As users revise, they ascend **منازل**, a progression inspired by the hadith.
+Aqra began as a revision app for huffaz. On 2026-10-07 its scope grew to the full journey, taking the Etqan Quran Platform document as a reference (not as a specification).
+
+### The منازل
+
+The منازل are the ayat themselves, as the hadith says: a student's منزلة is the last ayah they have reached. The student rises one ayah at a time as they memorize, and each ayah carries a strength that grows with revision and fades without it.
 
 ### Guiding principles
 
 - **The Quran text is sacred data.** See [Quran text](#quran-text).
 - **The منازل are motivational.** They remind the user of the hadith and never claim to represent a real rank in the Hereafter.
 - **Constructive competition.** Competition tools, leaderboards included, are welcome when they create a constructive, motivating environment. Features that encourage showing off for its own sake are avoided, to preserve sincerity (إخلاص).
+- **Every rule is a policy, not code.** Review intervals, mastery thresholds and similar rules live in one adjustable place, so they can be tuned after trying them with real huffaz and sheikhs.
+
+## Release waves
+
+Each wave is complete and usable on its own, and each depends on the one before it.
+
+| Wave | Scope | Status |
+|---|---|---|
+| **1. The student alone** | Offline, no account: the Mushaf, the memorization map, the revision engine, and today's wird. | Built (2026-10-07) |
+| **2. The student with others** | Accounts, teachers and tasmee', the "verified" mark, peer tasmee'. | Next |
+| **3. The full journey** | The personal plan with new memorization and a completion date, stages and tests, competitions, the seat auction, payments. | Later |
 
 ## Platform
 
 - **First release:** an iOS app, built as an Xcode project with SwiftUI.
 - **Minimum deployment target:** iOS 17. It can be raised if a feature requires it.
-- **Later:** Android and the web. Data and logic, such as ayah IDs, scheduling and منازل, should be designed to be platform-neutral so the expansion is straightforward.
+- **Later:** Android and the web. Data and logic, such as ayah IDs, scheduling and منازل, are designed to be platform-neutral so the expansion is straightforward.
 
 ## Quran text
 
@@ -32,27 +47,78 @@ Accuracy of the Quran text is the project's highest requirement.
 
 - **Source:** the King Fahd Glorious Quran Printing Complex (مجمع الملك فهد لطباعة المصحف الشريف).
 - **Riwayah:** Hafs only, for now.
-- **Display:** 604 Mushaf pages in the Madinah layout, using the Complex's own fonts, so that huffaz keep the visual memory of where each ayah sits on the page.
+- **Display:** 604 Mushaf pages in the Madinah layout of the **1441H print**, so that huffaz keep the visual memory of where each ayah sits on the page. The page fonts carry the tajweed colors, which can be turned off.
 
 ### Safeguards
 
 1. **Bundled unmodified.** The text is never typed by hand, edited, generated or "cleaned up".
 2. **Checksum.** A checksum of the original files is recorded, and a test fails the build if the text changes.
-3. **Cross-verification.** The text is compared once against a second trusted source, such as Tanzil, and any difference is reviewed.
-4. **Rendering review.** A qualified hafiz reviews the rendering before release.
+3. **Cross-verification.** The layout is checked against the Complex's official data line by line, by a test.
+4. **Rendering review.** A qualified hafiz reviews the rendering before release, with and without tajweed colors.
 5. **License.** The Complex's usage terms are respected, and the Complex is credited in the app.
+
+See `shared/quran/README.md` for the sources, the provisional ones, and what must be settled before release.
+
+## The screens
+
+### Home
+
+The home answers «وش علي اليوم؟». It shows:
+- **The journey:** the منازل stairs (ten steps of three juz' each), the share of the Quran memorized, and the average strength of the memorization.
+- **Today's wird:** the pages to revise today, one button to start, and the daily amount.
+
+A tab bar holds the home and the Mushaf. The Mushaf hides it while reading.
+
+### Mushaf
+
+The Mushaf is where the student reads, marks what they have memorized, and revises. It opens on the last page read.
+
+- **Memorized ayat are colored.** Each ayah takes the color of its topic section, as in a printed thematic Mushaf, drawn as a soft highlight behind its words. The color is faint when the ayah is newly memorized, fuller as it grows strong, and fades when revision is overdue. Unmemorized ayat stay plain paper.
+- **Tajweed colors** on the letters, with their own toggle.
+- **Marking mode** marks pages and ayat as memorized directly on the page.
+- **Revision mode** veils the memorized ayat and reveals them one at a time.
+
+## Memorization
+
+### Where the student starts
+
+The student **declares** what they already know, by juz', by surah, by page, and ayah by ayah, with a "whole Quran" shortcut:
+- juz' and surahs on the «ماذا تحفظ؟» screen right after onboarding;
+- pages and ayat in the Mushaf's marking mode.
+
+Later, a tasmee' with a teacher **confirms** it, adding a "verified" mark (wave 2).
+
+### Strength of an ayah
+
+Every memorized ayah has a half-life that fades with time, grows with each clean revision and shrinks with each stumble. The details and every number are in [REVISION.md](REVISION.md).
+
+## Revision
+
+Each day's wird takes, in order, pages stumbled on recently (follow-up), then the next pages of a rotation through everything memorized, in Mushaf order, up to the daily amount the student chose. Missed days don't pile up.
+
+A revision is recorded in one of three ways:
+1. **In the app:** the page's ayat are veiled; the student recites, reveals them one at a time, and taps the ayat they stumbled on.
+2. **Outside the app** (in prayer, or to a friend): the page is checked off from the wird.
+3. **With a sheikh** during tasmee' (wave 2).
+
+Each source will carry a different weight: self-revision less than a peer's tasmee', and a peer's less than a sheikh's.
+
+See [REVISION.md](REVISION.md) for the policy, its defaults, and the open questions.
 
 ## Connectivity
 
-- **Online app with accounts.**
-- **Offline:** Mushaf reading and basic features work without a connection.
-- **Online only:** video calls, booking, the auction, competitions, and other features that require a connection.
+- **Wave 1 works entirely offline with no account.**
+- **Online only:** accounts, video calls, booking, the auction, and competitions.
+
+## Accounts
+
+Every user starts as an anonymous Firebase user. Their progress lives on the device until they sign in with Apple or Google, which links the credential to the anonymous account so nothing is lost. Signing in is required before booking tasmee' or buying credits.
 
 ## Roles
 
 ### Student
 
-- Revises.
+- Memorizes and revises.
 - Books tasmee' sessions with teachers.
 
 ### Teacher
@@ -65,7 +131,7 @@ A separate role. Becoming a teacher requires:
 ## Tasmee' sessions
 
 - **Booking:** the student chooses a teacher and books a tasmee' time slot.
-- **Format:** a live audio and video call in which the student recites and the teacher corrects.
+- **Format:** a live audio and video call in which the student recites and the teacher corrects, marking mistakes on the ayat.
 - **Video provider:** LiveKit Cloud. Self-hosting is an option later if costs grow.
 - **Access:** room tokens are issued by Cloud Functions only after verifying that the user holds a seat in that session.
 
@@ -113,12 +179,12 @@ Competitions must be constructive and motivating, consistent with the [guiding p
 - **Private competitions between friends.**
 - **Teacher-run competitions** for a teacher's own students.
 
-The exact scope is TBD.
+Public standing should rest on verified evidence (a sheikh's tasmee'), not on self-reports. The exact scope is TBD.
 
 ## Backend
 
 - **Firebase:**
-  - **Auth:** Sign in with Apple and Google. Phone number sign-in may be added later.
+  - **Auth:** anonymous users, then Sign in with Apple and Google. Phone number sign-in may be added later.
   - **Firestore.**
   - **Cloud Functions.**
 - **LiveKit Cloud** for video calls.
@@ -131,9 +197,10 @@ The exact scope is TBD.
 
 ## Open questions
 
-- **Revision method:** recitation with speech recognition, hide and reveal, quizzes, logging, or a combination.
-- **Revision scheduling:** spaced repetition suggested by the app, or chosen by the user.
-- **منازل calculation:** by ayat revised, by recitation quality, or by consistency.
+- **Topic sections:** the stand-in data must be replaced by a published thematic Mushaf's division, with the publisher's permission.
+- **Revision policy:** the numbers in [REVISION.md](REVISION.md) need trying with real huffaz.
+- **Stages and tests:** how Etqan's ten stages and tests map onto Aqra's منازل (the ten stairs match the ten stages).
+- **The sheikh's role:** an ongoing sheikh who follows a student, or booking any teacher, or both.
 - **Free seats:** how many reserved free seats each session has.
 - **Commission:** the app's commission percentage.
 - **Teacher vetting:** the full acceptance procedure beyond the ijazah and interview.
