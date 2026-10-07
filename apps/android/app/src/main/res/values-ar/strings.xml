@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="continue_with_apple">المتابعة باستخدام Apple</string>
+    <string name="notifications_are_off">الإشعارات متوقفة لتطبيق اقرأ.</string>
+    <string name="open_notification_settings">افتح الإعدادات</string>
+    <string name="scanning_isnt_available">المسح غير متاح على هذا الجهاز.</string>
+    <string name="accounts_need_the_firebase_config">الحسابات متوقفة في هذه النسخة.</string>
+    <string name="credits_arent_sold_on_android_yet">لا يمكن شراء العملات من تطبيق أندرويد بعد. والعملات التي في حسابك تزايد بها هنا كما في أي مكان.</string>
+    <string name="video_calls_need_camera_and_microphone">تستمر المكالمة بما أُذن لاقرأ باستخدامه: اسمح بالكاميرا والميكروفون من الإعدادات ليراك الآخرون ويسمعوك.</string>
+</resources>
