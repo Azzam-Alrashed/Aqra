@@ -246,12 +246,17 @@ struct HomeView: View {
             if memorization.count > 0 {
                 TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !isVisible || reduceMotion)) { timeline in
                     let time = timeline.date.timeIntervalSinceReferenceDate
+                    // Each chip rests against its side of the stage, whatever its width in the app's language,
+                    // and flies out to it from the middle.
                     ZStack {
-                        floating(0, at: CGPoint(x: 92 * mirror, y: -118), tilt: -5 * mirror, time: time) { shareChip(share) }
+                        floating(0, from: CGPoint(x: 92 * mirror, y: -118), tilt: -5 * mirror, time: time) { shareChip(share) }
+                            .frame(maxWidth: .infinity, alignment: mirror > 0 ? .trailing : .leading)
                         if let strength {
-                            floating(1, at: CGPoint(x: -96 * mirror, y: 128), tilt: 4 * mirror, time: time) { strengthChip(strength) }
+                            floating(1, from: CGPoint(x: -96 * mirror, y: 128), tilt: 4 * mirror, time: time) { strengthChip(strength) }
+                                .frame(maxWidth: .infinity, alignment: mirror > 0 ? .leading : .trailing)
                         }
                     }
+                    .padding(.horizontal, 2)
                     // The chips' layer spans the stage, so nothing they drift to is cut off.
                     .frame(maxWidth: .infinity, maxHeight: .infinity)
                     .drawingGroup()
@@ -272,7 +277,8 @@ struct HomeView: View {
         }
     }
 
-    private func floating<Content: View>(_ index: Int, at target: CGPoint, tilt: Double, time: TimeInterval,
+    /// A chip at its resting place, after flying out from `start`'s distance back toward the stage's middle.
+    private func floating<Content: View>(_ index: Int, from start: CGPoint, tilt: Double, time: TimeInterval,
                                          @ViewBuilder content: () -> Content) -> some View {
         let drift = chipsOut && !reduceMotion ? sin(time * (0.8 + Double(index) * 0.2) + Double(index) * 1.3) * 5 : 0
         return content()
@@ -280,7 +286,7 @@ struct HomeView: View {
             .scaleEffect(chipsOut ? 1 : 0.3)
             .rotationEffect(.degrees(chipsOut ? tilt : 0))
             .opacity(chipsOut ? 1 : 0)
-            .offset(x: chipsOut ? target.x : 0, y: (chipsOut ? target.y : 0) + drift)
+            .offset(x: chipsOut ? 0 : -start.x, y: (chipsOut ? start.y : 0) + drift)
     }
 
     private func shareChip(_ share: Double) -> some View {
