@@ -39,15 +39,24 @@ struct MushafDataTests {
     }
 }
 
-/// How long it takes to load the Mushaf; printed so changes can be compared.
+/// How long it takes to load the Mushaf; printed so changes can be compared. The limit is on the loading thread's
+/// own CPU time, so suites running alongside (which load the Mushaf too) don't make it look slower than it is.
 struct MushafLoadTimeTests {
     @Test func loadsQuickly() throws {
         let clock = ContinuousClock()
         var store: MushafStore?
+        let cpuStart = Self.threadCPUTime()
         let elapsed = try clock.measure { store = try MushafStore() }
-        print("MushafStore load time: \(elapsed.formatted(.units(allowed: [.milliseconds])))")
+        let cpu = Self.threadCPUTime() - cpuStart
+        print("MushafStore load time: \(elapsed.formatted(.units(allowed: [.milliseconds]))), CPU \(Int(cpu * 1_000)) ms")
         #expect(store != nil)
-        #expect(elapsed < .seconds(2))
+        #expect(cpu < 2)
+    }
+
+    private static func threadCPUTime() -> Double {
+        var time = timespec()
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time)
+        return Double(time.tv_sec) + Double(time.tv_nsec) / 1_000_000_000
     }
 }
 

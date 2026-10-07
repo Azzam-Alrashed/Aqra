@@ -36,6 +36,8 @@ final class TasmeeStore {
     var mushaf: MushafStore? {
         didSet { applyPending() }
     }
+    /// Called after each tasmee' is applied on this device (a teacher's stage test counts toward its stage).
+    @ObservationIgnored var onApplied: ((TasmeeRecord) -> Void)?
 
     @ObservationIgnored private let memorization: MemorizationStore
     @ObservationIgnored private let revision: RevisionStore
@@ -413,6 +415,7 @@ final class TasmeeStore {
             TasmeeApply.apply(record, memorization: memorization, revision: revision) { mushaf.page($0).ayahs }
             applied.append(record.id)
             recentlyApplied.insert(record, at: 0)
+            onApplied?(record)
             // A client date, not a server timestamp: a pending server timestamp reads as null here and the
             // record would come round again.
             user(uid).collection("tasmee").document(record.id).updateData(["appliedAt": Date()])

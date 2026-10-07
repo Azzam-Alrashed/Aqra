@@ -7,7 +7,9 @@ import UserNotifications
 /// and the sources Aqra is built on. What's memorized and the daily amount are edited from the home.
 struct AccountView: View {
     @Environment(AccountStore.self) private var account
+    @Environment(PlanStore.self) private var plan
     @Environment(\.openURL) private var openURL
+    @AppStorage("sounds.on") private var soundsOn = true
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @AppStorage("mushaf.topics") private var topicColors = true
     @AppStorage("reminder.on") private var reminderOn = false
@@ -76,6 +78,9 @@ struct AccountView: View {
                     AqraSectionTitle(title: "App").padding(.top, 10)
                     AqraCard(padding: 0, radius: 24) {
                         VStack(spacing: 0) {
+                            AqraRow(icon: "🔔", tint: Palette.butter, title: Text("Sounds"),
+                                    detail: Text("A gentle chime for rewards")) { toggle($soundsOn) }
+                            AqraRowDivider()
                             Button {
                                 openSettings()
                             } label: {
@@ -140,6 +145,7 @@ struct AccountView: View {
         .environment(\.colorScheme, .light)
         .onChange(of: reminderOn) { updateReminder() }
         .onChange(of: reminderMinutes) { updateReminder() }
+        .onChange(of: plan.plan == nil) { if reminderOn { updateReminder() } }
         .alert("Sign out?", isPresented: $confirmingSignOut) {
             Button("Sign out", role: .destructive) { Task { await account.signOut() } }
             Button("Cancel", role: .cancel) {}
@@ -179,7 +185,7 @@ struct AccountView: View {
         Task {
             if await DailyReminder.authorize() {
                 notificationsDenied = false
-                DailyReminder.schedule(minutes: reminderMinutes)
+                DailyReminder.schedule(minutes: reminderMinutes, withPortion: plan.plan != nil)
             } else {
                 notificationsDenied = true
                 reminderOn = false
@@ -441,12 +447,14 @@ enum DailyReminder {
         }
     }
 
-    static func schedule(minutes: Int) {
+    static func schedule(minutes: Int, withPortion: Bool = false) {
         let center = UNUserNotificationCenter.current()
         center.removePendingNotificationRequests(withIdentifiers: [identifier])
         let content = UNMutableNotificationContent()
         content.title = String(localized: "Today's revision")
-        content.body = String(localized: "Your pages for today are waiting for you.")
+        content.body = withPortion
+            ? String(localized: "Your new portion and your pages for today are waiting for you.")
+            : String(localized: "Your pages for today are waiting for you.")
         content.sound = .default
         var time = DateComponents()
         time.hour = minutes / 60
@@ -457,6 +465,36 @@ enum DailyReminder {
 
     static func cancel() {
         UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+    }
+}
+
+/// A reminder an hour before each tasmee' session booked, kept in step with the bookings. Nothing is asked: the
+/// reminders are only set when notifications are already allowed (by the daily reminder).
+@MainActor
+enum SessionReminders {
+    private static let prefix = "session-"
+
+    static func schedule(_ bookings: [Booking]) {
+        let center = UNUserNotificationCenter.current()
+        Task {
+            let settings = await center.notificationSettings()
+            let pending = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
+            center.removePendingNotificationRequests(withIdentifiers: pending)
+            guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else { return }
+            for booking in bookings {
+                let at = booking.startsAt.addingTimeInterval(-3_600)
+                guard at > .now else { continue }
+                let content = UNMutableNotificationContent()
+                content.title = String(localized: "Your tasmee' in an hour")
+                content.body = booking.kind == .video
+                    ? String(localized: "With \(booking.teacherName), by video.")
+                    : String(localized: "With \(booking.teacherName), at \(booking.place).")
+                content.sound = .default
+                let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: at)
+                try? await center.add(UNNotificationRequest(identifier: prefix + booking.id, content: content,
+                                                            trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
+            }
+        }
     }
 }
 

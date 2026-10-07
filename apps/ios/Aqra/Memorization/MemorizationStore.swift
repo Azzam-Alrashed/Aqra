@@ -13,10 +13,23 @@ struct AyahMemory: Codable, Hashable {
     /// Whether a teacher has confirmed it in a tasmee'.
     var verified = false
     var since: Date
+    /// When it was memorized in Aqra as a new portion; nil for an ayah the student declared they already knew.
+    var learnedAt: Date?
+    /// The last stumble on it, if any: it's mastered only once a clean revision has come after it.
+    var lastLapseAt: Date?
 
-    init(since: Date, stability: Double = ReviewPolicy.standard.declaredStability) {
+    init(since: Date, stability: Double = ReviewPolicy.standard.declaredStability, learnedAt: Date? = nil) {
         self.since = since
         self.stability = stability
+        self.learnedAt = learnedAt
+    }
+
+    /// Whether it's mastered: established to the stage policy's mastery half-life, with no stumble since its last
+    /// clean revision.
+    func isMastered(policy: StagePolicy = .standard) -> Bool {
+        guard stability >= policy.masteryStability else { return false }
+        guard let lastLapseAt else { return true }
+        return (lastReviewed ?? since) > lastLapseAt
     }
 
     /// How strong it is now, from 0 to 1: how established it is (its stability, up to the policy's mature level)
@@ -36,6 +49,7 @@ struct AyahMemory: Codable, Hashable {
         if stumbled {
             next.stability = max(stability * policy.lapseFactor, policy.minStability)
             next.lapses += 1
+            next.lastLapseAt = max(date, lastLapseAt ?? date)
         } else {
             // Revising again before it has had time to slip strengthens it less (the spacing effect). The first
             // revision of a declared ayah counts in full: it was memorized long before, when isn't known.
@@ -48,8 +62,9 @@ struct AyahMemory: Codable, Hashable {
         return next
     }
 
-    // Files from before revision existed (version 1) hold only `strength`, `verified` and `since`.
-    private enum CodingKeys: String, CodingKey { case stability, lastReviewed, lapses, verified, since }
+    // Files from before revision existed (version 1) hold only `strength`, `verified` and `since`; files from before
+    // the plan don't say when an ayah was learned or last stumbled on.
+    private enum CodingKeys: String, CodingKey { case stability, lastReviewed, lapses, verified, since, learnedAt, lastLapseAt }
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
@@ -58,6 +73,8 @@ struct AyahMemory: Codable, Hashable {
         lastReviewed = try container.decodeIfPresent(Date.self, forKey: .lastReviewed)
         lapses = try container.decodeIfPresent(Int.self, forKey: .lapses) ?? 0
         verified = try container.decodeIfPresent(Bool.self, forKey: .verified) ?? false
+        learnedAt = try container.decodeIfPresent(Date.self, forKey: .learnedAt)
+        lastLapseAt = try container.decodeIfPresent(Date.self, forKey: .lastLapseAt)
     }
 }
 
@@ -159,6 +176,30 @@ final class MemorizationStore {
         ayahs = memories.filter { (0..<MushafStore.ayahCount).contains($0.key) }
         scheduleSave()
         saveNow()
+    }
+
+    /// Marks ayat as newly memorized in Aqra (a portion of the plan): they start at the plan's short half-life, so
+    /// they're faint and come back soon. Ayat already memorized keep what's known about them.
+    func learn(_ learned: some Sequence<Int>, at date: Date = .now, stability: Double) {
+        var changed = false
+        for ayah in learned where (0..<MushafStore.ayahCount).contains(ayah) && !isMemorized(ayah) {
+            ayahs[ayah] = AyahMemory(since: date, stability: stability, learnedAt: date)
+            changed = true
+        }
+        if changed {
+            scheduleSave()
+            saveNow()
+        }
+    }
+
+    /// The memorized ayat that are mastered (see `AyahMemory.isMastered`), counted in a range.
+    func masteredCount(in range: ClosedRange<Int>, policy: StagePolicy = .standard) -> Int {
+        range.reduce(0) { $0 + (ayahs[$1]?.isMastered(policy: policy) == true ? 1 : 0) }
+    }
+
+    /// The memorized ayat a teacher verified, counted in a range.
+    func verifiedCount(in range: ClosedRange<Int>) -> Int {
+        range.reduce(0) { $0 + (ayahs[$1]?.verified == true ? 1 : 0) }
     }
 
     /// Marks ayat as memorized (keeping what's already known about them) or as not memorized.

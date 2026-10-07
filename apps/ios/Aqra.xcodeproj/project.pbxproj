@@ -21,6 +21,7 @@
 		1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01744F945BA643B14B7465BE /* AqraWelcomeView.swift */; };
 		1C5F4BA3851DEFBE3DEFC906 /* MushafTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */; };
 		1EAB7A71C09ABF42DFDB12DF /* Amiri-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6E6984583BED0004A203DABB /* Amiri-Bold.ttf */; };
+		1EE162AB5A10ED7D0D6A5627 /* PlanViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = BA5A24D8953593FFD67072E8 /* PlanViews.swift */; };
 		1FCDC782C27B1AC154389AEC /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = 22A0842F575DA582DF2221F0 /* LiveKit */; };
 		214A4FF9C9FB9EEB9930F6C4 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F047391ECE3170AC958AE61A /* GoogleSignIn */; };
 		263DCB34D497E7EBE0794B0F /* Amiri-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */; };
@@ -32,7 +33,9 @@
 		44145773A03836E569495B56 /* FirebaseFunctions in Frameworks */ = {isa = PBXBuildFile; productRef = 092276FFF5136E406677F603 /* FirebaseFunctions */; };
 		454EBEFA7C30DEF4B3582458 /* TasmeeModels.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C96B802FBD5FD542DC59F30 /* TasmeeModels.swift */; };
 		46321E94CC83A24568ABCFCC /* RevisionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCCD71BF466B07DDD06D84E /* RevisionEngine.swift */; };
+		477F1C7A1EBCABFB7CBF2812 /* RewardViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D81E6FBDB58FBFAFF3DF0FA /* RewardViews.swift */; };
 		4964D378F5949856F3745F53 /* ManazilStairs.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B68B0A48A1816211271B2B /* ManazilStairs.swift */; };
+		5383EDE2A7ACFF82329F5E49 /* RewardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C79F65CF6B20E4427E9DC8A4 /* RewardStore.swift */; };
 		57DEC10A3EC756442E353877 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 35F03A505062D433A0B82952 /* Localizable.xcstrings */; };
 		596A5B67934BA91E23B6B715 /* PeerTasmee.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1318AACA208DCE2AD954B8A0 /* PeerTasmee.swift */; };
 		59C9BB628C5B5E6AAC777C44 /* AqraComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DF83E6EACD34C51D60CD605 /* AqraComponents.swift */; };
@@ -54,15 +57,20 @@
 		A2C8F773376D76EE820064A2 /* PeerViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9FBAA9E53852AC40FE94CFA3 /* PeerViews.swift */; };
 		A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CF7CA2416343BC4067921C5 /* PageDots.swift */; };
 		B12D782394025C437D5E133A /* Firebase in Resources */ = {isa = PBXBuildFile; fileRef = 41C1DBE7823563D3D5499F28 /* Firebase */; };
+		B1DF2B5429CB727F3AAC7E65 /* Journey.swift in Sources */ = {isa = PBXBuildFile; fileRef = CB8C65BE3F2EEA4C8597403A /* Journey.swift */; };
 		B385724117B3DF0FF21962B3 /* MushafView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5374F6DB7F1FFAF810B695C4 /* MushafView.swift */; };
 		B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */; };
 		BDEC10886391E806B355B426 /* MushafStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836D08619011973FB71AEFC1 /* MushafStore.swift */; };
 		BF159EA2BDB21AC60E486049 /* CloudSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE2931FF3F4AD637603D71BD /* CloudSyncTests.swift */; };
 		C07E4DA1A47CB3F5AD4F1A84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99C540650E9663B5B728582A /* Assets.xcassets */; };
 		C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */; };
+		C367E709A040189141DC730C /* StageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9BFF882A84556422BB47BD5 /* StageViews.swift */; };
 		C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF793C12D16FB36F80C61903 /* SacredText.swift */; };
 		CA36F4A0D29DE63EAD73FA60 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 69FA526BC35C31760E96760B /* OFL.txt */; };
 		CFE907F55F9252A073A6EBF5 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AB3061F1929AE7431B17E2DF /* FirebaseFirestore */; };
+		D1532B8C85C494E67336552E /* JourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951585A6E1740996615236BA /* JourneyTests.swift */; };
+		D35482B4BEF2062E268AE3A3 /* RotationAdvisor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A36665EF8F19D147219B7 /* RotationAdvisor.swift */; };
+		D8D65C91045C897D90F7FE9D /* MemorizeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21BFEDE7189234BAC56C6A6 /* MemorizeView.swift */; };
 		DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A5BD4368E1C3CCFCDBDB66 /* StartPageView.swift */; };
 		E0B742B5B6301FE52D225754 /* VideoCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2890AF77D2F59AA73DF8608F /* VideoCall.swift */; };
 		E4D2E9755861CE6A0FBE2A8E /* RevisionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */; };
@@ -73,6 +81,7 @@
 		EB8C8031FA7C371C1FFA38C8 /* AqraApp.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4971E9222377B2D0AE1D25DD /* AqraApp.swift */; };
 		EBC979E0483FB969B99B4D03 /* DailyAmountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76EBE0EB6CE652A1ECAD40BB /* DailyAmountView.swift */; };
 		EF4765262D5AA2C27811E483 /* AqraFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4936D1082FB73C3638CB969 /* AqraFont.swift */; };
+		FF34ECA9B23026A632862A5B /* PlanStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FB96DBD7F5AD2D753B534CA /* PlanStore.swift */; };
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
@@ -90,10 +99,12 @@
 		03ED14CD4BB8B9B8644FD2B0 /* TasmeeTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasmeeTests.swift; sourceTree = "<group>"; };
 		057E8C550F33565A3E785512 /* AqraArchLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraArchLogo.swift; sourceTree = "<group>"; };
 		0CB3948E085F254CF36BF182 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
+		0FB96DBD7F5AD2D753B534CA /* PlanStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanStore.swift; sourceTree = "<group>"; };
 		1300102697229A28E90F368F /* StudentFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentFile.swift; sourceTree = "<group>"; };
 		1318AACA208DCE2AD954B8A0 /* PeerTasmee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerTasmee.swift; sourceTree = "<group>"; };
 		140188D5E36E5305D761C689 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		197C7240EA806A2E4643B0F4 /* Aqra.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Aqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		1E7A36665EF8F19D147219B7 /* RotationAdvisor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotationAdvisor.swift; sourceTree = "<group>"; };
 		245F653F1425B4D48BE20C29 /* WirdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WirdView.swift; sourceTree = "<group>"; };
 		264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafTests.swift; sourceTree = "<group>"; };
 		269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManazilPageView.swift; sourceTree = "<group>"; };
@@ -115,6 +126,7 @@
 		4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		5374F6DB7F1FFAF810B695C4 /* MushafView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafView.swift; sourceTree = "<group>"; };
 		56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraTests.swift; sourceTree = "<group>"; };
+		5D81E6FBDB58FBFAFF3DF0FA /* RewardViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardViews.swift; sourceTree = "<group>"; };
 		5DB683A2A8EACC0D30A1D343 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		5ED2439632E5AA260610DF87 /* MemorizationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizationStore.swift; sourceTree = "<group>"; };
 		69FA526BC35C31760E96760B /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
@@ -126,17 +138,22 @@
 		7AB948E93ABED6504E87449D /* quran */ = {isa = PBXFileReference; lastKnownFileType = folder; name = quran; path = ../../shared/quran; sourceTree = SOURCE_ROOT; };
 		836D08619011973FB71AEFC1 /* MushafStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafStore.swift; sourceTree = "<group>"; };
 		94E4E27C2A024A8688C0B012 /* MushafIndexView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafIndexView.swift; sourceTree = "<group>"; };
+		951585A6E1740996615236BA /* JourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyTests.swift; sourceTree = "<group>"; };
 		99C540650E9663B5B728582A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9C96B802FBD5FD542DC59F30 /* TasmeeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasmeeModels.swift; sourceTree = "<group>"; };
 		9FBAA9E53852AC40FE94CFA3 /* PeerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerViews.swift; sourceTree = "<group>"; };
 		A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafPageView.swift; sourceTree = "<group>"; };
+		A9BFF882A84556422BB47BD5 /* StageViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StageViews.swift; sourceTree = "<group>"; };
 		B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSnapshotTests.swift; sourceTree = "<group>"; };
+		BA5A24D8953593FFD67072E8 /* PlanViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanViews.swift; sourceTree = "<group>"; };
 		C03FFBBE60EB3AC1DA597F5D /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		C27910445AF7EA6D08D14CAF /* CloudBackup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackup.swift; sourceTree = "<group>"; };
 		C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconRenderTests.swift; sourceTree = "<group>"; };
 		C3D871D9287AF47EBED70889 /* OnboardingPageLayout.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingPageLayout.swift; sourceTree = "<group>"; };
 		C3D8F702F0E08B9E7214A07A /* AqraTests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AqraTests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		C79F65CF6B20E4427E9DC8A4 /* RewardStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardStore.swift; sourceTree = "<group>"; };
 		CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Amiri-Regular.ttf"; sourceTree = "<group>"; };
+		CB8C65BE3F2EEA4C8597403A /* Journey.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Journey.swift; sourceTree = "<group>"; };
 		CCBAD12111AE3902F992CCFF /* MemorizationSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizationSetupView.swift; sourceTree = "<group>"; };
 		CFCCD71BF466B07DDD06D84E /* RevisionEngine.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevisionEngine.swift; sourceTree = "<group>"; };
 		D44E6BE584D0B5057F1DD97B /* FeaturesPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = FeaturesPageView.swift; sourceTree = "<group>"; };
@@ -148,6 +165,7 @@
 		E7BE8C32420D5CB314CBF888 /* TasmeeHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasmeeHistoryView.swift; sourceTree = "<group>"; };
 		E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevisionTests.swift; sourceTree = "<group>"; };
 		EA10A8241619208EBC8A9E56 /* MemorizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizationTests.swift; sourceTree = "<group>"; };
+		F21BFEDE7189234BAC56C6A6 /* MemorizeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizeView.swift; sourceTree = "<group>"; };
 		F4936D1082FB73C3638CB969 /* AqraFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraFont.swift; sourceTree = "<group>"; };
 		FF793C12D16FB36F80C61903 /* SacredText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SacredText.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
@@ -183,6 +201,16 @@
 			path = Onboarding;
 			sourceTree = "<group>";
 		};
+		15F4107B6E5A063FA8B1F0FC /* Plan */ = {
+			isa = PBXGroup;
+			children = (
+				F21BFEDE7189234BAC56C6A6 /* MemorizeView.swift */,
+				0FB96DBD7F5AD2D753B534CA /* PlanStore.swift */,
+				BA5A24D8953593FFD67072E8 /* PlanViews.swift */,
+			);
+			path = Plan;
+			sourceTree = "<group>";
+		};
 		28E1913F081F6C788EE5B202 /* Aqra */ = {
 			isa = PBXGroup;
 			children = (
@@ -208,6 +236,7 @@
 			children = (
 				76EBE0EB6CE652A1ECAD40BB /* DailyAmountView.swift */,
 				CFCCD71BF466B07DDD06D84E /* RevisionEngine.swift */,
+				1E7A36665EF8F19D147219B7 /* RotationAdvisor.swift */,
 				245F653F1425B4D48BE20C29 /* WirdView.swift */,
 			);
 			path = Revision;
@@ -254,6 +283,7 @@
 			isa = PBXGroup;
 			children = (
 				3A4939431832F1F695BCB2C7 /* Curriculum.swift */,
+				A9BFF882A84556422BB47BD5 /* StageViews.swift */,
 			);
 			path = Curriculum;
 			sourceTree = "<group>";
@@ -284,8 +314,18 @@
 				6E0CDDC46CD40B3AA873605C /* AccountView.swift */,
 				C27910445AF7EA6D08D14CAF /* CloudBackup.swift */,
 				3C21E66BA2ADEDC31C27EEEC /* CloudSync.swift */,
+				CB8C65BE3F2EEA4C8597403A /* Journey.swift */,
 			);
 			path = Account;
+			sourceTree = "<group>";
+		};
+		8FE1830E094D949EE4905E48 /* Rewards */ = {
+			isa = PBXGroup;
+			children = (
+				C79F65CF6B20E4427E9DC8A4 /* RewardStore.swift */,
+				5D81E6FBDB58FBFAFF3DF0FA /* RewardViews.swift */,
+			);
+			path = Rewards;
 			sourceTree = "<group>";
 		};
 		9C8F178663BAA7E3C4CCCF64 /* Resources */ = {
@@ -313,9 +353,11 @@
 				414E566AE95DAE89ECEB90A3 /* Memorization */,
 				88636D0AF183BBA7F8083935 /* Mushaf */,
 				1549276E68F0E369A83EEED1 /* Onboarding */,
+				15F4107B6E5A063FA8B1F0FC /* Plan */,
 				81E09644DE32BC5B6438182E /* Progress */,
 				9C8F178663BAA7E3C4CCCF64 /* Resources */,
 				3AB17583EB887E2AA2431A98 /* Revision */,
+				8FE1830E094D949EE4905E48 /* Rewards */,
 				FE352AD1935C1FB58065078E /* SacredText */,
 				6774E87687A14CF88549ECDE /* Tasmee */,
 			);
@@ -328,6 +370,7 @@
 				C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */,
 				56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */,
 				DE2931FF3F4AD637603D71BD /* CloudSyncTests.swift */,
+				951585A6E1740996615236BA /* JourneyTests.swift */,
 				EA10A8241619208EBC8A9E56 /* MemorizationTests.swift */,
 				264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */,
 				E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */,
@@ -496,6 +539,7 @@
 				6FFAE34E3F9E52CC10B92D53 /* AppIconRenderTests.swift in Sources */,
 				713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */,
 				BF159EA2BDB21AC60E486049 /* CloudSyncTests.swift in Sources */,
+				D1532B8C85C494E67336552E /* JourneyTests.swift in Sources */,
 				916DEA5DC95A5438E364AEDB /* MemorizationTests.swift in Sources */,
 				1C5F4BA3851DEFBE3DEFC906 /* MushafTests.swift in Sources */,
 				E4D2E9755861CE6A0FBE2A8E /* RevisionTests.swift in Sources */,
@@ -524,10 +568,12 @@
 				EBC979E0483FB969B99B4D03 /* DailyAmountView.swift in Sources */,
 				9B6609EC32D686618171D356 /* FeaturesPageView.swift in Sources */,
 				0EB2AD94C10829064C1917EB /* HomeView.swift in Sources */,
+				B1DF2B5429CB727F3AAC7E65 /* Journey.swift in Sources */,
 				C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */,
 				4964D378F5949856F3745F53 /* ManazilStairs.swift in Sources */,
 				2A203B4FCA716C993ACC5786 /* MemorizationSetupView.swift in Sources */,
 				3FDBDC2BEE2EA9E82D76CF50 /* MemorizationStore.swift in Sources */,
+				D8D65C91045C897D90F7FE9D /* MemorizeView.swift in Sources */,
 				065BF80A3008FD7DC76BF935 /* MushafIndexView.swift in Sources */,
 				EAEBCFF615FEDD24A42B8A43 /* MushafPageView.swift in Sources */,
 				BDEC10886391E806B355B426 /* MushafStore.swift in Sources */,
@@ -538,8 +584,14 @@
 				A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */,
 				596A5B67934BA91E23B6B715 /* PeerTasmee.swift in Sources */,
 				A2C8F773376D76EE820064A2 /* PeerViews.swift in Sources */,
+				FF34ECA9B23026A632862A5B /* PlanStore.swift in Sources */,
+				1EE162AB5A10ED7D0D6A5627 /* PlanViews.swift in Sources */,
 				46321E94CC83A24568ABCFCC /* RevisionEngine.swift in Sources */,
+				5383EDE2A7ACFF82329F5E49 /* RewardStore.swift in Sources */,
+				477F1C7A1EBCABFB7CBF2812 /* RewardViews.swift in Sources */,
+				D35482B4BEF2062E268AE3A3 /* RotationAdvisor.swift in Sources */,
 				C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */,
+				C367E709A040189141DC730C /* StageViews.swift in Sources */,
 				DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */,
 				1463F78C0FE01B87F4CDF0A1 /* StudentFile.swift in Sources */,
 				E653A46A7138FFC02652BBC8 /* TasmeeHistoryView.swift in Sources */,

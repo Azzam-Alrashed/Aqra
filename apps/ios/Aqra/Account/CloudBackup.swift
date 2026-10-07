@@ -5,8 +5,10 @@ import Foundation
 ///
 /// The account holds:
 /// - `users/{uid}/memory/block-NN`: the memorized ayat in blocks of 256, each ayah as
-///   `[since, stability, lastReviewed or -1, lapses, verified]`, dates in seconds since 1970;
-/// - `users/{uid}/revision/state`: the revision store's `Snapshot`, as JSON.
+///   `[since, stability, lastReviewed or -1, lapses, verified, learnedAt or -1, lastLapseAt or -1]`, dates in
+///   seconds since 1970 (rows written before the plan have only the first five);
+/// - `users/{uid}/revision/state`: the revision store's `Snapshot`, as JSON;
+/// - `users/{uid}/journey/state`: the plan, rewards and assessments (`Journey.Snapshot`), as JSON.
 enum CloudBackup {
     static let blockSize = 256
     static let blockCount = (MushafStore.ayahCount + blockSize - 1) / blockSize
@@ -22,7 +24,8 @@ enum CloudBackup {
 
     static func encode(_ memory: AyahMemory) -> [Double] {
         [memory.since.timeIntervalSince1970, memory.stability, memory.lastReviewed?.timeIntervalSince1970 ?? -1,
-         Double(memory.lapses), memory.verified ? 1 : 0]
+         Double(memory.lapses), memory.verified ? 1 : 0, memory.learnedAt?.timeIntervalSince1970 ?? -1,
+         memory.lastLapseAt?.timeIntervalSince1970 ?? -1]
     }
 
     static func decode(_ row: [Double]) -> AyahMemory? {
@@ -31,6 +34,10 @@ enum CloudBackup {
         memory.lastReviewed = row[2] < 0 ? nil : Date(timeIntervalSince1970: row[2])
         memory.lapses = max(Int(row[3]), 0)
         memory.verified = row[4] != 0
+        if row.count >= 7 {
+            memory.learnedAt = row[5] < 0 ? nil : Date(timeIntervalSince1970: row[5])
+            memory.lastLapseAt = row[6] < 0 ? nil : Date(timeIntervalSince1970: row[6])
+        }
         return memory
     }
 
@@ -83,6 +90,8 @@ enum CloudBackup {
         let (newer, older) = remote.updatedAt >= local.updatedAt ? (remote, local) : (local, remote)
         merged.dailyPages = newer.dailyPages ?? older.dailyPages
         merged.revisedDays = Set(local.revisedDays).union(remote.revisedDays).sorted()
+        let completed = Set(local.completedDays ?? []).union(remote.completedDays ?? [])
+        merged.completedDays = completed.isEmpty ? nil : completed.sorted()
         var seen = Set<RevisionRecord>()
         merged.history = (local.history + remote.history)
             .sorted { $0.date < $1.date }
@@ -101,5 +110,17 @@ enum CloudBackup {
 
     static func decodeRevision(_ json: String) -> RevisionStore.Snapshot? {
         try? JSONDecoder().decode(RevisionStore.Snapshot.self, from: Data(json.utf8))
+    }
+
+    // MARK: - The rest of the journey
+
+    @MainActor
+    static func encode(_ snapshot: Journey.Snapshot) throws -> String {
+        String(decoding: try JSONEncoder().encode(snapshot), as: UTF8.self)
+    }
+
+    @MainActor
+    static func decodeJourney(_ json: String) -> Journey.Snapshot? {
+        try? JSONDecoder().decode(Journey.Snapshot.self, from: Data(json.utf8))
     }
 }

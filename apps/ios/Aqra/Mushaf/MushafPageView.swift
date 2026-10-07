@@ -16,6 +16,8 @@ enum MushafStyle {
     /// In revision, the soft bars that veil words not yet revealed, and the wash behind an ayah stumbled on.
     static let veil = Color(light: 0xE6DAC2, dark: 0x3C3228)
     static let stumble = Color(light: 0xF4BFAE, dark: 0x7C3B2D)
+    /// While choosing how much of a portion was memorized: the wash behind the ayat chosen.
+    static let chosen = Color(light: 0xCDEBD8, dark: 0x24452F)
     /// The bars floating over the page, in the app's colors: white capsules, purple controls on lavender.
     static let barFill = Color(light: 0xFFFFFF, dark: 0x2B2622)
     static let barAccent = Color(light: 0x5B2D91, dark: 0xCDB8F2)
@@ -225,6 +227,51 @@ extension EnvironmentValues {
     /// In a revision, what pressing and holding an ayah does (a listener classifying a stumble); nil when it does
     /// nothing more than a tap.
     @Entry var mushafAyahLongPress: (@MainActor (Int) -> Void)? = nil
+    /// While a new portion is memorized: its ayat, in focus on the page.
+    @Entry var mushafFocus: MemorizeFocus? = nil
+}
+
+/// A new portion being memorized: its ayat stand out on the page and the rest fade back; a tap hides an ayah to
+/// recite it from memory, or, when choosing where the student stopped, picks the last ayah memorized.
+@MainActor @Observable
+final class MemorizeFocus {
+    /// The portion, in the order it's memorized.
+    let portion: [Int]
+    let ayahs: Set<Int>
+    private(set) var hidden: Set<Int> = []
+    /// Choosing the last ayah memorized, when only part of the portion was.
+    var choosingEnd = false
+    private(set) var end: Int?
+
+    init(portion: [Int]) {
+        self.portion = portion
+        ayahs = Set(portion)
+    }
+
+    func tap(_ ayah: Int?) {
+        guard let ayah, ayahs.contains(ayah) else { return }
+        if choosingEnd {
+            end = ayah
+        } else if hidden.contains(ayah) {
+            hidden.remove(ayah)
+        } else {
+            hidden.insert(ayah)
+        }
+    }
+
+    func hideAll() { hidden = ayahs }
+    func showAll() { hidden = [] }
+
+    /// The ayat memorized when the student stopped at `end`: the portion up to it.
+    var memorizedPart: [Int] {
+        guard let end, let index = portion.firstIndex(of: end) else { return [] }
+        return Array(portion[...index])
+    }
+
+    /// Whether an ayah is part of what's chosen as memorized.
+    func isChosen(_ ayah: Int) -> Bool {
+        memorizedPart.contains(ayah)
+    }
 }
 
 /// One Mushaf page: 15 lines in the page's own font, framed by the surah, juz' and page number.
@@ -239,6 +286,7 @@ struct MushafPageView: View {
     @Environment(MarkingSession.self) private var marking: MarkingSession?
     @Environment(RevisionSession.self) private var revisionSession: RevisionSession?
     @Environment(\.mushafAyahLongPress) private var ayahLongPress
+    @Environment(\.mushafFocus) private var focus
     /// Set when a press in marking mode lasts long enough to start a range.
     @State private var pressedLong = false
 
@@ -261,7 +309,7 @@ struct MushafPageView: View {
         }
         .background(MushafStyle.paper)
         .overlay {
-            if let revision { revisionLayer(revision) } else if let marking { markingLayer(marking) }
+            if let revision { revisionLayer(revision) } else if let focus { focusLayer(focus) } else if let marking { markingLayer(marking) }
         }
         .environment(\.layoutDirection, .rightToLeft)
         // The words are font glyphs that VoiceOver can't read; give it the page in plain text instead.
@@ -286,6 +334,18 @@ struct MushafPageView: View {
                 )
         }
         // Locations are measured from the page's left edge, like the lines' own layout.
+        .environment(\.layoutDirection, .leftToRight)
+    }
+
+    /// Memorizing a portion: a tap hides or shows an ayah of it, or picks where the student stopped.
+    private func focusLayer(_ focus: MemorizeFocus) -> some View {
+        GeometryReader { geometry in
+            Color.clear
+                .contentShape(Rectangle())
+                .onTapGesture { location in
+                    withAnimation(.easeOut(duration: 0.2)) { focus.tap(Self.ayah(at: location, on: page, size: geometry.size)) }
+                }
+        }
         .environment(\.layoutDirection, .leftToRight)
     }
 
@@ -392,8 +452,13 @@ struct MushafPageView: View {
         return TopicHighlight(topic: topic, strength: strength)
     }
 
-    /// How a word draws during a revision of this page.
+    /// How a word draws during a revision of this page, or while a portion is memorized.
     private func state(of word: MushafWord) -> LineWord.State {
+        if let focus {
+            guard focus.ayahs.contains(word.ayah) else { return .dimmed }
+            if focus.choosingEnd { return focus.isChosen(word.ayah) ? .chosen : .normal }
+            return focus.hidden.contains(word.ayah) ? .veiled : .normal
+        }
         guard let revision else { return .normal }
         guard revision.covers(word.ayah) else { return .dimmed }
         if revision.isVeiled(word.ayah) { return .veiled }
@@ -518,6 +583,8 @@ private struct LineWord {
         case veiled
         /// Revealed and marked as stumbled on.
         case stumbled
+        /// Chosen as memorized, when only part of a portion was.
+        case chosen
         /// Not memorized, so not part of the revision under way.
         case dimmed
     }
@@ -554,7 +621,8 @@ private struct AyahLine: View {
                                                  centered: centered, wordSpacing: wordSpacing).map { $0 + bleed }
 
                 drawHighlights(in: context, lefts: lefts, top: bleed, height: height)
-                drawStumbles(in: context, lefts: lefts, top: bleed, height: height)
+                drawWashes(.stumbled, color: MushafStyle.stumble, in: context, lefts: lefts, top: bleed, height: height)
+                drawWashes(.chosen, color: MushafStyle.chosen, in: context, lefts: lefts, top: bleed, height: height)
 
                 for (word, left) in zip(words, lefts) {
                     var context = context
@@ -563,8 +631,8 @@ private struct AyahLine: View {
                     if word.isAyahEnd {
                         // A soft oval laid exactly behind the marker's rosette; an ayah stumbled on shows it in coral.
                         if word.state == .dimmed { context.opacity = 0.35 }
-                        context.fill(Path(ellipseIn: box.insetBy(dx: box.width * 0.07, dy: box.height * 0.08)),
-                                     with: .color(word.state == .stumbled ? MushafStyle.stumble : MushafStyle.markerFill))
+                        let fill = word.state == .stumbled ? MushafStyle.stumble : word.state == .chosen ? MushafStyle.chosen : MushafStyle.markerFill
+                        context.fill(Path(ellipseIn: box.insetBy(dx: box.width * 0.07, dy: box.height * 0.08)), with: .color(fill))
                         context.fill(word.glyph.outline, with: .color(MushafStyle.marker))
                         continue
                     }
@@ -577,7 +645,7 @@ private struct AyahLine: View {
                         context.fill(Path(roundedRect: bar, cornerRadius: barHeight / 2), with: .color(MushafStyle.veil))
                     case .dimmed:
                         context.fill(word.glyph.outline, with: .color(MushafStyle.ink.opacity(0.3)))
-                    case .normal, .stumbled:
+                    case .normal, .stumbled, .chosen:
                         context.fill(word.glyph.outline, with: .color(MushafStyle.ink))
                         if tajweed && !word.glyph.layers.isEmpty {
                             // The colors tint the letters they belong to and nothing outside them.
@@ -596,18 +664,20 @@ private struct AyahLine: View {
         .allowsHitTesting(false)
     }
 
-    /// A coral wash behind each run of words the student stumbled on, joined across the gaps between them.
-    private func drawStumbles(in context: GraphicsContext, lefts: [CGFloat], top: CGFloat, height: CGFloat) {
+    /// A wash behind each run of words in a state — coral for stumbles, mint for ayat chosen as memorized —
+    /// joined across the gaps between them.
+    private func drawWashes(_ state: LineWord.State, color: Color, in context: GraphicsContext, lefts: [CGFloat], top: CGFloat,
+                            height: CGFloat) {
         var index = 0
         while index < words.count {
-            guard words[index].state == .stumbled else { index += 1; continue }
+            guard words[index].state == state else { index += 1; continue }
             var end = index
-            while end + 1 < words.count, words[end + 1].state == .stumbled { end += 1 }
+            while end + 1 < words.count, words[end + 1].state == state { end += 1 }
             let glyph = words[index].glyph
             let wordTop = top + (height - glyph.size.height) / 2
             let right = lefts[index] + glyph.size.width + fontSize * 0.1, left = lefts[end] - fontSize * 0.1
             let wash = CGRect(x: left, y: wordTop + glyph.baseline - fontSize * 0.95, width: right - left, height: fontSize * 1.3)
-            context.fill(Path(roundedRect: wash, cornerRadius: fontSize * 0.35), with: .color(MushafStyle.stumble))
+            context.fill(Path(roundedRect: wash, cornerRadius: fontSize * 0.35), with: .color(color))
             index = end + 1
         }
     }

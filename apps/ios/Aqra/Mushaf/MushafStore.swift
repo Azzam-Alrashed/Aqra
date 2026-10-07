@@ -73,6 +73,12 @@ final class MushafStore: Sendable {
     /// «بِسْمِ اللَّهِ الرَّحْمَٰنِ الرَّحِيمِ» in the official Hafs Smart encoding — the words of al-Fatiha 1:1
     /// without its ayah-number marker.
     let basmala: String
+    /// Each ayah's text in the official Hafs Smart encoding, with its number marker, exactly as published: drawn in
+    /// the Complex's Hafs Smart font where an ayah stands on its own (the stage tests).
+    let ayahTexts: [String]
+    /// How long each ayah is, in lines of the 15-line page: each line it shares counts by its share of the line's
+    /// words. The personal plan measures portions with it.
+    let ayahLines: [Double]
 
     private let pages: [MushafPage]
 
@@ -143,6 +149,7 @@ final class MushafStore: Sendable {
         surahHeaders = headers
         let fatiha = official.first { $0.sura_no == 1 && $0.aya_no == 1 }?.aya_text ?? ""
         basmala = fatiha.split(separator: " ").dropLast().joined(separator: " ")
+        ayahTexts = official.map(\.aya_text)
 
         // QUL glyphs: word id → glyph. The last word of each ayah is its ayah-end marker.
         struct Word: Decodable { var id: Int; var surah: String; var ayah: String; var word: String; var text: String }
@@ -207,6 +214,19 @@ final class MushafStore: Sendable {
             linesByPage[page].append(MushafLine(number: number, kind: kind))
         }
 
+        // Each ayah's share of every line it's on, by words.
+        var lengths = [Double](repeating: 0, count: Self.ayahCount)
+        for lines in linesByPage {
+            for line in lines {
+                guard case .ayah(let words, _) = line.kind, !words.isEmpty else { continue }
+                let share = 1 / Double(words.count)
+                for word in words where (0..<Self.ayahCount).contains(word.ayah) {
+                    lengths[word.ayah] += share
+                }
+            }
+        }
+        ayahLines = lengths
+
         var surahStarts: [Int: Int] = [:]
         for page in 1...Self.pageCount {
             for line in linesByPage[page] {
@@ -263,6 +283,21 @@ final class MushafStore: Sendable {
         let ayah = min(max(ayah, 0), Self.ayahCount - 1)
         guard let (surah, range) = surahAyahs.first(where: { $0.value.contains(ayah) }) else { return (1, 1) }
         return (surah, ayah - range.lowerBound + 1)
+    }
+
+    /// The length of some ayat in lines of the page.
+    func lines(of ayahs: some Sequence<Int>) -> Double {
+        ayahs.reduce(0) { $0 + ayahLines[min(max($1, 0), Self.ayahCount - 1)] }
+    }
+
+    /// The surah an ayah belongs to.
+    func surah(ofAyah ayah: Int) -> Int {
+        reference(ofAyah: ayah).surah
+    }
+
+    /// The juz' an ayah belongs to.
+    func juz(ofAyah ayah: Int) -> Int {
+        juzAyahs.first { $0.value.contains(ayah) }?.key ?? 1
     }
 
     /// The page an ayah starts on: the first page that holds any of it.

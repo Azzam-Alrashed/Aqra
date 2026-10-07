@@ -15,23 +15,27 @@ final class CloudSync {
 
     @ObservationIgnored private let memorization: MemorizationStore
     @ObservationIgnored private let revision: RevisionStore
+    @ObservationIgnored private let journey: Journey?
     @ObservationIgnored private var uid: String?
     @ObservationIgnored private var pendingUpload: Task<Void, Never>?
     /// What the account is known to hold, so only what changed is written. Nil until known: then every block is
     /// written, so a block emptied on the device (ayat unmarked) is emptied in the account too.
     @ObservationIgnored private var uploadedBlocks: [Int: CloudBackup.Block]?
     @ObservationIgnored private var uploadedRevision: RevisionStore.Snapshot?
+    @ObservationIgnored private var uploadedJourney: Journey.Snapshot?
     /// Changes aren't backed up while a restore is replacing the device's copy.
     @ObservationIgnored private var isRestoring = false
 
     /// The account whose copy this install has already merged, so it's merged once rather than on every launch.
     private static let restoredKey = "cloud.restoredAccount"
 
-    init(memorization: MemorizationStore, revision: RevisionStore) {
+    init(memorization: MemorizationStore, revision: RevisionStore, journey: Journey? = nil) {
         self.memorization = memorization
         self.revision = revision
+        self.journey = journey
         memorization.onChange = { [weak self] in self?.scheduleUpload() }
         revision.onChange = { [weak self] in self?.scheduleUpload() }
+        journey?.onChange = { [weak self] in self?.scheduleUpload() }
     }
 
     private var database: Firestore { Firestore.firestore() }
@@ -48,6 +52,7 @@ final class CloudSync {
         self.uid = uid
         uploadedBlocks = nil
         uploadedRevision = nil
+        uploadedJourney = nil
         lastBackup = nil
         if UserDefaults.standard.string(forKey: Self.restoredKey) != uid {
             await restoreAndMerge(uid: uid)
@@ -69,6 +74,7 @@ final class CloudSync {
         isRestoring = true
         memorization.replaceAll([:])
         revision.apply(.empty)
+        journey?.apply(.empty)
         isRestoring = false
     }
 
@@ -78,6 +84,7 @@ final class CloudSync {
         do {
             let blocks = try await user(uid).collection("memory").getDocuments()
             let state = try await user(uid).collection("revision").document("state").getDocument()
+            let journeyState = try await user(uid).collection("journey").document("state").getDocument()
             guard uid == self.uid else { return }
 
             var remoteBlocks: [Int: CloudBackup.Block] = [:]
@@ -92,9 +99,14 @@ final class CloudSync {
             if let remoteRevision {
                 revision.apply(CloudBackup.merge(revision.snapshot, remoteRevision))
             }
+            let remoteJourney = (journeyState.data()?["json"] as? String).flatMap(CloudBackup.decodeJourney)
+            if let journey, let remoteJourney {
+                journey.apply(Journey.Snapshot.merge(journey.snapshot, remoteJourney))
+            }
             isRestoring = false
             uploadedBlocks = remoteBlocks
             uploadedRevision = remoteRevision
+            uploadedJourney = remoteJourney
             UserDefaults.standard.set(uid, forKey: Self.restoredKey)
         } catch {
             // Offline or refused: the next launch tries again, and nothing on the device is lost meanwhile.
@@ -131,7 +143,10 @@ final class CloudSync {
         let changed = uploadedBlocks.map { uploaded in blocks.filter { uploaded[$0.key, default: [:]] != $0.value } } ?? blocks
         let snapshot = revision.snapshot
         let revisionChanged = snapshot != uploadedRevision && (uploadedRevision != nil || snapshot != .empty)
-        guard !changed.isEmpty || revisionChanged else {
+        let journeySnapshot = journey?.snapshot
+        let journeyChanged = journeySnapshot != nil && journeySnapshot != uploadedJourney
+            && (uploadedJourney != nil || journeySnapshot != .empty)
+        guard !changed.isEmpty || revisionChanged || journeyChanged else {
             lastBackup = lastBackup ?? .now
             return
         }
@@ -147,10 +162,15 @@ final class CloudSync {
             batch.setData(["json": try CloudBackup.encode(snapshot), "updatedAt": FieldValue.serverTimestamp()],
                           forDocument: user.collection("revision").document("state"))
         }
+        if journeyChanged, let journeySnapshot {
+            batch.setData(["json": try CloudBackup.encode(journeySnapshot), "updatedAt": FieldValue.serverTimestamp()],
+                          forDocument: user.collection("journey").document("state"))
+        }
         try await batch.commit()
         guard uid == self.uid else { return }
         uploadedBlocks = (uploadedBlocks ?? [:]).merging(changed) { _, new in new }
         if revisionChanged { uploadedRevision = snapshot }
+        if journeyChanged { uploadedJourney = journeySnapshot }
         lastBackup = .now
     }
 
@@ -178,6 +198,7 @@ final class CloudSync {
             batch.deleteDocument(user.collection("memory").document(CloudBackup.blockID(index)))
         }
         batch.deleteDocument(user.collection("revision").document("state"))
+        batch.deleteDocument(user.collection("journey").document("state"))
         batch.deleteDocument(user)
         try await batch.commit()
     }

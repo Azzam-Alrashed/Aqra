@@ -267,41 +267,59 @@ struct MushafRootView: View {
     @State private var store: Result<MushafStore, Error>?
     @State private var memorization: MemorizationStore
     @State private var revision: RevisionStore
+    @State private var plan: PlanStore
+    @State private var rewards: RewardStore
+    @State private var assessments: AssessmentStore
     /// The account the progress is backed up to.
     @State private var account: AccountStore
     @State private var router = AppRouter()
     /// Whether the student has said what they've memorized (or that they're just starting).
     @AppStorage("memorization.hasDeclared") private var hasDeclared = false
     @State private var startsMarking = false
-    /// After choosing what they've memorized, the student chooses how much to revise each day.
-    @State private var askingDailyAmount = false
+    /// After choosing what they've memorized, the student chooses how much to revise each day, then their plan.
+    @State private var setupStep = SetupStep.memorized
+
+    private enum SetupStep { case memorized, dailyAmount, plan }
 
     init() {
         let memorization = MemorizationStore()
         let revision = RevisionStore()
+        let plan = PlanStore()
+        let rewards = RewardStore()
+        let assessments = AssessmentStore()
         _memorization = State(initialValue: memorization)
         _revision = State(initialValue: revision)
-        _account = State(initialValue: AccountStore(sync: CloudSync(memorization: memorization, revision: revision),
+        _plan = State(initialValue: plan)
+        _rewards = State(initialValue: rewards)
+        _assessments = State(initialValue: assessments)
+        let journey = Journey(plan: plan, rewards: rewards, assessments: assessments)
+        _account = State(initialValue: AccountStore(sync: CloudSync(memorization: memorization, revision: revision, journey: journey),
                                                     tasmee: TasmeeStore(memorization: memorization, revision: revision)))
     }
 
     var body: some View {
         Group {
             switch store {
-            case .success(let store) where !hasDeclared && askingDailyAmount:
+            case .success(let store) where !hasDeclared && setupStep == .plan:
+                PlanEditorView(store: store, isSetup: true) { _ in
+                    withAnimation { hasDeclared = true }
+                }
+                .transition(.move(edge: .leading).combined(with: .opacity))
+            case .success(let store) where !hasDeclared && setupStep == .dailyAmount:
                 let pages = RevisionStore.memorizedPages(in: store, memorization: memorization).count
                 DailyAmountView(memorizedPages: pages, initial: revision.effectiveDailyPages(memorizedPages: pages)) { amount in
                     revision.setDailyPages(amount)
-                    withAnimation { hasDeclared = true }
+                    withAnimation { setupStep = .plan }
                 }
                 .transition(.move(edge: .leading).combined(with: .opacity))
             case .success(let store) where !hasDeclared:
                 MemorizationSetupView(store: store) { markInMushaf in
                     startsMarking = markInMushaf
-                    if !markInMushaf && memorization.count > 0 {
-                        withAnimation { askingDailyAmount = true }
-                    } else {
+                    if markInMushaf {
                         withAnimation { hasDeclared = true }
+                    } else {
+                        // With something memorized, its daily revision first; starting from zero, straight to the plan.
+                        withAnimation { setupStep = memorization.count > 0 ? .dailyAmount : .plan }
                     }
                 }
             case .success(let store):
@@ -317,12 +335,15 @@ struct MushafRootView: View {
         }
         .environment(memorization)
         .environment(revision)
+        .environment(plan)
+        .environment(rewards)
+        .environment(assessments)
         .environment(account)
         .environment(account.sync)
         .environment(account.tasmee)
         .environment(router)
         // After signing out, setup starts from «ماذا تحفظ؟» again.
-        .onChange(of: hasDeclared) { if !hasDeclared { askingDailyAmount = false } }
+        .onChange(of: hasDeclared) { if !hasDeclared { setupStep = .memorized } }
         .onOpenURL { url in
             if !router.open(url) { _ = GIDSignIn.sharedInstance.handle(url) }
         }
@@ -331,8 +352,32 @@ struct MushafRootView: View {
             guard store == nil else { return }
             // Decoding the Quran data takes a moment; keep it off the main thread so the app stays responsive.
             store = await Task.detached(priority: .userInitiated) { Result { try MushafStore() } }.value
+            guard case .success(let mushaf) = store else { return }
+            connect(mushaf)
             // A tasmee' waiting in the account can be applied once the Mushaf says which ayat each page holds.
-            if case .success(let mushaf) = store { account.tasmee.mushaf = mushaf }
+            account.tasmee.mushaf = mushaf
+        }
+    }
+
+    /// How the stores answer one another: each revision, portion, teacher's test and stage passed earns its
+    /// rewards, and may pass a stage or meet a challenge.
+    private func connect(_ mushaf: MushafStore) {
+        let (memorization, revision, plan, rewards, assessments) = (memorization, revision, plan, rewards, assessments)
+        revision.onRecord = { record in
+            rewards.revised(record, revision: revision)
+            rewards.checkChallenges(revision: revision, plan: plan)
+            assessments.checkPasses(store: mushaf, memorization: memorization)
+        }
+        plan.onPortion = { portion in
+            rewards.memorized(portion, memorization: memorization, store: mushaf)
+            rewards.checkChallenges(revision: revision, plan: plan)
+        }
+        assessments.onPass = { stage in
+            rewards.passedStage(stage, totalPassed: assessments.passes.count)
+        }
+        account.tasmee.onApplied = { record in
+            assessments.record(record)
+            assessments.checkPasses(store: mushaf, memorization: memorization)
         }
     }
 }
