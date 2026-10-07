@@ -27,6 +27,7 @@
 		95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CB3948E085F254CF36BF182 /* Color+Hex.swift */; };
 		9B6609EC32D686618171D356 /* FeaturesPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D44E6BE584D0B5057F1DD97B /* FeaturesPageView.swift */; };
 		9D6D88E273E4885187DC9823 /* AqraLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708045EEA73D597E66035897 /* AqraLogo.swift */; };
+		9DBC182A5B2E823752A08D45 /* WirdView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 245F653F1425B4D48BE20C29 /* WirdView.swift */; };
 		A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2CF7CA2416343BC4067921C5 /* PageDots.swift */; };
 		B385724117B3DF0FF21962B3 /* MushafView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5374F6DB7F1FFAF810B695C4 /* MushafView.swift */; };
 		B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */; };
@@ -60,6 +61,7 @@
 		0CB3948E085F254CF36BF182 /* Color+Hex.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = "Color+Hex.swift"; sourceTree = "<group>"; };
 		140188D5E36E5305D761C689 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
 		197C7240EA806A2E4643B0F4 /* Aqra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		245F653F1425B4D48BE20C29 /* WirdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WirdView.swift; sourceTree = "<group>"; };
 		264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafTests.swift; sourceTree = "<group>"; };
 		269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManazilPageView.swift; sourceTree = "<group>"; };
 		2CF7CA2416343BC4067921C5 /* PageDots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageDots.swift; sourceTree = "<group>"; };
@@ -133,6 +135,7 @@
 			children = (
 				76EBE0EB6CE652A1ECAD40BB /* DailyAmountView.swift */,
 				CFCCD71BF466B07DDD06D84E /* RevisionEngine.swift */,
+				245F653F1425B4D48BE20C29 /* WirdView.swift */,
 			);
 			path = Revision;
 			sourceTree = "<group>";
@@ -382,6 +385,7 @@
 				46321E94CC83A24568ABCFCC /* RevisionEngine.swift in Sources */,
 				C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */,
 				DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */,
+				9DBC182A5B2E823752A08D45 /* WirdView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};

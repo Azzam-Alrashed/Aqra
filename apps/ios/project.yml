@@ -24,6 +24,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.azzamalrashed.aqra
         DEVELOPMENT_TEAM: 6QYT6GJB4Z
+        CURRENT_PROJECT_VERSION: "2"
         CODE_SIGN_IDENTITY: iPhone Developer
         GENERATE_INFOPLIST_FILE: YES
         INFOPLIST_KEY_CFBundleDisplayName: "اقْرَأْ"

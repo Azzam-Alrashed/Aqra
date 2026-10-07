@@ -65,18 +65,22 @@ See `shared/quran/README.md` for the sources, the provisional ones, and what mus
 
 The home answers «وش علي اليوم؟». It shows:
 - **The journey:** the منازل stairs (ten steps of three juz' each), the share of the Quran memorized, and the average strength of the memorization.
+- **The Mushaf:** a miniature of the page last read, which opens it.
 - **Today's wird:** the pages to revise today, one button to start, and the daily amount.
 
-A tab bar holds the home and the Mushaf. The Mushaf hides it while reading.
+The home is the app's root; there is no tab bar. The Mushaf and today's wird open full screen over it and close back to it, so revising never moves the student's place in the Mushaf.
 
 ### Mushaf
 
-The Mushaf is where the student reads, marks what they have memorized, and revises. It opens on the last page read.
+The Mushaf is where the student reads and marks what they have memorized. It opens on the last page read, and its top bar leads back home.
 
 - **Memorized ayat are colored.** Each ayah takes the color of its topic section, as in a printed thematic Mushaf, drawn as a soft highlight behind its words. The color is faint when the ayah is newly memorized, fuller as it grows strong, and fades when revision is overdue. Unmemorized ayat stay plain paper.
 - **Tajweed colors** on the letters, with their own toggle.
 - **Marking mode** marks pages and ayat as memorized directly on the page.
-- **Revision mode** veils the memorized ayat and reveals them one at a time.
+
+### Today's wird
+
+The wird goes through its pages one after another, each held still with its memorized ayat veiled and revealed one at a time, then returns home when it's done.
 
 ## Memorization
 

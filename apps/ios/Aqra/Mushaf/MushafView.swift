@@ -1,6 +1,6 @@
 import SwiftUI
 
-/// The main screen: the Mushaf, opening on the last page read and turned like a book (right to left).
+/// The Mushaf, opened full screen from the home on the last page read, and turned like a book (right to left).
 /// On a wide iPad it shows two facing pages, odd on the right, as in the printed Madinah Mushaf.
 struct MushafView: View {
     var store: MushafStore
@@ -8,8 +8,7 @@ struct MushafView: View {
     var startsMarking = false
 
     @Environment(MemorizationStore.self) private var memorization
-    @Environment(RevisionStore.self) private var revision
-    @Environment(AppNavigator.self) private var navigator: AppNavigator?
+    @Environment(\.dismiss) private var dismiss
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @AppStorage("mushaf.topics") private var topicColors = true
@@ -22,18 +21,13 @@ struct MushafView: View {
     /// Marking mode, while the student marks the ayat they've memorized.
     @State private var marking: MarkingSession?
     @State private var showingSetup = false
-    /// Revision of one page, started from today's wird on the home.
-    @State private var revising: RevisionSession?
 
     var body: some View {
         GeometryReader { geometry in
             let facingPages = geometry.size.width > geometry.size.height && geometry.size.width >= 900
             ZStack {
                 Group {
-                    if let revising {
-                        // A revision holds its page still: no turning until it's done.
-                        revisionPages(revising, facingPages: facingPages)
-                    } else if facingPages {
+                    if facingPages {
                         spreadPager
                     } else {
                         pagePager
@@ -42,10 +36,9 @@ struct MushafView: View {
                 .environment(\.mushafTajweed, tajweed)
                 .environment(\.mushafTopics, topicColors)
                 .environment(marking)
-                .environment(revising)
                 .onTapGesture {
-                    // In marking mode and in revision, taps belong to the page and the toolbar stays.
-                    guard marking == nil, revising == nil else { return }
+                    // In marking mode, taps belong to the page and the toolbar stays.
+                    guard marking == nil else { return }
                     withAnimation(.easeInOut(duration: 0.2)) { toolbarVisible.toggle() }
                 }
 
@@ -58,8 +51,6 @@ struct MushafView: View {
                         Group {
                             if let marking {
                                 markingBar(marking, pages: facingPages ? spreadPages : [lastPage])
-                            } else if let revising {
-                                revisionBar(revising)
                             } else {
                                 bottomBar
                             }
@@ -71,8 +62,8 @@ struct MushafView: View {
         }
         .background(MushafStyle.paper.ignoresSafeArea())
         .statusBarHidden(!toolbarVisible)
-        // The tab bar comes and goes with the toolbar, and stays away while marking or revising.
-        .toolbar(toolbarVisible && marking == nil && revising == nil ? .visible : .hidden, for: .tabBar)
+        // Swiping down closes the Mushaf, but not while marking, where a stray swipe would lose the place.
+        .interactiveDismissDisabled(marking != nil)
         .animation(.easeInOut(duration: 0.2), value: toolbarVisible)
         // Swiping to another page hides the toolbar; jumps made from the toolbar keep it open.
         .onChange(of: lastPage) {
@@ -85,18 +76,6 @@ struct MushafView: View {
         .onAppear {
             if startsMarking && marking == nil { startMarking() }
         }
-        // A page asked for from the home: opened, and revised when it's part of today's wird.
-        .onChange(of: navigator?.request, initial: true) {
-            guard let request = navigator?.request else { return }
-            navigator?.request = nil
-            if request.revise {
-                startRevision(of: request.page)
-            } else {
-                movedByToolbar = request.page != lastPage
-                lastPage = request.page
-            }
-        }
-        .sensoryFeedback(.success, trigger: revision.plan?.isComplete == true) { _, isComplete in isComplete }
         // A light tick as each page turns, and a firmer one on entering a new juz'.
         .sensoryFeedback(.selection, trigger: lastPage)
         .sensoryFeedback(.impact(weight: .medium), trigger: store.page(lastPage).juz)
@@ -142,103 +121,6 @@ struct MushafView: View {
             }
         }
         .tabViewStyle(.page(indexDisplayMode: .never))
-        .environment(\.layoutDirection, .rightToLeft)
-    }
-
-    // MARK: - Today and revision
-
-    private func startRevision(of page: Int) {
-        marking = nil
-        let ayahs = store.page(page).ayahs.filter { memorization.isMemorized($0) }
-        movedByToolbar = page != lastPage
-        lastPage = page
-        withAnimation(.easeInOut(duration: 0.25)) {
-            revising = RevisionSession(page: page, ayahs: ayahs)
-            toolbarVisible = true
-        }
-    }
-
-    /// Ends a page's revision. Recorded, it moves straight on to the next page of today's wird, and back home
-    /// when the wird is done.
-    private func finishRevision(_ session: RevisionSession, record: Bool) {
-        guard record else {
-            withAnimation(.easeInOut(duration: 0.25)) { revising = nil }
-            return
-        }
-        revision.record(page: session.page, ayahs: session.ayahs, stumbles: session.stumbles,
-                        source: .app, memorization: memorization)
-        if let next = revision.plan?.items.first(where: { !$0.done }) {
-            startRevision(of: next.page)
-        } else {
-            withAnimation(.easeInOut(duration: 0.25)) { revising = nil }
-            navigator?.tab = .home
-        }
-    }
-
-    @ViewBuilder
-    private func revisionPages(_ session: RevisionSession, facingPages: Bool) -> some View {
-        if facingPages {
-            MushafSpreadView(spread: (session.page + 1) / 2, store: store)
-        } else {
-            MushafPageView(page: store.page(session.page), store: store)
-        }
-    }
-
-    private func revisionBar(_ session: RevisionSession) -> some View {
-        VStack(spacing: 12) {
-            HStack(alignment: .center, spacing: 12) {
-                Button {
-                    finishRevision(session, record: false)
-                } label: {
-                    Label("Leave revision", systemImage: "xmark")
-                        .labelStyle(.iconOnly)
-                        .font(.system(size: 15, weight: .bold))
-                        .frame(width: 36, height: 36)
-                        .background(MushafStyle.markerFill, in: Circle())
-                }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Page \(session.page)")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                    Text("\(min(session.revealed, session.ayahs.count)) of \(session.ayahs.count)")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(MushafStyle.chrome)
-                        .contentTransition(.numericText())
-                }
-                Spacer()
-                if !session.stumbles.isEmpty {
-                    Text("\(session.stumbles.count) stumbles")
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .padding(.horizontal, 12)
-                        .frame(height: 30)
-                        .background(MushafStyle.stumble, in: Capsule())
-                        .transition(.scale.combined(with: .opacity))
-                }
-            }
-            Text("Tap to reveal the next ayah, and tap a revealed ayah if you stumbled on it")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(MushafStyle.chrome)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-            HStack(spacing: 10) {
-                Button("Next ayah") { withAnimation(.easeOut(duration: 0.2)) { session.revealNext() } }
-                    .buttonStyle(MarkingButtonStyle())
-                    .disabled(session.isComplete)
-                Button("Show page") { withAnimation(.easeOut(duration: 0.2)) { session.revealAll() } }
-                    .buttonStyle(MarkingButtonStyle())
-                    .disabled(session.isComplete)
-                Button("Done") { finishRevision(session, record: true) }
-                    .buttonStyle(MarkingButtonStyle(prominent: true))
-            }
-        }
-        .animation(.snappy, value: session.stumbles.count)
-        .sensoryFeedback(.selection, trigger: session.revealed)
-        .sensoryFeedback(.impact(weight: .light), trigger: session.stumbles.count)
-        .foregroundStyle(MushafStyle.ink)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity)
-        .background(.ultraThinMaterial)
         .environment(\.layoutDirection, .rightToLeft)
     }
 
@@ -298,51 +180,26 @@ struct MushafView: View {
     // MARK: - Toolbar
 
     private var topBar: some View {
-        let page = store.page(lastPage)
-        return HStack {
+        MushafTopBar(page: store.page(lastPage), store: store) {
+            Button {
+                if marking != nil { memorization.saveNow() }
+                dismiss()
+            } label: {
+                MushafBarIcon("Home", systemImage: "house")
+            }
             Button {
                 showingIndex = true
             } label: {
-                Label("Index", systemImage: "list.bullet")
-                    .labelStyle(.iconOnly)
-                    .font(.system(size: 18, weight: .semibold))
-                    .frame(width: 44, height: 44)
+                MushafBarIcon("Index", systemImage: "list.bullet")
             }
-            Spacer()
+        } trailing: {
             Button {
                 if marking == nil { startMarking() } else { marking = nil }
             } label: {
-                Label("My memorization", systemImage: marking == nil ? "checkmark.seal" : "checkmark.seal.fill")
-                    .labelStyle(.iconOnly)
-                    .font(.system(size: 18, weight: .semibold))
-                    .frame(width: 44, height: 44)
+                MushafBarIcon("My memorization", systemImage: marking == nil ? "checkmark.seal" : "checkmark.seal.fill")
             }
-            Menu {
-                Toggle("Tajweed colors", isOn: $tajweed)
-                Toggle("Topic colors", isOn: $topicColors)
-            } label: {
-                Label("Colors", systemImage: "paintpalette")
-                    .labelStyle(.iconOnly)
-                    .font(.system(size: 18, weight: .semibold))
-                    .frame(width: 44, height: 44)
-            }
+            MushafColorsMenu()
         }
-        // The title stays centered, whatever the buttons on either side.
-        .overlay {
-            VStack(spacing: 2) {
-                Text(verbatim: store.surahNames[page.surah] ?? "")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
-                Text(verbatim: "الجزء \(arabic(page.juz)) · الصفحة \(arabic(page.number))")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(MushafStyle.chrome)
-            }
-        }
-        .foregroundStyle(MushafStyle.ink)
-        .tint(MushafStyle.marker)
-        .padding(.horizontal, 12)
-        .padding(.bottom, 8)
-        .background(.ultraThinMaterial)
-        .environment(\.layoutDirection, .rightToLeft)
     }
 
     private var bottomBar: some View {
@@ -423,7 +280,7 @@ struct MushafRootView: View {
                     }
                 }
             case .success(let store):
-                AppTabView(store: store, startsMarking: startsMarking)
+                HomeView(store: store, startsMarking: startsMarking)
             case .failure(let error):
                 ContentUnavailableView("The Mushaf couldn't be loaded", systemImage: "book.closed", description: Text(verbatim: "\(error)"))
             case nil:
@@ -443,8 +300,77 @@ struct MushafRootView: View {
     }
 }
 
-/// The marking bar's buttons: soft capsules, the main one in the marker's gold-brown.
-private struct MarkingButtonStyle: ButtonStyle {
+/// The Mushaf's top bar: the surah, juz' and page in the middle, with buttons on either side.
+struct MushafTopBar<Leading: View, Trailing: View>: View {
+    var page: MushafPage
+    var store: MushafStore
+    @ViewBuilder var leading: Leading
+    @ViewBuilder var trailing: Trailing
+
+    var body: some View {
+        HStack(spacing: 0) {
+            leading
+            Spacer()
+            trailing
+        }
+        // The title stays centered, whatever the buttons on either side.
+        .overlay {
+            VStack(spacing: 2) {
+                Text(verbatim: store.surahNames[page.surah] ?? "")
+                    .font(.system(size: 17, weight: .bold, design: .rounded))
+                Text(verbatim: "الجزء \(arabic(page.juz)) · الصفحة \(arabic(page.number))")
+                    .font(.system(size: 12, weight: .medium, design: .rounded))
+                    .foregroundStyle(MushafStyle.chrome)
+            }
+        }
+        .foregroundStyle(MushafStyle.ink)
+        .tint(MushafStyle.marker)
+        .padding(.horizontal, 12)
+        .padding(.bottom, 8)
+        .background(.ultraThinMaterial)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    private func arabic(_ number: Int) -> String {
+        number.formatted(.number.locale(Locale(identifier: "ar@numbers=arab")))
+    }
+}
+
+/// A button's icon in the Mushaf's top bar.
+struct MushafBarIcon: View {
+    var title: LocalizedStringKey
+    var systemImage: String
+
+    init(_ title: LocalizedStringKey, systemImage: String) {
+        self.title = title
+        self.systemImage = systemImage
+    }
+
+    var body: some View {
+        Label(title, systemImage: systemImage)
+            .labelStyle(.iconOnly)
+            .font(.system(size: 18, weight: .semibold))
+            .frame(width: 44, height: 44)
+    }
+}
+
+/// The tajweed and topic color switches, kept for the whole app.
+struct MushafColorsMenu: View {
+    @AppStorage("mushaf.tajweed") private var tajweed = true
+    @AppStorage("mushaf.topics") private var topicColors = true
+
+    var body: some View {
+        Menu {
+            Toggle("Tajweed colors", isOn: $tajweed)
+            Toggle("Topic colors", isOn: $topicColors)
+        } label: {
+            MushafBarIcon("Colors", systemImage: "paintpalette")
+        }
+    }
+}
+
+/// The marking and revision bars' buttons: soft capsules, the main one in the marker's gold-brown.
+struct MarkingButtonStyle: ButtonStyle {
     var prominent = false
 
     func makeBody(configuration: Configuration) -> some View {

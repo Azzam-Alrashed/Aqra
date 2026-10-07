@@ -1,69 +1,40 @@
 import SwiftUI
 
-/// Where the app is: which tab is showing, and a page the home asked the Mushaf to open (and revise).
-@MainActor @Observable
-final class AppNavigator {
-    enum Tab: Hashable { case home, mushaf }
-
-    /// A request for the Mushaf: open a page, and start revising it when `revise` is set.
-    struct Request: Equatable {
-        var page: Int
-        var revise: Bool
-        var id = UUID()
-    }
-
-    var tab = Tab.home
-    var request: Request?
-
-    func open(page: Int, revise: Bool) {
-        request = Request(page: page, revise: revise)
-        tab = .mushaf
-    }
-}
-
-/// The app after setup: the home, where the journey and today's wird are, and the Mushaf, for reading and revising.
-struct AppTabView: View {
+/// The home, the app's root: where the student is on the journey (the منازل stairs), the Mushaf where they left
+/// it, and what they have today (the wird). The Mushaf and the wird open full screen over it and close back to it.
+struct HomeView: View {
     var store: MushafStore
+    /// Opens straight into the Mushaf's marking mode (after the student chose to mark pages and ayat).
     var startsMarking = false
+
+    /// What the home has open over it.
+    enum Destination: Hashable, Identifiable {
+        case mushaf(marking: Bool)
+        /// Today's wird, from one of its pages.
+        case wird(page: Int)
+
+        var id: Self { self }
+
+        /// The view on the home it grows from and shrinks back into.
+        var sourceID: String {
+            switch self {
+            case .mushaf: "mushaf"
+            case .wird(let page): "page-\(page)"
+            }
+        }
+    }
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(RevisionStore.self) private var revision
     @Environment(\.scenePhase) private var scenePhase
-    @State private var navigator = AppNavigator()
-
-    var body: some View {
-        TabView(selection: $navigator.tab) {
-            HomeView(store: store)
-                .tag(AppNavigator.Tab.home)
-                .tabItem { Label("Home", systemImage: "house") }
-            MushafView(store: store, startsMarking: startsMarking)
-                .tag(AppNavigator.Tab.mushaf)
-                .tabItem { Label("Mushaf", systemImage: "book") }
-        }
-        .tint(OnboardingPalette.brand)
-        .environment(navigator)
-        .onAppear { if startsMarking { navigator.tab = .mushaf } }
-        // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
-        .task { refreshPlan() }
-        .onChange(of: memorization.count) { refreshPlan() }
-        .onChange(of: scenePhase) { if scenePhase == .active { refreshPlan() } }
-    }
-
-    private func refreshPlan() {
-        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization))
-    }
-}
-
-/// The home: where the student is on the journey (the منازل stairs), and what they have today (the wird).
-struct HomeView: View {
-    var store: MushafStore
-
-    @Environment(MemorizationStore.self) private var memorization
-    @Environment(RevisionStore.self) private var revision
-    @Environment(AppNavigator.self) private var navigator
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @AppStorage("mushaf.lastPage") private var lastPage = 1
     @State private var shownClimb = 0.0
+    @State private var climbAnimation: Animation?
     @State private var editingMemorization = false
+    @State private var destination: Destination?
+    @State private var openedMarking = false
+    @Namespace private var zoom
 
     var body: some View {
         NavigationStack {
@@ -71,6 +42,7 @@ struct HomeView: View {
                 VStack(spacing: 22) {
                     greeting
                     journey
+                    mushaf
                     wird
                 }
                 .padding(.horizontal, 20)
@@ -81,16 +53,54 @@ struct HomeView: View {
             }
             .scrollIndicators(.hidden)
             .background(Palette.surface.ignoresSafeArea())
+            // What scrolls up fades away under the status bar instead of running into it.
+            .overlay(alignment: .top) {
+                GeometryReader { geometry in
+                    LinearGradient(colors: [Palette.surface, Palette.surface.opacity(0)], startPoint: .top, endPoint: .bottom)
+                        .frame(height: geometry.safeAreaInsets.top + 14)
+                        .offset(y: -geometry.safeAreaInsets.top)
+                }
+                .allowsHitTesting(false)
+            }
             .toolbar(.hidden, for: .navigationBar)
         }
         .fontDesign(.rounded)
         .tint(Palette.brand)
         .environment(\.colorScheme, .light)
-        .onAppear { climb(entrance: true) }
+        .onAppear {
+            climb(entrance: true)
+            // After choosing to mark in the Mushaf, the app opens straight on it, with the home underneath.
+            if startsMarking && !openedMarking {
+                openedMarking = true
+                var transaction = Transaction()
+                transaction.disablesAnimations = true
+                withTransaction(transaction) { destination = .mushaf(marking: true) }
+            }
+        }
         .onChange(of: memorization.count) { climb(entrance: false) }
+        // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
+        .task { refreshPlan() }
+        .onChange(of: memorization.count) { refreshPlan() }
+        .onChange(of: scenePhase) { if scenePhase == .active { refreshPlan() } }
+        .sensoryFeedback(.success, trigger: revision.plan?.isComplete == true) { _, isComplete in isComplete }
         .sheet(isPresented: $editingMemorization) {
             MemorizationSetupView(store: store, isSheet: true) { _ in editingMemorization = false }
         }
+        .fullScreenCover(item: $destination) { destination in
+            Group {
+                switch destination {
+                case .mushaf(let marking):
+                    MushafView(store: store, startsMarking: marking)
+                case .wird(let page):
+                    WirdView(store: store, startPage: page)
+                }
+            }
+            .zoomTransition(sourceID: destination.sourceID, in: zoom)
+        }
+    }
+
+    private func refreshPlan() {
+        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization))
     }
 
     // MARK: - Greeting
@@ -111,15 +121,11 @@ struct HomeView: View {
 
     // MARK: - The journey
 
+    /// Moves the stairs to what's memorized. The animation is the stairs' own: in a `withAnimation`, the rest of
+    /// the home's first layout would be animated with it, its text sliding in glyph by glyph.
     private func climb(entrance: Bool) {
-        let target = memorization.quranShare(in: store) * Double(ManazilStairs.stepCount)
-        guard !reduceMotion else {
-            shownClimb = target
-            return
-        }
-        withAnimation(entrance ? .spring(duration: 1.4, bounce: 0.1).delay(0.2) : .spring(duration: 0.9, bounce: 0.15)) {
-            shownClimb = target
-        }
+        climbAnimation = reduceMotion ? nil : entrance ? .spring(duration: 1.4, bounce: 0.1).delay(0.2) : .spring(duration: 0.9, bounce: 0.15)
+        shownClimb = memorization.quranShare(in: store) * Double(ManazilStairs.stepCount)
     }
 
     private var journey: some View {
@@ -127,6 +133,7 @@ struct HomeView: View {
         let strength = memorization.averageStrength()
         return VStack(spacing: 16) {
             ManazilStairs(climb: shownClimb)
+                .animation(climbAnimation, value: shownClimb)
                 .frame(height: 130)
             if memorization.count == 0 {
                 Text("Choose what you've memorized to start climbing")
@@ -176,6 +183,50 @@ struct HomeView: View {
         .shadow(color: Palette.shadow.opacity(0.06), radius: 14, y: 6)
     }
 
+    // MARK: - The Mushaf
+
+    /// The Mushaf, open on the page last read: its miniature grows into the full page.
+    private var mushaf: some View {
+        let page = store.page(lastPage)
+        return Button {
+            destination = .mushaf(marking: false)
+        } label: {
+            HStack(spacing: 14) {
+                MushafThumbnail(page: page, store: store)
+                    .frame(width: 58, height: 92)
+                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
+                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(MushafStyle.chrome.opacity(0.25), lineWidth: 1))
+                    .shadow(color: Palette.shadow.opacity(0.12), radius: 6, y: 3)
+                    .zoomTransitionSource(id: Destination.mushaf(marking: false).sourceID, in: zoom)
+                VStack(alignment: .leading, spacing: 4) {
+                    Text("Mushaf")
+                        .font(.system(size: 13, weight: .semibold))
+                        .foregroundStyle(Palette.inkSoft)
+                    Text(verbatim: store.surahNames[page.surah] ?? "")
+                        .font(.system(size: 22, weight: .heavy))
+                        .foregroundStyle(Palette.ink)
+                    HStack(spacing: 6) {
+                        Text("Juz' \(page.juz)")
+                        Text(verbatim: "·")
+                        Text("Page \(page.number)")
+                    }
+                    .font(.system(size: 13, weight: .medium))
+                    .foregroundStyle(Palette.inkSoft)
+                }
+                Spacer(minLength: 8)
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 14, weight: .heavy))
+                    .foregroundStyle(Palette.brand)
+                    .frame(width: 34, height: 34)
+                    .background(Palette.lavender, in: Circle())
+            }
+            .padding(14)
+            .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .shadow(color: Palette.shadow.opacity(0.06), radius: 14, y: 6)
+        }
+        .buttonStyle(.plain)
+    }
+
     // MARK: - Today's wird
 
     @ViewBuilder
@@ -192,7 +243,7 @@ struct HomeView: View {
                     BrandButton(plan.doneCount == 0 ? "Start today's revision" : "Continue today's revision",
                                 metrics: OnboardingButtonMetrics(height: 54, fontSize: 17, compact: false)) {
                         if let next = plan.items.first(where: { !$0.done }) {
-                            navigator.open(page: next.page, revise: true)
+                            destination = .wird(page: next.page)
                         }
                     }
                     Text("Revised a page outside the app? Press and hold it.")
@@ -244,7 +295,7 @@ struct HomeView: View {
         let page = store.page(item.page)
         let face = ManazilStairs.face(forJuz: page.juz)
         return Button {
-            navigator.open(page: item.page, revise: !item.done)
+            destination = .wird(page: item.page)
         } label: {
             HStack(spacing: 12) {
                 Text(item.page.formatted())
@@ -278,6 +329,7 @@ struct HomeView: View {
             .padding(10)
             .background(item.done ? Palette.surface : .white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
             .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Palette.lavender, lineWidth: item.done ? 0 : 1.2))
+            .zoomTransitionSource(id: Destination.wird(page: item.page).sourceID, in: zoom)
         }
         .buttonStyle(.plain)
         .contextMenu {
@@ -320,6 +372,48 @@ struct HomeView: View {
             .padding(.top, 4)
         }
         .buttonStyle(.plain)
+    }
+}
+
+/// A miniature of a Mushaf page: the real page, drawn at a phone's size and scaled down.
+private struct MushafThumbnail: View {
+    var page: MushafPage
+    var store: MushafStore
+    private static let drawnSize = CGSize(width: 380, height: 600)
+
+    var body: some View {
+        GeometryReader { geometry in
+            let scale = min(geometry.size.width / Self.drawnSize.width, geometry.size.height / Self.drawnSize.height)
+            MushafPageView(page: page, store: store)
+                .frame(width: Self.drawnSize.width, height: Self.drawnSize.height)
+                .scaleEffect(scale, anchor: .topLeading)
+                .frame(width: geometry.size.width, height: geometry.size.height, alignment: .topLeading)
+        }
+        .background(MushafStyle.paper)
+        .allowsHitTesting(false)
+        .accessibilityHidden(true)
+    }
+}
+
+extension View {
+    /// Opens a full-screen view by growing it out of the view it was opened from (iOS 18 and later).
+    @ViewBuilder
+    func zoomTransition(sourceID: String, in namespace: Namespace.ID) -> some View {
+        if #available(iOS 18, *) {
+            navigationTransition(.zoom(sourceID: sourceID, in: namespace))
+        } else {
+            self
+        }
+    }
+
+    /// Marks the view a zoom transition grows from and shrinks back into.
+    @ViewBuilder
+    func zoomTransitionSource(id: String, in namespace: Namespace.ID) -> some View {
+        if #available(iOS 18, *) {
+            matchedTransitionSource(id: id, in: namespace)
+        } else {
+            self
+        }
     }
 }
 
