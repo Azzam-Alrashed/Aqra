@@ -223,6 +223,8 @@ struct MushafPageView: View {
     @Environment(\.mushafTopics) private var topics
     @Environment(MemorizationStore.self) private var memorization: MemorizationStore?
     @Environment(MarkingSession.self) private var marking: MarkingSession?
+    /// Set when a press in marking mode lasts long enough to start a range.
+    @State private var pressedLong = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -249,16 +251,19 @@ struct MushafPageView: View {
         .accessibilityLabel(Text(verbatim: accessibilityText))
     }
 
-    /// Marking mode: a tap marks or unmarks an ayah; pressing a moment, then dragging, marks every ayah crossed.
+    /// Marking mode: a tap marks or unmarks an ayah; pressing and holding one starts a range that the next tap ends.
     private func markingLayer(_ marking: MarkingSession) -> some View {
         GeometryReader { geometry in
-            // Both gestures run alongside the pager's swipe, so pages still turn in marking mode;
-            // the pager holds still only once a press has turned into a drag that marks.
+            // Both gestures run alongside the pager's swipe, so pages still turn in marking mode.
+            // A press held long enough, then lifted, starts a range at that ayah instead of toggling it.
             Color.clear
                 .contentShape(Rectangle())
+                .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in pressedLong = true })
                 .simultaneousGesture(
                     SpatialTapGesture().onEnded { value in
-                        if let ayah = Self.ayah(at: value.location, on: page, size: geometry.size) { marking.tap(ayah) }
+                        defer { pressedLong = false }
+                        guard let ayah = Self.ayah(at: value.location, on: page, size: geometry.size) else { return }
+                        if pressedLong { marking.beginRange(at: ayah) } else { marking.tap(ayah) }
                     }
                 )
         }

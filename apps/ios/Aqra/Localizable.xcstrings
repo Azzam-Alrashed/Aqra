@@ -1,433 +1,73 @@
 {
-  "sourceLanguage": "en",
-  "strings": {
-    "Begin": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ابدأ"
+  "sourceLanguage" : "en",
+  "strings" : {
+    "%@ of the Quran" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ من القرآن"
           }
         }
       }
     },
-    "Reported by Ahmad": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "رواه أحمد"
-          }
-        }
-      }
-    },
-    "Translation: Jami' at-Tirmidhi 2914, Darussalam": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الترجمة: جامع الترمذي 2914، دار السلام"
-          }
-        }
-      }
-    },
-    "Strengthen your memorization,": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ثبِّت حفظك،"
-          }
-        }
-      }
-    },
-    "and rise, ayah by ayah.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "وارتقِ آيةً بعد آية"
-          }
-        }
-      }
-    },
-    "Revise every day, and climb your stations in Aqra.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "راجِع كل يوم، وارتقِ في منازلك على اقرأ."
-          }
-        }
-      }
-    },
-    "Continue": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "متابعة"
-          }
-        }
-      }
-    },
-    "Everything that helps your memorization,": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "كل ما يُعينك على حفظك"
-          }
-        }
-      }
-    },
-    "in one place.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "في مكان واحد"
-          }
-        }
-      }
-    },
-    "Daily revision, tasmee' with qualified teachers, and rewards that motivate you.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "مراجعة يومية، وتسميع على شيوخ مُجازين، ومكافآت تحفّزك."
-          }
-        }
-      }
-    },
-    "Everything is ready,": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "كل شيء جاهز،"
-          }
-        }
-      }
-    },
-    "begin your journey.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ابدأ رحلتك"
-          }
-        }
-      }
-    },
-    "Your progress is saved on your device, and you can link it to your account anytime.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تقدّمك يُحفظ على جهازك، ويمكنك ربطه بحسابك متى شئت."
-          }
-        }
-      }
-    },
-    "The Mushaf couldn't be loaded": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تعذّر تحميل المصحف"
-          }
-        }
-      }
-    },
-    "Index": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الفهرس"
-          }
-        }
-      }
-    },
-    "Surahs": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "السور"
-          }
-        }
-      }
-    },
-    "Juz'": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الأجزاء"
-          }
-        }
-      }
-    },
-    "Tajweed colors": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ألوان التجويد"
-          }
-        }
-      }
-    },
-    "Colors": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الألوان"
-          }
-        }
-      }
-    },
-    "Topic colors": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ألوان المواضيع"
-          }
-        }
-      }
-    },
-    "What have you memorized": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "ماذا تحفظ"
-          }
-        }
-      }
-    },
-    "of the Quran?": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "من القرآن؟"
-          }
-        }
-      }
-    },
-    "Choose the juz' and surahs you know. You can mark pages and ayat in the Mushaf anytime.": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اختر الأجزاء والسور التي تحفظها، ويمكنك تحديد الصفحات والآيات في المصحف متى شئت."
-          }
-        }
-      }
-    },
-    "The whole Quran": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "القرآن كاملًا"
-          }
-        }
-      }
-    },
-    "I'm just starting": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "أبدأ من الصفر"
-          }
-        }
-      }
-    },
-    "Memorized by": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الحفظ حسب"
-          }
-        }
-      }
-    },
-    "Juz' %lld": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الجزء %lld"
-          }
-        }
-      }
-    },
-    "Nothing chosen yet": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "لم تختر شيئًا بعد"
-          }
-        }
-      }
-    },
-    "%@ of the Quran": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "%@ من القرآن"
-          }
-        }
-      }
-    },
-    "Done": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "تم"
-          }
-        }
-      }
-    },
-    "Mark pages and ayat in the Mushaf": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "حدّد الصفحات والآيات في المصحف"
-          }
-        }
-      }
-    },
-    "Tap the ayat you've memorized": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اضغط على الآيات التي تحفظها"
-          }
-        }
-      }
-    },
-    "Press, then drag, to mark several": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "اضغط مطوّلًا ثم اسحب لتحديد عدة آيات"
-          }
-        }
-      }
-    },
-    "Whole page": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الصفحة كاملة"
-          }
-        }
-      }
-    },
-    "Both pages": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الصفحتان"
-          }
-        }
-      }
-    },
-    "Juz' & surahs": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "الأجزاء والسور"
-          }
-        }
-      }
-    },
-    "My memorization": {
-      "localizations": {
-        "ar": {
-          "stringUnit": {
-            "state": "translated",
-            "value": "حفظي"
-          }
-        }
-      }
-    },
-    "%lld ayat": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld ayah"
+    "%lld ayat" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آيات"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld ayat"
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آية واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آيتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية"
                 }
               }
             }
           }
         },
-        "ar": {
-          "variations": {
-            "plural": {
-              "zero": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld آية"
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayah"
                 }
               },
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "آية واحدة"
-                }
-              },
-              "two": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "آيتان"
-                }
-              },
-              "few": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld آيات"
-                }
-              },
-              "many": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld آية"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld آية"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayat"
                 }
               }
             }
@@ -435,70 +75,440 @@
         }
       }
     },
-    "%lld ayat memorized": {
-      "localizations": {
-        "en": {
-          "variations": {
-            "plural": {
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld ayah memorized"
+    "%lld ayat memorized" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آيات محفوظة"
                 }
               },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld ayat memorized"
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية محفوظة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آية واحدة محفوظة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية محفوظة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آيتان محفوظتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا آيات محفوظة"
                 }
               }
             }
           }
         },
-        "ar": {
-          "variations": {
-            "plural": {
-              "zero": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "لا آيات محفوظة"
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayah memorized"
                 }
               },
-              "one": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "آية واحدة محفوظة"
-                }
-              },
-              "two": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "آيتان محفوظتان"
-                }
-              },
-              "few": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld آيات محفوظة"
-                }
-              },
-              "many": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld آية محفوظة"
-                }
-              },
-              "other": {
-                "stringUnit": {
-                  "state": "translated",
-                  "value": "%lld آية محفوظة"
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayat memorized"
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Begin" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ"
+          }
+        }
+      }
+    },
+    "Both pages" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصفحتان"
+          }
+        }
+      }
+    },
+    "Choose the juz' and surahs you know. You can mark pages and ayat in the Mushaf anytime." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر الأجزاء والسور التي تحفظها، ويمكنك تحديد الصفحات والآيات في المصحف متى شئت."
+          }
+        }
+      }
+    },
+    "Colors" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الألوان"
+          }
+        }
+      }
+    },
+    "Continue" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متابعة"
+          }
+        }
+      }
+    },
+    "Daily revision, tasmee' with qualified teachers, and rewards that motivate you." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مراجعة يومية، وتسميع على شيوخ مُجازين، ومكافآت تحفّزك."
+          }
+        }
+      }
+    },
+    "Done" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تم"
+          }
+        }
+      }
+    },
+    "Everything is ready," : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل شيء جاهز،"
+          }
+        }
+      }
+    },
+    "Everything that helps your memorization," : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل ما يُعينك على حفظك"
+          }
+        }
+      }
+    },
+    "I'm just starting" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أبدأ من الصفر"
+          }
+        }
+      }
+    },
+    "Index" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفهرس"
+          }
+        }
+      }
+    },
+    "Juz'" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأجزاء"
+          }
+        }
+      }
+    },
+    "Juz' %lld" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الجزء %lld"
+          }
+        }
+      }
+    },
+    "Juz' & surahs" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأجزاء والسور"
+          }
+        }
+      }
+    },
+    "Mark pages and ayat in the Mushaf" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حدّد الصفحات والآيات في المصحف"
+          }
+        }
+      }
+    },
+    "Memorized by" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحفظ حسب"
+          }
+        }
+      }
+    },
+    "My memorization" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظي"
+          }
+        }
+      }
+    },
+    "Nothing chosen yet" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تختر شيئًا بعد"
+          }
+        }
+      }
+    },
+    "Now tap the last ayah of the range" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط الآن على آخر آية في المدى"
+          }
+        }
+      }
+    },
+    "Press and hold an ayah to mark from it to another" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط مطوّلًا على آية لتحدّد منها إلى غيرها"
+          }
+        }
+      }
+    },
+    "Reported by Ahmad" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رواه أحمد"
+          }
+        }
+      }
+    },
+    "Revise every day, and climb your stations in Aqra." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجِع كل يوم، وارتقِ في منازلك على اقرأ."
+          }
+        }
+      }
+    },
+    "Strengthen your memorization," : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ثبِّت حفظك،"
+          }
+        }
+      }
+    },
+    "Surahs" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السور"
+          }
+        }
+      }
+    },
+    "Tajweed colors" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألوان التجويد"
+          }
+        }
+      }
+    },
+    "Tap the ayat you've memorized" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط على الآيات التي تحفظها"
+          }
+        }
+      }
+    },
+    "The Mushaf couldn't be loaded" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر تحميل المصحف"
+          }
+        }
+      }
+    },
+    "The whole Quran" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القرآن كاملًا"
+          }
+        }
+      }
+    },
+    "Topic colors" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألوان المواضيع"
+          }
+        }
+      }
+    },
+    "Translation: Jami' at-Tirmidhi 2914, Darussalam" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الترجمة: جامع الترمذي 2914، دار السلام"
+          }
+        }
+      }
+    },
+    "What have you memorized" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ماذا تحفظ"
+          }
+        }
+      }
+    },
+    "Whole page" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصفحة كاملة"
+          }
+        }
+      }
+    },
+    "Your progress is saved on your device, and you can link it to your account anytime." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقدّمك يُحفظ على جهازك، ويمكنك ربطه بحسابك متى شئت."
+          }
+        }
+      }
+    },
+    "and rise, ayah by ayah." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وارتقِ آيةً بعد آية"
+          }
+        }
+      }
+    },
+    "begin your journey." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ رحلتك"
+          }
+        }
+      }
+    },
+    "in one place." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في مكان واحد"
+          }
+        }
+      }
+    },
+    "of the Quran?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من القرآن؟"
           }
         }
       }
     }
   },
-  "version": "1.1"
+  "version" : "1.1"
 }

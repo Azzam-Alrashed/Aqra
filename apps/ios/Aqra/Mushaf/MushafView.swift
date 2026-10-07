@@ -31,8 +31,6 @@ struct MushafView: View {
                 .environment(\.mushafTajweed, tajweed)
                 .environment(\.mushafTopics, topicColors)
                 .environment(marking)
-                // The pages hold still while a drag marks ayat.
-                .scrollDisabled(marking?.isPainting == true)
                 .onTapGesture {
                     // In marking mode, taps mark ayat and the toolbar stays.
                     guard marking == nil else { return }
@@ -133,14 +131,20 @@ struct MushafView: View {
         let ayahs = store.page(pages.first ?? lastPage).ayahs.lowerBound...store.page(pages.last ?? lastPage).ayahs.upperBound
         return VStack(spacing: 12) {
             VStack(spacing: 3) {
-                Text("Tap the ayat you've memorized")
+                // While a range waits for its end, the bar says so.
+                Text(marking.rangeStart == nil ? "Tap the ayat you've memorized" : "Now tap the last ayah of the range")
                     .font(.system(size: 16, weight: .bold, design: .rounded))
                 HStack(spacing: 6) {
                     Text("\(memorization.count) ayat memorized")
+                    Text(verbatim: "·")
+                    Text("Press and hold an ayah to mark from it to another")
                 }
                 .font(.system(size: 12, weight: .medium, design: .rounded))
                 .foregroundStyle(MushafStyle.chrome)
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
             }
+            .animation(.easeInOut(duration: 0.2), value: marking.rangeStart)
             HStack(spacing: 10) {
                 Button(pages.count > 1 ? "Both pages" : "Whole page") { marking.toggle(ayahs) }
                     .buttonStyle(MarkingButtonStyle())

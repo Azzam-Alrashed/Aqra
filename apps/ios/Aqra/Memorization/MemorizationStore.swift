@@ -94,41 +94,37 @@ final class MemorizationStore {
     }
 }
 
-/// The Mushaf's marking mode: a tap marks or unmarks one ayah, and pressing then dragging marks every ayah
-/// from where the finger started to where it is (or unmarks them, when the first one was already marked).
+/// The Mushaf's marking mode. A tap marks or unmarks one ayah. Pressing and holding an ayah starts a range:
+/// the next tap, on any page, marks every ayah from there to it (or unmarks them, when the first was marked).
 @MainActor @Observable
 final class MarkingSession {
     let memorization: MemorizationStore
-    /// True while the finger is dragging across ayat; the pages don't turn meanwhile.
-    private(set) var isPainting = false
-    @ObservationIgnored private var anchor: Int?
-    @ObservationIgnored private var painting = true
-    @ObservationIgnored private var paintEnded = Date.distantPast
+    /// Where a range started, while it waits for its last ayah.
+    private(set) var rangeStart: Int?
+    @ObservationIgnored private var rangeMarks = true
 
     init(memorization: MemorizationStore) {
         self.memorization = memorization
     }
 
     func tap(_ ayah: Int) {
-        // A press that just painted shouldn't also count as a tap.
-        guard Date.now.timeIntervalSince(paintEnded) > 0.3 else { return }
-        memorization.toggle(ayah: ayah)
-    }
-
-    func paint(_ ayah: Int) {
-        if anchor == nil {
-            anchor = ayah
-            painting = !memorization.isMemorized(ayah)
-            isPainting = true
+        if let start = rangeStart {
+            memorization.mark(min(start, ayah)...max(start, ayah), memorized: rangeMarks)
+            rangeStart = nil
+        } else {
+            memorization.toggle(ayah: ayah)
         }
-        guard let anchor else { return }
-        memorization.mark(min(anchor, ayah)...max(anchor, ayah), memorized: painting)
     }
 
-    func endPaint() {
-        anchor = nil
-        isPainting = false
-        paintEnded = .now
+    /// Starts a range at an ayah, marking it (or unmarking it, if it was marked) right away.
+    func beginRange(at ayah: Int) {
+        rangeMarks = !memorization.isMemorized(ayah)
+        memorization.mark([ayah], memorized: rangeMarks)
+        rangeStart = ayah
+    }
+
+    func cancelRange() {
+        rangeStart = nil
     }
 
     /// Marks every ayah of the given pages, or unmarks them when they're all already marked.

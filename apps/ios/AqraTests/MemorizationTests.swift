@@ -31,19 +31,21 @@ struct MemorizationStoreTests {
         #expect(reloaded.isMemorized(110) && !reloaded.isMemorized(121))
     }
 
-    @Test func markingSessionPaintsAndTogglesRanges() {
+    @Test func markingSessionMarksRangesAndPages() {
         let memorization = MemorizationStore(fileURL: nil)
         let session = MarkingSession(memorization: memorization)
-        // Dragging from an unmarked ayah marks everything from where it started to where it is.
-        session.paint(10)
-        session.paint(14)
-        session.endPaint()
-        #expect(memorization.memorizedCount(in: 10...14) == 5)
-        // Dragging from a marked ayah unmarks.
-        session.paint(12)
-        session.paint(13)
-        session.endPaint()
+        // A held press starts a range at an unmarked ayah, marking it; the next tap marks everything up to it.
+        session.beginRange(at: 14)
+        #expect(memorization.isMemorized(14) && session.rangeStart == 14)
+        session.tap(10)
+        #expect(memorization.memorizedCount(in: 10...14) == 5 && session.rangeStart == nil)
+        // Starting on a marked ayah unmarks the range instead.
+        session.beginRange(at: 12)
+        session.tap(13)
         #expect(memorization.memorizedCount(in: 10...14) == 3)
+        // Without a range, a tap toggles one ayah.
+        session.tap(12)
+        #expect(memorization.isMemorized(12))
         // A whole page: marks all of it unless it's all marked already, then unmarks it.
         session.toggle(10...14)
         #expect(memorization.memorizedCount(in: 10...14) == 5)
