@@ -342,6 +342,7 @@ struct SessionView: View {
     @State private var marking: Seat?
     @State private var editing = false
     @State private var confirmingCancel = false
+    @State private var calling = false
 
     /// The session as it is now; the one navigated to is only a snapshot.
     private var live: TasmeeSession { tasmee.mySessions.first { $0.id == session.id } ?? session }
@@ -365,6 +366,22 @@ struct SessionView: View {
                                     .foregroundStyle(Palette.brand)
                             }
                             Spacer(minLength: 0)
+                        }
+                        if live.kind == .video {
+                            TimelineView(.periodic(from: .now, by: 30)) { timeline in
+                                let open = CallModel.isOpen(live, at: timeline.date)
+                                Button {
+                                    calling = true
+                                } label: {
+                                    Label(open ? "Start the call" : "The call opens 15 minutes before", systemImage: "video.fill")
+                                        .font(.system(size: 15, weight: .bold))
+                                        .foregroundStyle(open ? .white : Palette.inkSoft)
+                                        .frame(maxWidth: .infinity, minHeight: 44)
+                                        .background(open ? Palette.brand : Palette.lavender, in: Capsule())
+                                }
+                                .buttonStyle(AqraPressStyle())
+                                .disabled(!open)
+                            }
                         }
                         HStack(spacing: 16) {
                             Button("Edit") { editing = true }
@@ -424,6 +441,9 @@ struct SessionView: View {
             }
         }
         .sheet(isPresented: $editing) { SessionEditor(session: live) }
+        .fullScreenCover(isPresented: $calling) {
+            TeacherCallView(session: live, store: store, seats: seats)
+        }
         .fullScreenCover(item: $marking) { seat in
             TasmeeMarkingView(store: store, studentName: seat.name, startPage: startPage(for: seat), allowsStageTest: true) { result in
                 tasmee.recordTasmee(for: seat, in: live, pages: result.pages, stumbles: result.stumbles,

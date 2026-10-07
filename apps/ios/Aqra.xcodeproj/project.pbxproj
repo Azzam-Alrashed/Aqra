@@ -21,6 +21,7 @@
 		1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01744F945BA643B14B7465BE /* AqraWelcomeView.swift */; };
 		1C5F4BA3851DEFBE3DEFC906 /* MushafTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */; };
 		1EAB7A71C09ABF42DFDB12DF /* Amiri-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6E6984583BED0004A203DABB /* Amiri-Bold.ttf */; };
+		1FCDC782C27B1AC154389AEC /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = 22A0842F575DA582DF2221F0 /* LiveKit */; };
 		214A4FF9C9FB9EEB9930F6C4 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F047391ECE3170AC958AE61A /* GoogleSignIn */; };
 		263DCB34D497E7EBE0794B0F /* Amiri-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */; };
 		2A203B4FCA716C993ACC5786 /* MemorizationSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBAD12111AE3902F992CCFF /* MemorizationSetupView.swift */; };
@@ -63,6 +64,7 @@
 		CA36F4A0D29DE63EAD73FA60 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 69FA526BC35C31760E96760B /* OFL.txt */; };
 		CFE907F55F9252A073A6EBF5 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AB3061F1929AE7431B17E2DF /* FirebaseFirestore */; };
 		DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A5BD4368E1C3CCFCDBDB66 /* StartPageView.swift */; };
+		E0B742B5B6301FE52D225754 /* VideoCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2890AF77D2F59AA73DF8608F /* VideoCall.swift */; };
 		E4D2E9755861CE6A0FBE2A8E /* RevisionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */; };
 		E51E3867065754E8438B8590 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A857877D3905C9E30C7FB0B6 /* FirebaseStorage */; };
 		E653A46A7138FFC02652BBC8 /* TasmeeHistoryView.swift in Sources */ = {isa = PBXBuildFile; fileRef = E7BE8C32420D5CB314CBF888 /* TasmeeHistoryView.swift */; };
@@ -96,6 +98,7 @@
 		264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafTests.swift; sourceTree = "<group>"; };
 		269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManazilPageView.swift; sourceTree = "<group>"; };
 		277CB2DEABA8387C27D5C63E /* TeacherApplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeacherApplicationView.swift; sourceTree = "<group>"; };
+		2890AF77D2F59AA73DF8608F /* VideoCall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCall.swift; sourceTree = "<group>"; };
 		2CF7CA2416343BC4067921C5 /* PageDots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageDots.swift; sourceTree = "<group>"; };
 		35F03A505062D433A0B82952 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
 		38BA04D3A2BC24F36FEFBEA4 /* Aqra.entitlements */ = {isa = PBXFileReference; lastKnownFileType = text.plist.entitlements; path = Aqra.entitlements; sourceTree = "<group>"; };
@@ -159,6 +162,7 @@
 				44145773A03836E569495B56 /* FirebaseFunctions in Frameworks */,
 				E51E3867065754E8438B8590 /* FirebaseStorage in Frameworks */,
 				214A4FF9C9FB9EEB9930F6C4 /* GoogleSignIn in Frameworks */,
+				1FCDC782C27B1AC154389AEC /* LiveKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -232,6 +236,7 @@
 				E65E7F1942F97EBB0B2D6507 /* TeacherApplication.swift */,
 				277CB2DEABA8387C27D5C63E /* TeacherApplicationView.swift */,
 				6DC9532CAE4D490BCD61621A /* TeacherViews.swift */,
+				2890AF77D2F59AA73DF8608F /* VideoCall.swift */,
 			);
 			path = Tasmee;
 			sourceTree = "<group>";
@@ -401,6 +406,7 @@
 				092276FFF5136E406677F603 /* FirebaseFunctions */,
 				A857877D3905C9E30C7FB0B6 /* FirebaseStorage */,
 				F047391ECE3170AC958AE61A /* GoogleSignIn */,
+				22A0842F575DA582DF2221F0 /* LiveKit */,
 			);
 			productName = Aqra;
 			productReference = 197C7240EA806A2E4643B0F4 /* Aqra.app */;
@@ -451,6 +457,7 @@
 			packageReferences = (
 				D43C0063A5472B2366798D29 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				B0D5345BB6733675088C3865 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
+				5746233B03DB254B784B2C01 /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7CB4E00B6ED4E140218F3DEE /* Products */;
@@ -543,6 +550,7 @@
 				338165B3CB00953B2E5D15D3 /* TeacherApplication.swift in Sources */,
 				11FB92A94C3F527A2CD5382D /* TeacherApplicationView.swift in Sources */,
 				05A0EE7464CA3BD7B9C014BB /* TeacherViews.swift in Sources */,
+				E0B742B5B6301FE52D225754 /* VideoCall.swift in Sources */,
 				9DBC182A5B2E823752A08D45 /* WirdView.swift in Sources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
@@ -812,6 +820,14 @@
 /* End XCConfigurationList section */
 
 /* Begin XCRemoteSwiftPackageReference section */
+		5746233B03DB254B784B2C01 /* XCRemoteSwiftPackageReference "client-sdk-swift" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/livekit/client-sdk-swift";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 2.16.0;
+			};
+		};
 		B0D5345BB6733675088C3865 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */ = {
 			isa = XCRemoteSwiftPackageReference;
 			repositoryURL = "https://github.com/google/GoogleSignIn-iOS";
@@ -835,6 +851,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = D43C0063A5472B2366798D29 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */;
 			productName = FirebaseFunctions;
+		};
+		22A0842F575DA582DF2221F0 /* LiveKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = 5746233B03DB254B784B2C01 /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
+			productName = LiveKit;
 		};
 		A857877D3905C9E30C7FB0B6 /* FirebaseStorage */ = {
 			isa = XCSwiftPackageProductDependency;

@@ -1086,6 +1086,16 @@
         }
       }
     },
+    "Camera" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الكاميرا"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "localizations" : {
         "ar" : {
@@ -1636,6 +1646,26 @@
         }
       }
     },
+    "Join the call" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انضم إلى المكالمة"
+          }
+        }
+      }
+    },
+    "Joining the call…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ الانضمام إلى المكالمة…"
+          }
+        }
+      }
+    },
     "Juz'" : {
       "localizations" : {
         "ar" : {
@@ -1746,6 +1776,16 @@
         }
       }
     },
+    "Leave the call" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "غادر المكالمة"
+          }
+        }
+      }
+    },
     "Leave without recording?" : {
       "localizations" : {
         "ar" : {
@@ -1812,6 +1852,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "قوة الحفظ"
+          }
+        }
+      }
+    },
+    "Microphone" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الميكروفون"
           }
         }
       }
@@ -1976,6 +2026,16 @@
         }
       }
     },
+    "Not in the call" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس في المكالمة"
+          }
+        }
+      }
+    },
     "Not passed yet" : {
       "localizations" : {
         "ar" : {
@@ -2062,6 +2122,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "من القرآن؟"
+          }
+        }
+      }
+    },
+    "Off" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقف"
+          }
+        }
+      }
+    },
+    "On" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعمل"
+          }
+        }
+      }
+    },
+    "Only students with a seat join this call." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينضم إلى هذه المكالمة الطلابُ الذين حجزوا مقعدًا فقط."
           }
         }
       }
@@ -2570,6 +2660,16 @@
         }
       }
     },
+    "Start the call" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ المكالمة"
+          }
+        }
+      }
+    },
     "Start today's revision" : {
       "localizations" : {
         "ar" : {
@@ -2830,6 +2930,26 @@
         }
       }
     },
+    "The call opens 15 minutes before" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُفتح المكالمة قبل الجلسة بربع ساعة"
+          }
+        }
+      }
+    },
+    "The call opens a quarter of an hour before the session." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُفتح المكالمة قبل الجلسة بربع ساعة."
+          }
+        }
+      }
+    },
     "The Complex's Mushaf page fonts of the 1441H print, with tajweed colors." : {
       "localizations" : {
         "ar" : {
@@ -2986,6 +3106,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يعلّم تعثّراتك على جواله"
+          }
+        }
+      }
+    },
+    "This call has closed." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انتهت هذه المكالمة."
           }
         }
       }
@@ -3170,6 +3300,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "مكالمة مرئية"
+          }
+        }
+      }
+    },
+    "Waiting for the teacher…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في انتظار المعلّم…"
+          }
+        }
+      }
+    },
+    "Waiting for your students…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في انتظار طلابك…"
           }
         }
       }
@@ -3584,6 +3734,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يعود مقعدك إلى الجلسة."
+          }
+        }
+      }
+    },
+    "Your students" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طلابك"
           }
         }
       }

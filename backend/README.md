@@ -7,13 +7,34 @@ The Firebase project `aqra-quran`, shared by all apps. Firestore lives in Dammam
 - `scripts/seed-emulator.mjs`: makes an emulator account a vetted teacher, for trying the teacher's side.
 - `scripts/admin.mjs`: administration from the command line (applications, teachers, administrators, payouts,
   the server policy).
+- `functions/`: the Cloud Functions (TypeScript, Node 22, region `me-central2`), for everything that must be
+  trusted rather than left to one client. Their defaults live in `functions/src/policy.ts`; an administrator can
+  override any of them in `config/policy`.
+  - `joinCall`: a LiveKit room token for a video session, only for its teacher or a student holding a seat, from
+    15 minutes before the session until 3 hours after.
+
+### Setting up video (LiveKit Cloud)
+
+Create a LiveKit Cloud project, then give the functions its URL and keys:
+
+```
+echo "LIVEKIT_URL=wss://<project>.livekit.cloud" > functions/.env.aqra-quran
+firebase functions:secrets:set LIVEKIT_API_KEY
+firebase functions:secrets:set LIVEKIT_API_SECRET
+firebase deploy --only functions
+```
+
+On the emulators the functions use `functions/.secret.local` (copy `.secret.local.example`: the keys of
+`livekit-server --dev`) and `ws://127.0.0.1:7880`, so a local `livekit-server --dev` makes calls work end to end.
 
 ## Commands
 
 ```
 npm install                                         # once
+npm install && npm --prefix functions install        # once
 npm run test:rules                                  # the rules tests, on the Firestore and Storage emulators (needs Java)
-npm run emulators                                   # Auth, Firestore and Storage emulators, UI at http://localhost:4000
+npm run test:functions                              # the functions' tests, on the emulators
+npm run emulators                                   # every emulator, functions built first; UI at http://localhost:4000
 npm run seed -- --email teacher@example.com         # make that emulator account a vetted teacher (+ a session)
 npm run admin -- applications --emulator            # administration (see scripts/admin.mjs; drop --emulator for real)
 firebase deploy --only firestore:rules,storage      # publish the rules

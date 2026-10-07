@@ -214,6 +214,9 @@ struct TasmeeView: View {
                         .background(Palette.lavender, in: Capsule())
                         .buttonStyle(.plain)
                 }
+                if booking.kind == .video, let live, !cancelled {
+                    JoinCallButton(session: live)
+                }
                 if let problem {
                     ProblemLine(problem: problem)
                 }

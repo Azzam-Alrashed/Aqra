@@ -12,6 +12,10 @@ packages:
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS
     from: 9.1.0
+  # Video tasmee'. Kept below 2.17, whose vendored nanopb headers clash with Firebase's (both ship a `pb.h`).
+  LiveKit:
+    url: https://github.com/livekit/client-sdk-swift
+    minorVersion: 2.16.0
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -42,6 +46,8 @@ targets:
         product: FirebaseStorage
       - package: GoogleSignIn
         product: GoogleSignIn
+      - package: LiveKit
+        product: LiveKit
     entitlements:
       path: Aqra/Aqra.entitlements
       properties:
