@@ -77,6 +77,7 @@
 		D35482B4BEF2062E268AE3A3 /* RotationAdvisor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A36665EF8F19D147219B7 /* RotationAdvisor.swift */; };
 		D8D65C91045C897D90F7FE9D /* MemorizeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21BFEDE7189234BAC56C6A6 /* MemorizeView.swift */; };
 		DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A5BD4368E1C3CCFCDBDB66 /* StartPageView.swift */; };
+		DDA79F6E3E69BAB3DC2025FF /* AyahText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C91AADA1D8AFB8D6B84C661 /* AyahText.swift */; };
 		E0B742B5B6301FE52D225754 /* VideoCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2890AF77D2F59AA73DF8608F /* VideoCall.swift */; };
 		E4D2E9755861CE6A0FBE2A8E /* RevisionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */; };
 		E4F6BAB42D69166C5BFEE19C /* SocialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00E0526DCD17438F7E175473 /* SocialStore.swift */; };
@@ -152,6 +153,7 @@
 		94E4E27C2A024A8688C0B012 /* MushafIndexView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafIndexView.swift; sourceTree = "<group>"; };
 		951585A6E1740996615236BA /* JourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyTests.swift; sourceTree = "<group>"; };
 		99C540650E9663B5B728582A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
+		9C91AADA1D8AFB8D6B84C661 /* AyahText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AyahText.swift; sourceTree = "<group>"; };
 		9C96B802FBD5FD542DC59F30 /* TasmeeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasmeeModels.swift; sourceTree = "<group>"; };
 		9FBAA9E53852AC40FE94CFA3 /* PeerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerViews.swift; sourceTree = "<group>"; };
 		A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafPageView.swift; sourceTree = "<group>"; };
@@ -325,6 +327,7 @@
 		88636D0AF183BBA7F8083935 /* Mushaf */ = {
 			isa = PBXGroup;
 			children = (
+				9C91AADA1D8AFB8D6B84C661 /* AyahText.swift */,
 				94E4E27C2A024A8688C0B012 /* MushafIndexView.swift */,
 				A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */,
 				836D08619011973FB71AEFC1 /* MushafStore.swift */,
@@ -602,6 +605,7 @@
 				EF4765262D5AA2C27811E483 /* AqraFont.swift in Sources */,
 				9D6D88E273E4885187DC9823 /* AqraLogo.swift in Sources */,
 				1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */,
+				DDA79F6E3E69BAB3DC2025FF /* AyahText.swift in Sources */,
 				1B89FE71BD1F0E2488ABECD1 /* CloudBackup.swift in Sources */,
 				8076ABAE11B163C198E3B107 /* CloudSync.swift in Sources */,
 				95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */,

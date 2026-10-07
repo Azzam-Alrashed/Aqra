@@ -416,10 +416,7 @@ struct StageTestView: View {
         } label: {
             Group {
                 if question.kind == .nextAyah {
-                    Text(verbatim: store.ayahTexts[option])
-                        .font(MushafFonts.hafsSmart(size: 21) ?? .title3)
-                        .lineLimit(3)
-                        .multilineTextAlignment(.center)
+                    AyahText(text: store.ayahTexts[option], spoken: store.ayahPlainTexts[option], size: 21)
                 } else {
                     Text(verbatim: store.surahNames[option] ?? "")
                         .font(.system(size: 18, weight: .bold))
@@ -458,12 +455,8 @@ struct StageTestView: View {
     }
 
     private func ayahCard(_ ayah: Int, emphasized: Bool) -> some View {
-        Text(verbatim: store.ayahTexts[ayah])
-            .font(MushafFonts.hafsSmart(size: emphasized ? 24 : 20) ?? .title2)
+        AyahText(text: store.ayahTexts[ayah], spoken: store.ayahPlainTexts[ayah], size: emphasized ? 24 : 20)
             .foregroundStyle(MushafStyle.ink)
-            .multilineTextAlignment(.center)
-            .lineLimit(6)
-            .minimumScaleFactor(0.6)
             .padding(18)
             .frame(maxWidth: .infinity)
             .background(MushafStyle.paper, in: RoundedRectangle(cornerRadius: 22, style: .continuous))

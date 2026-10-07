@@ -312,6 +312,9 @@ struct MushafPageView: View {
             if let revision { revisionLayer(revision) } else if let focus { focusLayer(focus) } else if let marking { markingLayer(marking) }
         }
         .environment(\.layoutDirection, .rightToLeft)
+        // The Complex's fonts as they are, wherever the page is shown: a design (rounded) would swap them for a
+        // system font.
+        .fontDesign(nil)
         // The words are font glyphs that VoiceOver can't read; give it the page in plain text instead.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: accessibilityText))

@@ -76,6 +76,8 @@ final class MushafStore: Sendable {
     /// Each ayah's text in the official Hafs Smart encoding, with its number marker, exactly as published: drawn in
     /// the Complex's Hafs Smart font where an ayah stands on its own (the stage tests).
     let ayahTexts: [String]
+    /// Each ayah's plain (Imla'i) text from the official data, for VoiceOver.
+    let ayahPlainTexts: [String]
     /// How long each ayah is, in lines of the 15-line page: each line it shares counts by its share of the line's
     /// words. The personal plan measures portions with it.
     let ayahLines: [Double]
@@ -150,6 +152,7 @@ final class MushafStore: Sendable {
         let fatiha = official.first { $0.sura_no == 1 && $0.aya_no == 1 }?.aya_text ?? ""
         basmala = fatiha.split(separator: " ").dropLast().joined(separator: " ")
         ayahTexts = official.map(\.aya_text)
+        ayahPlainTexts = official.map(\.aya_text_emlaey)
 
         // QUL glyphs: word id → glyph. The last word of each ayah is its ayah-end marker.
         struct Word: Decodable { var id: Int; var surah: String; var ayah: String; var word: String; var text: String }
