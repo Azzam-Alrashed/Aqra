@@ -4519,16 +4519,6 @@
         }
       }
     },
-    "pages a day" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "صفحة في اليوم"
-          }
-        }
-      }
-    },
     "Pages heard" : {
       "localizations" : {
         "ar" : {

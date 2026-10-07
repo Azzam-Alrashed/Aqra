@@ -10,6 +10,7 @@ struct DailyAmountView: View {
 
     @State private var amount: Int
     @Environment(\.dismiss) private var dismiss
+    @Environment(\.locale) private var locale
 
     init(memorizedPages: Int, initial: Int, isEditor: Bool = false, onDone: @escaping (Int) -> Void) {
         self.memorizedPages = memorizedPages
@@ -54,6 +55,14 @@ struct DailyAmountView: View {
         .sensoryFeedback(.selection, trigger: amount)
     }
 
+    /// «صفحات يوميًا» under the large number: the app's «%lld pages a day», which already agrees with the number in
+    /// each language («صفحتان», «صفحات», «صفحة»), with the number itself taken out.
+    private var unit: String {
+        String(localized: "\(amount) pages a day", locale: locale)
+            .replacingOccurrences(of: amount.formatted(.number.locale(locale)), with: "")
+            .trimmingCharacters(in: .whitespaces)
+    }
+
     /// The amount in the glowing rings, − and + on either side, and chips for the cycle and the suggestion.
     private func stage(suggested: Int) -> some View {
         ZStack {
@@ -64,8 +73,7 @@ struct DailyAmountView: View {
                         .font(.system(size: 76, weight: .heavy).monospacedDigit())
                         .foregroundStyle(Palette.brand)
                         .contentTransition(.numericText(value: Double(amount)))
-                    // A unit label under the large number, read the same whatever the number.
-                    Text("pages a day")
+                    Text(verbatim: unit)
                         .font(.system(size: 15, weight: .bold))
                         .foregroundStyle(Palette.ink)
                 }
