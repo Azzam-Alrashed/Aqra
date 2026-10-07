@@ -294,7 +294,8 @@ struct MushafRootView: View {
         _assessments = State(initialValue: assessments)
         let journey = Journey(plan: plan, rewards: rewards, assessments: assessments)
         _account = State(initialValue: AccountStore(sync: CloudSync(memorization: memorization, revision: revision, journey: journey),
-                                                    tasmee: TasmeeStore(memorization: memorization, revision: revision)))
+                                                    tasmee: TasmeeStore(memorization: memorization, revision: revision),
+                                                    social: SocialStore(memorization: memorization, revision: revision)))
     }
 
     var body: some View {
@@ -341,6 +342,7 @@ struct MushafRootView: View {
         .environment(account)
         .environment(account.sync)
         .environment(account.tasmee)
+        .environment(account.social)
         .environment(router)
         // After signing out, setup starts from «ماذا تحفظ؟» again.
         .onChange(of: hasDeclared) { if !hasDeclared { setupStep = .memorized } }
@@ -363,14 +365,17 @@ struct MushafRootView: View {
     /// rewards, and may pass a stage or meet a challenge.
     private func connect(_ mushaf: MushafStore) {
         let (memorization, revision, plan, rewards, assessments) = (memorization, revision, plan, rewards, assessments)
+        let account = account
         revision.onRecord = { record in
             rewards.revised(record, revision: revision)
             rewards.checkChallenges(revision: revision, plan: plan)
             assessments.checkPasses(store: mushaf, memorization: memorization)
+            if let name = account.publicName { account.social.reportScores(name: name) }
         }
         plan.onPortion = { portion in
             rewards.memorized(portion, memorization: memorization, store: mushaf)
             rewards.checkChallenges(revision: revision, plan: plan)
+            if let name = account.publicName { account.social.reportScores(name: name) }
         }
         assessments.onPass = { stage in
             rewards.passedStage(stage, totalPassed: assessments.passes.count)

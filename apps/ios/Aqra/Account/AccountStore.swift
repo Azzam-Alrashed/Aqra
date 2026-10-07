@@ -43,13 +43,16 @@ final class AccountStore {
     @ObservationIgnored let sync: CloudSync
     /// Teachers, sessions and tasmee' records, through the same account.
     @ObservationIgnored let tasmee: TasmeeStore
+    /// Friends and competitions, through the same account.
+    @ObservationIgnored let social: SocialStore
     @ObservationIgnored private let apple = AppleSignIn()
     @ObservationIgnored private var listener: AuthStateDidChangeListenerHandle?
     @ObservationIgnored private var userListener: (any ListenerRegistration)?
 
-    init(sync: CloudSync, tasmee: TasmeeStore) {
+    init(sync: CloudSync, tasmee: TasmeeStore, social: SocialStore) {
         self.sync = sync
         self.tasmee = tasmee
+        self.social = social
     }
 
     // MARK: - Starting
@@ -114,6 +117,7 @@ final class AccountStore {
                         // The backup first, so a tasmee' arriving isn't applied over a copy being restored.
                         await self.sync.attach(uid: user.uid)
                         self.tasmee.attach(uid: user.uid)
+                        self.social.attach(uid: user.uid)
                     }
                 } else {
                     Auth.auth().signInAnonymously { _, _ in }
@@ -265,6 +269,7 @@ final class AccountStore {
         }
         sync.detach()
         tasmee.detach()
+        social.detach()
         GIDSignIn.sharedInstance.signOut()
         try? Auth.auth().signOut()
         sync.clearDevice()
@@ -292,6 +297,7 @@ final class AccountStore {
                 }
             }
             try await tasmee.deleteAccountData(uid: user.uid)
+            try await social.deleteAccountData(uid: user.uid)
             try await sync.deleteAccountData(uid: user.uid)
             do {
                 try await user.delete()
@@ -301,6 +307,7 @@ final class AccountStore {
             }
             sync.detach()
             tasmee.detach()
+            social.detach()
             GIDSignIn.sharedInstance.signOut()
             return true
         } catch {

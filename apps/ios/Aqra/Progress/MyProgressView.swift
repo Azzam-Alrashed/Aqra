@@ -38,6 +38,8 @@ struct MyProgressView: View {
                 StagesSection(store: store)
 
                 RewardsSection()
+
+                TogetherSection(store: store)
             }
             .padding(.horizontal, 22)
             .padding(.top, 8)

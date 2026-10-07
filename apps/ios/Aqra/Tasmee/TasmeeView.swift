@@ -14,6 +14,7 @@ struct TasmeeView: View {
     @State private var problem: AccountStore.Problem?
     @State private var reciting = false
     @State private var hearing: HearingFriend?
+    @State private var startingCompetition = false
 
     var body: some View {
         NavigationStack {
@@ -78,6 +79,7 @@ struct TasmeeView: View {
         .sheet(isPresented: $creatingSession) { SessionEditor(session: nil) }
         .sheet(isPresented: $editingProfile) { TeacherProfileEditor() }
         .sheet(isPresented: $reciting) { PeerRequestView() }
+        .sheet(isPresented: $startingCompetition) { NewCompetitionView(kinds: [.teacher]) }
         .fullScreenCover(item: $hearing) { hearing in
             HearFriendView(store: store, initialCode: hearing.code)
         }
@@ -174,6 +176,14 @@ struct TasmeeView: View {
                         }
                         .buttonStyle(.plain)
                     }
+                    AqraRowDivider()
+                    Button {
+                        startingCompetition = true
+                    } label: {
+                        AqraRow(icon: "🏆", tint: Palette.mint, title: Text("A competition for my students"),
+                                detail: Text("Scored from the pages you hear clean"))
+                    }
+                    .buttonStyle(.plain)
                 }
             }
         }
