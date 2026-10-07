@@ -1,0 +1,655 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>اقرأ — ثبِّت حفظك، وارتقِ آيةً بعد آية</title>
+  <meta name="description" content="اقرأ يرافق حافظ القرآن في مراجعته كل يوم: مصحف المدينة كما طُبع بألوان التجويد، ووِرد يومي يُقدَّر لك، ومنازل ترتقيها آيةً بعد آية.">
+  <meta name="theme-color" content="#F7F4FB">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+
+  <meta property="og:type" content="website">
+  <meta property="og:title" content="اقرأ — ثبِّت حفظك، وارتقِ آيةً بعد آية">
+  <meta property="og:description" content="تطبيق لحُفّاظ القرآن: مصحف المدينة كما طُبع، ووِرد يومي، ومنازل ترتقيها آيةً بعد آية.">
+  <meta property="og:url" content="https://azzam-alrashed.github.io/Aqra/">
+  <meta property="og:image" content="https://azzam-alrashed.github.io/Aqra/img/icon-512.png">
+  <meta property="og:locale" content="ar_SA">
+  <meta property="og:locale:alternate" content="en_US">
+  <meta name="twitter:card" content="summary">
+
+  <!-- The language is applied before the first paint, so the page never flashes in the other one. -->
+  <script>
+    (function () {
+      var lang = 'ar';
+      try {
+        var q = new URLSearchParams(location.search).get('lang');
+        lang = q || localStorage.getItem('aqra-lang') || 'ar';
+      } catch (e) {}
+      if (lang !== 'en') lang = 'ar';
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&family=Amiri:wght@400;700&display=swap">
+
+  <style>
+    /* Colors from apps/ios/Aqra/Onboarding/OnboardingPageLayout.swift (OnboardingPalette) and AqraLogo.swift. */
+    :root {
+      --surface: #F7F4FB;
+      --ink: #241A33;
+      --ink-soft: #7B7290;
+      --brand: #5B2D91;
+      --brand-deep: #3E1D66;
+      --gold: #E8B64C;
+      --butter: #FFF1C7;
+      --peach: #FFE2CF;
+      --rose: #FCDCE7;
+      --lavender: #E9DEFA;
+      --sky: #DCEBFB;
+      --mint: #D8F2E3;
+      --white: #FFFFFF;
+      --shadow: 91 45 145; /* the brand purple, used at low opacity */
+
+      --step-butter-a: #FFE7A3; --step-butter-b: #F4C65E;
+      --step-peach-a: #FFCDAE;  --step-peach-b: #F29D72;
+      --step-rose-a: #FBBCD0;   --step-rose-b: #E7849F;
+      --step-lavender-a: #D9C6F7; --step-lavender-b: #A98BE3;
+      --step-sky-a: #B9D8F7;    --step-sky-b: #7FAEE6;
+
+      --font: "Rubik", ui-rounded, "SF Pro Rounded", "SF Arabic Rounded", system-ui, -apple-system, "Segoe UI", sans-serif;
+      --font-hadith: "Amiri", "Scheherazade New", "Noto Naskh Arabic", "Geeza Pro", serif;
+      --gutter: 16px;
+      --max: 1120px;
+      --radius: 24px;
+      color-scheme: light;
+    }
+
+    *, *::before, *::after { box-sizing: border-box; }
+    html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; scroll-padding-top: 84px; }
+    body {
+      margin: 0;
+      background: var(--surface);
+      color: var(--ink);
+      font-family: var(--font);
+      font-size: 17px;
+      line-height: 1.6;
+      -webkit-font-smoothing: antialiased;
+      overflow-x: clip;
+    }
+    img, svg { display: block; max-width: 100%; }
+    h1, h2, h3, p { margin: 0; }
+    h1, h2, h3, .lead { text-wrap: balance; }
+    a { color: inherit; }
+    :focus-visible { outline: 3px solid var(--brand); outline-offset: 3px; border-radius: 10px; }
+
+    /* One page, two languages: each piece of copy is written twice, and the other language is hidden. */
+    html[lang="ar"] .en, html[lang="en"] .ar { display: none !important; }
+    .wrap { width: 100%; max-width: var(--max); margin-inline: auto; padding-inline: var(--gutter); }
+    .num { font-variant-numeric: tabular-nums; }
+
+    /* ---------- Shared pieces: the onboarding's building blocks (AqraComponents.swift) ---------- */
+    .card {
+      background: var(--white);
+      border-radius: var(--radius);
+      box-shadow: 0 10px 18px rgb(var(--shadow) / .10), 0 1px 2px rgb(var(--shadow) / .06);
+    }
+    .tile {
+      display: inline-grid; place-items: center; flex: none;
+      width: 38px; height: 38px; border-radius: 12px;
+      font-size: 20px; line-height: 1;
+      font-family: "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", sans-serif;
+    }
+    .tile.sm { width: 26px; height: 26px; border-radius: 8px; font-size: 14px; }
+    .tile.lg { width: 48px; height: 48px; border-radius: 15px; font-size: 25px; }
+    .chip {
+      display: inline-flex; align-items: center; gap: 8px;
+      padding: 5px 12px 5px 5px; border-radius: 999px;
+      background: var(--white); color: var(--ink);
+      font-size: 13px; font-weight: 700; white-space: nowrap;
+      box-shadow: 0 6px 12px rgb(var(--shadow) / .10);
+    }
+    html[dir="rtl"] .chip { padding: 5px 5px 5px 12px; }
+    .eyebrow {
+      display: inline-flex; align-items: center; gap: 8px;
+      font-size: 14px; font-weight: 800; color: var(--brand);
+      letter-spacing: .01em;
+    }
+    .eyebrow::before { content: ""; width: 10px; height: 10px; border-radius: 50%; background: var(--brand); opacity: .6; }
+    h2 {
+      font-size: clamp(30px, 5vw, 44px); font-weight: 900; line-height: 1.15;
+      margin-top: 10px;
+    }
+    h2 .accent, h1 .accent { color: var(--brand); display: block; }
+    .lead { font-size: clamp(16px, 1.8vw, 18px); color: var(--ink-soft); font-weight: 500; margin-top: 16px; max-width: 46ch; }
+    .lead + .lead { margin-top: 12px; }
+    .lead strong { color: var(--ink); font-weight: 700; }
+
+    .btn {
+      display: inline-flex; align-items: center; justify-content: center; gap: 10px;
+      min-height: 56px; padding: 0 28px; border-radius: 999px;
+      font-weight: 700; font-size: 18px; text-decoration: none; cursor: pointer;
+      background: linear-gradient(180deg, var(--brand), var(--brand-deep));
+      color: var(--white);
+      box-shadow: inset 0 0 0 1px rgb(255 255 255 / .18), 0 8px 14px rgb(var(--shadow) / .35);
+      transition: transform .18s ease, box-shadow .18s ease;
+    }
+    .btn:hover { transform: translateY(-2px); box-shadow: inset 0 0 0 1px rgb(255 255 255 / .18), 0 12px 20px rgb(var(--shadow) / .38); }
+    .btn:active { transform: scale(.96); }
+    .btn svg { width: 20px; height: 20px; flex: none; fill: currentColor; }
+    .btn-soft {
+      background: var(--white); color: var(--brand);
+      box-shadow: 0 10px 18px rgb(var(--shadow) / .10), 0 1px 2px rgb(var(--shadow) / .06);
+    }
+    .btn-soft:hover { box-shadow: 0 14px 22px rgb(var(--shadow) / .14), 0 1px 2px rgb(var(--shadow) / .06); }
+    .btn-sm { min-height: 42px; padding: 0 18px; font-size: 15px; }
+    .soon {
+      display: inline-flex; align-items: center; gap: 6px;
+      padding: 4px 10px; border-radius: 999px;
+      background: var(--lavender); color: var(--brand);
+      font-size: 13px; font-weight: 800;
+    }
+
+    /* ---------- Nav ---------- */
+    .nav {
+      position: sticky; top: 0; z-index: 10;
+      background: rgb(247 244 251 / .85);
+      -webkit-backdrop-filter: blur(14px); backdrop-filter: blur(14px);
+    }
+    .nav .wrap { display: flex; align-items: center; justify-content: space-between; gap: 16px; min-height: 68px; }
+    .brand { display: flex; align-items: center; gap: 10px; text-decoration: none; font-weight: 900; font-size: 22px; }
+    .brand img { width: 40px; height: 40px; border-radius: 11px; box-shadow: 0 2px 8px rgb(var(--shadow) / .18); }
+    .nav-links { display: none; gap: 26px; font-weight: 700; font-size: 15px; color: var(--ink-soft); }
+    .nav-links a { text-decoration: none; }
+    .nav-links a:hover { color: var(--brand); }
+    .nav-end { display: flex; align-items: center; gap: 10px; }
+    .lang {
+      min-height: 38px; padding: 0 14px; border-radius: 999px; border: 0;
+      background: var(--white); color: var(--brand); font: inherit; font-weight: 800; font-size: 14px; cursor: pointer;
+      box-shadow: 0 4px 10px rgb(var(--shadow) / .10);
+    }
+    @media (min-width: 900px) { .nav-links { display: flex; } }
+
+    /* ---------- Hero ---------- */
+    .hero { padding-block: 8px clamp(56px, 8vw, 96px); text-align: center; }
+    .hero .wrap { display: grid; justify-items: center; }
+
+    /* The stage is composed at 420×440 like the onboarding's, and scaled down on small screens. */
+    .stage-box { --s: 1; position: relative; width: calc(420px * var(--s)); height: calc(440px * var(--s)); }
+    .stage { position: absolute; left: 50%; top: 50%; width: 420px; height: 440px; direction: ltr; transform: translate(-50%, -50%) scale(var(--s)); }
+    @media (max-width: 460px) { .stage-box { --s: .8; } }
+    @media (max-width: 380px) { .stage-box { --s: .72; } }
+    .stage > * { position: absolute; left: 50%; top: 50%; translate: -50% -50%; }
+    .glow {
+      width: 400px; height: 400px; border-radius: 50%;
+      background: radial-gradient(circle, var(--lavender) 0%, rgb(252 220 231 / .5) 45%, rgb(247 244 251 / 0) 70%);
+      animation: breathe 7s ease-in-out infinite;
+    }
+    .ring { border-radius: 50%; border: 1.5px solid rgb(255 255 255 / .9); animation: breathe 7s ease-in-out infinite; }
+    .ring.r1 { width: 126px; height: 126px; background: rgb(255 255 255 / .55); border: 0; }
+    .ring.r2 { width: 218px; height: 218px; }
+    .ring.r3 { width: 310px; height: 310px; animation-delay: -2s; }
+    .mark { width: 230px; height: auto; filter: drop-shadow(0 18px 30px rgb(var(--shadow) / .18)); animation: twinkle 5s ease-in-out infinite; }
+    @keyframes breathe { 0%, 100% { scale: 1; } 50% { scale: 1.03; } }
+    @keyframes twinkle { 0%, 100% { translate: -50% -50%; } 50% { translate: -50% calc(-50% - 5px); } }
+
+    /* Floating cards burst out of the glow and keep drifting, as on the third onboarding page. */
+    .float {
+      left: calc(50% + var(--x)); top: calc(50% + var(--y));
+      translate: -50% -50%;
+      rotate: var(--tilt);
+      animation: pop .62s cubic-bezier(.2, .9, .3, 1.15) both, drift var(--dur, 5s) ease-in-out var(--delay, 0s) infinite alternate;
+      animation-delay: var(--in), calc(var(--in) + .6s);
+    }
+    .float.back { scale: .86; z-index: 0; --dur: 6.5s; }
+    .float.mid { scale: .94; z-index: 1; --dur: 5.5s; }
+    .float.front { z-index: 2; --dur: 4.8s; }
+    html[dir="rtl"] .float .card, html[dir="rtl"] .float .chip { direction: rtl; }
+    @keyframes pop { from { opacity: 0; translate: -50% -50%; scale: .3; } to { opacity: 1; } }
+    @keyframes drift { from { margin-top: -5px; } to { margin-top: 5px; } }
+
+    .mini { padding: 12px; display: grid; gap: 10px; width: max-content; text-align: start; }
+    .mini .row { display: flex; align-items: center; gap: 10px; }
+    .mini .title { font-size: 16px; font-weight: 900; line-height: 1.15; }
+    .mini .sub { font-size: 11px; font-weight: 700; color: var(--ink-soft); }
+    .dots { display: flex; gap: 5px; }
+    .dots i { width: 16px; height: 16px; border-radius: 50%; background: var(--lavender); display: grid; place-items: center; }
+    .dots i.on { background: var(--brand); }
+    .dots i.on::after { content: ""; width: 5px; height: 8px; border: solid var(--white); border-width: 0 2.2px 2.2px 0; rotate: 45deg; translate: 0 -1px; }
+    .bar { width: 132px; height: 7px; border-radius: 999px; background: var(--lavender); overflow: hidden; }
+    .bar i { display: block; height: 100%; width: 68%; border-radius: 999px; background: linear-gradient(90deg, var(--brand), #B36AD8); }
+
+    /* The hadith, in Amiri, with «اقرَأ وارقَ» in the brand color. */
+    .hadith { margin-top: 10px; max-width: 640px; font-family: var(--font-hadith); direction: rtl; }
+    .hadith .who { font-size: 16px; color: var(--ink-soft); }
+    .hadith .said { font-size: 19px; font-weight: 700; }
+    .hadith .text { font-size: clamp(21px, 3vw, 25px); line-height: 1.9; margin-top: 6px; }
+    .hadith .text em { font-style: normal; font-weight: 700; color: var(--brand); font-size: 1.12em; }
+    .hadith .narrated { font-family: var(--font); font-size: 13px; font-weight: 700; color: var(--ink-soft); margin-top: 6px; }
+    .translation { max-width: 600px; margin-top: 10px; font-family: Georgia, "Times New Roman", serif; font-size: 15px; color: rgb(36 26 51 / .85); }
+    .translation small { display: block; font-family: var(--font); font-size: 11px; font-weight: 700; color: var(--ink-soft); margin-top: 4px; }
+
+    .hero h1 { margin-top: 30px; font-size: clamp(34px, 6.5vw, 58px); font-weight: 900; line-height: 1.15; }
+    .hero .lead { margin-inline: auto; text-align: center; max-width: 54ch; }
+    .cta { display: flex; flex-wrap: wrap; justify-content: center; gap: 12px; margin-top: 28px; }
+
+    /* ---------- Sections ---------- */
+    .section { padding-block: clamp(56px, 8vw, 104px); }
+    .section.tint { background: var(--white); }
+    .split { display: grid; gap: 40px; align-items: center; }
+    @media (min-width: 880px) {
+      .split { grid-template-columns: 1fr 1fr; gap: 56px; }
+      .split.flip > .copy { order: 2; }
+    }
+    .copy { text-align: start; }
+    .chips { display: flex; flex-wrap: wrap; gap: 10px; margin-top: 22px; }
+
+    /* A phone frame around a real screenshot. */
+    .phones { display: flex; justify-content: center; gap: clamp(14px, 3vw, 28px); align-items: flex-end; }
+    .phone {
+      width: min(300px, 78vw); aspect-ratio: 402 / 874; flex: none;
+      padding: 10px; border-radius: 52px;
+      background: linear-gradient(160deg, #2B2140, #1A1328);
+      box-shadow: 0 30px 60px rgb(var(--shadow) / .25), 0 6px 14px rgb(var(--shadow) / .12), inset 0 0 0 1.5px rgb(255 255 255 / .12);
+    }
+    .phone img { width: 100%; height: 100%; object-fit: cover; border-radius: 42px; background: var(--surface); }
+    .phones .phone.second { width: min(250px, 62vw); }
+    @media (max-width: 560px) { .phones .phone.second { display: none; } }
+
+    .steps { list-style: none; padding: 0; margin: 24px 0 0; display: grid; gap: 10px; counter-reset: step; }
+    .steps li { display: flex; gap: 14px; align-items: flex-start; padding: 14px; }
+    .steps li::before {
+      counter-increment: step; content: counter(step);
+      flex: none; width: 34px; height: 34px; border-radius: 11px; display: grid; place-items: center;
+      background: var(--lavender); color: var(--brand); font-weight: 900; font-size: 16px;
+    }
+    html[lang="ar"] .steps li::before { content: counter(step, arabic-indic); }
+    .steps b { display: block; font-weight: 800; }
+    .steps span { color: var(--ink-soft); font-size: 15px; font-weight: 500; }
+
+    .grid3 { display: grid; gap: 16px; margin-top: 32px; }
+    @media (min-width: 700px) { .grid3 { grid-template-columns: repeat(3, 1fr); } }
+    .feature { padding: 20px; display: grid; gap: 12px; align-content: start; text-align: start; }
+    .feature h3 { font-size: 19px; font-weight: 900; }
+    .feature p { color: var(--ink-soft); font-size: 15px; font-weight: 500; }
+
+    .band { margin-top: 0; }
+    .band .card { padding: clamp(22px, 4vw, 36px); display: grid; gap: 16px; grid-template-columns: auto 1fr; align-items: center; }
+    .band h3 { font-size: clamp(20px, 3vw, 26px); font-weight: 900; line-height: 1.25; }
+    .band p { color: var(--ink-soft); font-weight: 500; margin-top: 6px; }
+    @media (max-width: 560px) { .band .card { grid-template-columns: 1fr; } }
+
+    .sources { display: grid; gap: 12px; margin-top: 32px; }
+    @media (min-width: 700px) { .sources { grid-template-columns: repeat(2, 1fr); } }
+    .source { padding: 14px; display: flex; gap: 12px; align-items: flex-start; text-align: start; }
+    .source b { display: block; font-size: 16px; font-weight: 900; }
+    .source span { display: block; font-size: 13px; font-weight: 600; color: var(--ink-soft); margin-top: 2px; }
+
+    .closing { text-align: center; }
+    .closing .wrap { display: grid; justify-items: center; }
+    .closing .star { width: 110px; height: 110px; filter: drop-shadow(0 10px 24px rgb(246 203 102 / .6)); animation: twinkle 4s ease-in-out infinite; }
+    .closing h2 { margin-top: 18px; }
+
+    footer { padding-block: 32px 40px; color: var(--ink-soft); font-size: 14px; font-weight: 600; }
+    footer .wrap { display: flex; flex-wrap: wrap; gap: 14px 28px; align-items: center; justify-content: space-between; }
+    footer a { text-decoration: none; }
+    footer a:hover { color: var(--brand); }
+    footer nav { display: flex; flex-wrap: wrap; gap: 18px; }
+
+    @media (prefers-reduced-motion: reduce) {
+      *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition: none !important; }
+      .float { animation: none; opacity: 1; }
+    }
+  </style>
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="#top" aria-label="اقرأ">
+      <img src="img/apple-touch-icon.png" width="40" height="40" alt="">
+      <span class="ar">اقرأ</span><span class="en" lang="en">Aqra</span>
+    </a>
+    <nav class="nav-links" aria-label="Sections">
+      <a href="#mushaf"><span class="ar">المصحف</span><span class="en" lang="en">Mushaf</span></a>
+      <a href="#wird"><span class="ar">الوِرد</span><span class="en" lang="en">Wird</span></a>
+      <a href="#manazil"><span class="ar">المنازل</span><span class="en" lang="en">Stations</span></a>
+      <a href="#tasmee"><span class="ar">التسميع</span><span class="en" lang="en">Tasmee'</span></a>
+      <a href="#sources"><span class="ar">المصادر</span><span class="en" lang="en">Sources</span></a>
+    </nav>
+    <div class="nav-end">
+      <button class="lang" type="button" data-lang-toggle aria-label="Switch language">English</button>
+    </div>
+  </div>
+</header>
+
+<main id="top">
+  <!-- ======================= Hero ======================= -->
+  <section class="hero">
+    <div class="wrap">
+      <div class="stage-box" aria-hidden="true">
+        <div class="stage">
+          <div class="glow"></div>
+          <div class="ring r3"></div>
+          <div class="ring r2"></div>
+          <div class="ring r1"></div>
+          <img class="mark" src="img/logo-mark.webp" width="720" height="889" alt="">
+
+          <div class="float back" style="--x:-112px; --y:-168px; --tilt:-8deg; --in:.35s">
+            <span class="chip"><span class="tile sm" style="background:var(--butter)">⭐️</span><span class="ar">+٥٠ نقطة</span><span class="en" lang="en">+50 points</span></span>
+          </div>
+          <div class="float front" style="--x:58px; --y:-104px; --tilt:4deg; --in:.46s">
+            <div class="card mini">
+              <div class="row">
+                <span class="tile" style="background:var(--peach)">🔥</span>
+                <div><div class="title"><span class="ar">١٤ يومًا</span><span class="en" lang="en">14 days</span></div><div class="sub"><span class="ar">سلسلة المراجعة</span><span class="en" lang="en">Revision streak</span></div></div>
+              </div>
+              <div class="dots"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></div>
+            </div>
+          </div>
+          <div class="float front" style="--x:-66px; --y:24px; --tilt:-3deg; --in:.57s">
+            <div class="card mini">
+              <div class="row">
+                <span class="tile" style="background:var(--lavender)">🪜</span>
+                <div><div class="title"><span class="ar">المنزلة ١٢</span><span class="en" lang="en">Station 12</span></div><div class="sub"><span class="ar">٣٤ آية إلى التالية</span><span class="en" lang="en">34 ayat to the next</span></div></div>
+              </div>
+              <div class="bar"><i></i></div>
+            </div>
+          </div>
+          <div class="float mid" style="--x:76px; --y:138px; --tilt:5deg; --in:.68s">
+            <div class="card mini">
+              <div class="row">
+                <span class="tile" style="background:var(--sky)">🎙️</span>
+                <div><div class="title"><span class="ar">تسميع مع شيخ</span><span class="en" lang="en">Tasmee' with a sheikh</span></div><div class="sub"><span class="ar">غدًا · ٨:٠٠ م</span><span class="en" lang="en">Tomorrow · 8:00 PM</span></div></div>
+              </div>
+            </div>
+          </div>
+          <div class="float back" style="--x:-98px; --y:180px; --tilt:3deg; --in:.79s">
+            <span class="chip"><span class="tile sm" style="background:var(--mint)">✅</span><span class="ar">أتممت الجزء ٣٠</span><span class="en" lang="en">Juz' 30 complete</span></span>
+          </div>
+        </div>
+      </div>
+
+      <blockquote class="hadith" lang="ar">
+        <div class="who">عن عبد الله بن عمرو رضي الله عنهما</div>
+        <div class="said">قال رسول الله ﷺ:</div>
+        <p class="text">يقالُ لصاحِبِ القرآنِ <em>اقرَأ وارقَ</em> ورتِّل كما كُنتَ ترتِّلُ في الدُّنيا فإنَّ منزلتَكَ عندَ آخرِ آيةٍ تقرؤُها</p>
+        <div class="narrated"><span class="ar">رواه أحمد</span><span class="en" lang="en">Reported by Ahmad</span></div>
+      </blockquote>
+      <p class="translation en" lang="en">
+        &quot;It shall be said - meaning to the one who memorized the Qur&#x27;an - &#x27;Recite, and rise up, recite (melodiously) as you would recite in the world. For indeed your rank shall be at the last Ayah you recited.&#x27;&quot;
+        <small>Translation: Jami' at-Tirmidhi 2914, Darussalam</small>
+      </p>
+
+      <h1>
+        <span class="ar">ثبِّت حفظك، <span class="accent">وارتقِ آيةً بعد آية</span></span>
+        <span class="en" lang="en">Strengthen your memorization, <span class="accent">and rise, ayah by ayah.</span></span>
+      </h1>
+      <p class="lead">
+        <span class="ar">اقرأ يرافق حافظ القرآن في مراجعته كل يوم: مصحف المدينة كما طُبع، ووِردٌ يوميّ يُقدَّر لك، ومنازل ترتقيها آيةً بعد آية.</span>
+        <span class="en" lang="en">Aqra keeps the Quran memorizer company in daily revision: the Madinah Mushaf as printed, a daily wird measured for you, and stations you climb one ayah at a time.</span>
+      </p>
+      <div class="cta">
+        <span class="btn" aria-disabled="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 12.7c-.03-2.6 2.13-3.86 2.22-3.92-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.94.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.58-1.81 3.14-.46 7.8 1.3 10.35.86 1.25 1.89 2.65 3.23 2.6 1.3-.05 1.79-.84 3.36-.84 1.56 0 2.01.84 3.38.81 1.4-.02 2.28-1.27 3.14-2.52 1-1.45 1.4-2.85 1.43-2.92-.03-.02-2.74-1.05-2.72-4.14zM13.8 5.06c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.55-.66.77-1.25 2-1.09 3.18 1.15.09 2.32-.58 3.04-1.45z"/></svg>
+          <span class="ar">قريبًا على App Store</span><span class="en" lang="en">Coming soon to the App Store</span>
+        </span>
+        <a class="btn btn-soft" href="https://github.com/Azzam-Alrashed/Aqra">
+          <span class="ar">المشروع على GitHub</span><span class="en" lang="en">The project on GitHub</span>
+        </a>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Mushaf ======================= -->
+  <section class="section tint" id="mushaf">
+    <div class="wrap split">
+      <div class="copy">
+        <span class="eyebrow"><span class="ar">المصحف</span><span class="en" lang="en">The Mushaf</span></span>
+        <h2>
+          <span class="ar">مصحف المدينة، <span class="accent">كما طُبع</span></span>
+          <span class="en" lang="en">The Madinah Mushaf, <span class="accent">as printed</span></span>
+        </h2>
+        <p class="lead">
+          <span class="ar">صفحات المصحف الـ٦٠٤ بتخطيط طبعة ١٤٤١هـ من مجمع الملك فهد لطباعة المصحف الشريف، بألوان التجويد، فتبقى في عينك صورة الصفحة التي تحفظها.</span>
+          <span class="en" lang="en">All 604 pages in the layout of the 1441H print by the King Fahd Glorious Quran Printing Complex, with tajweed colors, so the page you memorized stays in your mind's eye.</span>
+        </p>
+        <p class="lead">
+          <span class="ar">وما تحفظه يتلوّن في الصفحة بلون موضوعه، كما في المصحف الموضوعي الملوّن: <strong>خافتًا</strong> حين تحفظه، <strong>أشدّ</strong> كلما راجعته، <strong>باهتًا</strong> إن تأخّرت عنه. وما لم تحفظه يبقى ورقًا.</span>
+          <span class="en" lang="en">What you've memorized takes the color of its topic on the page, like a thematic colored Mushaf: <strong>faint</strong> when new, <strong>fuller</strong> with every revision, <strong>fading</strong> when it's overdue. What you haven't memorized stays plain paper.</span>
+        </p>
+        <div class="chips">
+          <span class="chip"><span class="tile sm" style="background:var(--butter)">📖</span><span class="ar">٦٠٤ صفحات · طبعة ١٤٤١هـ</span><span class="en" lang="en">604 pages · 1441H print</span></span>
+          <span class="chip"><span class="tile sm" style="background:var(--rose)">🖍️</span><span class="ar">ألوان التجويد</span><span class="en" lang="en">Tajweed colors</span></span>
+          <span class="chip"><span class="tile sm" style="background:var(--mint)">🎨</span><span class="ar">ألوان المواضيع</span><span class="en" lang="en">Topic colors</span></span>
+        </div>
+      </div>
+      <div class="phones">
+        <div class="phone"><img src="img/mushaf.webp" width="804" height="1748" loading="lazy" alt="صفحة من المصحف في اقرأ: الآيات المحفوظة ملوّنة بلون موضوعها، بدرجات تتبع قوة الحفظ"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Wird ======================= -->
+  <section class="section" id="wird">
+    <div class="wrap split flip">
+      <div class="copy">
+        <span class="eyebrow"><span class="ar">وِرد اليوم</span><span class="en" lang="en">Today's wird</span></span>
+        <h2>
+          <span class="ar">وِردٌ يوميّ <span class="accent">يُقدَّر لك</span></span>
+          <span class="en" lang="en">A daily wird, <span class="accent">measured for you</span></span>
+        </h2>
+        <p class="lead">
+          <span class="ar">تختار كم صفحة تراجع في اليوم، ويرتّب اقرأ وِردك: الصفحات التي تعثّرت فيها تعود أولًا، ثم دورةٌ على كل ما تحفظ بترتيب المصحف. والأيام التي تفوتك لا تتراكم عليك.</span>
+          <span class="en" lang="en">You choose how many pages a day, and Aqra arranges the wird: pages you stumbled on come back first, then a rotation through everything you've memorized, in Mushaf order. Missed days don't pile up.</span>
+        </p>
+        <ol class="steps">
+          <li class="card"><div><b><span class="ar">تُحجب الآيات المحفوظة</span><span class="en" lang="en">The memorized ayat are veiled</span></b><span><span class="ar">تبقى الصفحة أمامك، ومواضع الآيات ظاهرة.</span><span class="en" lang="en">The page stays in front of you, with every ayah's place showing.</span></span></div></li>
+          <li class="card"><div><b><span class="ar">تقرأ غيبًا وتكشفها آيةً آية</span><span class="en" lang="en">Recite from memory, revealing one ayah at a time</span></b><span><span class="ar">اضغط لتظهر الآية التالية وتتأكّد.</span><span class="en" lang="en">Tap to reveal the next ayah and check yourself.</span></span></div></li>
+          <li class="card"><div><b><span class="ar">تضغط على ما تعثّرت فيه، ثم «تم»</span><span class="en" lang="en">Tap where you stumbled, then Done</span></b><span><span class="ar">تعود الصفحة بعد يوم، ثم ثلاثة، ثم سبعة، حتى تثبت.</span><span class="en" lang="en">The page comes back after a day, then three, then seven, until it holds.</span></span></div></li>
+        </ol>
+        <p class="lead">
+          <span class="ar">راجعت في الصلاة أو على صاحبك؟ علّم الصفحة من الوِرد، وتُحسب لك.</span>
+          <span class="en" lang="en">Revised in prayer, or to a friend? Check the page off from the wird, and it counts.</span>
+        </p>
+      </div>
+      <div class="phones">
+        <div class="phone"><img src="img/wird.webp" width="804" height="1748" loading="lazy" alt="مراجعة صفحة في اقرأ: آيتان مكشوفتان، إحداهما معلَّمة كتعثّر، والباقي محجوب"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Manazil ======================= -->
+  <section class="section tint" id="manazil">
+    <div class="wrap split">
+      <div class="copy">
+        <span class="eyebrow"><span class="ar">المنازل</span><span class="en" lang="en">The stations</span></span>
+        <h2>
+          <span class="ar">ارتقِ منازلك <span class="accent">آيةً بعد آية</span></span>
+          <span class="en" lang="en">Climb your stations, <span class="accent">ayah by ayah</span></span>
+        </h2>
+        <p class="lead">
+          <span class="ar">كل آية تحفظها منزلةٌ ترتقيها، تذكيرًا بالحديث. على الرئيسية عشر درجات، كل درجة ثلاثة أجزاء، تُريك أين بلغت من القرآن، ومعها نسبة حفظك وقوّته وسلسلة مراجعتك.</span>
+          <span class="en" lang="en">Every ayah you memorize is a station you rise to, in remembrance of the hadith. The home shows ten steps, three juz' each, with your share of the Quran, its strength, and your revision streak.</span>
+        </p>
+        <p class="lead">
+          <span class="ar">وفي «تقدّمي» ترى كل جزء على حدة: كم حفظت منه، وكم هو راسخ.</span>
+          <span class="en" lang="en">And in Progress, every juz' at a glance: how much of it you've memorized, and how firmly.</span>
+        </p>
+        <div class="chips">
+          <span class="chip"><span class="tile sm" style="background:var(--lavender)">🪜</span><span class="ar">عشر درجات · ثلاثون جزءًا</span><span class="en" lang="en">Ten steps · thirty juz'</span></span>
+          <span class="chip"><span class="tile sm" style="background:var(--peach)">🔥</span><span class="ar">سلسلة المراجعة</span><span class="en" lang="en">Revision streak</span></span>
+          <span class="chip"><span class="tile sm" style="background:var(--mint)">🌱</span><span class="ar">قوة الحفظ</span><span class="en" lang="en">Memorization strength</span></span>
+        </div>
+      </div>
+      <div class="phones">
+        <div class="phone"><img src="img/home.webp" width="1206" height="2622" loading="lazy" alt="الرئيسية في اقرأ: درجات المنازل داخل حلقات متوهّجة، ونسبة الحفظ وقوّته، ووِرد اليوم"></div>
+        <div class="phone second"><img src="img/progress.webp" width="1206" height="2622" loading="lazy" alt="شاشة تقدّمي في اقرأ: قوة الحفظ في كل جزء"></div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Tasmee' ======================= -->
+  <section class="section" id="tasmee">
+    <div class="wrap">
+      <div class="copy" style="max-width: 640px">
+        <span class="eyebrow"><span class="ar">التسميع</span><span class="en" lang="en">Tasmee'</span></span>
+        <h2>
+          <span class="ar">سمِّع على <span class="accent">شيخٍ مُجاز</span></span>
+          <span class="en" lang="en">Recite to <span class="accent">a qualified teacher</span></span>
+        </h2>
+        <p class="lead">
+          <span class="ar">احجز مقعدًا في جلسة تسميع مع أيٍّ من الشيوخ المُجازين في اقرأ، حضوريًا أو عبر الفيديو. يعلّم الشيخ ما تعثّرت فيه على مصحفه، فتصبح آياتك «مُصدَّقة»، ويُحسب تسميعك عليه أثقل من مراجعتك وحدك.</span>
+          <span class="en" lang="en">Book a seat in a tasmee' session with any of Aqra's vetted teachers, in person or by video. The teacher marks what you stumbled on, your ayat become verified, and a sheikh's tasmee' counts for more than revising alone.</span>
+        </p>
+        <p class="lead"><span class="soon"><span class="ar">قريبًا</span><span class="en" lang="en">Coming soon</span></span></p>
+      </div>
+      <div class="grid3">
+        <div class="card feature">
+          <span class="tile lg" style="background:var(--sky)">🗓️</span>
+          <h3><span class="ar">الحجز</span><span class="en" lang="en">Booking</span></h3>
+          <p><span class="ar">اختر الشيخ والجلسة واحجز مقعدك. المقاعد مجانية في البداية، والأسبق أولى.</span><span class="en" lang="en">Choose the teacher and the session, and book your seat. Seats are free at first, first come first served.</span></p>
+        </div>
+        <div class="card feature">
+          <span class="tile lg" style="background:var(--rose)">🎙️</span>
+          <h3><span class="ar">حضوريًا أو عن بُعد</span><span class="en" lang="en">In person or by video</span></h3>
+          <p><span class="ar">في الحلقة، أو بمكالمة فيديو تقرأ فيها ويصحّح الشيخ.</span><span class="en" lang="en">In the circle, or on a video call where you recite and the teacher corrects.</span></p>
+        </div>
+        <div class="card feature">
+          <span class="tile lg" style="background:var(--mint)">✅</span>
+          <h3><span class="ar">علامة «مُصدَّق»</span><span class="en" lang="en">The verified mark</span></h3>
+          <p><span class="ar">ما سمّعته على شيخ يُعلَّم في مصحفك مصدَّقًا، وتسميعه يُثبّت حفظك أكثر.</span><span class="en" lang="en">What you recite to a teacher is marked verified in your Mushaf, and counts for more in your memorization's strength.</span></p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Account ======================= -->
+  <section class="section tint band" id="account">
+    <div class="wrap">
+      <div class="card">
+        <span class="tile lg" style="background:var(--butter)">☁️</span>
+        <div>
+          <h3>
+            <span class="ar">يعمل بلا حساب، ويحفظ تقدّمك متى شئت</span>
+            <span class="en" lang="en">Works without an account, and backs up your progress when you choose</span>
+          </h3>
+          <p>
+            <span class="ar">اقرأ يعمل على جهازك من أول يوم، دون إنترنت. وحين تشاء، سجّل الدخول بحساب Apple أو Google ليُحفَظ تقدّمك ويعود إليك على أي جهاز. نسختك الاحتياطية تُحفظ على خوادم في الدمام.</span>
+            <span class="en" lang="en">Aqra works on your device from day one, offline. When you choose, sign in with Apple or Google so your progress is backed up and comes back to you on any device. Your backup is kept on servers in Dammam, Saudi Arabia.</span>
+          </p>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Sources ======================= -->
+  <section class="section" id="sources">
+    <div class="wrap">
+      <div class="copy" style="max-width: 640px">
+        <span class="eyebrow"><span class="ar">المصادر</span><span class="en" lang="en">Sources</span></span>
+        <h2>
+          <span class="ar">نصّ القرآن <span class="accent">أمانة</span></span>
+          <span class="en" lang="en">The Quran's text <span class="accent">is a trust</span></span>
+        </h2>
+        <p class="lead">
+          <span class="ar">لا يُكتب نص القرآن في اقرأ بيد، ولا يُولَّد ولا يُعدَّل. يُعرض كما نُشر من مصادره، وتتحقّق الاختبارات من كل ملف ومن موضع كل آية في صفحتها قبل كل إصدار، ويراجع العرضَ حافظٌ قبل النشر.</span>
+          <span class="en" lang="en">The Quran's text in Aqra is never typed, generated or edited. It's shown exactly as its sources published it, tests check every file and every ayah's place on its page before each release, and a hafiz reviews the rendering before publication.</span>
+        </p>
+        <p class="lead">
+          <span class="ar">يعرض اقرأ القرآن الكريم كما نُشر تمامًا، من هذه المصادر، مع الشكر والتقدير.</span>
+          <span class="en" lang="en">Aqra shows the Quran exactly as published, from these sources, with thanks.</span>
+        </p>
+      </div>
+      <div class="sources">
+        <div class="card source">
+          <span class="tile" style="background:var(--butter)">📜</span>
+          <div><b><span class="ar">مجمع الملك فهد لطباعة المصحف الشريف</span><span class="en" lang="en">King Fahd Glorious Quran Printing Complex</span></b><span><span class="ar">نص القرآن الكريم وبياناته، برواية حفص.</span><span class="en" lang="en">The Quran text and its data, in the riwayah of Hafs.</span></span></div>
+        </div>
+        <div class="card source">
+          <span class="tile" style="background:var(--lavender)">🖋️</span>
+          <div><b lang="en">Quran Foundation</b><span><span class="ar">خطوط صفحات المصحف من المجمع، طبعة ١٤٤١هـ، بألوان التجويد.</span><span class="en" lang="en">The Complex's Mushaf page fonts of the 1441H print, with tajweed colors.</span></span></div>
+        </div>
+        <div class="card source">
+          <span class="tile" style="background:var(--sky)">🧩</span>
+          <div><b lang="en">Quranic Universal Library (QUL)</b><span><span class="ar">تخطيط صفحات المصحف وعناوين السور.</span><span class="en" lang="en">The Mushaf page layout and the surah headers.</span></span></div>
+        </div>
+        <div class="card source">
+          <span class="tile" style="background:var(--mint)">🏷️</span>
+          <div><b lang="en">Ayah by Ayah</b><span><span class="ar">التقسيم الموضوعي، مؤقتًا.</span><span class="en" lang="en">The topic sections, for now.</span></span></div>
+        </div>
+        <div class="card source">
+          <span class="tile" style="background:var(--rose)">✒️</span>
+          <div><b lang="en">Amiri</b><span><span class="ar">خط الحديث، برخصة SIL Open Font License.</span><span class="en" lang="en">The typeface of the hadith, under the SIL Open Font License.</span></span></div>
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ======================= Closing ======================= -->
+  <section class="section tint closing">
+    <div class="wrap">
+      <svg class="star" viewBox="0 0 100 100" aria-hidden="true">
+        <defs><linearGradient id="g" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8D371"/><stop offset="1" stop-color="#EFB54A"/></linearGradient></defs>
+        <path fill="url(#g)" d="M50 4 L58 36 L86 22 L66 46 L96 50 L66 54 L86 78 L58 64 L50 96 L42 64 L14 78 L34 54 L4 50 L34 46 L14 22 L42 36 Z" stroke-linejoin="round" stroke="url(#g)" stroke-width="4"/>
+      </svg>
+      <h2>
+        <span class="ar">كل شيء جاهز، <span class="accent">ابدأ رحلتك</span></span>
+        <span class="en" lang="en">Everything is ready, <span class="accent">begin your journey.</span></span>
+      </h2>
+      <p class="lead" style="text-align:center">
+        <span class="ar">تقدّمك يُحفظ على جهازك، ويمكنك ربطه بحسابك متى شئت.</span>
+        <span class="en" lang="en">Your progress is saved on your device, and you can link it to your account anytime.</span>
+      </p>
+      <div class="cta">
+        <span class="btn" aria-disabled="true">
+          <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M16.37 12.7c-.03-2.6 2.13-3.86 2.22-3.92-1.21-1.77-3.09-2.01-3.76-2.04-1.6-.16-3.12.94-3.94.94-.81 0-2.06-.92-3.39-.9-1.74.03-3.35 1.01-4.25 2.58-1.81 3.14-.46 7.8 1.3 10.35.86 1.25 1.89 2.65 3.23 2.6 1.3-.05 1.79-.84 3.36-.84 1.56 0 2.01.84 3.38.81 1.4-.02 2.28-1.27 3.14-2.52 1-1.45 1.4-2.85 1.43-2.92-.03-.02-2.74-1.05-2.72-4.14zM13.8 5.06c.72-.87 1.2-2.08 1.07-3.28-1.03.04-2.28.69-3.02 1.55-.66.77-1.25 2-1.09 3.18 1.15.09 2.32-.58 3.04-1.45z"/></svg>
+          <span class="ar">قريبًا على App Store</span><span class="en" lang="en">Coming soon to the App Store</span>
+        </span>
+        <a class="btn btn-soft" href="https://github.com/Azzam-Alrashed/Aqra">
+          <span class="ar">المشروع على GitHub</span><span class="en" lang="en">The project on GitHub</span>
+        </a>
+      </div>
+    </div>
+  </section>
+</main>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <span class="ar">اقرأ · تطبيق لحُفّاظ القرآن، مفتوح المصدر.</span>
+      <span class="en" lang="en">Aqra · an open-source app for Quran memorizers.</span>
+    </div>
+    <nav aria-label="Footer">
+      <a href="https://github.com/Azzam-Alrashed/Aqra">GitHub</a>
+      <a href="#sources"><span class="ar">المصادر</span><span class="en" lang="en">Sources</span></a>
+      <a href="#top" data-lang-toggle-link><span class="ar" lang="en">English</span><span class="en" lang="ar">العربية</span></a>
+    </nav>
+  </div>
+</footer>
+
+<script>
+  (function () {
+    var html = document.documentElement;
+    var titles = { ar: 'اقرأ — ثبِّت حفظك، وارتقِ آيةً بعد آية', en: 'Aqra — Strengthen your memorization, and rise, ayah by ayah' };
+    function apply(lang) {
+      html.lang = lang;
+      html.dir = lang === 'ar' ? 'rtl' : 'ltr';
+      document.title = titles[lang];
+      document.querySelectorAll('[data-lang-toggle]').forEach(function (b) {
+        b.textContent = lang === 'ar' ? 'English' : 'العربية';
+        b.lang = lang === 'ar' ? 'en' : 'ar';
+      });
+      try { localStorage.setItem('aqra-lang', lang); } catch (e) {}
+    }
+    apply(html.lang === 'en' ? 'en' : 'ar');
+    function toggle(e) { e.preventDefault(); apply(html.lang === 'ar' ? 'en' : 'ar'); }
+    document.querySelectorAll('[data-lang-toggle], [data-lang-toggle-link]').forEach(function (b) { b.addEventListener('click', toggle); });
+  })();
+</script>
+</body>
+</html>

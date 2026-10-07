@@ -13,4 +13,14 @@ struct AppIconRenderTests {
         let data = try #require(renderer.uiImage?.pngData())
         try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("arch-logo.png"))
     }
+
+    /// The logo mark alone, on a transparent background, for the website and other artwork.
+    @Test func renderArchLogoMark() throws {
+        guard let directory = ProcessInfo.processInfo.environment["AQRA_ICON_OUT"] else { return }
+        let renderer = ImageRenderer(content: AqraArchLogo(withBackground: false))
+        renderer.scale = 1
+        renderer.isOpaque = false
+        let data = try #require(renderer.uiImage?.pngData())
+        try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("arch-logo-mark.png"))
+    }
 }

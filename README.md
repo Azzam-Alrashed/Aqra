@@ -10,7 +10,7 @@ apps/
   web/        Web PWA (planned)
 backend/      Firebase: Firestore rules and their tests; Cloud Functions (planned)
 shared/       Platform-neutral data, e.g. the verified Quran text and its checksums (planned)
-docs/         Product and technical documentation, see docs/VISION.md
+docs/         Product and technical documentation (see docs/VISION.md), and the website (index.html, served by GitHub Pages)
 ```
 
 ## Setup
