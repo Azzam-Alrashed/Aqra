@@ -205,19 +205,30 @@ struct TeacherView: View {
     }
 }
 
-/// A small capsule button at the end of a row: purple when filled, lavender otherwise.
+/// A small capsule button at the end of a row: purple when filled, lavender otherwise; faded when disabled.
 struct ChipButtonStyle: ButtonStyle {
     var filled: Bool
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 13, weight: .bold))
-            .lineLimit(1)
-            .foregroundStyle(filled ? .white : OnboardingPalette.brand)
-            .padding(.horizontal, 12)
-            .frame(height: 30)
-            .background(filled ? OnboardingPalette.brand : OnboardingPalette.lavender, in: Capsule())
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
+        Chip(configuration: configuration, filled: filled)
+    }
+
+    private struct Chip: View {
+        var configuration: Configuration
+        var filled: Bool
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 13, weight: .bold))
+                .lineLimit(1)
+                .foregroundStyle(filled ? .white : OnboardingPalette.brand)
+                .padding(.horizontal, 12)
+                .frame(height: 30)
+                .background(filled ? OnboardingPalette.brand : OnboardingPalette.lavender, in: Capsule())
+                .opacity(isEnabled ? 1 : 0.45)
+                .scaleEffect(configuration.isPressed ? 0.96 : 1)
+        }
     }
 }
 

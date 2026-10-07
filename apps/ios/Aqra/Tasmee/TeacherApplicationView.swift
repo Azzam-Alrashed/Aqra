@@ -180,7 +180,7 @@ struct TeacherApplicationView: View {
                 .foregroundStyle(Palette.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
 
-            AqraSectionTitle(title: "About you").padding(.top, 6)
+            AqraSectionTitle(title: "Your details").padding(.top, 6)
             AqraCard(padding: 0, radius: 24) {
                 VStack(spacing: 0) {
                     field(Text("Name"), text: $draft.name)

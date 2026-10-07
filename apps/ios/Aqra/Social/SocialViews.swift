@@ -140,6 +140,10 @@ struct FriendsView: View {
                 .font(.system(size: 28, weight: .heavy))
                 .padding(.top, 22)
 
+                if account.publicName == nil {
+                    NamePrompt()
+                }
+
                 AqraCard(padding: 14, radius: 24) {
                     VStack(alignment: .leading, spacing: 12) {
                         HStack(spacing: 12) {
@@ -182,7 +186,7 @@ struct FriendsView: View {
                                 Label("Make my code", systemImage: "qrcode")
                             }
                             .buttonStyle(ChipButtonStyle(filled: true))
-                            .disabled(making)
+                            .disabled(making || account.publicName == nil)
                         }
                     }
                 }
@@ -273,7 +277,13 @@ struct AcceptFriendView: View {
                 ProgressView().tint(Palette.brand)
             } else if let invite, invite.ownerUid != account.profile?.uid {
                 Text(verbatim: done ? "✅" : "🤝").font(.system(size: 64))
-                (done ? Text("You're friends with \(invite.ownerName)") : Text("Be friends with \(invite.ownerName)?"))
+                Group {
+                    if invite.ownerName.isEmpty {
+                        done ? Text("You're friends now") : Text("Add this friend?")
+                    } else {
+                        done ? Text("You're friends with \(invite.ownerName)") : Text("Be friends with \(invite.ownerName)?")
+                    }
+                }
                     .font(.system(size: 22, weight: .heavy))
                     .foregroundStyle(Palette.ink)
                     .multilineTextAlignment(.center)
@@ -318,6 +328,32 @@ struct AcceptFriendView: View {
             withAnimation(.spring(response: 0.4, dampingFraction: 0.8)) { done = true }
         } catch {
             problem = AccountStore.problem(for: error)
+        }
+    }
+}
+
+/// The name friends will see, asked for before inviting them when the account has none.
+struct NamePrompt: View {
+    @Environment(AccountStore.self) private var account
+    @State private var name = ""
+
+    var body: some View {
+        AqraCard(padding: 14, radius: 24) {
+            VStack(alignment: .leading, spacing: 10) {
+                Text("First, the name your friends will see")
+                    .font(.system(size: 15, weight: .heavy))
+                    .foregroundStyle(Palette.ink)
+                HStack(spacing: 10) {
+                    TextField("Your name", text: $name)
+                        .font(.system(size: 16, weight: .semibold))
+                        .padding(.horizontal, 12)
+                        .frame(height: 40)
+                        .background(Palette.surface, in: Capsule())
+                    Button("Save") { account.setDisplayName(name) }
+                        .buttonStyle(ChipButtonStyle(filled: true))
+                        .disabled(name.trimmingCharacters(in: .whitespacesAndNewlines).isEmpty)
+                }
+            }
         }
     }
 }
