@@ -19,13 +19,17 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
     /// How much more a clean revision counts when a sheikh heard it in a tasmee', compared with self-revision.
     /// Provisional, see docs/REVISION.md.
     var sheikhWeight = 1.5
+    /// A peer's tasmee' sits between self-revision and a sheikh's. Provisional, see docs/REVISION.md.
+    var peerWeight = 1.25
 
     static let standard = ReviewPolicy()
 
-    /// The weight of a revision's evidence: self-revision, in or outside the app, counts once; a sheikh's more.
+    /// The weight of a revision's evidence: self-revision, in or outside the app, counts once; a peer's more,
+    /// and a sheikh's more still.
     func weight(of source: RevisionRecord.Source) -> Double {
         switch source {
         case .app, .outside: 1
+        case .peer: peerWeight
         case .sheikh: sheikhWeight
         }
     }
@@ -38,8 +42,8 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
 
 /// One page revised: when, how, and which of its ayat the student stumbled on.
 struct RevisionRecord: Codable, Hashable {
-    /// Who heard the revision: the student alone, in the app or outside it, or a sheikh in a tasmee'.
-    enum Source: String, Codable { case app, outside, sheikh }
+    /// Who heard the revision: the student alone, in the app or outside it, a peer, or a sheikh in a tasmee'.
+    enum Source: String, Codable { case app, outside, peer, sheikh }
 
     var date: Date
     var page: Int
@@ -95,10 +99,14 @@ final class RevisionStore {
     /// The days on which at least one page was revised, kept apart from the history so a long streak isn't cut
     /// short when old records are dropped.
     private(set) var revisedDays: Set<Date> = []
+    /// The days on which the whole of that day's wird was revised.
+    private(set) var completedDays: Set<Date> = []
     /// When any of it last changed, to tell which copy is newer when merging with the account's.
     private(set) var updatedAt = Date.distantPast
     /// Called after every change, so the backup can follow.
     @ObservationIgnored var onChange: (() -> Void)?
+    /// Called after each page is recorded, so rewards can follow.
+    @ObservationIgnored var onRecord: ((RevisionRecord) -> Void)?
 
     @ObservationIgnored private let fileURL: URL?
     @ObservationIgnored private let calendar: Calendar
@@ -121,6 +129,7 @@ final class RevisionStore {
         plan = file.plan
         history = file.history
         revisedDays = Set(file.revisedDays ?? file.history.map { calendar.startOfDay(for: $0.date) })
+        completedDays = Set(file.completedDays ?? [])
         // Files from before backups were kept don't say when they changed; the file's own date does.
         updatedAt = file.updatedAt
             ?? (try? fileURL.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
@@ -137,6 +146,8 @@ final class RevisionStore {
         var plan: DayPlan?
         var history: [RevisionRecord] = []
         var revisedDays: [Date] = []
+        /// Missing from backups made before it was kept.
+        var completedDays: [Date]? = nil
         var updatedAt = Date.distantPast
 
         static let empty = Snapshot()
@@ -144,7 +155,8 @@ final class RevisionStore {
 
     var snapshot: Snapshot {
         Snapshot(dailyPages: dailyPages, rotationCursor: rotationCursor, followUps: followUps, plan: plan,
-                 history: history, revisedDays: revisedDays.sorted(), updatedAt: updatedAt)
+                 history: history, revisedDays: revisedDays.sorted(),
+                 completedDays: completedDays.isEmpty ? nil : completedDays.sorted(), updatedAt: updatedAt)
     }
 
     /// Replaces everything with a snapshot: restoring from the account, or clearing the device on signing out.
@@ -156,6 +168,7 @@ final class RevisionStore {
         plan = snapshot.plan
         history = Array(snapshot.history.suffix(1_000))
         revisedDays = Set(snapshot.revisedDays)
+        completedDays = Set(snapshot.completedDays ?? [])
         save()
     }
 
@@ -238,6 +251,7 @@ final class RevisionStore {
         if var plan, plan.day == day, let index = plan.items.firstIndex(where: { $0.page == page }) {
             plan.items[index].done = true
             self.plan = plan
+            if plan.isComplete { completedDays.insert(day) }
             // The rotation moves past the leading run of revised rotation pages, so a page skipped today
             // (or revised out of order) is still first tomorrow.
             var cursor = rotationCursor
@@ -249,9 +263,24 @@ final class RevisionStore {
         }
 
         revisedDays.insert(day)
-        history.append(RevisionRecord(date: now, page: page, source: source, stumbles: stumbles.sorted()))
+        let entry = RevisionRecord(date: now, page: page, source: source, stumbles: stumbles.sorted())
+        history.append(entry)
         if history.count > 1_000 { history.removeFirst(history.count - 1_000) }
         save()
+        onRecord?(entry)
+    }
+
+    /// Brings pages back for follow-up from tomorrow, as after a stumble: a portion just memorized, or pages the
+    /// student chose to strengthen. A page already due sooner keeps its date.
+    func followUp(pages: some Sequence<Int>, now: Date = .now) {
+        let due = date(calendar.startOfDay(for: now), plus: policy.followUpDays.first ?? 1)
+        var changed = false
+        for page in Set(pages) where (1...MushafStore.pageCount).contains(page) {
+            if let existing = followUps[page], existing.due <= due { continue }
+            followUps[page] = FollowUp(due: due, step: 0)
+            changed = true
+        }
+        if changed { save() }
     }
 
     // MARK: - Streak
@@ -295,6 +324,7 @@ final class RevisionStore {
         var history: [RevisionRecord]
         /// Missing from files written before the streak was kept; it's then rebuilt from the history.
         var revisedDays: [Date]?
+        var completedDays: [Date]?
         var updatedAt: Date?
     }
 
@@ -305,7 +335,8 @@ final class RevisionStore {
         let file = File(
             dailyPages: dailyPages, rotationCursor: rotationCursor,
             followUps: followUps.sorted { $0.key < $1.key }.map { File.FollowUpRecord(page: $0.key, due: $0.value.due, step: $0.value.step) },
-            plan: plan, history: history, revisedDays: revisedDays.sorted(), updatedAt: updatedAt
+            plan: plan, history: history, revisedDays: revisedDays.sorted(), completedDays: completedDays.sorted(),
+            updatedAt: updatedAt
         )
         try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? JSONEncoder().encode(file).write(to: fileURL, options: .atomic)
@@ -354,5 +385,15 @@ final class RevisionSession {
 
     func revealAll() {
         revealed = ayahs.count
+    }
+
+    /// Marks an ayah as stumbled on, whatever it was (a listener classifying the stumble).
+    func markStumble(_ ayah: Int) {
+        guard covers(ayah) else { return }
+        stumbles.insert(ayah)
+    }
+
+    func clearStumble(_ ayah: Int) {
+        stumbles.remove(ayah)
     }
 }

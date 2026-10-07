@@ -31,12 +31,18 @@ struct AppTabView: View {
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(RevisionStore.self) private var revision
+    @Environment(PlanStore.self) private var plan
+    @Environment(RewardStore.self) private var rewards
+    @Environment(TasmeeStore.self) private var tasmee
+    @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
-    @State private var tab = AppTab.home
+    @AppStorage("reminder.on") private var reminderOn = false
+    @AppStorage("reminder.minutes") private var reminderMinutes = 5 * 60 + 30
 
     var body: some View {
-        TabView(selection: $tab) {
-            HomeView(store: store, startsMarking: startsMarking, tab: $tab)
+        @Bindable var router = router
+        TabView(selection: $router.tab) {
+            HomeView(store: store, startsMarking: startsMarking, tab: $router.tab)
                 .reservesTabBarSpace()
                 .toolbar(.hidden, for: .tabBar)
                 .tag(AppTab.home)
@@ -54,14 +60,27 @@ struct AppTabView: View {
                 .tag(AppTab.account)
         }
         .overlay(alignment: .bottom) {
-            AqraTabBar(selection: $tab)
+            AqraTabBar(selection: $router.tab)
                 .padding(.bottom, AqraTabBar.bottomPadding)
         }
+        .overlay { CelebrationOverlay() }
         .environment(\.colorScheme, .light)
         // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
         .task { refreshPlan() }
         .onChange(of: memorization.count) { refreshPlan() }
-        .onChange(of: scenePhase) { if scenePhase == .active { refreshPlan() } }
+        .onChange(of: scenePhase) {
+            if scenePhase == .active {
+                refreshPlan()
+                rewards.checkChallenges(revision: revision, plan: plan)
+            }
+        }
+        // A reminder an hour before each booked session.
+        .onChange(of: tasmee.upcomingBookings, initial: true) { SessionReminders.schedule(tasmee.upcomingBookings) }
+        // The daily reminder mentions the new portion on the plan's study days.
+        .onChange(of: plan.plan) {
+            guard reminderOn else { return }
+            DailyReminder.schedule(minutes: reminderMinutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays })
+        }
     }
 
     private func refreshPlan() {
@@ -83,6 +102,10 @@ struct HomeView: View {
         case mushaf(marking: Bool)
         /// Today's wird, from one of its pages; started from the home's button, or from that page's tile.
         case wird(page: Int, fromButton: Bool)
+        /// A page of today's wird revised outside the app, with the ayat stumbled on.
+        case outside(page: Int)
+        /// Today's new portion, to memorize.
+        case memorize(portion: [Int])
 
         var id: Self { self }
 
@@ -91,13 +114,16 @@ struct HomeView: View {
             switch self {
             case .mushaf: "mushaf"
             case .wird(_, true): "start"
-            case .wird(let page, false): "page-\(page)"
+            case .wird(let page, false), .outside(let page): "page-\(page)"
+            case .memorize: "portion"
             }
         }
     }
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(RevisionStore.self) private var revision
+    @Environment(PlanStore.self) private var plan
+    @Environment(AssessmentStore.self) private var assessments
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.layoutDirection) private var direction
     @AppStorage("mushaf.lastPage") private var lastPage = 1
@@ -106,8 +132,14 @@ struct HomeView: View {
     @State private var destination: Destination?
     /// «لاحقًا» on the invitation to sign in hides it until this date.
     @AppStorage("home.saveProgressSnoozedUntil") private var saveProgressSnoozedUntil = 0.0
+    /// The newest tasmee' whose card was closed, so it isn't shown again.
+    @AppStorage("home.seenTasmee") private var seenTasmee = ""
     @State private var editingMemorization = false
     @State private var editingAmount = false
+    @State private var editingPlan = false
+    @State private var openedStage: StageRoute?
+    /// Bumped when a suggestion is taken or dismissed, so the list is worked out again.
+    @State private var suggestionsVersion = 0
     @State private var openedMarking = false
     /// The entrance plays once: the stage opens, the stairs climb, the chips pop out and the rest rises.
     @State private var entered = false
@@ -129,6 +161,25 @@ struct HomeView: View {
                     action
                         .padding(.top, 24)
                     VStack(spacing: 14) {
+                        if showsPortion {
+                            PortionCard(store: store) { portion in
+                                destination = .memorize(portion: portion)
+                            } onEditPlan: {
+                                editingPlan = true
+                            }
+                            .zoomTransitionSource(id: "portion", in: zoom)
+                        }
+                        if memorization.count > 0 || plan.plan != nil {
+                            StageCard(store: store, stage: currentStage) { openedStage = StageRoute(stage: currentStage) }
+                        }
+                        if !suggestions.isEmpty {
+                            suggestionCard(suggestions)
+                                .transition(.scale(scale: 0.95).combined(with: .opacity))
+                        }
+                        if let record = newTasmee {
+                            heardCard(record)
+                                .transition(.scale(scale: 0.95).combined(with: .opacity))
+                        }
                         if let booking = tasmee.nextBooking {
                             tasmeeCard(booking)
                                 .transition(.scale(scale: 0.95).combined(with: .opacity))
@@ -188,6 +239,12 @@ struct HomeView: View {
         .sheet(isPresented: $editingAmount) {
             DailyAmountView(memorizedPages: memorizedPageCount, initial: dailyPages, isEditor: true) { revision.setDailyPages($0) }
         }
+        .sheet(isPresented: $editingPlan) {
+            PlanEditorView(store: store) { _ in }
+        }
+        .sheet(item: $openedStage) { route in
+            NavigationStack { StageDetailView(store: store, stage: route.stage) }
+        }
         .fullScreenCover(item: $destination) { destination in
             Group {
                 switch destination {
@@ -195,6 +252,10 @@ struct HomeView: View {
                     MushafView(store: store, startsMarking: marking)
                 case .wird(let page, _):
                     WirdView(store: store, startPage: page)
+                case .outside(let page):
+                    WirdView(store: store, startPage: page, outside: true)
+                case .memorize(let portion):
+                    MemorizeView(store: store, portion: portion)
                 }
             }
             .zoomTransition(sourceID: destination.sourceID, in: zoom)
@@ -220,6 +281,9 @@ struct HomeView: View {
             if streak > 0 {
                 AqraChip(icon: "🔥", tint: Palette.peach) { Text("\(streak) days") }
                     .accessibilityLabel(Text("Revision streak: \(streak) days"))
+            }
+            if AccountStore.isAvailable {
+                InboxButton()
             }
         }
         .padding(.top, 8)
@@ -349,7 +413,10 @@ struct HomeView: View {
         let plan = revision.plan
         return VStack(spacing: 10) {
             VStack(spacing: 2) {
-                if memorization.count == 0 || plan == nil || plan?.items.isEmpty == true {
+                if memorization.count == 0, self.plan.plan != nil {
+                    Text("Begin your journey").foregroundStyle(Palette.ink)
+                    Text("with today's portion").foregroundStyle(Palette.brand)
+                } else if memorization.count == 0 || plan == nil || plan?.items.isEmpty == true {
                     Text("What have you memorized").foregroundStyle(Palette.ink)
                     Text("of the Quran?").foregroundStyle(Palette.brand)
                 } else if let next = remaining.first {
@@ -365,7 +432,9 @@ struct HomeView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             Group {
-                if memorization.count == 0 {
+                if memorization.count == 0, self.plan.plan != nil {
+                    Text("Every ayah you memorize is a step up")
+                } else if memorization.count == 0 {
                     Text("Choose what you've memorized to start climbing")
                 } else {
                     cycleLine
@@ -381,7 +450,9 @@ struct HomeView: View {
     @ViewBuilder
     private var action: some View {
         let metrics = OnboardingButtonMetrics(height: 56, fontSize: 18, compact: false)
-        if memorization.count == 0 {
+        if memorization.count == 0, plan.plan != nil {
+            EmptyView()
+        } else if memorization.count == 0 {
             BrandButton("Choose what you've memorized", metrics: metrics) { editingMemorization = true }
         } else if let next = remaining.first, let plan = revision.plan {
             BrandButton(plan.doneCount == 0 ? "Start today's revision" : "Continue today's revision", metrics: metrics) {
@@ -517,6 +588,11 @@ struct HomeView: View {
                 } label: {
                     Label("Revised outside the app", systemImage: "checkmark.circle")
                 }
+                Button {
+                    destination = .outside(page: item.page)
+                } label: {
+                    Label("Revised outside the app, with stumbles…", systemImage: "exclamationmark.circle")
+                }
             }
         }
         .accessibilityValue(item.done ? Text("Revised") : Text(verbatim: ""))
@@ -542,7 +618,8 @@ struct HomeView: View {
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(Palette.ink)
                             .lineLimit(1)
-                        Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + " · " + (live?.place ?? booking.place))
+                        (Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + " · ")
+                            + TasmeeFormat.place(live.map { Booking($0) } ?? booking))
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(cancelled ? Palette.inkSoft : Palette.brand)
                             .strikethrough(cancelled)
@@ -556,6 +633,116 @@ struct HomeView: View {
         }
         .buttonStyle(AqraPressStyle())
         .accessibilityElement(children: .combine)
+    }
+
+    /// Today's portion, or the invitation to a plan — not for a student who has memorized the whole Quran.
+    private var showsPortion: Bool {
+        plan.plan != nil || memorization.count < MushafStore.ayahCount
+    }
+
+    /// The stage the student is in.
+    private var currentStage: Int {
+        var nextAyah: Int?
+        if let chosen = plan.plan, case .due(let portion) = plan.today(memorization: memorization, store: store) ?? .complete {
+            nextAyah = chosen.paused ? nil : portion.first
+        }
+        return AssessmentStore.currentStage(nextAyah: nextAyah, memorization: memorization, store: store, passes: assessments.passes)
+    }
+
+    /// Pages that keep slipping, suggested for extra follow-up.
+    private var suggestions: [Int] {
+        _ = suggestionsVersion
+        return RotationAdvisor.suggestions(store: store, memorization: memorization, revision: revision)
+    }
+
+    private func suggestionCard(_ pages: [Int]) -> some View {
+        AqraCard(padding: 14, radius: 24) {
+            VStack(alignment: .leading, spacing: 12) {
+                HStack(alignment: .top, spacing: 12) {
+                    IconTile(icon: "🌿", tint: Palette.mint, size: 40)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("These pages keep slipping")
+                            .font(.system(size: 16, weight: .heavy))
+                            .foregroundStyle(Palette.ink)
+                        Text("Pages \(pages.map(String.init).joined(separator: "، ")): bring them back tomorrow to make them firm?")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Palette.inkSoft)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 0)
+                }
+                HStack(spacing: 10) {
+                    Button("Not now") {
+                        RotationAdvisor.dismiss(pages)
+                        withAnimation(.snappy) { suggestionsVersion += 1 }
+                    }
+                    .buttonStyle(ChipButtonStyle(filled: false))
+                    Button("Add to follow-up") {
+                        RotationAdvisor.accept(pages, revision: revision)
+                        withAnimation(.snappy) { suggestionsVersion += 1 }
+                    }
+                    .buttonStyle(ChipButtonStyle(filled: true))
+                }
+            }
+        }
+    }
+
+    /// A tasmee' applied in the last two days that the student hasn't closed yet.
+    private var newTasmee: TasmeeRecord? {
+        guard let record = tasmee.history.first(where: { $0.appliedAt != nil }), record.id != seenTasmee,
+              record.at > Date.now.addingTimeInterval(-2 * 86_400) else { return nil }
+        return record
+    }
+
+    /// What a teacher or a friend heard, now applied to the student's progress.
+    private func heardCard(_ record: TasmeeRecord) -> some View {
+        let pages = Set(record.pages).count
+        return Button {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { tab = .tasmee }
+        } label: {
+            AqraCard(padding: 12, radius: 24) {
+                HStack(spacing: 12) {
+                    IconTile(icon: record.kind == .peer ? "🤝" : "🎓", tint: record.kind == .peer ? Palette.peach : Palette.mint, size: 40)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Group {
+                            if record.kind == .peer {
+                                Text("Your friend heard \(pages) pages")
+                            } else {
+                                Text("Your teacher heard \(pages) pages")
+                            }
+                        }
+                        .font(.system(size: 16, weight: .heavy))
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        Group {
+                            if record.kind == .sheikh && record.stumbles.isEmpty {
+                                Text("No stumbles: the ayat heard are verified")
+                            } else {
+                                Text("\(record.stumbles.count) stumbles · added to your revision")
+                            }
+                        }
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.brand)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    }
+                    Spacer(minLength: 8)
+                    Button {
+                        withAnimation(.snappy) { seenTasmee = record.id }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundStyle(Palette.brand)
+                            .frame(width: 28, height: 28)
+                            .background(Palette.lavender, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Close"))
+                }
+            }
+        }
+        .buttonStyle(AqraPressStyle())
     }
 
     // MARK: - Saving progress

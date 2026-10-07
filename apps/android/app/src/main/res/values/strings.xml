@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Strings only the Android app needs. The shared ones come from the iOS catalog (strings_ios.xml). -->
+<resources>
+    <string name="app_name" translatable="false">اقْرَأْ</string>
+    <string name="continue_with_apple">Continue with Apple</string>
+    <string name="notifications_are_off">Notifications are turned off for Aqra.</string>
+    <string name="open_notification_settings">Open settings</string>
+    <string name="arabic" translatable="false">العربية</string>
+    <string name="english" translatable="false">English</string>
+    <string name="scanning_isnt_available">Scanning isn\'t available on this device.</string>
+    <string name="accounts_need_the_firebase_config">Accounts are off in this build.</string>
+    <string name="credits_arent_sold_on_android_yet">Credits can\'t be bought in the Android app yet. Those already in your account bid here as anywhere.</string>
+    <string name="video_calls_need_camera_and_microphone">The call goes on with what Aqra may use: allow the camera and the microphone in settings to be seen and heard.</string>
+</resources>

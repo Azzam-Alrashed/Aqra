@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- The logo's arch and star, in one color, for the status bar. -->
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="24dp"
+    android:height="24dp"
+    android:viewportWidth="24"
+    android:viewportHeight="24">
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:fillType="evenOdd"
+        android:pathData="M5.3,11L5.3,18.1Q5.3,21.4 8.6,21.4L15.4,21.4Q18.7,21.4 18.7,18.1L18.7,11C18.7,7.9 15.5,5.4 12,3.6C8.5,5.4 5.3,7.9 5.3,11ZM7.3,11.4L7.3,17.8Q7.3,19.4 8.9,19.4L15.1,19.4Q16.7,19.4 16.7,17.8L16.7,11.4C16.7,9.3 14.5,7.4 12,5.9C9.5,7.4 7.3,9.3 7.3,11.4Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M12,8.6L12.7,10.3L14.5,10.4L13.1,11.5L13.6,13.3L12,12.3L10.4,13.3L10.9,11.5L9.5,10.4L11.3,10.3Z" />
+    <path
+        android:fillColor="#FFFFFFFF"
+        android:pathData="M10.6,19.4L10.6,16.3C10.6,15.3 11.2,14.6 12,14.2C12.8,14.6 13.4,15.3 13.4,16.3L13.4,19.4Z" />
+</vector>

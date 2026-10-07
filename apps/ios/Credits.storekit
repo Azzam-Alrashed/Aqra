@@ -1,0 +1,77 @@
+{
+  "identifier": "A9C3E5F1",
+  "nonRenewingSubscriptions": [],
+  "products": [
+    {
+      "displayPrice": "3.99",
+      "familyShareable": false,
+      "internalID": "6740000010",
+      "localizations": [
+        {
+          "description": "10 credits for seats in tasmee' sessions.",
+          "displayName": "10 credits",
+          "locale": "en_US"
+        },
+        {
+          "description": "١٠ عملات لمقاعد جلسات التسميع.",
+          "displayName": "١٠ عملات",
+          "locale": "ar"
+        }
+      ],
+      "productID": "aqra.credits.10",
+      "referenceName": "10 credits",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "9.99",
+      "familyShareable": false,
+      "internalID": "6740000030",
+      "localizations": [
+        {
+          "description": "30 credits for seats in tasmee' sessions.",
+          "displayName": "30 credits",
+          "locale": "en_US"
+        },
+        {
+          "description": "٣٠ عملة لمقاعد جلسات التسميع.",
+          "displayName": "٣٠ عملة",
+          "locale": "ar"
+        }
+      ],
+      "productID": "aqra.credits.30",
+      "referenceName": "30 credits",
+      "type": "Consumable"
+    },
+    {
+      "displayPrice": "17.99",
+      "familyShareable": false,
+      "internalID": "6740000060",
+      "localizations": [
+        {
+          "description": "60 credits for seats in tasmee' sessions.",
+          "displayName": "60 credits",
+          "locale": "en_US"
+        },
+        {
+          "description": "٦٠ عملة لمقاعد جلسات التسميع.",
+          "displayName": "٦٠ عملة",
+          "locale": "ar"
+        }
+      ],
+      "productID": "aqra.credits.60",
+      "referenceName": "60 credits",
+      "type": "Consumable"
+    }
+  ],
+  "settings": {
+    "_failTransactionsEnabled": false,
+    "_locale": "en_US",
+    "_storefront": "USA",
+    "_storeKitErrors": []
+  },
+  "subscriptionGroups": [],
+  "version": {
+    "major": 3,
+    "minor": 0
+  }
+}

@@ -25,17 +25,27 @@ final class TasmeeStore {
     private(set) var isLoadingTeachers = false
     /// Tasmee' records applied to this device since launch, newest first.
     private(set) var recentlyApplied: [TasmeeRecord] = []
+    /// Every tasmee' record in the account, newest first: what teachers and peers heard.
+    private(set) var history: [TasmeeRecord] = []
+    /// A teacher's students: everyone they've heard, most recently heard first.
+    private(set) var myStudents: [StudentFile] = []
+    /// The account's application to teach, if it made one.
+    private(set) var application: TeacherApplication?
     var problem: AccountStore.Problem?
     /// The Mushaf, once loaded. A tasmee' can only be applied with it (which ayat each page holds).
     var mushaf: MushafStore? {
         didSet { applyPending() }
     }
+    /// Called after each tasmee' is applied on this device (a teacher's stage test counts toward its stage).
+    @ObservationIgnored var onApplied: ((TasmeeRecord) -> Void)?
 
     @ObservationIgnored private let memorization: MemorizationStore
     @ObservationIgnored private let revision: RevisionStore
-    @ObservationIgnored private var uid: String?
+    /// The account followed, or nil before one is attached.
+    @ObservationIgnored private(set) var uid: String?
     @ObservationIgnored private var listeners: [any ListenerRegistration] = []
     @ObservationIgnored private var sessionsListener: (any ListenerRegistration)?
+    @ObservationIgnored private var studentsListener: (any ListenerRegistration)?
     @ObservationIgnored private var bookedListener: (any ListenerRegistration)?
     @ObservationIgnored private var bookedIDs: [String] = []
     /// Records the account holds that haven't been applied on this device yet.
@@ -48,15 +58,24 @@ final class TasmeeStore {
         self.revision = revision
     }
 
-    private var database: Firestore { Firestore.firestore() }
+    var database: Firestore { Firestore.firestore() }
 
-    private func user(_ uid: String) -> DocumentReference {
+    func user(_ uid: String) -> DocumentReference {
         database.collection("users").document(uid)
     }
 
-    /// Firestore hands dates back as `Timestamp`s; the values want `Date`s.
-    nonisolated private static func dated(_ data: [String: Any]) -> [String: Any] {
-        data.mapValues { ($0 as? Timestamp)?.dateValue() ?? $0 }
+    /// Firestore hands dates back as `Timestamp`s, also inside maps and lists; the values want `Date`s.
+    nonisolated static func dated(_ data: [String: Any]) -> [String: Any] {
+        data.mapValues(undated)
+    }
+
+    nonisolated private static func undated(_ value: Any) -> Any {
+        switch value {
+        case let timestamp as Timestamp: timestamp.dateValue()
+        case let map as [String: Any]: map.mapValues(undated)
+        case let list as [Any]: list.map(undated)
+        default: value
+        }
     }
 
     // MARK: - The account in use
@@ -73,6 +92,14 @@ final class TasmeeStore {
                 guard let self, let snapshot else { return }
                 self.teacherProfile = snapshot.data().flatMap { Teacher(id: uid, document: Self.dated($0)) }
                 self.watchMySessions()
+                self.watchMyStudents()
+            }
+        })
+
+        listeners.append(database.collection("teacherApplications").document(uid).addSnapshotListener { [weak self] snapshot, _ in
+            MainActor.assumeIsolated {
+                guard let self, let snapshot else { return }
+                self.application = snapshot.data().flatMap { TeacherApplication(id: uid, document: Self.dated($0)) }
             }
         })
 
@@ -86,12 +113,13 @@ final class TasmeeStore {
             }
         })
 
-        listeners.append(user.collection("tasmee").whereField("appliedAt", isEqualTo: NSNull()).addSnapshotListener { [weak self] snapshot, _ in
+        // Every record, for the history; those not yet applied are applied on this device as they arrive.
+        listeners.append(user.collection("tasmee").order(by: "at", descending: true).limit(to: 200).addSnapshotListener { [weak self] snapshot, _ in
             MainActor.assumeIsolated {
                 guard let self, let snapshot else { return }
-                self.pending = snapshot.documents
-                    .compactMap { TasmeeRecord(id: $0.documentID, document: Self.dated($0.data())) }
-                    .sorted { $0.at < $1.at }
+                let records = snapshot.documents.compactMap { TasmeeRecord(id: $0.documentID, document: Self.dated($0.data())) }
+                self.history = records
+                self.pending = records.filter { $0.appliedAt == nil }.sorted { $0.at < $1.at }
                 self.applyPending()
             }
         })
@@ -103,6 +131,8 @@ final class TasmeeStore {
         listeners = []
         sessionsListener?.remove()
         sessionsListener = nil
+        studentsListener?.remove()
+        studentsListener = nil
         bookedListener?.remove()
         bookedListener = nil
         bookedIDs = []
@@ -111,6 +141,9 @@ final class TasmeeStore {
         bookings = []
         bookedSessions = [:]
         mySessions = []
+        myStudents = []
+        history = []
+        application = nil
         pending = []
         problem = nil
     }
@@ -132,6 +165,25 @@ final class TasmeeStore {
                     .sorted { $0.startsAt < $1.startsAt }
             }
         }
+    }
+
+    private func watchMyStudents() {
+        guard let uid, isTeacher else {
+            studentsListener?.remove()
+            studentsListener = nil
+            myStudents = []
+            return
+        }
+        guard studentsListener == nil else { return }
+        studentsListener = database.collection("teachers").document(uid).collection("students")
+            .addSnapshotListener { [weak self] snapshot, _ in
+                MainActor.assumeIsolated {
+                    guard let self, let snapshot else { return }
+                    self.myStudents = snapshot.documents
+                        .compactMap { StudentFile(id: $0.documentID, document: Self.dated($0.data())) }
+                        .sorted { $0.lastHeardAt > $1.lastHeardAt }
+                }
+            }
     }
 
     private func watchBookedSessions() {
@@ -263,12 +315,64 @@ final class TasmeeStore {
     // A teacher's writes aren't waited for: Firestore keeps them while offline (a halaqah's mosque may have no
     // signal) and sends them when it can. What's refused is reported after the fact.
 
-    func createSession(startsAt: Date, place: String, seats: Int) {
+    /// How long before a session its auction closes (the server's policy, mirrored).
+    static let biddingClosesBefore: TimeInterval = 3 * 3_600
+
+    func createSession(startsAt: Date, kind: TasmeeSession.Kind, place: String, seats: Int, auctionSeats: Int = 0, minBid: Int = 0) {
         guard let uid, let profile = teacherProfile else { return }
         let reference = database.collection("sessions").document()
+        let auction = auctionSeats > 0
+            ? TasmeeSession.Auction(seats: auctionSeats, minBid: minBid, closesAt: startsAt.addingTimeInterval(-Self.biddingClosesBefore), state: .open)
+            : nil
         let session = TasmeeSession(id: reference.documentID, teacherId: uid, teacherName: profile.name, startsAt: startsAt,
-                                    place: place, seats: seats)
+                                    kind: kind, place: kind == .video ? "" : place, seats: seats, auction: auction)
         reference.setData(session.document, completion: report)
+    }
+
+    /// A session as it changes, until the stream is dropped.
+    func session(id: String) -> AsyncStream<TasmeeSession?> {
+        AsyncStream { continuation in
+            let registration = database.collection("sessions").document(id).addSnapshotListener { snapshot, _ in
+                continuation.yield(snapshot?.data().flatMap { TasmeeSession(id: id, document: Self.dated($0)) })
+            }
+            let listener = ListenerBox(registration)
+            continuation.onTermination = { _ in listener.remove() }
+        }
+    }
+
+    /// This student's bid in a session, as it stands, until the stream is dropped.
+    func myBid(in sessionId: String) -> AsyncStream<Bid?> {
+        AsyncStream { continuation in
+            guard let uid else {
+                continuation.finish()
+                return
+            }
+            let registration = database.collection("sessions").document(sessionId).collection("bids").document(uid)
+                .addSnapshotListener { snapshot, _ in
+                    continuation.yield(snapshot?.data().flatMap { Bid(id: uid, document: Self.dated($0)) })
+                }
+            let listener = ListenerBox(registration)
+            continuation.onTermination = { _ in listener.remove() }
+        }
+    }
+
+    /// Every bid in one of the teacher's sessions, best first.
+    func bids(of sessionId: String) -> AsyncStream<[Bid]> {
+        AsyncStream { continuation in
+            let registration = database.collection("sessions").document(sessionId).collection("bids")
+                .addSnapshotListener { snapshot, _ in
+                    guard let snapshot else { return }
+                    continuation.yield(snapshot.documents.compactMap { Bid(id: $0.documentID, document: Self.dated($0.data())) }
+                        .sorted { ($0.status == .active || $0.status == .won ? 0 : 1, -$0.amount, $0.at) < ($1.status == .active || $1.status == .won ? 0 : 1, -$1.amount, $1.at) })
+                }
+            let listener = ListenerBox(registration)
+            continuation.onTermination = { _ in listener.remove() }
+        }
+    }
+
+    /// Changes a session's time, place or seats. Students who booked see the change on their booking.
+    func updateSession(_ session: TasmeeSession) {
+        database.collection("sessions").document(session.id).updateData(session.editableDocument, completion: report)
     }
 
     func cancelSession(_ session: TasmeeSession) {
@@ -276,8 +380,42 @@ final class TasmeeStore {
             .updateData(["status": TasmeeSession.Status.cancelled.rawValue], completion: report)
     }
 
+    /// Changes the teacher's name, city and line, as students see them.
+    func updateTeacherProfile(name: String, city: String, line: String) {
+        guard let uid else { return }
+        database.collection("teachers").document(uid).updateData(
+            ["name": name, "city": city, "line": line], completion: report)
+    }
+
+    // MARK: - A teacher's students
+
+    /// What the teacher heard from one student, newest first, as it changes.
+    func records(of studentUid: String) -> AsyncStream<[TasmeeRecord]> {
+        AsyncStream { continuation in
+            guard let uid else {
+                continuation.finish()
+                return
+            }
+            let registration = database.collection("teachers").document(uid).collection("students").document(studentUid)
+                .collection("records").order(by: "at", descending: true).limit(to: 100)
+                .addSnapshotListener { snapshot, _ in
+                    guard let snapshot else { return }
+                    continuation.yield(snapshot.documents.compactMap { TasmeeRecord(id: $0.documentID, document: Self.dated($0.data())) })
+                }
+            let listener = ListenerBox(registration)
+            continuation.onTermination = { _ in listener.remove() }
+        }
+    }
+
+    /// The teacher's private notes on a student.
+    func saveNotes(_ notes: String, for studentUid: String) {
+        guard let uid else { return }
+        database.collection("teachers").document(uid).collection("students").document(studentUid)
+            .setData(["notes": notes], merge: true, completion: report)
+    }
+
     /// Keeps a write's failure, once the account answers.
-    private nonisolated func report(_ error: Error?) {
+    nonisolated func report(_ error: Error?) {
         guard let error else { return }
         MainActor.assumeIsolated { problem = AccountStore.problem(for: error) }
     }
@@ -298,12 +436,20 @@ final class TasmeeStore {
     }
 
     /// Records what the teacher heard from a student, into the student's account; the student's app applies it.
-    func recordTasmee(for studentUid: String, in session: TasmeeSession, pages: [Int], stumbles: [Int], at date: Date = .now) {
+    /// The teacher keeps their own copy in the student's file, so they can look back at what they heard.
+    func recordTasmee(for seat: Seat, in session: TasmeeSession, pages: [Int], stumbles: [Int], mistakes: [Mistake] = [],
+                      test: TasmeeRecord.StageTest? = nil, at date: Date = .now) {
         guard let uid, let profile = teacherProfile else { return }
-        let reference = user(studentUid).collection("tasmee").document()
+        let reference = user(seat.id).collection("tasmee").document()
         let record = TasmeeRecord(id: reference.documentID, teacherId: uid, teacherName: profile.name, sessionId: session.id,
-                                  at: date, pages: pages.sorted(), stumbles: stumbles.sorted())
+                                  at: date, pages: pages.sorted(), stumbles: stumbles.sorted(),
+                                  mistakes: mistakes.filter { $0.type != .memorization }, test: test)
         reference.setData(record.document, completion: report)
+        let file = database.collection("teachers").document(uid).collection("students").document(seat.id)
+        file.setData(["name": seat.name, "lastHeardAt": date], merge: true, completion: report)
+        var copy = record.document
+        copy["appliedAt"] = nil
+        file.collection("records").document(record.id).setData(copy, completion: report)
     }
 
     // MARK: - Applying what teachers heard
@@ -316,6 +462,7 @@ final class TasmeeStore {
             TasmeeApply.apply(record, memorization: memorization, revision: revision) { mushaf.page($0).ayahs }
             applied.append(record.id)
             recentlyApplied.insert(record, at: 0)
+            onApplied?(record)
             // A client date, not a server timestamp: a pending server timestamp reads as null here and the
             // record would come round again.
             user(uid).collection("tasmee").document(record.id).updateData(["appliedAt": Date()])
@@ -326,13 +473,14 @@ final class TasmeeStore {
 
     // MARK: - Deleting
 
-    /// Deletes what the account holds of the student's tasmee': bookings (giving the seats back) and records.
+    /// Deletes what the account holds of the student's tasmee': bookings (giving the seats back), records and the
+    /// inbox; and of a teacher's: the files they kept on their students, and their application with its uploads.
     func deleteAccountData(uid: String) async throws {
         let user = user(uid)
+        // Each booking goes in one write with its seat and the seat count, as the rules require.
         let bookings = try await user.collection("bookings").getDocuments()
-        let records = try await user.collection("tasmee").getDocuments()
-        let batch = database.batch()
         for booking in bookings.documents {
+            let batch = database.batch()
             let session = database.collection("sessions").document(booking.documentID)
             let seat = session.collection("seats").document(uid)
             if try await seat.getDocument().exists {
@@ -342,17 +490,41 @@ final class TasmeeStore {
                 }
             }
             batch.deleteDocument(booking.reference)
+            try await batch.commit()
         }
-        for record in records.documents {
-            batch.deleteDocument(record.reference)
+
+        var references = try await user.collection("tasmee").getDocuments().documents.map(\.reference)
+        references += try await user.collection("inbox").getDocuments().documents.map(\.reference)
+        let students = try await database.collection("teachers").document(uid).collection("students").getDocuments()
+        for student in students.documents {
+            references += try await student.reference.collection("records").getDocuments().documents.map(\.reference)
+            references.append(student.reference)
         }
-        try await batch.commit()
+        // Uploads are let go of even if the storage can't be reached: the account's deletion mustn't hang on them.
+        await TeacherApplication.deleteFiles(of: uid)
+        references.append(database.collection("teacherApplications").document(uid))
+        try await Self.delete(references, in: database)
+    }
+
+    /// Deletes documents in batches, within Firestore's limit of writes per batch.
+    nonisolated static func delete(_ references: [DocumentReference], in database: Firestore) async throws {
+        for start in stride(from: 0, to: references.count, by: 400) {
+            let batch = database.batch()
+            for reference in references[start..<min(start + 400, references.count)] {
+                batch.deleteDocument(reference)
+            }
+            try await batch.commit()
+        }
     }
 }
 
 enum TasmeeError: Error {
     /// The session filled up, was cancelled or began before the seat could be taken.
     case seatUnavailable
+    /// This needs an account, and none is attached yet.
+    case notSignedIn
+    /// No free peer code could be found.
+    case codeUnavailable
 }
 
 /// Carries a listener into a stream's termination handler.

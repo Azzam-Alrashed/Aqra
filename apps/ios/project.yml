@@ -12,6 +12,10 @@ packages:
   GoogleSignIn:
     url: https://github.com/google/GoogleSignIn-iOS
     from: 9.1.0
+  # Video tasmee'. Kept below 2.17, whose vendored nanopb headers clash with Firebase's (both ship a `pb.h`).
+  LiveKit:
+    url: https://github.com/livekit/client-sdk-swift
+    minorVersion: 2.16.0
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -36,8 +40,14 @@ targets:
         product: FirebaseAuth
       - package: Firebase
         product: FirebaseFirestore
+      - package: Firebase
+        product: FirebaseFunctions
+      - package: Firebase
+        product: FirebaseStorage
       - package: GoogleSignIn
         product: GoogleSignIn
+      - package: LiveKit
+        product: LiveKit
     entitlements:
       path: Aqra/Aqra.entitlements
       properties:
@@ -54,6 +64,9 @@ targets:
         INFOPLIST_KEY_CFBundleDisplayName: "اقْرَأْ"
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
         INFOPLIST_KEY_UILaunchScreen_Generation: YES
+        # Video tasmee' and scanning a friend's code (localized in InfoPlist.xcstrings).
+        INFOPLIST_KEY_NSCameraUsageDescription: "Your teacher sees you while you recite, and you can scan a friend's code."
+        INFOPLIST_KEY_NSMicrophoneUsageDescription: "Your teacher hears you recite in a video tasmee'."
         INFOPLIST_KEY_UIApplicationSceneManifest_Generation: YES
         INFOPLIST_KEY_UISupportedInterfaceOrientations: UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown
         TARGETED_DEVICE_FAMILY: "1,2"
@@ -82,5 +95,7 @@ schemes:
       commandLineArguments:
         # Tick it in the scheme's Run arguments to use the local Firebase emulators (see backend/README.md).
         "-UseFirebaseEmulator": false
+      # Credit packs for testing purchases in Xcode, with no App Store Connect (see backend/README.md, Credits).
+      storeKitConfiguration: Credits.storekit
     test:
       targets: [AqraTests]

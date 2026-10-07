@@ -1,31 +1,49 @@
 import SwiftUI
 
-/// A teacher hearing a student: the Mushaf on the teacher's phone, turned page by page as the student recites.
-/// A tap marks an ayah the student stumbled on; each page heard is marked as such; «تم» records it all into the
-/// student's account, where their own app applies it. The teacher's own memorization colors are kept off the
-/// page: this is the student's page.
-struct TasmeeMarkingView: View {
-    var store: MushafStore
-    var session: TasmeeSession
-    var seat: Seat
+/// What a listener marked: the pages heard, the ayat stumbled on with their types, and, for a teacher, whether it
+/// was a stage test.
+struct TasmeeResult: Hashable {
+    var pages: [Int]
+    var stumbles: [Int]
+    var mistakes: [Mistake]
+    var test: TasmeeRecord.StageTest?
+}
 
-    @Environment(TasmeeStore.self) private var tasmee
+/// Someone hearing a student — a teacher in a session, or a friend with the student's code: the Mushaf on the
+/// listener's phone, turned page by page as the student recites. A tap marks an ayah the student stumbled on;
+/// pressing and holding one says what kind of mistake it was; each page heard is marked as such; «سجّل التسميع»
+/// hands it all to `onRecord`, which writes it into the student's account, where their own app applies it. The
+/// listener's own memorization colors are kept off the page: this is the student's page.
+struct TasmeeMarkingView<Overlay: View>: View {
+    var store: MushafStore
+    var studentName: String
+    /// Teachers can record a tasmee' as a stage test; friends can't.
+    var allowsStageTest = false
+    var onRecord: (TasmeeResult) -> Void
+    /// Shown over the page's top corner: the student's video in a video session.
+    @ViewBuilder var overlay: Overlay
+
     @Environment(\.dismiss) private var dismiss
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @State private var page: Int
     /// One revision per page visited, fully revealed, so a tap toggles a stumble.
     @State private var pages: [Int: RevisionSession] = [:]
     @State private var heard: Set<Int> = []
+    /// The type of each stumble the listener classified; the rest are memorization errors.
+    @State private var types: [Int: MistakeType] = [:]
+    @State private var classifying: Int?
     @State private var showingIndex = false
     @State private var confirmingLeave = false
+    @State private var stageTest: TasmeeRecord.StageTest?
 
-    init(store: MushafStore, session: TasmeeSession, seat: Seat) {
+    init(store: MushafStore, studentName: String, startPage: Int, allowsStageTest: Bool = false,
+         onRecord: @escaping (TasmeeResult) -> Void, @ViewBuilder overlay: () -> Overlay = { EmptyView() }) {
         self.store = store
-        self.session = session
-        self.seat = seat
-        // Open where the student's memorization begins, if they said: the first page of their first whole juz'.
-        let firstJuz = seat.juzSummary?.split(separator: ",").first.flatMap { Int($0.trimmingCharacters(in: .whitespaces)) }
-        _page = State(initialValue: firstJuz.flatMap { store.juzStartPages[$0] } ?? 1)
+        self.studentName = studentName
+        self.allowsStageTest = allowsStageTest
+        self.onRecord = onRecord
+        self.overlay = overlay()
+        _page = State(initialValue: min(max(startPage, 1), MushafStore.pageCount))
     }
 
     var body: some View {
@@ -50,6 +68,7 @@ struct TasmeeMarkingView: View {
             }
             pager
                 .frame(maxHeight: .infinity)
+                .overlay(alignment: .topLeading) { overlay.padding(10) }
             markingBar
         }
         .background(MushafStyle.paper.ignoresSafeArea())
@@ -62,6 +81,16 @@ struct TasmeeMarkingView: View {
                 page = chosen
                 showingIndex = false
             }
+        }
+        .confirmationDialog("What kind of mistake?", isPresented: Binding(get: { classifying != nil }, set: { if !$0 { classifying = nil } }),
+                            titleVisibility: .visible, presenting: classifying) { ayah in
+            ForEach(MistakeType.allCases, id: \.self) { type in
+                Button(type.title) { classify(ayah, as: type) }
+            }
+            if stumbles.contains(ayah) {
+                Button("Not a mistake", role: .destructive) { unmark(ayah) }
+            }
+            Button("Cancel", role: .cancel) {}
         }
         .alert("Leave without recording?", isPresented: $confirmingLeave) {
             Button("Leave", role: .destructive) { dismiss() }
@@ -84,6 +113,7 @@ struct TasmeeMarkingView: View {
         .environment(\.layoutDirection, .rightToLeft)
         .environment(\.mushafTajweed, tajweed)
         .environment(\.mushafTopics, false)
+        .environment(\.mushafAyahLongPress, { ayah in classifying = ayah })
     }
 
     /// Every page visited gets a revision covering all its ayat, revealed, so taps mark stumbles.
@@ -92,6 +122,17 @@ struct TasmeeMarkingView: View {
         let revision = RevisionSession(page: page, ayahs: Array(store.page(page).ayahs))
         revision.revealAll()
         pages[page] = revision
+    }
+
+    private func classify(_ ayah: Int, as type: MistakeType) {
+        guard let session = pages.values.first(where: { $0.covers(ayah) }) else { return }
+        session.markStumble(ayah)
+        types[ayah] = type
+    }
+
+    private func unmark(_ ayah: Int) {
+        for session in pages.values where session.covers(ayah) { session.clearStumble(ayah) }
+        types[ayah] = nil
     }
 
     // MARK: - What's been marked
@@ -113,11 +154,11 @@ struct TasmeeMarkingView: View {
             VStack(spacing: 12) {
                 HStack(alignment: .center, spacing: 12) {
                     VStack(alignment: .leading, spacing: 2) {
-                        Text(verbatim: seat.name)
+                        Text(verbatim: studentName)
                             .font(.system(size: 17, weight: .heavy, design: .rounded))
                             .foregroundStyle(MushafStyle.ink)
                             .lineLimit(1)
-                        Text("\(recorded.count) pages · \(stumbles.count) stumbles")
+                        TasmeeFormat.counts(pages: recorded.count, stumbles: stumbles.count)
                             .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
                             .foregroundStyle(MushafStyle.chrome)
                             .contentTransition(.numericText())
@@ -132,8 +173,11 @@ struct TasmeeMarkingView: View {
                             .background(MushafStyle.stumble.opacity(0.6), in: Capsule())
                             .transition(.scale.combined(with: .opacity))
                     }
+                    if allowsStageTest {
+                        stageTestMenu
+                    }
                 }
-                Text("Tap an ayah the student stumbled on, and mark each page you heard.")
+                Text("Tap an ayah the student stumbled on, press and hold it to say what kind, and mark each page you heard.")
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(MushafStyle.chrome)
                     .lineLimit(2)
@@ -155,7 +199,43 @@ struct TasmeeMarkingView: View {
         }
         .animation(.snappy, value: onThisPage)
         .animation(.snappy, value: pageHeard)
+        .animation(.snappy, value: stageTest)
         .environment(\.layoutDirection, .rightToLeft)
+    }
+
+    /// A teacher can count this tasmee' as the test of a stage, with the mistakes allowed per page heard.
+    private var stageTestMenu: some View {
+        Menu {
+            Picker("Stage test", selection: Binding(get: { stageTest?.stage ?? 0 }, set: { stage in
+                stageTest = stage == 0 ? nil : TasmeeRecord.StageTest(
+                    stage: stage, allowedMistakesPerPage: stageTest?.allowedMistakesPerPage ?? StagePolicy.standard.allowedMistakesPerPage)
+            })) {
+                Text("Not a test").tag(0)
+                ForEach(1...Curriculum.stageCount, id: \.self) { stage in
+                    Text("Stage \(stage)").tag(stage)
+                }
+            }
+            if let test = stageTest {
+                Picker("Mistakes allowed per page", selection: Binding(get: { test.allowedMistakesPerPage }, set: {
+                    stageTest?.allowedMistakesPerPage = $0
+                })) {
+                    ForEach(0...3, id: \.self) { Text("\($0) mistakes per page").tag($0) }
+                }
+            }
+        } label: {
+            Group {
+                if let test = stageTest {
+                    Text("Stage \(test.stage) test")
+                } else {
+                    Text("Stage test")
+                }
+            }
+            .font(.system(size: 13, weight: .bold, design: .rounded))
+            .foregroundStyle(stageTest == nil ? MushafStyle.barAccent : .white)
+            .padding(.horizontal, 12)
+            .frame(height: 30)
+            .background(stageTest == nil ? MushafStyle.barAccentFill : OnboardingPalette.brand, in: Capsule())
+        }
     }
 
     private func leave() {
@@ -166,9 +246,24 @@ struct TasmeeMarkingView: View {
         }
     }
 
-    /// Records the tasmee' into the student's account (queued if offline) and closes.
+    /// Hands the tasmee' over to be recorded (queued if offline) and closes.
     private func finish() {
-        tasmee.recordTasmee(for: seat.id, in: session, pages: recorded.sorted(), stumbles: stumbles.sorted())
+        let stumbles = stumbles.sorted()
+        let mistakes = stumbles.map { Mistake(ayah: $0, type: types[$0] ?? .memorization) }
+        onRecord(TasmeeResult(pages: recorded.sorted(), stumbles: stumbles, mistakes: mistakes, test: stageTest))
         dismiss()
+    }
+}
+
+extension MistakeType {
+    var title: LocalizedStringKey {
+        switch self {
+        case .memorization: "Memorization error"
+        case .forgetting: "Forgot"
+        case .prompting: "Needed prompting"
+        case .hesitation: "Hesitated"
+        case .lahn: "Clear error (لحن جلي)"
+        case .tajweed: "Tajweed"
+        }
     }
 }

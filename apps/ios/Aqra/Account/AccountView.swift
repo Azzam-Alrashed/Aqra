@@ -7,7 +7,9 @@ import UserNotifications
 /// and the sources Aqra is built on. What's memorized and the daily amount are edited from the home.
 struct AccountView: View {
     @Environment(AccountStore.self) private var account
+    @Environment(PlanStore.self) private var plan
     @Environment(\.openURL) private var openURL
+    @AppStorage("sounds.on") private var soundsOn = true
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @AppStorage("mushaf.topics") private var topicColors = true
     @AppStorage("reminder.on") private var reminderOn = false
@@ -16,6 +18,8 @@ struct AccountView: View {
     @State private var notificationsDenied = false
     @State private var confirmingSignOut = false
     @State private var confirmingDeletion = false
+    @State private var showingWallet = false
+    @Environment(WalletStore.self) private var wallet
 
     var body: some View {
         NavigationStack {
@@ -27,6 +31,20 @@ struct AccountView: View {
                         .padding(.top, 16)
                         .accessibilityAddTraits(.isHeader)
                     AccountCard()
+
+                    if AccountStore.isAvailable {
+                        Button {
+                            showingWallet = true
+                        } label: {
+                            AqraCard(padding: 0, radius: 24) {
+                                AqraRow(icon: "🪙", tint: Palette.butter, title: Text("Credits"),
+                                        detail: account.profile?.isAnonymous == false
+                                            ? Text("\(CreditsFormat.credits(wallet.balance)) credits")
+                                            : Text("For seats won by bidding"))
+                            }
+                        }
+                        .buttonStyle(AqraPressStyle())
+                    }
 
                     AqraSectionTitle(title: "Mushaf").padding(.top, 10)
                     AqraCard(padding: 0, radius: 24) {
@@ -76,6 +94,9 @@ struct AccountView: View {
                     AqraSectionTitle(title: "App").padding(.top, 10)
                     AqraCard(padding: 0, radius: 24) {
                         VStack(spacing: 0) {
+                            AqraRow(icon: "🔔", tint: Palette.butter, title: Text("Sounds"),
+                                    detail: Text("A gentle chime for rewards")) { toggle($soundsOn) }
+                            AqraRowDivider()
                             Button {
                                 openSettings()
                             } label: {
@@ -138,6 +159,7 @@ struct AccountView: View {
         .fontDesign(.rounded)
         .tint(Palette.brand)
         .environment(\.colorScheme, .light)
+        .sheet(isPresented: $showingWallet) { WalletView() }
         .onChange(of: reminderOn) { updateReminder() }
         .onChange(of: reminderMinutes) { updateReminder() }
         .alert("Sign out?", isPresented: $confirmingSignOut) {
@@ -179,7 +201,7 @@ struct AccountView: View {
         Task {
             if await DailyReminder.authorize() {
                 notificationsDenied = false
-                DailyReminder.schedule(minutes: reminderMinutes)
+                DailyReminder.schedule(minutes: reminderMinutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays })
             } else {
                 notificationsDenied = true
                 reminderOn = false
@@ -210,12 +232,15 @@ struct AccountView: View {
 struct AccountCard: View {
     @Environment(AccountStore.self) private var account
     @Environment(CloudSync.self) private var sync
+    @State private var editingName = false
+    @State private var name = ""
 
     var body: some View {
         AqraCard(padding: 14, radius: 24) {
             VStack(alignment: .leading, spacing: 14) {
                 if let profile = account.profile, !profile.isAnonymous {
                     signedIn(profile)
+                    publicNameRow
                 } else {
                     invitation
                     if AccountStore.isAvailable {
@@ -280,6 +305,42 @@ struct AccountCard: View {
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    /// The name teachers, friends and peers see.
+    private var publicNameRow: some View {
+        Button {
+            name = account.publicName ?? ""
+            editingName = true
+        } label: {
+            HStack(spacing: 10) {
+                IconTile(icon: "🏷️", tint: Palette.lavender, size: 30)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Name others see")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.inkSoft)
+                    Text(verbatim: account.publicName ?? "—")
+                        .font(.system(size: 15, weight: .heavy))
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "pencil")
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(Palette.brand)
+                    .frame(width: 30, height: 30)
+                    .background(Palette.lavender, in: Circle())
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .alert("Name others see", isPresented: $editingName) {
+            TextField("Your name", text: $name)
+            Button("Save") { account.setDisplayName(name) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Teachers, friends and those who hear your tasmee' see this name.")
+        }
     }
 }
 
@@ -402,22 +463,66 @@ enum DailyReminder {
         }
     }
 
-    static func schedule(minutes: Int) {
+    /// One reminder a day at the chosen time. With a plan, the study days' reminder also mentions the new portion.
+    static func schedule(minutes: Int, studyDays: Set<Int>? = nil) {
         let center = UNUserNotificationCenter.current()
-        center.removePendingNotificationRequests(withIdentifiers: [identifier])
-        let content = UNMutableNotificationContent()
-        content.title = String(localized: "Today's revision")
-        content.body = String(localized: "Your pages for today are waiting for you.")
-        content.sound = .default
-        var time = DateComponents()
-        time.hour = minutes / 60
-        time.minute = minutes % 60
-        center.add(UNNotificationRequest(identifier: identifier, content: content,
-                                         trigger: UNCalendarNotificationTrigger(dateMatching: time, repeats: true)))
+        cancel()
+        func request(_ identifier: String, weekday: Int?, withPortion: Bool) -> UNNotificationRequest {
+            let content = UNMutableNotificationContent()
+            content.title = String(localized: "Today's revision")
+            content.body = withPortion
+                ? String(localized: "Your new portion and your pages for today are waiting for you.")
+                : String(localized: "Your pages for today are waiting for you.")
+            content.sound = .default
+            var time = DateComponents()
+            time.hour = minutes / 60
+            time.minute = minutes % 60
+            time.weekday = weekday
+            return UNNotificationRequest(identifier: identifier, content: content,
+                                         trigger: UNCalendarNotificationTrigger(dateMatching: time, repeats: true))
+        }
+        guard let studyDays else {
+            center.add(request(identifier, weekday: nil, withPortion: false))
+            return
+        }
+        for weekday in 1...7 {
+            center.add(request("\(identifier)-\(weekday)", weekday: weekday, withPortion: studyDays.contains(weekday)))
+        }
     }
 
     static func cancel() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(withIdentifiers: [identifier])
+        UNUserNotificationCenter.current().removePendingNotificationRequests(
+            withIdentifiers: [identifier] + (1...7).map { "\(identifier)-\($0)" })
+    }
+}
+
+/// A reminder an hour before each tasmee' session booked, kept in step with the bookings. Nothing is asked: the
+/// reminders are only set when notifications are already allowed (by the daily reminder).
+@MainActor
+enum SessionReminders {
+    private static let prefix = "session-"
+
+    static func schedule(_ bookings: [Booking]) {
+        let center = UNUserNotificationCenter.current()
+        Task {
+            let settings = await center.notificationSettings()
+            let pending = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(prefix) }
+            center.removePendingNotificationRequests(withIdentifiers: pending)
+            guard [.authorized, .provisional, .ephemeral].contains(settings.authorizationStatus) else { return }
+            for booking in bookings {
+                let at = booking.startsAt.addingTimeInterval(-3_600)
+                guard at > .now else { continue }
+                let content = UNMutableNotificationContent()
+                content.title = String(localized: "Your tasmee' in an hour")
+                content.body = booking.kind == .video
+                    ? String(localized: "With \(booking.teacherName), by video.")
+                    : String(localized: "With \(booking.teacherName), at \(booking.place).")
+                content.sound = .default
+                let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: at)
+                try? await center.add(UNNotificationRequest(identifier: prefix + booking.id, content: content,
+                                                            trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
+            }
+        }
     }
 }
 

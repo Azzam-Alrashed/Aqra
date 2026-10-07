@@ -39,15 +39,24 @@ struct MushafDataTests {
     }
 }
 
-/// How long it takes to load the Mushaf; printed so changes can be compared.
+/// How long it takes to load the Mushaf; printed so changes can be compared. The limit is on the loading thread's
+/// own CPU time, so suites running alongside (which load the Mushaf too) don't make it look slower than it is.
 struct MushafLoadTimeTests {
     @Test func loadsQuickly() throws {
         let clock = ContinuousClock()
         var store: MushafStore?
+        let cpuStart = Self.threadCPUTime()
         let elapsed = try clock.measure { store = try MushafStore() }
-        print("MushafStore load time: \(elapsed.formatted(.units(allowed: [.milliseconds])))")
+        let cpu = Self.threadCPUTime() - cpuStart
+        print("MushafStore load time: \(elapsed.formatted(.units(allowed: [.milliseconds]))), CPU \(Int(cpu * 1_000)) ms")
         #expect(store != nil)
-        #expect(elapsed < .seconds(2))
+        #expect(cpu < 2)
+    }
+
+    private static func threadCPUTime() -> Double {
+        var time = timespec()
+        clock_gettime(CLOCK_THREAD_CPUTIME_ID, &time)
+        return Double(time.tv_sec) + Double(time.tv_nsec) / 1_000_000_000
     }
 }
 
@@ -188,6 +197,22 @@ struct MushafStoreTests {
                     previous = word.ayah
                 }
             }
+        }
+    }
+
+    /// An ayah's surah and number, and the page it starts on.
+    @Test func referencesAndPagesOfAyat() {
+        #expect(store.reference(ofAyah: 0) == (1, 1))
+        #expect(store.reference(ofAyah: 7) == (2, 1))
+        #expect(store.reference(ofAyah: 7 + 254) == (2, 255))
+        #expect(store.reference(ofAyah: MushafStore.ayahCount - 1) == (114, 6))
+        #expect(store.page(ofAyah: 0) == 1 && store.page(ofAyah: 7) == 2 && store.page(ofAyah: 12) == 3)
+        #expect(store.page(ofAyah: MushafStore.ayahCount - 1) == 604)
+        // Every ayah's page holds it, and the page before doesn't.
+        for ayah in stride(from: 0, to: MushafStore.ayahCount, by: 37) {
+            let page = store.page(ofAyah: ayah)
+            #expect(store.page(page).ayahs.contains(ayah), "ayah \(ayah)")
+            if page > 1 { #expect(store.page(page - 1).ayahs.upperBound < ayah, "ayah \(ayah)") }
         }
     }
 

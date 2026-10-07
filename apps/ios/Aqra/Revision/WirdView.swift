@@ -6,6 +6,8 @@ struct WirdView: View {
     var store: MushafStore
     /// The page to revise first; the rest of today's wird follows it.
     var startPage: Int
+    /// A page revised outside the app, with stumbles to record: shown whole, recorded as revised outside, alone.
+    var outside = false
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(RevisionStore.self) private var revision
@@ -54,7 +56,9 @@ struct WirdView: View {
 
     private func start(_ page: Int) {
         let ayahs = store.page(page).ayahs.filter { memorization.isMemorized($0) }
-        session = RevisionSession(page: page, ayahs: ayahs)
+        let session = RevisionSession(page: page, ayahs: ayahs)
+        if outside { session.revealAll() }
+        self.session = session
     }
 
     /// Ends a page's revision. Recorded, it moves straight on to the next page of today's wird, and back home
@@ -65,8 +69,8 @@ struct WirdView: View {
             return
         }
         revision.record(page: session.page, ayahs: session.ayahs, stumbles: session.stumbles,
-                        source: .app, memorization: memorization)
-        if let next = revision.plan?.items.first(where: { !$0.done }) {
+                        source: outside ? .outside : .app, memorization: memorization)
+        if !outside, let next = revision.plan?.items.first(where: { !$0.done }) {
             withAnimation(.easeInOut(duration: 0.25)) { start(next.page) }
         } else {
             dismiss()
@@ -107,19 +111,27 @@ struct WirdView: View {
                             .transition(.scale.combined(with: .opacity))
                     }
                 }
-                Text("Tap to reveal the next ayah, and tap a revealed ayah if you stumbled on it")
+                Group {
+                    if outside {
+                        Text("Tap the ayat you stumbled on when you revised this page")
+                    } else {
+                        Text("Tap to reveal the next ayah, and tap a revealed ayah if you stumbled on it")
+                    }
+                }
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(MushafStyle.chrome)
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
                 HStack(spacing: 10) {
-                    Button("Next ayah") { withAnimation(.easeOut(duration: 0.2)) { session.revealNext() } }
-                        .buttonStyle(MarkingButtonStyle())
-                        .disabled(session.isComplete)
-                    Button("Show page") { withAnimation(.easeOut(duration: 0.2)) { session.revealAll() } }
-                        .buttonStyle(MarkingButtonStyle())
-                        .disabled(session.isComplete)
+                    if !outside {
+                        Button("Next ayah") { withAnimation(.easeOut(duration: 0.2)) { session.revealNext() } }
+                            .buttonStyle(MarkingButtonStyle())
+                            .disabled(session.isComplete)
+                        Button("Show page") { withAnimation(.easeOut(duration: 0.2)) { session.revealAll() } }
+                            .buttonStyle(MarkingButtonStyle())
+                            .disabled(session.isComplete)
+                    }
                     Button("Done") { finish(session, record: true) }
                         .buttonStyle(MarkingButtonStyle(prominent: true))
                 }

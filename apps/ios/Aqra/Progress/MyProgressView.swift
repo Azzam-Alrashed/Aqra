@@ -7,11 +7,14 @@ struct MyProgressView: View {
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(RevisionStore.self) private var revision
+    @Environment(PlanStore.self) private var plan
+    @State private var editingPlan = false
 
     var body: some View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 headline
+                sharesCard
                 streakCard
                 HStack(spacing: 10) {
                     stat(icon: "📖", tint: Palette.sky, value: memorization.count.formatted(), label: Text("Ayat memorized"))
@@ -27,6 +30,16 @@ struct MyProgressView: View {
                     .font(.system(size: 12, weight: .medium))
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
+
+                AqraSectionTitle(title: "Your plan").padding(.top, 10)
+                planCard
+
+                AqraSectionTitle(title: "The stages").padding(.top, 10)
+                StagesSection(store: store)
+
+                RewardsSection()
+
+                TogetherSection(store: store)
             }
             .padding(.horizontal, 22)
             .padding(.top, 8)
@@ -39,6 +52,72 @@ struct MyProgressView: View {
         .fadesUnderStatusBar()
         .fontDesign(.rounded)
         .environment(\.colorScheme, .light)
+        .sheet(isPresented: $editingPlan) { PlanEditorView(store: store) { _ in } }
+    }
+
+    // MARK: - Memorized, mastered, verified
+
+    /// Kept apart: how much is memorized, how much of it is mastered, and how much a teacher heard clean.
+    private var sharesCard: some View {
+        let all = 0...(MushafStore.ayahCount - 1)
+        let total = Double(MushafStore.ayahCount)
+        let mastered = Double(memorization.masteredCount(in: all)) / total
+        let verified = Double(memorization.verifiedCount(in: all)) / total
+        return AqraCard(padding: 14, radius: 24) {
+            HStack(spacing: 0) {
+                share(memorization.quranShare(in: store), label: Text("Memorized"), color: Palette.brand.opacity(0.45))
+                share(mastered, label: Text("Mastered"), color: Palette.brand)
+                share(verified, label: Text("Verified"), color: Color(light: 0x2E9B63, dark: 0x2E9B63))
+            }
+        }
+    }
+
+    private func share(_ value: Double, label: Text, color: Color) -> some View {
+        VStack(spacing: 6) {
+            ZStack {
+                Circle().stroke(Palette.lavender, lineWidth: 7)
+                Circle().trim(from: 0, to: min(max(value, 0), 1))
+                    .stroke(color, style: StrokeStyle(lineWidth: 7, lineCap: .round))
+                    .rotationEffect(.degrees(-90))
+                Text(verbatim: value.formatted(.percent.precision(.fractionLength(value > 0 && value < 0.01 ? 1 : 0))))
+                    .font(.system(size: 14, weight: .heavy).monospacedDigit())
+                    .foregroundStyle(Palette.ink)
+            }
+            .frame(width: 64, height: 64)
+            label
+                .font(.system(size: 12, weight: .bold))
+                .foregroundStyle(Palette.inkSoft)
+        }
+        .frame(maxWidth: .infinity)
+        .accessibilityElement(children: .combine)
+    }
+
+    // MARK: - The plan
+
+    private var planCard: some View {
+        Button {
+            editingPlan = true
+        } label: {
+            AqraCard(padding: 0, radius: 24) {
+                if let current = plan.plan {
+                    AqraRow(icon: current.paused ? "⏸️" : "✍️", tint: Palette.butter,
+                            title: PlanFormat.amount(current.dailyLines) + Text(verbatim: " · ") + Text("\(current.studyDays.count) days a week"),
+                            detail: planDetail)
+                } else {
+                    AqraRow(icon: "✍️", tint: Palette.butter, title: Text("Memorize new portions"),
+                            detail: Text("A daily amount, and the date you'd complete the Quran"))
+                }
+            }
+        }
+        .buttonStyle(AqraPressStyle())
+    }
+
+    private var planDetail: Text {
+        let week = Int(plan.lines(inLast: 7).rounded())
+        if let date = plan.completionDate(memorization: memorization, store: store) {
+            return Text("\(week) lines this week") + Text(verbatim: " · ") + Text("Completion: \(PlanFormat.month(date))")
+        }
+        return Text("\(week) lines this week")
     }
 
     private var headline: some View {

@@ -6,6 +6,14 @@
 	<array>
 		<dict>
 			<key>CFBundleURLName</key>
+			<string>Aqra</string>
+			<key>CFBundleURLSchemes</key>
+			<array>
+				<string>aqra</string>
+			</array>
+		</dict>
+		<dict>
+			<key>CFBundleURLName</key>
 			<string>Google Sign-In</string>
 			<key>CFBundleURLSchemes</key>
 			<array>

@@ -1,0 +1,15 @@
+rules_version = '2';
+
+// Uploads: only a teacher applicant's copies of their ijazah, read by them and by administrators.
+service firebase.storage {
+  match /b/{bucket}/o {
+    match /ijazahs/{uid}/{file} {
+      allow read: if request.auth != null && (request.auth.uid == uid || request.auth.token.get('admin', false) == true);
+      allow create, update: if request.auth != null && request.auth.uid == uid
+        && request.auth.token.firebase.sign_in_provider != 'anonymous'
+        && request.resource.size < 10 * 1024 * 1024
+        && (request.resource.contentType.matches('image/.*') || request.resource.contentType == 'application/pdf');
+      allow delete: if request.auth != null && (request.auth.uid == uid || request.auth.token.get('admin', false) == true);
+    }
+  }
+}
