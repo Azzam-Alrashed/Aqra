@@ -22,6 +22,24 @@ struct MemorizationStoreTests {
         #expect((memorization.strength(ofAyah: 0) ?? 1) < 0.2)
     }
 
+    @Test func verifyingMarksOnlyMemorizedAyat() {
+        let memorization = MemorizationStore(fileURL: nil)
+        var changes = 0
+        memorization.onChange = { changes += 1 }
+        memorization.mark(10...12, memorized: true)
+        memorization.verify([11, 12, 13])
+        #expect(memorization.memory(ofAyah: 11)?.verified == true && memorization.memory(ofAyah: 12)?.verified == true)
+        #expect(memorization.memory(ofAyah: 10)?.verified == false && !memorization.isMemorized(13))
+        #expect(changes == 2)
+        // Verifying what's already verified changes nothing.
+        memorization.verify([11])
+        #expect(changes == 2)
+        // A stumble before the teacher takes the mark away.
+        memorization.verify([11, 12], except: [12])
+        #expect(memorization.memory(ofAyah: 11)?.verified == true && memorization.memory(ofAyah: 12)?.verified == false)
+        #expect(changes == 3)
+    }
+
     @Test func savesAndReloads() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("memorization-\(UUID().uuidString).json")
         defer { try? FileManager.default.removeItem(at: url) }

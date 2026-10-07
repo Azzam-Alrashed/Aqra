@@ -16,8 +16,19 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
     var matureStability = 90.0
     /// After a stumble, the page comes back after these many days, one after another, while it stays clean.
     var followUpDays = [1, 3, 7]
+    /// How much more a clean revision counts when a sheikh heard it in a tasmee', compared with self-revision.
+    /// Provisional, see docs/REVISION.md.
+    var sheikhWeight = 1.5
 
     static let standard = ReviewPolicy()
+
+    /// The weight of a revision's evidence: self-revision, in or outside the app, counts once; a sheikh's more.
+    func weight(of source: RevisionRecord.Source) -> Double {
+        switch source {
+        case .app, .outside: 1
+        case .sheikh: sheikhWeight
+        }
+    }
 
     /// A daily amount that goes through everything memorized in about a month.
     static func suggestedDailyPages(memorizedPages: Int) -> Int {
@@ -27,7 +38,8 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
 
 /// One page revised: when, how, and which of its ayat the student stumbled on.
 struct RevisionRecord: Codable, Hashable {
-    enum Source: String, Codable { case app, outside }
+    /// Who heard the revision: the student alone, in the app or outside it, or a sheikh in a tasmee'.
+    enum Source: String, Codable { case app, outside, sheikh }
 
     var date: Date
     var page: Int
@@ -207,9 +219,10 @@ final class RevisionStore {
     /// - Parameters:
     ///   - ayahs: the page's memorized ayat (the ones the revision covered).
     ///   - stumbles: those the student stumbled on.
+    ///   - source: who heard it; a sheikh's tasmee' counts more (see `ReviewPolicy.weight(of:)`).
     func record(page: Int, ayahs: [Int], stumbles: Set<Int>, source: RevisionRecord.Source,
                 memorization: MemorizationStore, now: Date = .now) {
-        memorization.recordRevision(ayahs: ayahs, stumbled: stumbles, at: now, policy: policy)
+        memorization.recordRevision(ayahs: ayahs, stumbled: stumbles, at: now, policy: policy, weight: policy.weight(of: source))
         let day = calendar.startOfDay(for: now)
 
         // A stumble brings the page back tomorrow; clean follow-ups space out until the page leaves follow-up.

@@ -2,6 +2,7 @@ import AuthenticationServices
 import CryptoKit
 @preconcurrency import FirebaseAuth
 import FirebaseCore
+@preconcurrency import FirebaseFirestore
 import Foundation
 @preconcurrency import GoogleSignIn
 import Observation
@@ -36,11 +37,14 @@ final class AccountStore {
     var problem: Problem?
 
     @ObservationIgnored let sync: CloudSync
+    /// Teachers, sessions and tasmee' records, through the same account.
+    @ObservationIgnored let tasmee: TasmeeStore
     @ObservationIgnored private let apple = AppleSignIn()
     @ObservationIgnored private var listener: AuthStateDidChangeListenerHandle?
 
-    init(sync: CloudSync) {
+    init(sync: CloudSync, tasmee: TasmeeStore) {
         self.sync = sync
+        self.tasmee = tasmee
     }
 
     // MARK: - Starting
@@ -48,12 +52,37 @@ final class AccountStore {
     /// Whether accounts are set up in this build: they need the Firebase config, which isn't in git.
     static var isAvailable: Bool { FirebaseApp.app() != nil }
 
+    /// Debug builds launched with `-UseFirebaseEmulator` talk to the local Auth and Firestore emulators as the
+    /// project `demo-aqra`, with no real account involved (see backend/README.md).
+    static var usesEmulator: Bool {
+        #if DEBUG
+        ProcessInfo.processInfo.arguments.contains("-UseFirebaseEmulator")
+        #else
+        false
+        #endif
+    }
+
     /// Configures Firebase from `Firebase/GoogleService-Info.plist` in the bundle, unless it's missing or this is
     /// a unit-test run (tests never touch the network).
     static func configure() {
-        guard FirebaseApp.app() == nil,
-              ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil,
-              let url = Bundle.main.url(forResource: "GoogleService-Info", withExtension: "plist", subdirectory: "Firebase"),
+        guard FirebaseApp.app() == nil, ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil else { return }
+        #if DEBUG
+        if usesEmulator {
+            // Made-up options: the emulators check none of them, and the project's name keeps the Firestore
+            // cache apart from the real project's.
+            let options = FirebaseOptions(googleAppID: "1:000000000000:ios:0000000000000000", gcmSenderID: "000000000000")
+            options.projectID = "demo-aqra"
+            options.apiKey = "emulator"
+            FirebaseApp.configure(options: options)
+            Auth.auth().useEmulator(withHost: "127.0.0.1", port: 9099)
+            let settings = Firestore.firestore().settings
+            settings.host = "127.0.0.1:8080"
+            settings.isSSLEnabled = false
+            Firestore.firestore().settings = settings
+            return
+        }
+        #endif
+        guard let url = Bundle.main.url(forResource: "GoogleService-Info", withExtension: "plist", subdirectory: "Firebase"),
               let options = FirebaseOptions(contentsOfFile: url.path) else { return }
         FirebaseApp.configure(options: options)
         if let clientID = options.clientID {
@@ -69,13 +98,26 @@ final class AccountStore {
                 guard let self else { return }
                 self.refreshProfile(user)
                 if let user {
-                    Task { await self.sync.attach(uid: user.uid) }
+                    Task {
+                        // The backup first, so a tasmee' arriving isn't applied over a copy being restored.
+                        await self.sync.attach(uid: user.uid)
+                        self.tasmee.attach(uid: user.uid)
+                    }
                 } else {
                     Auth.auth().signInAnonymously { _, _ in }
                 }
             }
         }
     }
+
+    #if DEBUG
+    /// Signs in to the Auth emulator as a made-up Google account, linking it to this install's anonymous account
+    /// exactly as a real sign-in would.
+    func signInToEmulator(email: String) async {
+        let token = #"{"sub":"\#(email)","email":"\#(email)","email_verified":true}"#
+        await link(GoogleAuthProvider.credential(withIDToken: token, accessToken: ""), name: nil)
+    }
+    #endif
 
     private func refreshProfile(_ user: User? = Auth.auth().currentUser) {
         guard let user else {
@@ -178,6 +220,7 @@ final class AccountStore {
             return false
         }
         sync.detach()
+        tasmee.detach()
         GIDSignIn.sharedInstance.signOut()
         try? Auth.auth().signOut()
         sync.clearDevice()
@@ -204,6 +247,7 @@ final class AccountStore {
                     try? await Auth.auth().revokeToken(withAuthorizationCode: code)
                 }
             }
+            try await tasmee.deleteAccountData(uid: user.uid)
             try await sync.deleteAccountData(uid: user.uid)
             do {
                 try await user.delete()
@@ -212,6 +256,7 @@ final class AccountStore {
                 try await user.delete()
             }
             sync.detach()
+            tasmee.detach()
             GIDSignIn.sharedInstance.signOut()
             return true
         } catch {
@@ -230,7 +275,8 @@ final class AccountStore {
         try await user.reauthenticate(with: GoogleAuthProvider.credential(withIDToken: idToken, accessToken: result.user.accessToken.tokenString))
     }
 
-    private static func problem(for error: Error) -> Problem {
+    /// What to tell the student about an error from the account: offline, or something else.
+    static func problem(for error: Error) -> Problem {
         let error = error as NSError
         let offline = error.code == AuthErrorCode.networkError.rawValue || error.domain == NSURLErrorDomain
             || error is CloudSyncError

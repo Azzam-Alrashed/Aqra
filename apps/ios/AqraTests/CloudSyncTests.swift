@@ -68,10 +68,15 @@ struct CloudSyncTests {
 
     @Test func theRevisionRecordSurvivesItsJSON() throws {
         let revision = RevisionStore(fileURL: nil)
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.mark([7], memorized: true)
         revision.setDailyPages(5)
         revision.refreshPlan(memorizedPages: [1, 2, 3])
+        revision.record(page: 2, ayahs: [7], stumbles: [], source: .sheikh, memorization: memorization)
         let json = try CloudBackup.encode(revision.snapshot)
-        #expect(CloudBackup.decodeRevision(json) == revision.snapshot)
+        let decoded = CloudBackup.decodeRevision(json)
+        #expect(decoded == revision.snapshot)
+        #expect(decoded?.history.last?.source == .sheikh)
     }
 
     @Test func restoringReplacesTheStoresAndReportsTheChange() {

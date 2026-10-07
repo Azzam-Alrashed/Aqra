@@ -29,7 +29,9 @@ struct AyahMemory: Codable, Hashable {
     }
 
     /// The memory after a revision: a clean one strengthens it (more so the longer it waited), a stumble weakens it.
-    func revised(stumbled: Bool, at date: Date, policy: ReviewPolicy) -> AyahMemory {
+    /// - Parameter weight: how much the evidence counts; a sheikh's tasmee' grows the memory more than
+    ///   self-revision. A stumble is a stumble whoever heard it.
+    func revised(stumbled: Bool, at date: Date, policy: ReviewPolicy, weight: Double = 1) -> AyahMemory {
         var next = self
         if stumbled {
             next.stability = max(stability * policy.lapseFactor, policy.minStability)
@@ -39,9 +41,10 @@ struct AyahMemory: Codable, Hashable {
             // revision of a declared ayah counts in full: it was memorized long before, when isn't known.
             let days = max(date.timeIntervalSince(lastReviewed ?? since) / 86_400, 0)
             let spacing = lastReviewed == nil ? 1 : min(max(days / max(stability, 0.1), 0.1), 1)
-            next.stability = min(stability * (1 + (policy.growth - 1) * spacing), policy.maxStability)
+            next.stability = min(stability * (1 + (policy.growth - 1) * spacing * weight), policy.maxStability)
         }
-        next.lastReviewed = date
+        // A tasmee' can arrive after a later revision; the last revision never moves backwards.
+        next.lastReviewed = max(date, lastReviewed ?? date)
         return next
     }
 
@@ -113,12 +116,31 @@ final class MemorizationStore {
         ayahs[ayah]?.strength(at: date, policy: policy)
     }
 
-    /// Records a revision of memorized ayat: the stumbled ones weaken, the rest grow stronger.
-    func recordRevision(ayahs revised: some Sequence<Int>, stumbled: Set<Int>, at date: Date, policy: ReviewPolicy) {
+    /// Records a revision of memorized ayat: the stumbled ones weaken, the rest grow stronger (by `weight`, see
+    /// `AyahMemory.revised`). Ayat that aren't memorized are left alone.
+    func recordRevision(ayahs revised: some Sequence<Int>, stumbled: Set<Int>, at date: Date, policy: ReviewPolicy,
+                        weight: Double = 1) {
         var changed = false
         for ayah in revised {
             guard let memory = ayahs[ayah] else { continue }
-            ayahs[ayah] = memory.revised(stumbled: stumbled.contains(ayah), at: date, policy: policy)
+            ayahs[ayah] = memory.revised(stumbled: stumbled.contains(ayah), at: date, policy: policy, weight: weight)
+            changed = true
+        }
+        if changed {
+            scheduleSave()
+            saveNow()
+        }
+    }
+
+    /// A teacher heard these ayat in a tasmee': the memorized ones among them are marked verified, except the
+    /// stumbled ones, which lose the mark until a teacher hears them clean again.
+    func verify(_ heard: some Sequence<Int>, except stumbled: Set<Int> = []) {
+        var changed = false
+        for ayah in heard {
+            let verified = !stumbled.contains(ayah)
+            guard var memory = ayahs[ayah], memory.verified != verified else { continue }
+            memory.verified = verified
+            ayahs[ayah] = memory
             changed = true
         }
         if changed {

@@ -3,11 +3,12 @@ import UIKit
 
 /// The app's tabs. The Mushaf isn't one: it opens full screen from the home, over everything.
 enum AppTab: Hashable, CaseIterable {
-    case home, progress, account
+    case home, tasmee, progress, account
 
     var title: LocalizedStringKey {
         switch self {
         case .home: "Home"
+        case .tasmee: "Tasmee'"
         case .progress: "Progress"
         case .account: "Account"
         }
@@ -16,13 +17,14 @@ enum AppTab: Hashable, CaseIterable {
     var symbol: String {
         switch self {
         case .home: "house.fill"
+        case .tasmee: "person.2.wave.2.fill"
         case .progress: "chart.bar.fill"
         case .account: "person.crop.circle.fill"
         }
     }
 }
 
-/// The app after setup: the home, progress and account tabs, under the app's own floating tab bar.
+/// The app after setup: the home, tasmee', progress and account tabs, under the app's own floating tab bar.
 struct AppTabView: View {
     var store: MushafStore
     var startsMarking = false
@@ -34,10 +36,14 @@ struct AppTabView: View {
 
     var body: some View {
         TabView(selection: $tab) {
-            HomeView(store: store, startsMarking: startsMarking)
+            HomeView(store: store, startsMarking: startsMarking, tab: $tab)
                 .reservesTabBarSpace()
                 .toolbar(.hidden, for: .tabBar)
                 .tag(AppTab.home)
+            // Its pages reserve the tab bar's space inside its navigation stack.
+            TasmeeView(store: store)
+                .toolbar(.hidden, for: .tabBar)
+                .tag(AppTab.tasmee)
             MyProgressView(store: store)
                 .reservesTabBarSpace()
                 .toolbar(.hidden, for: .tabBar)
@@ -69,6 +75,8 @@ struct HomeView: View {
     var store: MushafStore
     /// Opens straight into the Mushaf's marking mode (after the student chose to mark pages and ayat).
     var startsMarking = false
+    /// The app's tab, so a card can lead to another tab.
+    @Binding var tab: AppTab
 
     /// What the home has open over it.
     enum Destination: Hashable, Identifiable {
@@ -94,6 +102,7 @@ struct HomeView: View {
     @Environment(\.layoutDirection) private var direction
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @Environment(AccountStore.self) private var account
+    @Environment(TasmeeStore.self) private var tasmee
     @State private var destination: Destination?
     /// «لاحقًا» on the invitation to sign in hides it until this date.
     @AppStorage("home.saveProgressSnoozedUntil") private var saveProgressSnoozedUntil = 0.0
@@ -120,6 +129,10 @@ struct HomeView: View {
                     action
                         .padding(.top, 24)
                     VStack(spacing: 14) {
+                        if let booking = tasmee.nextBooking {
+                            tasmeeCard(booking)
+                                .transition(.scale(scale: 0.95).combined(with: .opacity))
+                        }
                         mushafCard
                         if let plan = revision.plan, !plan.items.isEmpty {
                             pagesCard(plan)
@@ -501,6 +514,42 @@ struct HomeView: View {
             }
         }
         .accessibilityValue(item.done ? Text("Revised") : Text(verbatim: ""))
+    }
+
+    // MARK: - Tasmee'
+
+    /// The next tasmee' booked, with a teacher: when and where, or that the teacher cancelled it.
+    private func tasmeeCard(_ booking: Booking) -> some View {
+        let live = tasmee.session(of: booking)
+        let cancelled = live?.status == .cancelled
+        return Button {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { tab = .tasmee }
+        } label: {
+            AqraCard(padding: 12, radius: 24) {
+                HStack(spacing: 12) {
+                    IconTile(icon: "🎓", tint: cancelled ? Palette.rose : Palette.mint, size: 40)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text(cancelled ? "Tasmee' cancelled" : "Your next tasmee'")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Palette.inkSoft)
+                        Text(verbatim: booking.teacherName)
+                            .font(.system(size: 16, weight: .heavy))
+                            .foregroundStyle(Palette.ink)
+                            .lineLimit(1)
+                        Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + " · " + (live?.place ?? booking.place))
+                            .font(.system(size: 12, weight: .bold))
+                            .foregroundStyle(cancelled ? Palette.inkSoft : Palette.brand)
+                            .strikethrough(cancelled)
+                            .lineLimit(1)
+                            .minimumScaleFactor(0.8)
+                    }
+                    Spacer(minLength: 8)
+                    AqraChevron()
+                }
+            }
+        }
+        .buttonStyle(AqraPressStyle())
+        .accessibilityElement(children: .combine)
     }
 
     // MARK: - Saving progress

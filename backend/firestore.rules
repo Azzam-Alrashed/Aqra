@@ -1,11 +1,99 @@
 rules_version = '2';
 
-// Each user's progress lives under users/{uid}, and only that user can read or write it.
-// Everything else is closed until a later step opens it on purpose.
+// Who may read and write what. The collections are described in backend/README.md.
 service cloud.firestore {
   match /databases/{database}/documents {
-    match /users/{uid}/{document=**} {
-      allow read, write: if request.auth != null && request.auth.uid == uid;
+    function signedIn() { return request.auth != null; }
+    function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
+    // Anonymous accounts can't book a seat or hold anything that names them.
+    function isNamed() { return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
+    function isVettedTeacher() {
+      return signedIn()
+        && exists(/databases/$(database)/documents/teachers/$(request.auth.uid))
+        && get(/databases/$(database)/documents/teachers/$(request.auth.uid)).data.vetted == true;
+    }
+    function session(id) { return get(/databases/$(database)/documents/sessions/$(id)).data; }
+    function seat(id, uid) { return /databases/$(database)/documents/sessions/$(id)/seats/$(uid); }
+    function changesOnly(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
+    function hasKeys(required, optional) {
+      return request.resource.data.keys().hasAll(required) && request.resource.data.keys().hasOnly(required.concat(optional));
+    }
+
+    // A student's progress is theirs alone. A tasmee' record is written by the teacher who heard it, and the
+    // student only marks it applied.
+    match /users/{uid} {
+      allow read, write: if isOwner(uid);
+      match /memory/{block} { allow read, write: if isOwner(uid); }
+      match /revision/{document} { allow read, write: if isOwner(uid); }
+      match /bookings/{sessionId} { allow read, write: if isOwner(uid); }
+      match /tasmee/{id} {
+        allow read: if isOwner(uid) || (signedIn() && resource.data.teacherId == request.auth.uid);
+        allow create: if isVettedTeacher()
+          && hasKeys(['teacherId', 'teacherName', 'sessionId', 'at', 'pages', 'stumbles', 'appliedAt'], [])
+          && request.resource.data.teacherId == request.auth.uid
+          && request.resource.data.teacherName is string
+          && request.resource.data.at is timestamp
+          && request.resource.data.pages is list
+          && request.resource.data.stumbles is list
+          && request.resource.data.appliedAt == null
+          && session(request.resource.data.sessionId).teacherId == request.auth.uid
+          && exists(seat(request.resource.data.sessionId, uid));
+        allow update: if isOwner(uid) && changesOnly(['appliedAt']) && request.resource.data.appliedAt is timestamp;
+        allow delete: if isOwner(uid);
+      }
+    }
+
+    // Vetted teachers, written by hand after vetting. A teacher edits only their own name, city and line.
+    match /teachers/{uid} {
+      allow read: if signedIn();
+      allow update: if isOwner(uid) && changesOnly(['name', 'city', 'line']);
+      allow create, delete: if false;
+    }
+
+    // In-person sessions: everyone signed in reads them; a vetted teacher writes their own.
+    match /sessions/{id} {
+      allow read: if signedIn();
+      allow create: if isVettedTeacher()
+        && hasKeys(['teacherId', 'teacherName', 'startsAt', 'place', 'seats', 'booked', 'kind', 'status', 'createdAt'], [])
+        && request.resource.data.teacherId == request.auth.uid
+        && request.resource.data.teacherName is string
+        && request.resource.data.place is string
+        && request.resource.data.kind == 'inPerson'
+        && request.resource.data.status == 'open'
+        && request.resource.data.seats is int && request.resource.data.seats > 0
+        && request.resource.data.booked == 0
+        && request.resource.data.startsAt is timestamp && request.resource.data.startsAt > request.time;
+      allow update: if
+        // The teacher changes the session's details, cancels it, or corrects the seat count.
+        (isVettedTeacher() && resource.data.teacherId == request.auth.uid
+          && changesOnly(['startsAt', 'place', 'seats', 'booked', 'status'])
+          && request.resource.data.status in ['open', 'cancelled']
+          && request.resource.data.seats is int && request.resource.data.seats > 0
+          && request.resource.data.booked is int && request.resource.data.booked >= 0)
+        // Booking takes a seat: the student's seat appears in the same write, and the count moves up by one.
+        || (isNamed() && changesOnly(['booked'])
+          && request.resource.data.booked == resource.data.booked + 1
+          && resource.data.booked < resource.data.seats
+          && !exists(seat(id, request.auth.uid)) && existsAfter(seat(id, request.auth.uid)))
+        // Cancelling a booking gives the seat back.
+        || (isNamed() && changesOnly(['booked'])
+          && request.resource.data.booked == resource.data.booked - 1
+          && exists(seat(id, request.auth.uid)) && !existsAfter(seat(id, request.auth.uid)));
+      allow delete: if isVettedTeacher() && resource.data.teacherId == request.auth.uid;
+
+      // A seat is a student's booking, seen by them and by the session's teacher.
+      match /seats/{studentUid} {
+        allow read: if isOwner(studentUid) || (signedIn() && session(id).teacherId == request.auth.uid);
+        allow create: if isOwner(studentUid) && isNamed()
+          && session(id).status == 'open' && session(id).startsAt > request.time
+          && hasKeys(['bookedAt', 'name', 'memorizedPages'], ['juzSummary'])
+          && request.resource.data.bookedAt is timestamp
+          && request.resource.data.name is string
+          && request.resource.data.memorizedPages is int;
+        allow update: if false;
+        // The student or the teacher can give a seat back at any time, so deleting an account always can.
+        allow delete: if isOwner(studentUid) || (signedIn() && session(id).teacherId == request.auth.uid);
+      }
     }
   }
 }

@@ -3,7 +3,9 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:rules": "firebase emulators:exec --only firestore --project demo-aqra \"node --test test/*.test.js\""
+    "test:rules": "firebase emulators:exec --only firestore --project demo-aqra \"node --test test/*.test.js\"",
+    "emulators": "firebase emulators:start --only auth,firestore --project demo-aqra",
+    "seed": "node scripts/seed-emulator.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^4.0.1",

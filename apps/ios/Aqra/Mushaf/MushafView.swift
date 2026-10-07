@@ -280,7 +280,8 @@ struct MushafRootView: View {
         let revision = RevisionStore()
         _memorization = State(initialValue: memorization)
         _revision = State(initialValue: revision)
-        _account = State(initialValue: AccountStore(sync: CloudSync(memorization: memorization, revision: revision)))
+        _account = State(initialValue: AccountStore(sync: CloudSync(memorization: memorization, revision: revision),
+                                                    tasmee: TasmeeStore(memorization: memorization, revision: revision)))
     }
 
     var body: some View {
@@ -317,6 +318,7 @@ struct MushafRootView: View {
         .environment(revision)
         .environment(account)
         .environment(account.sync)
+        .environment(account.tasmee)
         // After signing out, setup starts from «ماذا تحفظ؟» again.
         .onChange(of: hasDeclared) { if !hasDeclared { askingDailyAmount = false } }
         .onOpenURL { url in _ = GIDSignIn.sharedInstance.handle(url) }
@@ -325,6 +327,8 @@ struct MushafRootView: View {
             guard store == nil else { return }
             // Decoding the Quran data takes a moment; keep it off the main thread so the app stays responsive.
             store = await Task.detached(priority: .userInitiated) { Result { try MushafStore() } }.value
+            // A tasmee' waiting in the account can be applied once the Mushaf says which ayat each page holds.
+            if case .success(let mushaf) = store { account.tasmee.mushaf = mushaf }
         }
     }
 }

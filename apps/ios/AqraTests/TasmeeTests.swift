@@ -1,0 +1,88 @@
+import Foundation
+import Testing
+@testable import Aqra
+
+/// The tasmee' values and how a tasmee' is applied to the student's progress, without the network.
+@MainActor
+struct TasmeeTests {
+    private var calendar: Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: "UTC")!
+        return calendar
+    }
+    private let start = Date(timeIntervalSince1970: 1_800_000_000)
+    private func day(_ n: Int) -> Date { start.addingTimeInterval(Double(n) * 86_400) }
+
+    @Test func valuesSurviveTheirDocuments() {
+        let teacher = Teacher(id: "t", name: "الشيخ أحمد", city: "الدمام", line: "إجازة", vetted: true)
+        #expect(Teacher(id: "t", document: teacher.document) == teacher)
+        #expect(Teacher(id: "t", document: ["city": "x"]) == nil)
+
+        let session = TasmeeSession(id: "s", teacherId: "t", teacherName: "الشيخ أحمد", startsAt: day(1), place: "المسجد",
+                                    seats: 5, booked: 2, status: .open, createdAt: day(0))
+        #expect(TasmeeSession(id: "s", document: session.document) == session)
+        #expect(session.document["kind"] as? String == "inPerson")
+        // Firestore hands numbers back as Int64 or NSNumber.
+        var document = session.document
+        document["seats"] = Int64(5)
+        document["booked"] = NSNumber(value: 2)
+        #expect(TasmeeSession(id: "s", document: document) == session)
+        document["status"] = "done"
+        #expect(TasmeeSession(id: "s", document: document) == nil)
+        #expect(session.seatsLeft == 3 && !session.isFull && session.isUpcoming(at: day(0)) && !session.isUpcoming(at: day(2)))
+        var cancelled = session
+        cancelled.status = .cancelled
+        #expect(!cancelled.isUpcoming(at: day(0)) && !cancelled.isCurrent(at: day(0)))
+
+        let seat = Seat(id: "alice", name: "Alice", bookedAt: day(0), memorizedPages: 40, juzSummary: "٣٠، ٢٩")
+        #expect(Seat(id: "alice", document: seat.document) == seat)
+        let bare = Seat(id: "bob", name: "Bob", bookedAt: day(0), memorizedPages: 0)
+        #expect(bare.document["juzSummary"] == nil && Seat(id: "bob", document: bare.document) == bare)
+
+        let booking = Booking(session)
+        #expect(booking.id == "s" && booking.teacherName == "الشيخ أحمد" && booking.startsAt == day(1))
+        #expect(Booking(id: "s", document: booking.document) == booking)
+
+        let record = TasmeeRecord(id: "r", teacherId: "t", teacherName: "الشيخ أحمد", sessionId: "s", at: day(1),
+                                  pages: [2, 3], stumbles: [8, 20])
+        #expect(record.document["appliedAt"] is NSNull)
+        #expect(TasmeeRecord(id: "r", document: record.document) == record)
+        var applied = record
+        applied.appliedAt = day(2)
+        #expect(TasmeeRecord(id: "r", document: applied.document)?.appliedAt == day(2))
+        var missing = record.document
+        missing["pages"] = nil
+        #expect(TasmeeRecord(id: "r", document: missing) == nil)
+    }
+
+    @Test func applyingATasmeeRecordsASheikhRevisionAndVerifies() {
+        let policy = ReviewPolicy.standard
+        let memorization = MemorizationStore(fileURL: nil)
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        memorization.mark(7...11, memorized: true)
+        revision.setDailyPages(2)
+        revision.refreshPlan(memorizedPages: [2], now: day(5))
+
+        // Page 2 holds ayat 7...20; the student memorized 7...11 and stumbled on 8 (and on 300, which isn't on
+        // the page) before the sheikh on day 5.
+        let record = TasmeeRecord(id: "r", teacherId: "t", teacherName: "x", sessionId: "s", at: day(5),
+                                  pages: [2, 9], stumbles: [8, 300])
+        TasmeeApply.apply(record, memorization: memorization, revision: revision) { $0 == 2 ? 7...20 : 500...520 }
+
+        // One revision, the sheikh's, of page 2 with the stumble that was on it; page 9 had nothing memorized.
+        #expect(revision.history.count == 1)
+        #expect(revision.history.last?.source == .sheikh && revision.history.last?.stumbles == [8] && revision.history.last?.page == 2)
+        // The stumbled ayah weakened and isn't verified; the clean ones grew by the sheikh's weight and are.
+        #expect(memorization.memory(ofAyah: 8)?.lapses == 1 && memorization.memory(ofAyah: 8)?.verified == false)
+        for ayah in [7, 9, 10, 11] {
+            #expect(memorization.memory(ofAyah: ayah)?.verified == true)
+            #expect(memorization.memory(ofAyah: ayah)?.stability == policy.declaredStability * (1 + (policy.growth - 1) * policy.sheikhWeight))
+        }
+        // Ayat the student never marked stay unmarked.
+        #expect(memorization.memorizedCount(in: 12...20) == 0)
+        // The page follows up tomorrow, the day counts, and today's plan item is checked off.
+        #expect(revision.followUps[2]?.due == calendar.startOfDay(for: day(6)))
+        #expect(revision.revisedDays.contains(calendar.startOfDay(for: day(5))))
+        #expect(revision.plan?.items.first { $0.page == 2 }?.done == true)
+    }
+}

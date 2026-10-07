@@ -42,6 +42,26 @@ struct RevisionTests {
         #expect(memory.strength(at: day(140)) > 0.99)
     }
 
+    @Test func aSheikhsTasmeeCountsMoreThanSelfRevision() {
+        let policy = ReviewPolicy.standard
+        #expect(policy.weight(of: .app) == 1 && policy.weight(of: .outside) == 1)
+        #expect(policy.weight(of: .sheikh) == policy.sheikhWeight && policy.sheikhWeight > 1)
+
+        let declared = AyahMemory(since: start)
+        let heard = declared.revised(stumbled: false, at: day(14), policy: policy, weight: policy.sheikhWeight)
+        #expect(heard.stability == policy.declaredStability * (1 + (policy.growth - 1) * policy.sheikhWeight))
+        #expect(heard.stability > declared.revised(stumbled: false, at: day(14), policy: policy).stability)
+
+        // A stumble is a stumble, whoever heard it.
+        let stumbled = heard.revised(stumbled: true, at: day(20), policy: policy, weight: policy.sheikhWeight)
+        #expect(stumbled.stability == heard.stability * policy.lapseFactor && stumbled.lapses == 1)
+
+        // A tasmee' applied after a later self-revision never moves the last revision backwards.
+        let later = declared.revised(stumbled: false, at: day(20), policy: policy)
+        let backdated = later.revised(stumbled: false, at: day(14), policy: policy, weight: policy.sheikhWeight)
+        #expect(backdated.lastReviewed == day(20) && backdated.stability > later.stability)
+    }
+
     @Test func oldMemorizationFilesStillLoad() throws {
         let url = FileManager.default.temporaryDirectory.appendingPathComponent("memorization-v1-\(UUID().uuidString).json")
         defer { try? FileManager.default.removeItem(at: url) }

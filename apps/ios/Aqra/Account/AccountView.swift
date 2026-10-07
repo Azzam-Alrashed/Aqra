@@ -225,6 +225,11 @@ struct AccountCard: View {
                 if let problem = account.problem {
                     ProblemLine(problem: problem)
                 }
+                #if DEBUG
+                if AccountStore.usesEmulator, let profile = account.profile {
+                    EmulatorSignIn(profile: profile)
+                }
+                #endif
             }
         }
         .animation(.snappy, value: account.profile)
@@ -325,6 +330,42 @@ struct SignInButtons: View {
         }
     }
 }
+
+#if DEBUG
+/// Signing in to the local Auth emulator with any email, and this account's uid for the seed script.
+private struct EmulatorSignIn: View {
+    var profile: AccountStore.Profile
+    @Environment(AccountStore.self) private var account
+    @State private var email = ""
+
+    var body: some View {
+        VStack(alignment: .leading, spacing: 8) {
+            Text(verbatim: "Emulator · \(profile.uid)")
+                .font(.system(size: 11, weight: .semibold).monospaced())
+                .foregroundStyle(Palette.inkSoft)
+                .textSelection(.enabled)
+            if profile.isAnonymous {
+                HStack(spacing: 8) {
+                    TextField("Email", text: $email)
+                        .textInputAutocapitalization(.never)
+                        .keyboardType(.emailAddress)
+                        .autocorrectionDisabled()
+                        .font(.system(size: 14, weight: .medium))
+                        .padding(.horizontal, 12)
+                        .frame(height: 40)
+                        .background(Palette.surface, in: Capsule())
+                    Button("Sign in to the emulator") {
+                        Task { await account.signInToEmulator(email: email.trimmingCharacters(in: .whitespaces)) }
+                    }
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Palette.brand)
+                    .disabled(email.isEmpty || account.isWorking)
+                }
+            }
+        }
+    }
+}
+#endif
 
 /// What went wrong, in one calm line.
 struct ProblemLine: View {

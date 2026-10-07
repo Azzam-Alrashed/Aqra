@@ -270,6 +270,80 @@
         }
       }
     },
+    "%lld of %lld seats" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld من %lld مقاعد"
+          }
+        }
+      }
+    },
+    "%lld pages" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا صفحات"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صفحة واحدة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صفحتان"
+                }
+              },
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld صفحات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld صفحة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld صفحة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld page"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld pages"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld pages a day" : {
       "localizations" : {
         "ar" : {
@@ -418,6 +492,16 @@
         }
       }
     },
+    "%lld pages · %lld stumbles" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld صفحات · %lld تعثّرات"
+          }
+        }
+      }
+    },
     "%lld stumbles" : {
       "localizations" : {
         "ar" : {
@@ -546,12 +630,32 @@
         }
       }
     },
+    "A student" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طالب"
+          }
+        }
+      }
+    },
     "Account" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "حسابي"
+          }
+        }
+      }
+    },
+    "Accounts aren't set up in this build, so teachers and tasmee' are off." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الحسابات غير مهيّأة في هذه النسخة، فالمعلّمون والتسميع متوقفان."
           }
         }
       }
@@ -636,6 +740,26 @@
         }
       }
     },
+    "Book" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احجز"
+          }
+        }
+      }
+    },
+    "Booked · Cancel" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "محجوز · إلغاء"
+          }
+        }
+      }
+    },
     "Both pages" : {
       "localizations" : {
         "ar" : {
@@ -656,6 +780,46 @@
         }
       }
     },
+    "Cancel booking" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء الحجز"
+          }
+        }
+      }
+    },
+    "Cancel session" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء الجلسة"
+          }
+        }
+      }
+    },
+    "Cancel this session?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تلغي هذه الجلسة؟"
+          }
+        }
+      }
+    },
+    "Cancel your booking?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تلغي حجزك؟"
+          }
+        }
+      }
+    },
     "Choose what you've memorized" : {
       "localizations" : {
         "ar" : {
@@ -672,6 +836,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "اختر ما تحفظه لتبدأ الصعود"
+          }
+        }
+      }
+    },
+    "Close" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إغلاق"
           }
         }
       }
@@ -722,6 +896,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "المتابعة باستخدام Google"
+          }
+        }
+      }
+    },
+    "Create" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنشاء"
           }
         }
       }
@@ -796,6 +980,16 @@
         }
       }
     },
+    "Email" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البريد الإلكتروني"
+          }
+        }
+      }
+    },
     "Every day at %@" : {
       "localizations" : {
         "ar" : {
@@ -832,6 +1026,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "متابعة"
+          }
+        }
+      }
+    },
+    "Full" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مكتملة"
+          }
+        }
+      }
+    },
+    "Heard" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سُمعت"
           }
         }
       }
@@ -896,12 +1110,12 @@
         }
       }
     },
-    "Juz' & surahs" : {
+    "Juz' %@" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "الأجزاء والسور"
+            "value" : "الأجزاء %@"
           }
         }
       }
@@ -912,6 +1126,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الجزء %lld"
+          }
+        }
+      }
+    },
+    "Juz' & surahs" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأجزاء والسور"
+          }
+        }
+      }
+    },
+    "Keep it" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أبقها"
           }
         }
       }
@@ -946,12 +1180,52 @@
         }
       }
     },
+    "Leave" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خروج"
+          }
+        }
+      }
+    },
     "Leave revision" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "إنهاء المراجعة"
+          }
+        }
+      }
+    },
+    "Leave without recording?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تخرج دون تسجيل؟"
+          }
+        }
+      }
+    },
+    "Loading teachers…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ تحميل المعلّمين…"
+          }
+        }
+      }
+    },
+    "Mark as heard" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "علّمها مسموعة"
           }
         }
       }
@@ -1006,12 +1280,62 @@
         }
       }
     },
+    "My sessions" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جلساتي"
+          }
+        }
+      }
+    },
+    "New session" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جلسة جديدة"
+          }
+        }
+      }
+    },
     "Next ayah" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "الآية التالية"
+          }
+        }
+      }
+    },
+    "No one has booked a seat yet." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يحجز أحد مقعدًا بعد."
+          }
+        }
+      }
+    },
+    "No sessions scheduled yet." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا جلسات مجدولة بعد."
+          }
+        }
+      }
+    },
+    "No teachers have joined yet." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم ينضم معلّمون بعد."
           }
         }
       }
@@ -1116,6 +1440,16 @@
         }
       }
     },
+    "Place" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المكان"
+          }
+        }
+      }
+    },
     "Press and hold an ayah to mark from it to another" : {
       "localizations" : {
         "ar" : {
@@ -1132,6 +1466,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تقدّمي"
+          }
+        }
+      }
+    },
+    "Record tasmee'" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل التسميع"
+          }
+        }
+      }
+    },
+    "Remove" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إزالة"
           }
         }
       }
@@ -1311,12 +1665,52 @@
         }
       }
     },
+    "Seats" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المقاعد"
+          }
+        }
+      }
+    },
+    "Seats left: %lld" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المقاعد المتبقية: %lld"
+          }
+        }
+      }
+    },
     "Show page" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "أظهر الصفحة"
+          }
+        }
+      }
+    },
+    "Sign in to book a seat" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل الدخول لحجز مقعد"
+          }
+        }
+      }
+    },
+    "Sign in to the emulator" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل الدخول إلى المحاكي"
           }
         }
       }
@@ -1361,6 +1755,16 @@
         }
       }
     },
+    "Stay" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "البقاء"
+          }
+        }
+      }
+    },
     "Strength by juz'" : {
       "localizations" : {
         "ar" : {
@@ -1377,6 +1781,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ثبِّت حفظك،"
+          }
+        }
+      }
+    },
+    "Students" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الطلاب"
           }
         }
       }
@@ -1411,6 +1825,26 @@
         }
       }
     },
+    "Tap a student to hear them: mark the ayat they stumble on, and the pages you heard." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقر طالبًا لتسمع منه: علّم الآيات التي يتعثّر فيها، والصفحات التي سمعتها."
+          }
+        }
+      }
+    },
+    "Tap an ayah the student stumbled on, and mark each page you heard." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "انقر الآية التي تعثّر فيها الطالب، وعلّم كل صفحة سمعتها."
+          }
+        }
+      }
+    },
     "Tap the ayat you've memorized" : {
       "localizations" : {
         "ar" : {
@@ -1427,6 +1861,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "اضغط لإظهار الآية التالية، واضغط على آية ظاهرة إن تعثّرت فيها"
+          }
+        }
+      }
+    },
+    "Tasmee'" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التسميع"
+          }
+        }
+      }
+    },
+    "Tasmee' cancelled" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُلغي التسميع"
+          }
+        }
+      }
+    },
+    "Teachers" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المعلّمون"
           }
         }
       }
@@ -1497,6 +1961,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "نص القرآن الكريم والخطوط والبيانات"
+          }
+        }
+      }
+    },
+    "The students who booked will see it cancelled." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيرى الطلاب الذين حجزوا أنها أُلغيت."
+          }
+        }
+      }
+    },
+    "The teacher cancelled this session." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغى المعلّم هذه الجلسة."
           }
         }
       }
@@ -1591,6 +2075,16 @@
         }
       }
     },
+    "Upcoming sessions" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الجلسات القادمة"
+          }
+        }
+      }
+    },
     "Version %@" : {
       "localizations" : {
         "ar" : {
@@ -1607,6 +2101,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ماذا تحفظ"
+          }
+        }
+      }
+    },
+    "What you marked will be lost." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيضيع ما علّمته."
+          }
+        }
+      }
+    },
+    "When" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متى"
           }
         }
       }
@@ -1637,6 +2151,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يُحذف حسابك والنسخة الاحتياطية من تقدّمك نهائيًا، ويبقى التقدّم المحفوظ على هذا الجهاز."
+          }
+        }
+      }
+    },
+    "Your next tasmee'" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسميعك القادم"
           }
         }
       }
@@ -1697,6 +2221,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "وِردك اليوم"
+          }
+        }
+      }
+    },
+    "Your seat goes back to the session." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعود مقعدك إلى الجلسة."
           }
         }
       }

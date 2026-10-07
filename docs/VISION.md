@@ -30,7 +30,7 @@ Each wave is complete and usable on its own, and each depends on the one before 
 | Wave | Scope | Status |
 |---|---|---|
 | **1. The student alone** | Offline, no account: the Mushaf, the memorization map, the revision engine, and today's wird. | Built (2026-10-07) |
-| **2. The student with others** | Accounts, teachers and tasmee', the "verified" mark, peer tasmee'. | In progress: accounts and backup built (2026-10-07) |
+| **2. The student with others** | Accounts, teachers and tasmee', the "verified" mark, peer tasmee'. | In progress: accounts, backup, teachers and in-person tasmee' built (2026-10-07); video and peer tasmee' to come |
 | **3. The full journey** | The personal plan with new memorization and a completion date, stages and tests, competitions, the seat auction, payments. | Later |
 
 ## Platform
@@ -67,7 +67,7 @@ Every screen speaks the onboarding's language: the colored-Mushaf pastels on a s
 
 ### Tabs
 
-A floating tab bar holds الرئيسية, تقدّمي and حسابي; التسميع joins them in wave 2. The Mushaf is not a tab: it's a button on the home. The Mushaf and today's wird open full screen over everything and close back where they were opened, so revising never moves the student's place in the Mushaf.
+A floating tab bar holds الرئيسية, التسميع, تقدّمي and حسابي. The Mushaf is not a tab: it's a button on the home. The Mushaf and today's wird open full screen over everything and close back where they were opened, so revising never moves the student's place in the Mushaf.
 
 ### Home
 
@@ -78,7 +78,7 @@ The home answers «وش علي اليوم؟». It shows:
 - **Today's pages:** each page as a tile in its juz's color; tap to revise it, press and hold if it was revised outside the app.
 - **What's memorized and the daily amount,** each opening its editor.
 
-In wave 2 the home also shows a booked tasmee' and, after the first achievement, a calm invitation to sign in.
+The home also shows the next tasmee' booked (or that its teacher cancelled it), leading to the التسميع tab, and, after the first revision, a calm invitation to sign in.
 
 ### Progress (تقدّمي)
 
@@ -87,6 +87,15 @@ The share of the Quran memorized, the revision streak over the last seven days, 
 ### Account (حسابي)
 
 Where the progress lives (on the device, until accounts come in wave 2), the Mushaf's colors, a daily reminder, the app's language, and the sources Aqra is built on, credited as their terms ask. What's memorized and the daily amount are edited from the home only.
+
+### Tasmee' (التسميع)
+
+The same tab serves both roles.
+
+- **Every student** sees their next booked session (with "Cancel booking"), then the vetted teachers. A teacher's page shows their profile and upcoming sessions, each with "Book" (or "Full"); an anonymous student is asked to sign in before booking.
+- **A teacher** sees "My sessions" above that: each upcoming session with its seat count, and "New session" (when, where, how many seats). A session's page lists the students who booked, with their name and what they've memorized; tapping a student opens the **marking screen**: the Mushaf on the teacher's phone, turned page by page as the student recites, a tap on an ayah marks a stumble, a button marks each page heard, and «سجّل التسميع» records it all. The teacher's own memorization colors stay off the page.
+
+The record lands in the student's account, and the **student's app applies it**: a sheikh's revision of the pages heard, and the "verified" mark on the clean ayat (see [REVISION.md](REVISION.md)). The teacher never reads the student's progress; the booked seat carries a small summary (pages memorized, whole juz') so the teacher can choose what to hear.
 
 ### Mushaf
 
@@ -108,7 +117,7 @@ The student **declares** what they already know, by juz', by surah, by page, and
 - juz' and surahs on the «ماذا تحفظ؟» screen right after onboarding;
 - pages and ayat in the Mushaf's marking mode.
 
-Later, a tasmee' with a teacher **confirms** it, adding a "verified" mark (wave 2).
+A tasmee' with a teacher **confirms** it: the ayat heard clean get a "verified" mark, and a stumble before the teacher takes it away until the ayah is heard clean again. A tasmee' never marks new ayat as memorized: the student owns the map.
 
 ### Strength of an ayah
 
@@ -121,9 +130,9 @@ Each day's wird takes, in order, pages stumbled on recently (follow-up), then th
 A revision is recorded in one of three ways:
 1. **In the app:** the page's ayat are veiled; the student recites, reveals them one at a time, and taps the ayat they stumbled on.
 2. **Outside the app** (in prayer, or to a friend): the page is checked off from the wird.
-3. **With a sheikh** during tasmee' (wave 2).
+3. **With a sheikh** during tasmee': the teacher marks the pages heard and the stumbles on their own phone, and the student's app records them as a sheikh's revision.
 
-Each source will carry a different weight: self-revision less than a peer's tasmee', and a peer's less than a sheikh's.
+A sheikh's tasmee' counts more than self-revision (1.5 times, provisionally); a peer's tasmee', when it comes, will sit between the two.
 
 See [REVISION.md](REVISION.md) for the policy, its defaults, and the open questions.
 
@@ -136,7 +145,7 @@ See [REVISION.md](REVISION.md) for the policy, its defaults, and the open questi
 
 Every user starts as an anonymous Firebase user, and their progress is backed up to that account from the first day. Signing in with Apple or Google links the sign-in to the same account, so nothing is lost. If the sign-in already belongs to an account (another device, an earlier install), that account is used and this device's progress is merged into it. Signing in is required before booking tasmee' or buying credits.
 
-- **What's stored:** what's memorized (with each ayah's strength and the verified mark) and the revision record. The device's copy is the one the app works from; the account is its backup, restored on a new device or after a reinstall. It isn't live editing on two devices at once.
+- **What's stored:** what's memorized (with each ayah's strength and the verified mark), the revision record, the student's bookings, and the tasmee' records teachers write. The device's copy is the one the app works from; the account is its backup, restored on a new device or after a reinstall. It isn't live editing on two devices at once.
 - **Where:** Firestore in Dammam, Saudi Arabia (me-central2).
 - **Signing out** keeps the progress in the account and clears the device.
 - **Deleting the account** deletes the account and everything backed up in it, as Apple requires; the progress on the device stays.
@@ -155,10 +164,12 @@ A separate role. Becoming a teacher requires:
 - **A personal interview.**
 - **Other vetting procedures** (details TBD).
 
+Teachers use the same app. A teacher is enabled by hand once vetted (a `teachers/{uid}` document marked vetted, see `backend/README.md`), and the التسميع tab then shows their sessions and students.
+
 ## Tasmee' sessions
 
-- **Booking:** the student chooses any vetted teacher and books a seat in one of their sessions. In wave 2 seats are free, first come first served; the auction adds paid seats in wave 3.
-- **In person or by video:** in person, the teacher marks each student's mistakes on his own phone during the session; remotely, a live video call. In person comes first.
+- **Booking:** the student chooses any vetted teacher and books a seat in one of their sessions. In wave 2 seats are free, first come first served; the auction adds paid seats in wave 3. Booking needs a signed-in (not anonymous) account. The seat, the student's own copy of the session and the seat count are written in one transaction, so a session never takes more students than it has seats.
+- **In person or by video:** in person, the teacher marks each student's mistakes on his own phone during the session (built); remotely, a live video call (to come).
 - **By video:** a live audio and video call in which the student recites and the teacher corrects, marking mistakes on the ayat.
 - **Video provider:** LiveKit Cloud. Self-hosting is an option later if costs grow.
 - **Access:** room tokens are issued by Cloud Functions only after verifying that the user holds a seat in that session.
@@ -226,7 +237,7 @@ Public standing should rest on verified evidence (a sheikh's tasmee'), not on se
 ## Open questions
 
 - **Topic sections:** the stand-in data must be replaced by a published thematic Mushaf's division, with the publisher's permission.
-- **Revision policy:** the numbers in [REVISION.md](REVISION.md) need trying with real huffaz.
+- **Revision policy:** the numbers in [REVISION.md](REVISION.md), the sheikh's weight among them, need trying with real huffaz and sheikhs.
 - **Stages and tests:** how Etqan's ten stages and tests map onto Aqra's منازل (the ten stairs match the ten stages).
 - **Free seats:** how many reserved free seats each session has.
 - **Commission:** the app's commission percentage.

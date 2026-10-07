@@ -28,6 +28,8 @@ Each memorized ayah has a **half-life**: the number of days until the chance of 
   - The multiplier is smaller if the revision comes before the memory has had time to slip (the spacing effect).
   - The first revision of a declared ayah counts in full.
 - **A stumble** multiplies it by **0.3**, with a minimum of 1 day.
+- **A sheikh's tasmee'** counts more: a clean revision heard by a sheikh grows the half-life by **1.5 times** the
+  usual growth. A stumble is a stumble, whoever heard it. Provisional, see the open questions.
 - **The longest half-life** is **365 days**.
 
 **What the student sees:** the color's strength is how established the ayah is (its half-life, full at **90 days**)
@@ -62,6 +64,13 @@ memorized in about a month, between 2 and 20 pages.
 
 **Outside the app** (in prayer, or to a friend): the page is checked off from the plan, as a clean revision.
 
+**With a sheikh** (tasmee'): the teacher turns the Mushaf's pages on their own phone as the student recites, taps
+the ayat the student stumbles on, and marks each page heard. The record goes into the student's account, and the
+student's app applies it: each page heard is a sheikh's revision of its memorized ayat (the stumbled ones weaken,
+the rest grow by the sheikh's weight), the clean ayat are marked **verified**, and a stumble takes the mark away
+until a teacher hears the ayah clean again. Ayat the student never marked as memorized are left alone: the
+student owns the map of what they know.
+
 **Follow-up after a stumble:** the page comes back after **1 day**, then **3**, then **7**, as long as it stays
 clean. A new stumble starts it again at 1 day.
 
@@ -72,5 +81,6 @@ clean. A new stumble starts it again at 1 day.
 2. **Revisions outside the app:** should they be allowed to record stumbles, not only clean revisions?
 3. **The rotation:** should it adapt by itself (strong juz' less often, weak ones more often), or only suggest
    changes for the student to approve? The direction so far is to suggest.
-4. **Evidence weights** for later waves: how much a peer's or a sheikh's tasmee' should count compared with
-   self-revision.
+4. **Evidence weights:** a sheikh's tasmee' counts 1.5 times self-revision for now, provisionally; a peer's
+   tasmee' (a later wave) is still to be set. And should a sheikh hearing an ayah clean that the student never
+   declared mark it memorized? For now it doesn't.
