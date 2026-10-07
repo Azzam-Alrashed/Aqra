@@ -91,6 +91,21 @@ final class MemorizationStore {
         range.reduce(0) { $0 + (ayahs[$1] == nil ? 0 : 1) }
     }
 
+    /// The share of the Quran memorized, counting every juz' equally (a juz' is a twentieth of the Mushaf's pages,
+    /// whatever its number of ayat) and a juz' memorized in part by the share of its ayat.
+    func quranShare(in store: MushafStore) -> Double {
+        (1...30).reduce(0.0) { total, juz in
+            guard let range = store.juzAyahs[juz] else { return total }
+            return total + Double(memorizedCount(in: range)) / Double(range.count)
+        } / 30
+    }
+
+    /// The average strength of everything memorized, from 0 to 1; nil when nothing is memorized.
+    func averageStrength(at date: Date = .now, policy: ReviewPolicy = .standard) -> Double? {
+        guard !ayahs.isEmpty else { return nil }
+        return ayahs.values.reduce(0) { $0 + $1.strength(at: date, policy: policy) } / Double(ayahs.count)
+    }
+
     /// How strong an ayah's memorization is now, or nil if it isn't memorized.
     func strength(ofAyah ayah: Int, at date: Date = .now, policy: ReviewPolicy = .standard) -> Double? {
         ayahs[ayah]?.strength(at: date, policy: policy)

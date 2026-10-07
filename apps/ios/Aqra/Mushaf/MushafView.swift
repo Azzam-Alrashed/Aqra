@@ -9,7 +9,7 @@ struct MushafView: View {
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(RevisionStore.self) private var revision
-    @Environment(\.scenePhase) private var scenePhase
+    @Environment(AppNavigator.self) private var navigator: AppNavigator?
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @AppStorage("mushaf.topics") private var topicColors = true
@@ -22,9 +22,8 @@ struct MushafView: View {
     /// Marking mode, while the student marks the ayat they've memorized.
     @State private var marking: MarkingSession?
     @State private var showingSetup = false
-    /// Revision of one page, started from today's plan.
+    /// Revision of one page, started from today's wird on the home.
     @State private var revising: RevisionSession?
-    @State private var showingToday = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -55,13 +54,6 @@ struct MushafView: View {
                         topBar.transition(.opacity)
                     }
                     Spacer()
-                    if marking == nil, revising == nil {
-                        // The pill sits on the page's footer row beside the page number, or above the bottom bar.
-                        TodayPill(plan: revision.plan) { openToday() }
-                            .frame(maxWidth: .infinity, alignment: .leading)
-                            .padding(.horizontal, facingPages ? 40 : 14)
-                            .padding(.bottom, toolbarVisible ? 10 : 0)
-                    }
                     if toolbarVisible {
                         Group {
                             if let marking {
@@ -79,6 +71,9 @@ struct MushafView: View {
         }
         .background(MushafStyle.paper.ignoresSafeArea())
         .statusBarHidden(!toolbarVisible)
+        // The tab bar comes and goes with the toolbar, and stays away while marking or revising.
+        .toolbar(toolbarVisible && marking == nil && revising == nil ? .visible : .hidden, for: .tabBar)
+        .animation(.easeInOut(duration: 0.2), value: toolbarVisible)
         // Swiping to another page hides the toolbar; jumps made from the toolbar keep it open.
         .onChange(of: lastPage) {
             if movedByToolbar {
@@ -90,10 +85,17 @@ struct MushafView: View {
         .onAppear {
             if startsMarking && marking == nil { startMarking() }
         }
-        // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
-        .task { refreshPlan() }
-        .onChange(of: memorization.count) { refreshPlan() }
-        .onChange(of: scenePhase) { if scenePhase == .active { refreshPlan() } }
+        // A page asked for from the home: opened, and revised when it's part of today's wird.
+        .onChange(of: navigator?.request, initial: true) {
+            guard let request = navigator?.request else { return }
+            navigator?.request = nil
+            if request.revise {
+                startRevision(of: request.page)
+            } else {
+                movedByToolbar = request.page != lastPage
+                lastPage = request.page
+            }
+        }
         .sensoryFeedback(.success, trigger: revision.plan?.isComplete == true) { _, isComplete in isComplete }
         // A light tick as each page turns, and a firmer one on entering a new juz'.
         .sensoryFeedback(.selection, trigger: lastPage)
@@ -103,11 +105,6 @@ struct MushafView: View {
         .sheet(isPresented: $showingSetup) {
             MemorizationSetupView(store: store, isSheet: true) { _ in showingSetup = false }
                 .environment(memorization)
-        }
-        .sheet(isPresented: $showingToday) {
-            TodayView(store: store, onStart: startRevision(of:))
-                .environment(memorization)
-                .environment(revision)
         }
         .sheet(isPresented: $showingIndex) {
             MushafIndexView(store: store, currentPage: lastPage) { page in
@@ -150,21 +147,7 @@ struct MushafView: View {
 
     // MARK: - Today and revision
 
-    private func refreshPlan() {
-        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization))
-    }
-
-    /// The pill opens today's plan, or, with nothing memorized yet, the screen to choose it.
-    private func openToday() {
-        if revision.plan?.items.isEmpty ?? true {
-            showingSetup = true
-        } else {
-            showingToday = true
-        }
-    }
-
     private func startRevision(of page: Int) {
-        showingToday = false
         marking = nil
         let ayahs = store.page(page).ayahs.filter { memorization.isMemorized($0) }
         movedByToolbar = page != lastPage
@@ -175,13 +158,21 @@ struct MushafView: View {
         }
     }
 
+    /// Ends a page's revision. Recorded, it moves straight on to the next page of today's wird, and back home
+    /// when the wird is done.
     private func finishRevision(_ session: RevisionSession, record: Bool) {
-        if record {
-            revision.record(page: session.page, ayahs: session.ayahs, stumbles: session.stumbles,
-                            source: .app, memorization: memorization)
+        guard record else {
+            withAnimation(.easeInOut(duration: 0.25)) { revising = nil }
+            return
         }
-        withAnimation(.easeInOut(duration: 0.25)) { revising = nil }
-        if record { showingToday = true }
+        revision.record(page: session.page, ayahs: session.ayahs, stumbles: session.stumbles,
+                        source: .app, memorization: memorization)
+        if let next = revision.plan?.items.first(where: { !$0.done }) {
+            startRevision(of: next.page)
+        } else {
+            withAnimation(.easeInOut(duration: 0.25)) { revising = nil }
+            navigator?.tab = .home
+        }
     }
 
     @ViewBuilder
@@ -432,7 +423,7 @@ struct MushafRootView: View {
                     }
                 }
             case .success(let store):
-                MushafView(store: store, startsMarking: startsMarking)
+                AppTabView(store: store, startsMarking: startsMarking)
             case .failure(let error):
                 ContentUnavailableView("The Mushaf couldn't be loaded", systemImage: "book.closed", description: Text(verbatim: "\(error)"))
             case nil:
@@ -467,53 +458,5 @@ private struct MarkingButtonStyle: ButtonStyle {
             .background(prominent ? MushafStyle.marker : MushafStyle.markerFill, in: Capsule())
             .scaleEffect(configuration.isPressed ? 0.96 : 1)
             .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
-    }
-}
-
-/// «وِرد اليوم» on the Mushaf: how much of today's plan is done, a tap away from the plan itself.
-private struct TodayPill: View {
-    var plan: DayPlan?
-    var action: () -> Void
-
-    var body: some View {
-        Button(action: action) {
-            HStack(spacing: 7) {
-                if let plan, !plan.items.isEmpty {
-                    if plan.isComplete {
-                        StarShape(points: 8, innerRatio: 0.42, cornerRadius: 0.05)
-                            .fill(MushafStyle.gold)
-                            .frame(width: 15, height: 15)
-                        Text("Today's revision is done")
-                    } else {
-                        ZStack {
-                            Circle().stroke(MushafStyle.marker.opacity(0.25), lineWidth: 2.5)
-                            Circle()
-                                .trim(from: 0, to: Double(plan.doneCount) / Double(plan.items.count))
-                                .stroke(MushafStyle.marker, style: StrokeStyle(lineWidth: 2.5, lineCap: .round))
-                                .rotationEffect(.degrees(-90))
-                        }
-                        .frame(width: 15, height: 15)
-                        Text("Today's revision")
-                        Text("\(plan.doneCount) of \(plan.items.count)")
-                            .monospacedDigit()
-                            .foregroundStyle(MushafStyle.chrome)
-                    }
-                } else {
-                    Image(systemName: "plus")
-                        .font(.system(size: 11, weight: .heavy))
-                    Text("Choose what you've memorized")
-                }
-            }
-            .font(.system(size: 13, weight: .bold, design: .rounded))
-            .foregroundStyle(MushafStyle.ink)
-            .lineLimit(1)
-            .padding(.horizontal, 12)
-            .frame(height: 30)
-            .background(plan?.isComplete == true ? MushafStyle.markerFill : MushafStyle.paper, in: Capsule())
-            .overlay(Capsule().strokeBorder(MushafStyle.gold.opacity(0.6), lineWidth: 1))
-            .animation(.snappy, value: plan?.doneCount)
-        }
-        .buttonStyle(.plain)
-        .environment(\.layoutDirection, .rightToLeft)
     }
 }

@@ -70,14 +70,7 @@ struct MemorizationSetupView: View {
 
     // MARK: - Hero
 
-    /// The share of the Quran memorized, counting every juz' equally (a juz' is a twentieth of the Mushaf's pages,
-    /// whatever its number of ayat) and a juz' memorized in part by the share of its ayat.
-    private var quranShare: Double {
-        (1...30).reduce(0.0) { total, juz in
-            guard let range = store.juzAyahs[juz] else { return total }
-            return total + Double(memorization.memorizedCount(in: range)) / Double(range.count)
-        } / 30
-    }
+    private var quranShare: Double { memorization.quranShare(in: store) }
 
     /// How many of the ten steps are climbed: three juz' make a step.
     private var targetClimb: Double {

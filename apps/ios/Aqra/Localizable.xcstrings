@@ -455,6 +455,16 @@
         }
       }
     },
+    "Continue today's revision" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أكمل وِرد اليوم"
+          }
+        }
+      }
+    },
     "Daily revision, tasmee' with qualified teachers, and rewards that motivate you." : {
       "localizations" : {
         "ar" : {
@@ -471,6 +481,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تم"
+          }
+        }
+      }
+    },
+    "Edit what you've memorized" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عدّل حفظك"
           }
         }
       }
@@ -501,6 +521,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "متابعة"
+          }
+        }
+      }
+    },
+    "Home" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرئيسية"
           }
         }
       }
@@ -585,6 +615,26 @@
         }
       }
     },
+    "Memorization strength" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قوة الحفظ"
+          }
+        }
+      }
+    },
+    "Mushaf" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المصحف"
+          }
+        }
+      }
+    },
     "My memorization" : {
       "localizations" : {
         "ar" : {
@@ -621,6 +671,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الصفحة %lld"
+          }
+        }
+      }
+    },
+    "Peace be upon you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السلام عليكم"
           }
         }
       }
@@ -705,12 +765,12 @@
         }
       }
     },
-    "Start" : {
+    "Start today's revision" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ابدأ"
+            "value" : "ابدأ وِرد اليوم"
           }
         }
       }
