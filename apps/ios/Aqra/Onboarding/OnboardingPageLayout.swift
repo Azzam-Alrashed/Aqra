@@ -50,6 +50,8 @@ struct OnboardingPageLayout<Stage: View, Copy: View, Buttons: View>: View {
                         VStack(spacing: 0) {
                             Spacer(minLength: 0)
                             copy(roomy ? 1.5 : 0.82)
+                                // The copy is never truncated; the stage gives up space instead.
+                                .fixedSize(horizontal: false, vertical: true)
                             actions(compact: !roomy, large: roomy)
                             Spacer(minLength: 0)
                         }
@@ -60,6 +62,7 @@ struct OnboardingPageLayout<Stage: View, Copy: View, Buttons: View>: View {
                 } else {
                     fittedStage(maxScale: roomy ? 1.6 : 1)
                     copy(roomy ? 1.65 : 1)
+                        .fixedSize(horizontal: false, vertical: true)
                         .frame(maxWidth: roomy ? 760 : .infinity)
                         .padding(.horizontal, 18)
                     actions(compact: false, large: roomy)
