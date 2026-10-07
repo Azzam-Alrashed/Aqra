@@ -61,14 +61,32 @@ See `shared/quran/README.md` for the sources, the provisional ones, and what mus
 
 ## The screens
 
+### The look
+
+Every screen speaks the onboarding's language: the colored-Mushaf pastels on a soft lavender surface, two-line headlines with the second line in purple, emoji in tinted rounded squares, white cards lifted by soft shadows, chips that float, and entrances that build up with gentle springs and haptics. The building blocks are shared (`DesignSystem/AqraComponents.swift`), so the onboarding and the app stay identical.
+
+### Tabs
+
+A floating tab bar holds الرئيسية, تقدّمي and حسابي; التسميع joins them in wave 2. The Mushaf is not a tab: it's a button on the home. The Mushaf and today's wird open full screen over everything and close back where they were opened, so revising never moves the student's place in the Mushaf.
+
 ### Home
 
 The home answers «وش علي اليوم؟». It shows:
-- **The journey:** the منازل stairs (ten steps of three juz' each), the share of the Quran memorized, and the average strength of the memorization.
+- **The stage:** the منازل stairs (ten glossy steps of three juz' each) inside glowing rings, with chips for the share of the Quran memorized and the memorization's strength, and the revision streak above.
+- **Today's wird:** a headline with the pages left and the length of a full revision, and one button to start.
 - **The Mushaf:** a miniature of the page last read, which opens it.
-- **Today's wird:** the pages to revise today, one button to start, and the daily amount.
+- **Today's pages:** each page as a tile in its juz's color; tap to revise it, press and hold if it was revised outside the app.
+- **What's memorized and the daily amount,** each opening its editor.
 
-The home is the app's root; there is no tab bar. The Mushaf and today's wird open full screen over it and close back to it, so revising never moves the student's place in the Mushaf.
+In wave 2 the home also shows a booked tasmee' and, after the first achievement, a calm invitation to sign in.
+
+### Progress (تقدّمي)
+
+The share of the Quran memorized, the revision streak over the last seven days, a few numbers, and every juz' at a glance: how much of it is memorized and how strong.
+
+### Account (حسابي)
+
+Where the progress lives (on the device, until accounts come in wave 2), the Mushaf's colors, a daily reminder, the app's language, and the sources Aqra is built on, credited as their terms ask. What's memorized and the daily amount are edited from the home only.
 
 ### Mushaf
 

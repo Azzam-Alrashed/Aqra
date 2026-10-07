@@ -148,6 +148,27 @@ struct RevisionTests {
         #expect(reloaded.plan?.items.first { $0.page == 3 }?.done == true)
         #expect(reloaded.followUps[3] != nil)
         #expect(reloaded.history.count == 1)
+        #expect(reloaded.streak(now: day(0)) == 1)
+    }
+
+    // MARK: - Streak
+
+    @Test func streakCountsDaysInARow() {
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        let memorization = MemorizationStore(fileURL: nil)
+        #expect(revision.streak(now: day(0)) == 0)
+        for n in [0, 1, 2] {
+            revision.record(page: 1, ayahs: [0], stumbles: [], source: .outside, memorization: memorization, now: day(n))
+        }
+        #expect(revision.streak(now: day(2)) == 3)
+        // Today not revised yet: the streak still stands, counted from yesterday, until the day ends.
+        #expect(revision.streak(now: day(3)) == 3)
+        // A whole day missed breaks it.
+        #expect(revision.streak(now: day(4)) == 0)
+        revision.record(page: 1, ayahs: [0], stumbles: [], source: .app, memorization: memorization, now: day(4))
+        #expect(revision.streak(now: day(4)) == 1)
+        // The last seven days, oldest first, ending today.
+        #expect(revision.recentDays(7, now: day(4)) == [false, false, true, true, true, false, true])
     }
 
     // MARK: - A page's revision

@@ -1,6 +1,9 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "" : {
+
+    },
     "%lld ayat" : {
       "localizations" : {
         "ar" : {
@@ -122,6 +125,70 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld ayat memorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld days" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld أيام"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld يومًا"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يوم واحد"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld يوم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "يومان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld يوم"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld days"
                 }
               }
             }
@@ -267,6 +334,90 @@
         }
       }
     },
+    "%lld pages from %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@pages@ من %2$@"
+          },
+          "substitutions" : {
+            "pages" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "few" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg صفحات"
+                    }
+                  },
+                  "many" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg صفحة"
+                    }
+                  },
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "صفحة واحدة"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg صفحة"
+                    }
+                  },
+                  "two" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "صفحتان"
+                    }
+                  },
+                  "zero" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg صفحة"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$#@pages@ from %2$@"
+          },
+          "substitutions" : {
+            "pages" : {
+              "argNum" : 1,
+              "formatSpecifier" : "lld",
+              "variations" : {
+                "plural" : {
+                  "one" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg page"
+                    }
+                  },
+                  "other" : {
+                    "stringUnit" : {
+                      "state" : "translated",
+                      "value" : "%arg pages"
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld stumbles" : {
       "localizations" : {
         "ar" : {
@@ -395,12 +546,72 @@
         }
       }
     },
+    "Account" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حسابي"
+          }
+        }
+      }
+    },
+    "and rise, ayah by ayah." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وارتقِ آيةً بعد آية"
+          }
+        }
+      }
+    },
+    "App" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التطبيق"
+          }
+        }
+      }
+    },
+    "Aqra shows the Quran exactly as published, from these sources, with thanks." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعرض اقرأ القرآن الكريم كما نُشر تمامًا، من هذه المصادر، مع الشكر والتقدير."
+          }
+        }
+      }
+    },
+    "Ayat memorized" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآيات المحفوظة"
+          }
+        }
+      }
+    },
     "Begin" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ابدأ"
+          }
+        }
+      }
+    },
+    "begin your journey." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ابدأ رحلتك"
           }
         }
       }
@@ -455,12 +666,32 @@
         }
       }
     },
+    "Continue reading" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تابع القراءة"
+          }
+        }
+      }
+    },
     "Continue today's revision" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "أكمل وِرد اليوم"
+          }
+        }
+      }
+    },
+    "Daily reminder" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التذكير اليومي"
           }
         }
       }
@@ -491,6 +722,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "عدّل حفظك"
+          }
+        }
+      }
+    },
+    "Every day at %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل يوم الساعة %@"
           }
         }
       }
@@ -555,6 +796,16 @@
         }
       }
     },
+    "in one place." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في مكان واحد"
+          }
+        }
+      }
+    },
     "Index" : {
       "localizations" : {
         "ar" : {
@@ -575,6 +826,16 @@
         }
       }
     },
+    "Juz' & surahs" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأجزاء والسور"
+          }
+        }
+      }
+    },
     "Juz' %lld" : {
       "localizations" : {
         "ar" : {
@@ -585,12 +846,22 @@
         }
       }
     },
-    "Juz' & surahs" : {
+    "King Fahd Glorious Quran Printing Complex" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "الأجزاء والسور"
+            "value" : "مجمع الملك فهد لطباعة المصحف الشريف"
+          }
+        }
+      }
+    },
+    "Language" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اللغة"
           }
         }
       }
@@ -611,6 +882,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "حدّد الصفحات والآيات في المصحف"
+          }
+        }
+      }
+    },
+    "May Allah bless you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بارك الله فيك"
           }
         }
       }
@@ -655,6 +936,26 @@
         }
       }
     },
+    "Not revised" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم تُراجَع"
+          }
+        }
+      }
+    },
+    "Notifications are turned off for Aqra in Settings." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإشعارات متوقفة لتطبيق اقرأ في الإعدادات."
+          }
+        }
+      }
+    },
     "Now tap the last ayah of the range" : {
       "localizations" : {
         "ar" : {
@@ -665,12 +966,72 @@
         }
       }
     },
+    "of the Quran" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من القرآن"
+          }
+        }
+      }
+    },
+    "of the Quran?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من القرآن؟"
+          }
+        }
+      }
+    },
+    "On this device" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "على هذا الجهاز"
+          }
+        }
+      }
+    },
+    "Open Settings" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتح الإعدادات"
+          }
+        }
+      }
+    },
     "Page %lld" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "الصفحة %lld"
+          }
+        }
+      }
+    },
+    "pages a day" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صفحة في اليوم"
+          }
+        }
+      }
+    },
+    "Pages revised this week" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صفحات راجعتها هذا الأسبوع"
           }
         }
       }
@@ -695,6 +1056,16 @@
         }
       }
     },
+    "Progress" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقدّمي"
+          }
+        }
+      }
+    },
     "Reported by Ahmad" : {
       "localizations" : {
         "ar" : {
@@ -705,12 +1076,32 @@
         }
       }
     },
+    "revise each day?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل يوم؟"
+          }
+        }
+      }
+    },
     "Revise every day, and climb your stations in Aqra." : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "راجِع كل يوم، وارتقِ في منازلك على اقرأ."
+          }
+        }
+      }
+    },
+    "Revised" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تمّت مراجعتها"
           }
         }
       }
@@ -735,7 +1126,92 @@
         }
       }
     },
+    "Revision" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المراجعة"
+          }
+        }
+      }
+    },
+    "Revision streak" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سلسلة المراجعة"
+          }
+        }
+      }
+    },
+    "Revision streak: %lld days" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سلسلة المراجعة: %lld أيام"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سلسلة المراجعة: %lld يومًا"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سلسلة المراجعة: يوم واحد"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سلسلة المراجعة: %lld يوم"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سلسلة المراجعة: يومان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سلسلة المراجعة: %lld يوم"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Revision streak: %lld day"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Revision streak: %lld days"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Rotation" : {
+      "extractionState" : "stale",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -765,12 +1241,32 @@
         }
       }
     },
+    "Sources" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المصادر"
+          }
+        }
+      }
+    },
     "Start today's revision" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ابدأ وِرد اليوم"
+          }
+        }
+      }
+    },
+    "Strength by juz'" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قوة الحفظ في كل جزء"
           }
         }
       }
@@ -835,6 +1331,26 @@
         }
       }
     },
+    "The Complex's Mushaf page fonts of the 1441H print, with tajweed colors." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خطوط صفحات المصحف من المجمع، طبعة ١٤٤١هـ، بألوان التجويد."
+          }
+        }
+      }
+    },
+    "The fuller a juz', the more of it you've memorized; the deeper its color, the stronger." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كلما امتلأ الجزء زاد ما تحفظه منه، وكلما اشتدّ لونه كان حفظه أقوى."
+          }
+        }
+      }
+    },
     "The Mushaf couldn't be loaded" : {
       "localizations" : {
         "ar" : {
@@ -845,12 +1361,82 @@
         }
       }
     },
+    "The Mushaf page layout and the surah headers." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تخطيط صفحات المصحف وعناوين السور."
+          }
+        }
+      }
+    },
+    "The Quran text and its data, in the riwayah of Hafs." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نص القرآن الكريم وبياناته، برواية حفص."
+          }
+        }
+      }
+    },
+    "The Quran text, fonts and data" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نص القرآن الكريم والخطوط والبيانات"
+          }
+        }
+      }
+    },
+    "The topic sections, for now." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أقسام المواضيع، مؤقتًا."
+          }
+        }
+      }
+    },
+    "The typeface of the hadith, under the SIL Open Font License." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خط الأحاديث، برخصة SIL للخطوط المفتوحة."
+          }
+        }
+      }
+    },
     "The whole Quran" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "القرآن كاملًا"
+          }
+        }
+      }
+    },
+    "Time" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الوقت"
+          }
+        }
+      }
+    },
+    "Today's pages" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صفحات اليوم"
           }
         }
       }
@@ -895,6 +1481,16 @@
         }
       }
     },
+    "Version %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإصدار %@"
+          }
+        }
+      }
+    },
     "What have you memorized" : {
       "localizations" : {
         "ar" : {
@@ -915,6 +1511,26 @@
         }
       }
     },
+    "Your pages for today are waiting for you." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صفحات وِردك اليوم في انتظارك."
+          }
+        }
+      }
+    },
+    "Your progress" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقدّمك"
+          }
+        }
+      }
+    },
     "Your progress is saved on your device, and you can link it to your account anytime." : {
       "localizations" : {
         "ar" : {
@@ -925,72 +1541,12 @@
         }
       }
     },
-    "and rise, ayah by ayah." : {
+    "Your revision today" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "وارتقِ آيةً بعد آية"
-          }
-        }
-      }
-    },
-    "begin your journey." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "ابدأ رحلتك"
-          }
-        }
-      }
-    },
-    "in one place." : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "في مكان واحد"
-          }
-        }
-      }
-    },
-    "of the Quran" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "من القرآن"
-          }
-        }
-      }
-    },
-    "of the Quran?" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "من القرآن؟"
-          }
-        }
-      }
-    },
-    "pages a day" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "صفحة في اليوم"
-          }
-        }
-      }
-    },
-    "revise each day?" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "كل يوم؟"
+            "value" : "وِردك اليوم"
           }
         }
       }

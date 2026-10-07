@@ -280,7 +280,7 @@ struct MushafRootView: View {
                     }
                 }
             case .success(let store):
-                HomeView(store: store, startsMarking: startsMarking)
+                AppTabView(store: store, startsMarking: startsMarking)
             case .failure(let error):
                 ContentUnavailableView("The Mushaf couldn't be loaded", systemImage: "book.closed", description: Text(verbatim: "\(error)"))
             case nil:

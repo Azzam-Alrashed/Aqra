@@ -6,8 +6,8 @@ import SwiftUI
 ///
 /// `climb` animates: change it inside `withAnimation` and the steps light one after another as it passes them.
 struct ManazilStairs: View, Animatable {
-    static let stepCount = 10
-    static let juzPerStep = 3
+    nonisolated static let stepCount = 10
+    nonisolated static let juzPerStep = 3
 
     /// How many steps are lit, 0...10; a fraction lights the top step partway.
     var climb: Double

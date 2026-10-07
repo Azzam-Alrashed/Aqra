@@ -1,7 +1,70 @@
 import SwiftUI
+import UIKit
 
-/// The home, the app's root: where the student is on the journey (the منازل stairs), the Mushaf where they left
-/// it, and what they have today (the wird). The Mushaf and the wird open full screen over it and close back to it.
+/// The app's tabs. The Mushaf isn't one: it opens full screen from the home, over everything.
+enum AppTab: Hashable, CaseIterable {
+    case home, progress, account
+
+    var title: LocalizedStringKey {
+        switch self {
+        case .home: "Home"
+        case .progress: "Progress"
+        case .account: "Account"
+        }
+    }
+
+    var symbol: String {
+        switch self {
+        case .home: "house.fill"
+        case .progress: "chart.bar.fill"
+        case .account: "person.crop.circle.fill"
+        }
+    }
+}
+
+/// The app after setup: the home, progress and account tabs, under the app's own floating tab bar.
+struct AppTabView: View {
+    var store: MushafStore
+    var startsMarking = false
+
+    @Environment(MemorizationStore.self) private var memorization
+    @Environment(RevisionStore.self) private var revision
+    @Environment(\.scenePhase) private var scenePhase
+    @State private var tab = AppTab.home
+
+    var body: some View {
+        TabView(selection: $tab) {
+            HomeView(store: store, startsMarking: startsMarking)
+                .reservesTabBarSpace()
+                .toolbar(.hidden, for: .tabBar)
+                .tag(AppTab.home)
+            MyProgressView(store: store)
+                .reservesTabBarSpace()
+                .toolbar(.hidden, for: .tabBar)
+                .tag(AppTab.progress)
+            // Its pages reserve the tab bar's space inside its navigation stack.
+            AccountView()
+                .toolbar(.hidden, for: .tabBar)
+                .tag(AppTab.account)
+        }
+        .overlay(alignment: .bottom) {
+            AqraTabBar(selection: $tab)
+                .padding(.bottom, AqraTabBar.bottomPadding)
+        }
+        .environment(\.colorScheme, .light)
+        // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
+        .task { refreshPlan() }
+        .onChange(of: memorization.count) { refreshPlan() }
+        .onChange(of: scenePhase) { if scenePhase == .active { refreshPlan() } }
+    }
+
+    private func refreshPlan() {
+        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization))
+    }
+}
+
+/// The home: the منازل stairs on a glowing stage, today's wird and one button to start it, then the Mushaf where
+/// the student left it, today's pages, and what they've memorized. The Mushaf and the wird open full screen over it.
 struct HomeView: View {
     var store: MushafStore
     /// Opens straight into the Mushaf's marking mode (after the student chose to mark pages and ayat).
@@ -10,8 +73,8 @@ struct HomeView: View {
     /// What the home has open over it.
     enum Destination: Hashable, Identifiable {
         case mushaf(marking: Bool)
-        /// Today's wird, from one of its pages.
-        case wird(page: Int)
+        /// Today's wird, from one of its pages; started from the home's button, or from that page's tile.
+        case wird(page: Int, fromButton: Bool)
 
         var id: Self { self }
 
@@ -19,56 +82,65 @@ struct HomeView: View {
         var sourceID: String {
             switch self {
             case .mushaf: "mushaf"
-            case .wird(let page): "page-\(page)"
+            case .wird(_, true): "start"
+            case .wird(let page, false): "page-\(page)"
             }
         }
     }
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(RevisionStore.self) private var revision
-    @Environment(\.scenePhase) private var scenePhase
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.layoutDirection) private var direction
     @AppStorage("mushaf.lastPage") private var lastPage = 1
+    @State private var destination: Destination?
+    @State private var editingMemorization = false
+    @State private var editingAmount = false
+    @State private var openedMarking = false
+    /// The entrance plays once: the stage opens, the stairs climb, the chips pop out and the rest rises.
+    @State private var entered = false
+    @State private var chipsOut = false
     @State private var shownClimb = 0.0
     @State private var climbAnimation: Animation?
-    @State private var editingMemorization = false
-    @State private var destination: Destination?
-    @State private var openedMarking = false
+    /// Pauses the stage's ambient motion while the home isn't on screen.
+    @State private var isVisible = false
     @Namespace private var zoom
 
     var body: some View {
-        NavigationStack {
-            ScrollView {
-                VStack(spacing: 22) {
-                    greeting
-                    journey
-                    mushaf
-                    wird
+        ScrollView {
+            VStack(spacing: 0) {
+                header
+                stage
+                Group {
+                    headline
+                        .padding(.top, 4)
+                    action
+                        .padding(.top, 24)
+                    VStack(spacing: 14) {
+                        mushafCard
+                        if let plan = revision.plan, !plan.items.isEmpty {
+                            pagesCard(plan)
+                        }
+                        memorizationCard
+                    }
+                    .padding(.top, 22)
                 }
-                .padding(.horizontal, 20)
-                .padding(.top, 12)
-                .padding(.bottom, 28)
-                .frame(maxWidth: 640)
-                .frame(maxWidth: .infinity)
+                .opacity(entered ? 1 : 0)
+                .offset(y: entered ? 0 : 16)
             }
-            .scrollIndicators(.hidden)
-            .background(Palette.surface.ignoresSafeArea())
-            // What scrolls up fades away under the status bar instead of running into it.
-            .overlay(alignment: .top) {
-                GeometryReader { geometry in
-                    LinearGradient(colors: [Palette.surface, Palette.surface.opacity(0)], startPoint: .top, endPoint: .bottom)
-                        .frame(height: geometry.safeAreaInsets.top + 14)
-                        .offset(y: -geometry.safeAreaInsets.top)
-                }
-                .allowsHitTesting(false)
-            }
-            .toolbar(.hidden, for: .navigationBar)
+            .padding(.horizontal, 22)
+            .padding(.bottom, 24)
+            .frame(maxWidth: 560)
+            .frame(maxWidth: .infinity)
         }
+        .scrollIndicators(.hidden)
+        .background(Palette.surface.ignoresSafeArea())
+        .fadesUnderStatusBar()
         .fontDesign(.rounded)
         .tint(Palette.brand)
         .environment(\.colorScheme, .light)
         .onAppear {
-            climb(entrance: true)
+            isVisible = true
             // After choosing to mark in the Mushaf, the app opens straight on it, with the home underneath.
             if startsMarking && !openedMarking {
                 openedMarking = true
@@ -77,21 +149,31 @@ struct HomeView: View {
                 withTransaction(transaction) { destination = .mushaf(marking: true) }
             }
         }
-        .onChange(of: memorization.count) { climb(entrance: false) }
-        // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
-        .task { refreshPlan() }
-        .onChange(of: memorization.count) { refreshPlan() }
-        .onChange(of: scenePhase) { if scenePhase == .active { refreshPlan() } }
+        .onDisappear { isVisible = false }
+        .task {
+            guard !entered else { return }
+            // A beat after the first layout, so the entrance animates only what it means to.
+            try? await Task.sleep(for: .milliseconds(80))
+            await playEntrance()
+        }
+        .onChange(of: memorization.count) {
+            guard entered else { return }
+            climbAnimation = reduceMotion ? nil : .spring(duration: 0.9, bounce: 0.15)
+            shownClimb = climbTarget
+        }
         .sensoryFeedback(.success, trigger: revision.plan?.isComplete == true) { _, isComplete in isComplete }
         .sheet(isPresented: $editingMemorization) {
             MemorizationSetupView(store: store, isSheet: true) { _ in editingMemorization = false }
+        }
+        .sheet(isPresented: $editingAmount) {
+            DailyAmountView(memorizedPages: memorizedPageCount, initial: dailyPages, isEditor: true) { revision.setDailyPages($0) }
         }
         .fullScreenCover(item: $destination) { destination in
             Group {
                 switch destination {
                 case .mushaf(let marking):
                     MushafView(store: store, startsMarking: marking)
-                case .wird(let page):
+                case .wird(let page, _):
                     WirdView(store: store, startPage: page)
                 }
             }
@@ -99,284 +181,355 @@ struct HomeView: View {
         }
     }
 
-    private func refreshPlan() {
-        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization))
-    }
+    // MARK: - Header
 
-    // MARK: - Greeting
-
-    private var greeting: some View {
-        var hijri = Date.FormatStyle.dateTime.weekday(.wide).day().month(.wide).year()
+    private var header: some View {
+        var hijri = Date.FormatStyle.dateTime.weekday(.wide).day().month(.wide)
         hijri.calendar = Calendar(identifier: .islamicUmmAlQura)
-        return VStack(alignment: .leading, spacing: 4) {
-            Text("Peace be upon you")
-                .font(.system(size: 30, weight: .heavy))
-                .foregroundStyle(Palette.ink)
-            Text(Date.now.formatted(hijri))
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Palette.inkSoft)
+        let streak = revision.streak()
+        return HStack(alignment: .center, spacing: 12) {
+            VStack(alignment: .leading, spacing: 2) {
+                Text("Peace be upon you")
+                    .font(.system(size: 20, weight: .heavy))
+                    .foregroundStyle(Palette.ink)
+                Text(Date.now.formatted(hijri))
+                    .font(.system(size: 13, weight: .semibold))
+                    .foregroundStyle(Palette.inkSoft)
+            }
+            Spacer(minLength: 0)
+            if streak > 0 {
+                AqraChip(icon: "🔥", tint: Palette.peach) { Text("\(streak) days") }
+                    .accessibilityLabel(Text("Revision streak: \(streak) days"))
+            }
         }
-        .frame(maxWidth: .infinity, alignment: .leading)
+        .padding(.top, 8)
     }
 
-    // MARK: - The journey
+    // MARK: - The stage
 
-    /// Moves the stairs to what's memorized. The animation is the stairs' own: in a `withAnimation`, the rest of
-    /// the home's first layout would be animated with it, its text sliding in glyph by glyph.
-    private func climb(entrance: Bool) {
-        climbAnimation = reduceMotion ? nil : entrance ? .spring(duration: 1.4, bounce: 0.1).delay(0.2) : .spring(duration: 0.9, bounce: 0.15)
-        shownClimb = memorization.quranShare(in: store) * Double(ManazilStairs.stepCount)
+    private var climbTarget: Double {
+        memorization.quranShare(in: store) * Double(GlossyStairs.stepCount)
     }
 
-    private var journey: some View {
+    /// The glowing rings, the stairs and the floating chips, laid out as one picture.
+    private var stage: some View {
+        // Positions are a fixed composition, mirrored for left-to-right languages; chips keep the screen's direction.
+        let mirror: CGFloat = direction == .rightToLeft ? 1 : -1
+        // Worked out once here, not on every frame of the chips' drift.
         let share = memorization.quranShare(in: store)
         let strength = memorization.averageStrength()
-        return VStack(spacing: 16) {
-            ManazilStairs(climb: shownClimb)
+        return ZStack {
+            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !isVisible || reduceMotion)) { timeline in
+                AqraGlowRings(open: entered, breath: sin(timeline.date.timeIntervalSinceReferenceDate * 0.9))
+                    .scaleEffect(1.05)
+                    // Drawn on the GPU, so the breathing doesn't redraw the gradients on the CPU every frame.
+                    .drawingGroup()
+            }
+            GlossyStairs(climb: shownClimb)
                 .animation(climbAnimation, value: shownClimb)
-                .frame(height: 130)
-            if memorization.count == 0 {
-                Text("Choose what you've memorized to start climbing")
-                    .font(.system(size: 16, weight: .semibold))
-                    .foregroundStyle(Palette.inkSoft)
-                    .multilineTextAlignment(.center)
-            } else {
-                HStack(alignment: .firstTextBaseline) {
-                    HStack(alignment: .firstTextBaseline, spacing: 6) {
-                        Text(verbatim: share.formatted(.percent.precision(.fractionLength(0...1))))
-                            .font(.system(size: 34, weight: .heavy))
-                            .foregroundStyle(Palette.brand)
-                            .contentTransition(.numericText(value: share))
-                        Text("of the Quran")
-                            .font(.system(size: 15, weight: .bold))
-                            .foregroundStyle(Palette.ink)
-                    }
-                    Spacer()
-                    if let strength {
-                        VStack(alignment: .trailing, spacing: 2) {
-                            Text(verbatim: strength.formatted(.percent.precision(.fractionLength(0))))
-                                .font(.system(size: 20, weight: .heavy))
-                                .foregroundStyle(Palette.ink)
-                            Text("Memorization strength")
-                                .font(.system(size: 12, weight: .semibold))
-                                .foregroundStyle(Palette.inkSoft)
+                .environment(\.layoutDirection, direction)
+                .offset(x: 8 * mirror, y: 6)
+            if memorization.count > 0 {
+                TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !isVisible || reduceMotion)) { timeline in
+                    let time = timeline.date.timeIntervalSinceReferenceDate
+                    ZStack {
+                        floating(0, at: CGPoint(x: 92 * mirror, y: -118), tilt: -5 * mirror, time: time) { shareChip(share) }
+                        if let strength {
+                            floating(1, at: CGPoint(x: -96 * mirror, y: 128), tilt: 4 * mirror, time: time) { strengthChip(strength) }
                         }
                     }
+                    // The chips' layer spans the stage, so nothing they drift to is cut off.
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
+                    .drawingGroup()
                 }
             }
-            Button {
-                editingMemorization = true
-            } label: {
-                Label(memorization.count == 0 ? "Choose what you've memorized" : "Edit what you've memorized",
-                      systemImage: "square.and.pencil")
-                    .font(.system(size: 14, weight: .bold))
-                    .foregroundStyle(Palette.brand)
-                    .padding(.horizontal, 16)
-                    .frame(height: 38)
-                    .background(Palette.lavender, in: Capsule())
-            }
-            .buttonStyle(.plain)
-            .frame(maxWidth: .infinity, alignment: memorization.count == 0 ? .center : .leading)
         }
-        .padding(18)
-        .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-        .shadow(color: Palette.shadow.opacity(0.06), radius: 14, y: 6)
+        .environment(\.layoutDirection, .leftToRight)
+        .frame(height: 360)
+        .frame(maxWidth: .infinity)
     }
 
-    // MARK: - The Mushaf
+    private func floating<Content: View>(_ index: Int, at target: CGPoint, tilt: Double, time: TimeInterval,
+                                         @ViewBuilder content: () -> Content) -> some View {
+        let drift = chipsOut && !reduceMotion ? sin(time * (0.8 + Double(index) * 0.2) + Double(index) * 1.3) * 5 : 0
+        return content()
+            .environment(\.layoutDirection, direction)
+            .scaleEffect(chipsOut ? 1 : 0.3)
+            .rotationEffect(.degrees(chipsOut ? tilt : 0))
+            .opacity(chipsOut ? 1 : 0)
+            .offset(x: chipsOut ? target.x : 0, y: (chipsOut ? target.y : 0) + drift)
+    }
 
-    /// The Mushaf, open on the page last read: its miniature grows into the full page.
-    private var mushaf: some View {
-        let page = store.page(lastPage)
-        return Button {
-            destination = .mushaf(marking: false)
-        } label: {
-            HStack(spacing: 14) {
-                MushafThumbnail(page: page, store: store)
-                    .frame(width: 58, height: 92)
-                    .clipShape(RoundedRectangle(cornerRadius: 10, style: .continuous))
-                    .overlay(RoundedRectangle(cornerRadius: 10, style: .continuous).strokeBorder(MushafStyle.chrome.opacity(0.25), lineWidth: 1))
-                    .shadow(color: Palette.shadow.opacity(0.12), radius: 6, y: 3)
-                    .zoomTransitionSource(id: Destination.mushaf(marking: false).sourceID, in: zoom)
-                VStack(alignment: .leading, spacing: 4) {
-                    Text("Mushaf")
-                        .font(.system(size: 13, weight: .semibold))
-                        .foregroundStyle(Palette.inkSoft)
-                    Text(verbatim: store.surahNames[page.surah] ?? "")
-                        .font(.system(size: 22, weight: .heavy))
-                        .foregroundStyle(Palette.ink)
-                    HStack(spacing: 6) {
-                        Text("Juz' \(page.juz)")
-                        Text(verbatim: "·")
-                        Text("Page \(page.number)")
-                    }
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Palette.inkSoft)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: "chevron.forward")
-                    .font(.system(size: 14, weight: .heavy))
-                    .foregroundStyle(Palette.brand)
-                    .frame(width: 34, height: 34)
-                    .background(Palette.lavender, in: Circle())
+    private func shareChip(_ share: Double) -> some View {
+        AqraChip(icon: "🪜", tint: Palette.lavender) {
+            HStack(spacing: 4) {
+                Text(verbatim: share.formatted(.percent.precision(.fractionLength(0...1))))
+                    .contentTransition(.numericText(value: share))
+                Text("of the Quran")
             }
-            .padding(14)
-            .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .shadow(color: Palette.shadow.opacity(0.06), radius: 14, y: 6)
         }
-        .buttonStyle(.plain)
+    }
+
+    private func strengthChip(_ strength: Double) -> some View {
+        AqraChip(icon: "🌱", tint: Palette.mint) {
+            HStack(spacing: 4) {
+                Text("Memorization strength")
+                Text(verbatim: strength.formatted(.percent.precision(.fractionLength(0))))
+            }
+        }
+    }
+
+    private func playEntrance() async {
+        guard !reduceMotion else {
+            entered = true
+            chipsOut = true
+            shownClimb = climbTarget
+            return
+        }
+        let light = UIImpactFeedbackGenerator(style: .light)
+        light.prepare()
+        withAnimation(.spring(response: 0.7, dampingFraction: 0.85)) { entered = true }
+        climbAnimation = .spring(duration: 1.3, bounce: 0.1)
+        shownClimb = climbTarget
+        try? await Task.sleep(for: .milliseconds(420))
+        guard memorization.count > 0 else { return }
+        withAnimation(.spring(response: 0.6, dampingFraction: 0.66)) { chipsOut = true }
+        light.impactOccurred(intensity: 0.5)
     }
 
     // MARK: - Today's wird
 
-    @ViewBuilder
-    private var wird: some View {
-        if let plan = revision.plan, !plan.items.isEmpty {
-            VStack(alignment: .leading, spacing: 14) {
-                wirdHeader(plan)
-                VStack(spacing: 10) {
-                    ForEach(plan.items) { item in
-                        card(item)
-                    }
+    /// What's left of today's wird: the pages not yet revised, the first of them leading.
+    private var remaining: [PlanItem] {
+        revision.plan?.items.filter { !$0.done } ?? []
+    }
+
+    private var memorizedPageCount: Int {
+        RevisionStore.memorizedPages(in: store, memorization: memorization).count
+    }
+
+    private var dailyPages: Int {
+        revision.effectiveDailyPages(memorizedPages: memorizedPageCount)
+    }
+
+    private var cycleLine: Text {
+        Text("A full revision every \(DailyAmountView.cycleDays(memorizedPages: memorizedPageCount, amount: dailyPages)) days")
+    }
+
+    private var headline: some View {
+        let plan = revision.plan
+        return VStack(spacing: 10) {
+            VStack(spacing: 2) {
+                if memorization.count == 0 || plan == nil || plan?.items.isEmpty == true {
+                    Text("What have you memorized").foregroundStyle(Palette.ink)
+                    Text("of the Quran?").foregroundStyle(Palette.brand)
+                } else if let next = remaining.first {
+                    Text("Your revision today").foregroundStyle(Palette.ink)
+                    Text("\(remaining.count) pages from \(store.surahNames[store.page(next.page).surah] ?? "")")
+                        .foregroundStyle(Palette.brand)
+                } else {
+                    Text("Today's revision is done").foregroundStyle(Palette.ink)
+                    Text("May Allah bless you").foregroundStyle(Palette.brand)
                 }
-                if !plan.isComplete {
-                    BrandButton(plan.doneCount == 0 ? "Start today's revision" : "Continue today's revision",
-                                metrics: OnboardingButtonMetrics(height: 54, fontSize: 17, compact: false)) {
-                        if let next = plan.items.first(where: { !$0.done }) {
-                            destination = .wird(page: next.page)
-                        }
-                    }
-                    Text("Revised a page outside the app? Press and hold it.")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Palette.inkSoft)
-                        .frame(maxWidth: .infinity)
-                }
-                amountRow
             }
-            .padding(18)
-            .background(.white, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
-            .shadow(color: Palette.shadow.opacity(0.06), radius: 14, y: 6)
+            .font(.system(size: 31, weight: .heavy))
+            .lineLimit(1)
+            .minimumScaleFactor(0.6)
+            Group {
+                if memorization.count == 0 {
+                    Text("Choose what you've memorized to start climbing")
+                } else {
+                    cycleLine
+                }
+            }
+            .font(.system(size: 16, weight: .medium))
+            .foregroundStyle(Palette.inkSoft)
+        }
+        .multilineTextAlignment(.center)
+        .frame(maxWidth: .infinity)
+    }
+
+    @ViewBuilder
+    private var action: some View {
+        let metrics = OnboardingButtonMetrics(height: 56, fontSize: 18, compact: false)
+        if memorization.count == 0 {
+            BrandButton("Choose what you've memorized", metrics: metrics) { editingMemorization = true }
+        } else if let next = remaining.first, let plan = revision.plan {
+            BrandButton(plan.doneCount == 0 ? "Start today's revision" : "Continue today's revision", metrics: metrics) {
+                destination = .wird(page: next.page, fromButton: true)
+            }
+            .zoomTransitionSource(id: Destination.wird(page: next.page, fromButton: true).sourceID, in: zoom)
         }
     }
 
-    private func wirdHeader(_ plan: DayPlan) -> some View {
-        HStack(spacing: 14) {
-            VStack(alignment: .leading, spacing: 3) {
-                Text(plan.isComplete ? "Today's revision is done" : "Today's revision")
-                    .font(.system(size: 22, weight: .heavy))
-                    .foregroundStyle(Palette.ink)
-                Text("\(plan.doneCount) of \(plan.items.count)")
-                    .font(.system(size: 14, weight: .semibold).monospacedDigit())
-                    .foregroundStyle(Palette.inkSoft)
-                    .contentTransition(.numericText())
+    // MARK: - Cards
+
+    /// The Mushaf, open on the page last read: its miniature grows into the full page.
+    private var mushafCard: some View {
+        let page = store.page(lastPage)
+        return Button {
+            destination = .mushaf(marking: false)
+        } label: {
+            AqraCard(padding: 12, radius: 24) {
+                HStack(spacing: 12) {
+                    MushafThumbnail(page: page, store: store)
+                        .frame(width: 40, height: 63)
+                        .clipShape(RoundedRectangle(cornerRadius: 8, style: .continuous))
+                        .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(MushafStyle.chrome.opacity(0.25), lineWidth: 1))
+                        .zoomTransitionSource(id: Destination.mushaf(marking: false).sourceID, in: zoom)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Continue reading")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Palette.inkSoft)
+                        HStack(spacing: 5) {
+                            Text(verbatim: store.surahNames[page.surah] ?? "")
+                            Text(verbatim: "·")
+                            Text("Page \(page.number)")
+                        }
+                        .font(.system(size: 16, weight: .heavy))
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    }
+                    Spacer(minLength: 8)
+                    IconTile(icon: "📖", tint: Palette.sky, size: 40)
+                }
             }
-            Spacer()
-            ZStack {
-                Circle().stroke(Palette.lavender, lineWidth: 6)
-                Circle()
-                    .trim(from: 0, to: Double(plan.doneCount) / Double(plan.items.count))
-                    .stroke(LinearGradient(colors: [Palette.brand, Palette.brandDeep], startPoint: .top, endPoint: .bottom),
-                            style: StrokeStyle(lineWidth: 6, lineCap: .round))
-                    .rotationEffect(.degrees(-90))
-                if plan.isComplete {
-                    StarShape(points: 8, innerRatio: 0.42, cornerRadius: 0.05)
-                        .fill(LinearGradient(colors: [Color(light: 0xF8D371, dark: 0xF8D371), Color(light: 0xEFB54A, dark: 0xEFB54A)],
-                                             startPoint: .top, endPoint: .bottom))
-                        .frame(width: 22, height: 22)
+        }
+        .buttonStyle(AqraPressStyle())
+    }
+
+    private func pagesCard(_ plan: DayPlan) -> some View {
+        AqraCard(padding: 14, radius: 24) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(spacing: 10) {
+                    IconTile(icon: "📄", tint: Palette.sky, size: 40)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Today's pages")
+                            .font(.system(size: 19, weight: .heavy))
+                            .foregroundStyle(Palette.ink)
+                        if !plan.isComplete {
+                            Text("Revised a page outside the app? Press and hold it.")
+                                .font(.system(size: 11, weight: .semibold))
+                                .foregroundStyle(Palette.inkSoft)
+                                .fixedSize(horizontal: false, vertical: true)
+                        }
+                    }
+                    Spacer(minLength: 4)
+                    Text("\(plan.doneCount) of \(plan.items.count)")
+                        .font(.system(size: 13, weight: .bold).monospacedDigit())
+                        .foregroundStyle(Palette.brand)
+                        .contentTransition(.numericText())
+                        .padding(.horizontal, 10)
+                        .frame(height: 28)
+                        .background(Palette.lavender, in: Capsule())
+                }
+                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
+                    ForEach(plan.items) { item in
+                        pageTile(item)
+                    }
+                }
+            }
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: plan.doneCount)
+        }
+    }
+
+    /// A page of today's wird, in its juz's band color: tap to revise it, press and hold if it was revised elsewhere.
+    private func pageTile(_ item: PlanItem) -> some View {
+        let page = store.page(item.page)
+        let face = ManazilStairs.face(forJuz: page.juz)
+        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
+        return Button {
+            destination = .wird(page: item.page, fromButton: false)
+        } label: {
+            VStack(spacing: 2) {
+                Text(item.page.formatted())
+                    .font(.system(size: 18, weight: .heavy).monospacedDigit())
+                    .foregroundStyle(item.done ? Palette.inkSoft : Palette.ink)
+                Group {
+                    if item.kind == .followUp {
+                        Text("Follow-up").foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
+                    } else {
+                        Text(verbatim: store.surahNames[page.surah] ?? "").foregroundStyle(Palette.inkSoft)
+                    }
+                }
+                .font(.system(size: 11, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+            }
+            .padding(.horizontal, 6)
+            .frame(maxWidth: .infinity)
+            .frame(height: 62)
+            .background(
+                item.done
+                    ? AnyShapeStyle(face.top.opacity(0.14))
+                    : AnyShapeStyle(LinearGradient(colors: [face.top.opacity(0.6), face.top.opacity(0.28)], startPoint: .top, endPoint: .bottom)),
+                in: shape
+            )
+            .overlay(shape.strokeBorder(.white.opacity(0.8), lineWidth: 1))
+            .overlay(alignment: .topTrailing) {
+                if item.done {
+                    Image(systemName: "checkmark.circle.fill")
+                        .font(.system(size: 16, weight: .bold))
+                        .foregroundStyle(.white, face.bottom)
+                        .padding(6)
                         .transition(.scale.combined(with: .opacity))
                 }
             }
-            .frame(width: 52, height: 52)
+            .contentShape(shape)
         }
-        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: plan.doneCount)
-    }
-
-    private func card(_ item: PlanItem) -> some View {
-        let page = store.page(item.page)
-        let face = ManazilStairs.face(forJuz: page.juz)
-        return Button {
-            destination = .wird(page: item.page)
-        } label: {
-            HStack(spacing: 12) {
-                Text(item.page.formatted())
-                    .font(.system(size: 16, weight: .heavy).monospacedDigit())
-                    .foregroundStyle(Palette.ink)
-                    .frame(width: 48, height: 48)
-                    .background(face.top, in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                VStack(alignment: .leading, spacing: 3) {
-                    Text(verbatim: store.surahNames[page.surah] ?? "")
-                        .font(.system(size: 17, weight: .bold))
-                        .foregroundStyle(Palette.ink)
-                    HStack(spacing: 6) {
-                        Text("Juz' \(page.juz)")
-                        Text(item.kind == .followUp ? "Follow-up" : "Rotation")
-                            .font(.system(size: 11, weight: .bold))
-                            .foregroundStyle(item.kind == .followUp ? Color(light: 0x9A3E26, dark: 0x9A3E26) : Palette.brand)
-                            .padding(.horizontal, 8)
-                            .padding(.vertical, 3)
-                            .background(item.kind == .followUp ? Color(light: 0xFCE3DA, dark: 0xFCE3DA) : Palette.lavender, in: Capsule())
-                    }
-                    .font(.system(size: 13, weight: .medium))
-                    .foregroundStyle(Palette.inkSoft)
-                }
-                Spacer(minLength: 8)
-                Image(systemName: item.done ? "checkmark" : "chevron.forward")
-                    .font(.system(size: 14, weight: .heavy))
-                    .foregroundStyle(item.done ? .white : Palette.inkSoft)
-                    .frame(width: 34, height: 34)
-                    .background(item.done ? face.bottom : Palette.surface, in: Circle())
-            }
-            .padding(10)
-            .background(item.done ? Palette.surface : .white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
-            .overlay(RoundedRectangle(cornerRadius: 20, style: .continuous).strokeBorder(Palette.lavender, lineWidth: item.done ? 0 : 1.2))
-            .zoomTransitionSource(id: Destination.wird(page: item.page).sourceID, in: zoom)
-        }
-        .buttonStyle(.plain)
+        .buttonStyle(AqraPressStyle())
+        .zoomTransitionSource(id: Destination.wird(page: item.page, fromButton: false).sourceID, in: zoom)
         .contextMenu {
             if !item.done {
                 Button {
-                    let ayahs = store.page(item.page).ayahs.filter { memorization.isMemorized($0) }
+                    let ayahs = page.ayahs.filter { memorization.isMemorized($0) }
                     revision.record(page: item.page, ayahs: ayahs, stumbles: [], source: .outside, memorization: memorization)
                 } label: {
                     Label("Revised outside the app", systemImage: "checkmark.circle")
                 }
             }
         }
-        .animation(.spring(response: 0.4, dampingFraction: 0.8), value: item.done)
+        .accessibilityValue(item.done ? Text("Revised") : Text(verbatim: ""))
     }
 
-    private var amountRow: some View {
-        let memorizedPages = RevisionStore.memorizedPages(in: store, memorization: memorization).count
-        let amount = revision.effectiveDailyPages(memorizedPages: memorizedPages)
-        return NavigationLink {
-            DailyAmountView(memorizedPages: memorizedPages, initial: amount, isEditor: true) { revision.setDailyPages($0) }
-                .toolbar(.visible, for: .navigationBar)
-        } label: {
-            HStack(spacing: 10) {
-                Image(systemName: "calendar")
-                    .font(.system(size: 15, weight: .bold))
-                    .foregroundStyle(Palette.brand)
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("\(amount) pages a day")
-                        .font(.system(size: 14, weight: .bold))
-                        .foregroundStyle(Palette.ink)
-                    Text("A full revision every \(DailyAmountView.cycleDays(memorizedPages: memorizedPages, amount: amount)) days")
-                        .font(.system(size: 12, weight: .medium))
-                        .foregroundStyle(Palette.inkSoft)
+    /// What's memorized and how much is revised each day, each opening its editor.
+    private var memorizationCard: some View {
+        AqraCard(padding: 0, radius: 24) {
+            VStack(spacing: 0) {
+                Button {
+                    editingMemorization = true
+                } label: {
+                    AqraRow(icon: "✏️", tint: Palette.butter,
+                            title: memorization.count == 0 ? Text("Choose what you've memorized") : Text("Edit what you've memorized"),
+                            detail: memorization.count == 0 ? nil : memorizedSummary)
                 }
-                Spacer()
-                Image(systemName: "chevron.forward")
-                    .font(.system(size: 12, weight: .bold))
-                    .foregroundStyle(Palette.inkSoft)
+                .buttonStyle(.plain)
+                if memorization.count > 0 {
+                    AqraRowDivider()
+                    Button {
+                        editingAmount = true
+                    } label: {
+                        AqraRow(icon: "🗓️", tint: Palette.peach, title: Text("\(dailyPages) pages a day"), detail: cycleLine)
+                    }
+                    .buttonStyle(.plain)
+                }
             }
-            .padding(.top, 4)
         }
-        .buttonStyle(.plain)
+    }
+
+    /// «٥٦٤ آية · جزء واحد»: the ayat memorized, and the whole juz' among them.
+    private var memorizedSummary: Text {
+        let fullJuz = (1...30).filter { juz in
+            store.juzAyahs[juz].map { memorization.memorizedCount(in: $0) == $0.count } ?? false
+        }.count
+        let ayat = Text("\(memorization.count) ayat")
+        return fullJuz > 0 ? ayat + Text(verbatim: " · ") + Text("\(fullJuz) juz'") : ayat
     }
 }
 
 /// A miniature of a Mushaf page: the real page, drawn at a phone's size and scaled down.
-private struct MushafThumbnail: View {
+struct MushafThumbnail: View {
     var page: MushafPage
     var store: MushafStore
     private static let drawnSize = CGSize(width: 380, height: 600)

@@ -12,15 +12,18 @@
 		0B3D2921336B533833058829 /* quran in Resources */ = {isa = PBXBuildFile; fileRef = 7AB948E93ABED6504E87449D /* quran */; };
 		0EB2AD94C10829064C1917EB /* HomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 140188D5E36E5305D761C689 /* HomeView.swift */; };
 		12D590DA34A191EB5674BEFE /* WelcomeSnapshotTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */; };
+		1369C75B6E0F90F163E6D860 /* AccountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 6E0CDDC46CD40B3AA873605C /* AccountView.swift */; };
 		1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 01744F945BA643B14B7465BE /* AqraWelcomeView.swift */; };
 		1C5F4BA3851DEFBE3DEFC906 /* MushafTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */; };
 		1EAB7A71C09ABF42DFDB12DF /* Amiri-Bold.ttf in Resources */ = {isa = PBXBuildFile; fileRef = 6E6984583BED0004A203DABB /* Amiri-Bold.ttf */; };
 		263DCB34D497E7EBE0794B0F /* Amiri-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */; };
 		2A203B4FCA716C993ACC5786 /* MemorizationSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBAD12111AE3902F992CCFF /* MemorizationSetupView.swift */; };
+		3CD36316B74C1EBCC705BADF /* MyProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B6432468BBF0A2EFA7D57F0 /* MyProgressView.swift */; };
 		3FDBDC2BEE2EA9E82D76CF50 /* MemorizationStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5ED2439632E5AA260610DF87 /* MemorizationStore.swift */; };
 		46321E94CC83A24568ABCFCC /* RevisionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCCD71BF466B07DDD06D84E /* RevisionEngine.swift */; };
 		4964D378F5949856F3745F53 /* ManazilStairs.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B68B0A48A1816211271B2B /* ManazilStairs.swift */; };
 		57DEC10A3EC756442E353877 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 35F03A505062D433A0B82952 /* Localizable.xcstrings */; };
+		59C9BB628C5B5E6AAC777C44 /* AqraComponents.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3DF83E6EACD34C51D60CD605 /* AqraComponents.swift */; };
 		6FFAE34E3F9E52CC10B92D53 /* AppIconRenderTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */; };
 		713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */; };
 		916DEA5DC95A5438E364AEDB /* MemorizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA10A8241619208EBC8A9E56 /* MemorizationTests.swift */; };
@@ -66,12 +69,15 @@
 		269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManazilPageView.swift; sourceTree = "<group>"; };
 		2CF7CA2416343BC4067921C5 /* PageDots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageDots.swift; sourceTree = "<group>"; };
 		35F03A505062D433A0B82952 /* Localizable.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = Localizable.xcstrings; sourceTree = "<group>"; };
+		3B6432468BBF0A2EFA7D57F0 /* MyProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyProgressView.swift; sourceTree = "<group>"; };
+		3DF83E6EACD34C51D60CD605 /* AqraComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraComponents.swift; sourceTree = "<group>"; };
 		4971E9222377B2D0AE1D25DD /* AqraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraApp.swift; sourceTree = "<group>"; };
 		4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		5374F6DB7F1FFAF810B695C4 /* MushafView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafView.swift; sourceTree = "<group>"; };
 		56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraTests.swift; sourceTree = "<group>"; };
 		5ED2439632E5AA260610DF87 /* MemorizationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizationStore.swift; sourceTree = "<group>"; };
 		69FA526BC35C31760E96760B /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
+		6E0CDDC46CD40B3AA873605C /* AccountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountView.swift; sourceTree = "<group>"; };
 		6E6984583BED0004A203DABB /* Amiri-Bold.ttf */ = {isa = PBXFileReference; lastKnownFileType = file; path = "Amiri-Bold.ttf"; sourceTree = "<group>"; };
 		708045EEA73D597E66035897 /* AqraLogo.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraLogo.swift; sourceTree = "<group>"; };
 		76EBE0EB6CE652A1ECAD40BB /* DailyAmountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyAmountView.swift; sourceTree = "<group>"; };
@@ -158,6 +164,14 @@
 			name = Products;
 			sourceTree = "<group>";
 		};
+		81E09644DE32BC5B6438182E /* Progress */ = {
+			isa = PBXGroup;
+			children = (
+				3B6432468BBF0A2EFA7D57F0 /* MyProgressView.swift */,
+			);
+			path = Progress;
+			sourceTree = "<group>";
+		};
 		88636D0AF183BBA7F8083935 /* Mushaf */ = {
 			isa = PBXGroup;
 			children = (
@@ -167,6 +181,14 @@
 				5374F6DB7F1FFAF810B695C4 /* MushafView.swift */,
 			);
 			path = Mushaf;
+			sourceTree = "<group>";
+		};
+		8B4F7800401DDED08D9DE514 /* Account */ = {
+			isa = PBXGroup;
+			children = (
+				6E0CDDC46CD40B3AA873605C /* AccountView.swift */,
+			);
+			path = Account;
 			sourceTree = "<group>";
 		};
 		9C8F178663BAA7E3C4CCCF64 /* Resources */ = {
@@ -183,11 +205,13 @@
 				4971E9222377B2D0AE1D25DD /* AqraApp.swift */,
 				99C540650E9663B5B728582A /* Assets.xcassets */,
 				35F03A505062D433A0B82952 /* Localizable.xcstrings */,
+				8B4F7800401DDED08D9DE514 /* Account */,
 				FC29328FD3B6841D595DB0AC /* DesignSystem */,
 				CEFBDBEB05736F3F2932CCEA /* Home */,
 				414E566AE95DAE89ECEB90A3 /* Memorization */,
 				88636D0AF183BBA7F8083935 /* Mushaf */,
 				1549276E68F0E369A83EEED1 /* Onboarding */,
+				81E09644DE32BC5B6438182E /* Progress */,
 				9C8F178663BAA7E3C4CCCF64 /* Resources */,
 				3AB17583EB887E2AA2431A98 /* Revision */,
 				FE352AD1935C1FB58065078E /* SacredText */,
@@ -238,6 +262,7 @@
 			isa = PBXGroup;
 			children = (
 				057E8C550F33565A3E785512 /* AqraArchLogo.swift */,
+				3DF83E6EACD34C51D60CD605 /* AqraComponents.swift */,
 				F4936D1082FB73C3638CB969 /* AqraFont.swift */,
 				708045EEA73D597E66035897 /* AqraLogo.swift */,
 				0CB3948E085F254CF36BF182 /* Color+Hex.swift */,
@@ -362,8 +387,10 @@
 			isa = PBXSourcesBuildPhase;
 			buildActionMask = 2147483647;
 			files = (
+				1369C75B6E0F90F163E6D860 /* AccountView.swift in Sources */,
 				EB8C8031FA7C371C1FFA38C8 /* AqraApp.swift in Sources */,
 				E8E74CAA0E7A5D828639A8D3 /* AqraArchLogo.swift in Sources */,
+				59C9BB628C5B5E6AAC777C44 /* AqraComponents.swift in Sources */,
 				EF4765262D5AA2C27811E483 /* AqraFont.swift in Sources */,
 				9D6D88E273E4885187DC9823 /* AqraLogo.swift in Sources */,
 				1B957D3DA37DB61940802401 /* AqraWelcomeView.swift in Sources */,
@@ -379,6 +406,7 @@
 				EAEBCFF615FEDD24A42B8A43 /* MushafPageView.swift in Sources */,
 				BDEC10886391E806B355B426 /* MushafStore.swift in Sources */,
 				B385724117B3DF0FF21962B3 /* MushafView.swift in Sources */,
+				3CD36316B74C1EBCC705BADF /* MyProgressView.swift in Sources */,
 				028487F5A6C0BED60172B546 /* OnboardingPageLayout.swift in Sources */,
 				B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */,
 				A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */,

@@ -73,7 +73,7 @@ struct FeaturesPageView: View {
                     .opacity(glowIn ? 1 : 0)
 
                 floating(0, depth: .back, at: CGPoint(x: -112, y: -168), tilt: -8, time: time) {
-                    Chip(icon: "⭐️", tint: Palette.butter, text: "+٥٠ نقطة")
+                    AqraChip(icon: "⭐️", tint: Palette.butter) { Text(verbatim: "+٥٠ نقطة") }
                 }
                 floating(1, depth: .front, at: CGPoint(x: 58, y: -104), tilt: 4, time: time) {
                     StreakCard(days: streakDays)
@@ -85,7 +85,7 @@ struct FeaturesPageView: View {
                     SessionCard()
                 }
                 floating(4, depth: .back, at: CGPoint(x: -98, y: 180), tilt: 3, time: time) {
-                    Chip(icon: "✅", tint: Palette.mint, text: "أتممت الجزء ٣٠")
+                    AqraChip(icon: "✅", tint: Palette.mint) { Text(verbatim: "أتممت الجزء ٣٠") }
                 }
             }
             // Positions are a fixed composition; each card's contents keep the screen's direction.
@@ -157,37 +157,11 @@ private typealias Palette = OnboardingPalette
 
 // MARK: - Cards
 
-/// Every icon sits in the same tinted rounded square.
-private struct IconTile: View {
-    var icon: String
-    var tint: Color
-    var size: CGFloat = 34
-
-    var body: some View {
-        Text(icon)
-            .font(.system(size: size * 0.52))
-            .frame(width: size, height: size)
-            .background(tint, in: RoundedRectangle(cornerRadius: size * 0.32, style: .continuous))
-    }
-}
-
-private struct Card<Content: View>: View {
-    @ViewBuilder var content: Content
-
-    var body: some View {
-        content
-            .padding(12)
-            .background(.white, in: RoundedRectangle(cornerRadius: 22, style: .continuous))
-            .shadow(color: Palette.shadow.opacity(0.10), radius: 18, y: 10)
-            .shadow(color: Palette.shadow.opacity(0.06), radius: 2, y: 1)
-    }
-}
-
 private struct StreakCard: View {
     var days: Int
 
     var body: some View {
-        Card {
+        AqraCard {
             VStack(alignment: .leading, spacing: 10) {
                 HStack(spacing: 10) {
                     IconTile(icon: "🔥", tint: Palette.peach)
@@ -223,7 +197,7 @@ private struct ManzilCard: View {
     var progress: CGFloat
 
     var body: some View {
-        Card {
+        AqraCard {
             VStack(alignment: .leading, spacing: 9) {
                 HStack(spacing: 10) {
                     IconTile(icon: "🪜", tint: Palette.lavender)
@@ -251,7 +225,7 @@ private struct ManzilCard: View {
 
 private struct SessionCard: View {
     var body: some View {
-        Card {
+        AqraCard {
             HStack(spacing: 10) {
                 IconTile(icon: "🎙️", tint: Palette.sky)
                 VStack(alignment: .leading, spacing: 1) {
@@ -265,26 +239,6 @@ private struct SessionCard: View {
             }
             .padding(.trailing, 4)
         }
-    }
-}
-
-private struct Chip: View {
-    var icon: String
-    var tint: Color
-    var text: String
-
-    var body: some View {
-        HStack(spacing: 8) {
-            IconTile(icon: icon, tint: tint, size: 26)
-            Text(verbatim: text)
-                .font(.system(size: 13, weight: .bold))
-                .foregroundStyle(Palette.ink)
-        }
-        .padding(.leading, 5)
-        .padding(.trailing, 12)
-        .padding(.vertical, 5)
-        .background(.white, in: Capsule())
-        .shadow(color: Palette.shadow.opacity(0.10), radius: 12, y: 6)
     }
 }
 

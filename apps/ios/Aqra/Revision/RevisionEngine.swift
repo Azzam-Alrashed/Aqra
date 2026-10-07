@@ -80,6 +80,9 @@ final class RevisionStore {
     private(set) var followUps: [Int: FollowUp] = [:]
     private(set) var plan: DayPlan?
     private(set) var history: [RevisionRecord] = []
+    /// The days on which at least one page was revised, kept apart from the history so a long streak isn't cut
+    /// short when old records are dropped.
+    private(set) var revisedDays: Set<Date> = []
 
     @ObservationIgnored private let fileURL: URL?
     @ObservationIgnored private let calendar: Calendar
@@ -101,6 +104,7 @@ final class RevisionStore {
         followUps = Dictionary(file.followUps.map { ($0.page, FollowUp(due: $0.due, step: $0.step)) }, uniquingKeysWith: { first, _ in first })
         plan = file.plan
         history = file.history
+        revisedDays = Set(file.revisedDays ?? file.history.map { calendar.startOfDay(for: $0.date) })
     }
 
     /// The daily amount in effect: the student's choice, or the suggestion for what they've memorized.
@@ -191,9 +195,31 @@ final class RevisionStore {
             rotationCursor = cursor
         }
 
+        revisedDays.insert(day)
         history.append(RevisionRecord(date: now, page: page, source: source, stumbles: stumbles.sorted()))
         if history.count > 1_000 { history.removeFirst(history.count - 1_000) }
         save()
+    }
+
+    // MARK: - Streak
+
+    /// The days in a row, up to today, on which the student revised. Today not being revised yet doesn't break
+    /// it: until the day ends, the streak counts back from yesterday.
+    func streak(now: Date = .now) -> Int {
+        var day = calendar.startOfDay(for: now)
+        if !revisedDays.contains(day) { day = date(day, plus: -1) }
+        var count = 0
+        while revisedDays.contains(day) {
+            count += 1
+            day = date(day, plus: -1)
+        }
+        return count
+    }
+
+    /// Whether the student revised on each of the last `count` days, oldest first, ending today.
+    func recentDays(_ count: Int = 7, now: Date = .now) -> [Bool] {
+        let today = calendar.startOfDay(for: now)
+        return (0..<count).reversed().map { revisedDays.contains(date(today, plus: -$0)) }
     }
 
     private func date(_ day: Date, plus days: Int) -> Date {
@@ -214,6 +240,8 @@ final class RevisionStore {
         var followUps: [FollowUpRecord]
         var plan: DayPlan?
         var history: [RevisionRecord]
+        /// Missing from files written before the streak was kept; it's then rebuilt from the history.
+        var revisedDays: [Date]?
     }
 
     private func save() {
@@ -221,7 +249,7 @@ final class RevisionStore {
         let file = File(
             dailyPages: dailyPages, rotationCursor: rotationCursor,
             followUps: followUps.sorted { $0.key < $1.key }.map { File.FollowUpRecord(page: $0.key, due: $0.value.due, step: $0.value.step) },
-            plan: plan, history: history
+            plan: plan, history: history, revisedDays: revisedDays.sorted()
         )
         try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? JSONEncoder().encode(file).write(to: fileURL, options: .atomic)
