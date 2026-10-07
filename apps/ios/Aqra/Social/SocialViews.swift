@@ -96,6 +96,10 @@ struct TogetherSection: View {
                 }
             }
         }
+        // A race's standings show the student's score as soon as they're in it, not only after their next revision.
+        .onChange(of: social.competitions, initial: true) {
+            if let name = account.publicName { social.reportScores(name: name) }
+        }
         .sheet(isPresented: $showingFriends) { FriendsView() }
         .sheet(isPresented: $creating) { NewCompetitionView(kinds: [.friends, .khatmah]) }
         .sheet(item: $opened) { competition in CompetitionView(competition: competition) }

@@ -98,11 +98,8 @@ struct PeerRequestView: View {
         .environment(\.colorScheme, .light)
         .animation(.spring(response: 0.45, dampingFraction: 0.8), value: received)
         .sensoryFeedback(.success, trigger: received != nil) { _, arrived in arrived }
+        // The code is left to expire rather than deleted on closing: a friend may still be marking.
         .task { await create() }
-        .onDisappear {
-            // A code nobody used is let go of at once rather than left to expire.
-            if let request, received == nil { tasmee.cancelPeerRequest(request) }
-        }
     }
 
     private func create() async {

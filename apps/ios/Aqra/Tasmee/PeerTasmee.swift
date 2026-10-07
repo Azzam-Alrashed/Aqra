@@ -89,11 +89,6 @@ extension TasmeeStore {
         throw TasmeeError.codeUnavailable
     }
 
-    /// Withdraws a request before it expires.
-    func cancelPeerRequest(_ request: PeerRequest) {
-        database.collection("peerRequests").document(request.id).delete(completion: report)
-    }
-
     /// The request behind a code, if it exists and is still valid.
     func peerRequest(code: String) async throws -> PeerRequest? {
         let snapshot = try await database.collection("peerRequests").document(code).getDocument()
