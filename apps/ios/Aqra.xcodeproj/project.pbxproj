@@ -75,6 +75,7 @@
 		CFE907F55F9252A073A6EBF5 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AB3061F1929AE7431B17E2DF /* FirebaseFirestore */; };
 		D1532B8C85C494E67336552E /* JourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951585A6E1740996615236BA /* JourneyTests.swift */; };
 		D35482B4BEF2062E268AE3A3 /* RotationAdvisor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A36665EF8F19D147219B7 /* RotationAdvisor.swift */; };
+		D4969195FDFB71EC67776D38 /* PlanSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = FD9D4F6D1A0B10E49186D558 /* PlanSetupView.swift */; };
 		D8D65C91045C897D90F7FE9D /* MemorizeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21BFEDE7189234BAC56C6A6 /* MemorizeView.swift */; };
 		DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A5BD4368E1C3CCFCDBDB66 /* StartPageView.swift */; };
 		DDA79F6E3E69BAB3DC2025FF /* AyahText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C91AADA1D8AFB8D6B84C661 /* AyahText.swift */; };
@@ -185,6 +186,7 @@
 		F21BFEDE7189234BAC56C6A6 /* MemorizeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizeView.swift; sourceTree = "<group>"; };
 		F4936D1082FB73C3638CB969 /* AqraFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraFont.swift; sourceTree = "<group>"; };
 		F963062115C6877B1AA1CE65 /* InboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InboxStore.swift; sourceTree = "<group>"; };
+		FD9D4F6D1A0B10E49186D558 /* PlanSetupView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanSetupView.swift; sourceTree = "<group>"; };
 		FF793C12D16FB36F80C61903 /* SacredText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SacredText.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -223,6 +225,7 @@
 			isa = PBXGroup;
 			children = (
 				F21BFEDE7189234BAC56C6A6 /* MemorizeView.swift */,
+				FD9D4F6D1A0B10E49186D558 /* PlanSetupView.swift */,
 				0FB96DBD7F5AD2D753B534CA /* PlanStore.swift */,
 				BA5A24D8953593FFD67072E8 /* PlanViews.swift */,
 			);
@@ -632,6 +635,7 @@
 				A628EEB2B5D4250A946134C1 /* PageDots.swift in Sources */,
 				596A5B67934BA91E23B6B715 /* PeerTasmee.swift in Sources */,
 				A2C8F773376D76EE820064A2 /* PeerViews.swift in Sources */,
+				D4969195FDFB71EC67776D38 /* PlanSetupView.swift in Sources */,
 				FF34ECA9B23026A632862A5B /* PlanStore.swift in Sources */,
 				1EE162AB5A10ED7D0D6A5627 /* PlanViews.swift in Sources */,
 				46321E94CC83A24568ABCFCC /* RevisionEngine.swift in Sources */,

@@ -48,11 +48,9 @@ enum PlanFormat {
 // MARK: - Setting the plan
 
 /// «كم تحفظ يوميًا؟»: the personal plan — how much new memorization a day, on which days, in which order — with the
-/// completion date it leads to. Shown at the end of setup, and later to change the plan.
+/// completion date it leads to, all on one sheet to change it. Setup asks the same one page at a time (`PlanSetupView`).
 struct PlanEditorView: View {
     var store: MushafStore
-    /// The last step of setup, where it can be left for later, rather than a sheet changing the plan.
-    var isSetup = false
     var onDone: (MemorizationPlan?) -> Void
 
     @Environment(PlanStore.self) private var planStore
@@ -74,7 +72,7 @@ struct PlanEditorView: View {
                 .multilineTextAlignment(.center)
                 .lineLimit(1)
                 .minimumScaleFactor(0.7)
-                .padding(.top, isSetup ? 28 : 24)
+                .padding(.top, 24)
                 Text("A little every day, and the review engine keeps it.")
                     .font(.system(size: 15, weight: .medium))
                     .foregroundStyle(Palette.inkSoft)
@@ -228,17 +226,13 @@ struct PlanEditorView: View {
 
     private var buttons: some View {
         VStack(spacing: 10) {
-            BrandButton(isSetup || planStore.plan == nil ? "Start my plan" : "Save",
+            BrandButton(planStore.plan == nil ? "Start my plan" : "Save",
                         metrics: OnboardingButtonMetrics(height: 56, fontSize: 18, compact: false)) {
                 var plan = draft
                 plan.paused = false
                 finish(plan)
             }
-            if isSetup {
-                Button("Not now") { finish(nil) }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Palette.brand)
-            } else if let plan = planStore.plan {
+            if let plan = planStore.plan {
                 HStack(spacing: 20) {
                     Button(plan.paused ? "Resume" : "Pause") {
                         var changed = plan
@@ -263,10 +257,9 @@ struct PlanEditorView: View {
     }
 
     private func finish(_ plan: MemorizationPlan?) {
-        // In setup, «ليس الآن» leaves no plan; outside it, only «إيقاف الخطة» removes one.
-        if plan != nil || !isSetup { planStore.setPlan(plan) }
+        planStore.setPlan(plan)
         onDone(plan)
-        if !isSetup { dismiss() }
+        dismiss()
     }
 }
 

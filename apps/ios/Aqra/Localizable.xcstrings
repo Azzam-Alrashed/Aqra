@@ -1,6 +1,106 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
+    "Which days" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في أي الأيام"
+          }
+        }
+      }
+    },
+    "will you memorize?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحفظ؟"
+          }
+        }
+      }
+    },
+    "Revision goes on every day." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المراجعة مستمرة كل يوم."
+          }
+        }
+      }
+    },
+    "a week" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في الأسبوع"
+          }
+        }
+      }
+    },
+    "Where will you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من أين"
+          }
+        }
+      }
+    },
+    "begin?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تبدأ؟"
+          }
+        }
+      }
+    },
+    "You'll finish, God willing," : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ستختم بإذن الله"
+          }
+        }
+      }
+    },
+    "in %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في %@"
+          }
+        }
+      }
+    },
+    "You've memorized" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظت"
+          }
+        }
+      }
+    },
+    "the whole Quran" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "القرآن كاملًا"
+          }
+        }
+      }
+    },
     "" : {
 
     },

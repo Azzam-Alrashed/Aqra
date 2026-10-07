@@ -302,7 +302,7 @@ struct MushafRootView: View {
         Group {
             switch store {
             case .success(let store) where !hasDeclared && setupStep == .plan:
-                PlanEditorView(store: store, isSetup: true) { _ in
+                PlanSetupView(store: store) { _ in
                     withAnimation { hasDeclared = true }
                 }
                 .transition(.move(edge: .leading).combined(with: .opacity))

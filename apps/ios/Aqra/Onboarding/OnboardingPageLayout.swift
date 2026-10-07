@@ -99,22 +99,34 @@ struct OnboardingPageLayout<Stage: View, Copy: View, Buttons: View>: View {
 
 /// A two-line headline, the second line in the brand color, with a detail line beneath.
 struct OnboardingHeadline: View {
-    var first: LocalizedStringKey
-    var second: LocalizedStringKey
-    var detail: LocalizedStringKey
+    var first: Text
+    var second: Text
+    var detail: Text
     var scale: CGFloat
     var visible: Bool
+
+    init(first: LocalizedStringKey, second: LocalizedStringKey, detail: LocalizedStringKey, scale: CGFloat, visible: Bool) {
+        self.init(first: Text(first), second: Text(second), detail: Text(detail), scale: scale, visible: visible)
+    }
+
+    init(first: Text, second: Text, detail: Text, scale: CGFloat, visible: Bool) {
+        self.first = first
+        self.second = second
+        self.detail = detail
+        self.scale = scale
+        self.visible = visible
+    }
 
     var body: some View {
         VStack(spacing: 10 * scale) {
             VStack(spacing: 2) {
-                Text(first).foregroundStyle(OnboardingPalette.ink)
-                Text(second).foregroundStyle(OnboardingPalette.brand)
+                first.foregroundStyle(OnboardingPalette.ink)
+                second.foregroundStyle(OnboardingPalette.brand)
             }
             .font(.system(size: 31 * scale, weight: .heavy))
             .lineLimit(1)
             .minimumScaleFactor(0.7)
-            Text(detail)
+            detail
                 .font(.system(size: 16 * scale, weight: .medium))
                 .foregroundStyle(OnboardingPalette.inkSoft)
         }
