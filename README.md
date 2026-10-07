@@ -6,7 +6,7 @@
 ```
 apps/
   ios/        iOS app (SwiftUI, XcodeGen: edit project.yml, then run `xcodegen generate`)
-  android/    Android app (planned)
+  android/    Android app (Kotlin, Jetpack Compose; see apps/android/README.md)
   web/        Web PWA (planned)
 backend/      Firebase: Firestore rules and their tests; Cloud Functions (planned)
 shared/       Platform-neutral data, e.g. the verified Quran text and its checksums (planned)
