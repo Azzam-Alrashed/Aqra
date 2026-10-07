@@ -1,6 +1,5 @@
 package com.azzamalrashed.aqra.plan
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -272,7 +271,7 @@ private fun OrderCard(order: MemorizationPlan.Order, onChoose: (MemorizationPlan
 @Composable
 fun PortionCard(app: AqraApp, store: MushafStore, onMemorize: (List<Int>) -> Unit, onEditPlan: () -> Unit) {
     val plan = app.plan
-    AqraCard(Modifier.fillMaxWidth().animateContentSize(), padding = 14.dp, radius = 24.dp) {
+    AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 14.dp, radius = 24.dp) {
         val today = plan.today(app.memorization, store)
         when {
             plan.plan == null -> Row(Modifier.fillMaxWidth().pressable(pressed = 0.98f, onClick = onEditPlan),

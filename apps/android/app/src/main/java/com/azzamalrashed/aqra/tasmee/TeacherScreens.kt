@@ -1,6 +1,9 @@
 package com.azzamalrashed.aqra.tasmee
 
 import androidx.compose.foundation.background
+import androidx.compose.foundation.gestures.awaitEachGesture
+import androidx.compose.foundation.gestures.awaitFirstDown
+import androidx.compose.foundation.gestures.waitForUpOrCancellation
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -22,6 +25,7 @@ import androidx.compose.material3.DatePicker
 import androidx.compose.material3.DatePickerDialog
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
+import androidx.compose.material3.SelectableDates
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.material3.TimePicker
@@ -33,17 +37,27 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.rememberUpdatedState
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.Role
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.disabled
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.role
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.account.AqraTextField
 import com.azzamalrashed.aqra.account.Confirm
+import com.azzamalrashed.aqra.account.aqraTimePickerColors
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.ui.AqraSheet
@@ -70,11 +84,13 @@ import com.azzamalrashed.aqra.ui.util.formatNumber
 import com.azzamalrashed.aqra.ui.util.formatRelative
 import com.azzamalrashed.aqra.ui.util.formatWhen
 import java.time.Instant
+import java.time.LocalDate
 import java.time.LocalTime
 import java.time.ZoneId
 import java.time.ZoneOffset
 import java.time.ZonedDateTime
 import java.time.temporal.ChronoUnit
+import kotlinx.coroutines.withTimeoutOrNull
 
 // MARK: - A session, new or edited
 
@@ -89,6 +105,8 @@ fun SessionEditor(app: AqraApp, session: TasmeeSession?, onDone: () -> Unit) {
     var kind by remember { mutableStateOf(session?.kind ?: TasmeeSession.Kind.IN_PERSON) }
     var place by remember { mutableStateOf(session?.place.orEmpty()) }
     var seats by remember { mutableIntStateOf(session?.seats ?: 5) }
+    var auctionSeats by remember { mutableIntStateOf(0) }
+    var minBid by remember { mutableIntStateOf(0) }
     var pickingDate by remember { mutableStateOf(false) }
     var pickingTime by remember { mutableStateOf(false) }
     // A session's seats can't go below the students who already booked.
@@ -116,11 +134,24 @@ fun SessionEditor(app: AqraApp, session: TasmeeSession?, onDone: () -> Unit) {
             }
             AqraRowDivider(start = 14.dp)
             FieldRow(stringResource(R.string.seats)) {
-                Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    RoundStep(Icons.Rounded.Remove, seats > minimumSeats) { seats -= 1 }
-                    Text(formatNumber(seats), style = aqraStyle(17f, Weight.heavy, Palette.ink))
-                    RoundStep(Icons.Rounded.Add, seats < 30) { seats += 1 }
+                Stepper(seats, canLower = seats > minimumSeats, canRaise = seats < 30) { seats = (seats + it).coerceIn(minimumSeats, 30) }
+            }
+        }
+        if (session == null) {
+            AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 0.dp, radius = 24.dp) {
+                FieldRow(stringResource(R.string.seats_by_auction)) {
+                    Stepper(auctionSeats, canLower = auctionSeats > 0, canRaise = auctionSeats < 20) { auctionSeats = (auctionSeats + it).coerceIn(0, 20) }
                 }
+                if (auctionSeats > 0) {
+                    AqraRowDivider(start = 14.dp)
+                    FieldRow(stringResource(R.string.lowest_bid)) {
+                        Stepper(minBid, canLower = minBid > 0, canRaise = minBid < 100) { minBid = (minBid + it).coerceIn(0, 100) }
+                    }
+                }
+            }
+            if (auctionSeats > 0) {
+                Text(stringResource(R.string.beside_the_free_seats_these_go_to_the_highest_bids), style = aqraStyle(12f, Weight.medium, Palette.inkSoft),
+                    modifier = Modifier.padding(horizontal = 6.dp))
             }
         }
         if (kind == TasmeeSession.Kind.VIDEO) {
@@ -132,14 +163,22 @@ fun SessionEditor(app: AqraApp, session: TasmeeSession?, onDone: () -> Unit) {
             if (session != null) {
                 app.tasmee.updateSession(session.copy(startsAt = moment, place = if (kind == TasmeeSession.Kind.VIDEO) "" else place.trim(), seats = maxOf(seats, minimumSeats)))
             } else {
-                app.tasmee.createSession(moment, kind, place.trim(), seats)
+                app.tasmee.createSession(moment, kind, place.trim(), seats, auctionSeats, minBid)
             }
             onDone()
         }
     }
 
     if (pickingDate) {
-        val state = rememberDatePickerState(initialSelectedDateMillis = startsAt.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli())
+        // A session can't be set in the past.
+        val today = remember { LocalDate.now(zone) }
+        val state = rememberDatePickerState(
+            initialSelectedDateMillis = startsAt.toLocalDate().atStartOfDay(ZoneOffset.UTC).toInstant().toEpochMilli(),
+            selectableDates = object : SelectableDates {
+                override fun isSelectableDate(utcTimeMillis: Long) = Instant.ofEpochMilli(utcTimeMillis).atZone(ZoneOffset.UTC).toLocalDate() >= today
+                override fun isSelectableYear(year: Int) = year >= today.year
+            },
+        )
         DatePickerDialog(onDismissRequest = { pickingDate = false }, confirmButton = {
             TextButton({
                 state.selectedDateMillis?.let {
@@ -152,7 +191,7 @@ fun SessionEditor(app: AqraApp, session: TasmeeSession?, onDone: () -> Unit) {
     }
     if (pickingTime) {
         val state = rememberTimePickerState(startsAt.hour, startsAt.minute)
-        androidx.compose.material3.AlertDialog(onDismissRequest = { pickingTime = false }, containerColor = Color.White, text = { TimePicker(state) },
+        androidx.compose.material3.AlertDialog(onDismissRequest = { pickingTime = false }, containerColor = Color.White, text = { TimePicker(state, colors = aqraTimePickerColors()) },
             confirmButton = {
                 TextButton({
                     startsAt = ZonedDateTime.of(startsAt.toLocalDate(), LocalTime.of(state.hour, state.minute), zone)
@@ -177,9 +216,48 @@ private fun ValueChip(text: String, onClick: () -> Unit) {
     }
 }
 
+/** A number between a minus and a plus, each repeating while held; [onStep] gets −1 or +1. */
 @Composable
-private fun RoundStep(icon: androidx.compose.ui.graphics.vector.ImageVector, enabled: Boolean, onClick: () -> Unit) {
-    Box(Modifier.size(34.dp).background(Palette.lavender, CircleShape).pressable(enabled = enabled, onClick = onClick), contentAlignment = Alignment.Center) {
+private fun Stepper(value: Int, canLower: Boolean, canRaise: Boolean, onStep: (Int) -> Unit) {
+    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+        RoundStep(Icons.Rounded.Remove, "−", canLower) { onStep(-1) }
+        Text(formatNumber(value), style = aqraStyle(17f, Weight.heavy, Palette.ink), textAlign = TextAlign.Center, modifier = Modifier.widthIn(min = 28.dp))
+        RoundStep(Icons.Rounded.Add, "+", canRaise) { onStep(1) }
+    }
+}
+
+@Composable
+private fun RoundStep(icon: androidx.compose.ui.graphics.vector.ImageVector, label: String, enabled: Boolean, onStep: () -> Unit) {
+    val step by rememberUpdatedState(onStep)
+    Box(
+        Modifier
+            .size(34.dp)
+            .background(Palette.lavender, CircleShape)
+            .semantics {
+                role = Role.Button
+                contentDescription = label
+                if (enabled) onClick { step(); true } else disabled()
+            }
+            .pointerInput(enabled) {
+                if (!enabled) return@pointerInput
+                awaitEachGesture {
+                    awaitFirstDown()
+                    step()
+                    // Held down, it repeats, faster after a moment.
+                    var wait = 450L
+                    while (true) {
+                        val ended = withTimeoutOrNull(wait) {
+                            waitForUpOrCancellation()
+                            true
+                        }
+                        if (ended == true) break
+                        step()
+                        wait = 90L
+                    }
+                }
+            },
+        contentAlignment = Alignment.Center,
+    ) {
         Icon(icon, null, tint = if (enabled) Palette.brand else Palette.inkSoft.copy(alpha = 0.4f), modifier = Modifier.size(18.dp))
     }
 }
@@ -194,9 +272,11 @@ fun SessionPage(app: AqraApp, store: MushafStore, session: TasmeeSession, naviga
     var seats by remember { mutableStateOf(emptyList<Seat>()) }
     var editing by remember { mutableStateOf(false) }
     var confirmingCancel by remember { mutableStateOf(false) }
+    var bids by remember { mutableStateOf(emptyList<Bid>()) }
     // The session as it is now; the one navigated to is only a snapshot.
     val live = tasmee.mySessions.firstOrNull { it.id == session.id } ?: session
     LaunchedEffect(session.id) { tasmee.seats(session.id).collect { seats = it } }
+    LaunchedEffect(session.id) { if (session.auction != null) tasmee.bids(session.id).collect { bids = it } }
 
     TabPage(top = 16.dp) {
         AqraCard(Modifier.fillMaxWidth(), padding = 14.dp, radius = 24.dp) {
@@ -206,12 +286,32 @@ fun SessionPage(app: AqraApp, store: MushafStore, session: TasmeeSession, naviga
                     Text(formatWhen(live.startsAt.toInstant()), style = aqraStyle(19f, Weight.heavy, Palette.ink))
                     Text(placeText(live), style = aqraStyle(13f, Weight.semibold, Palette.inkSoft))
                     Text(stringResource(R.string.n_of_n_seats, seats.size, live.seats), style = aqraStyle(13f, Weight.bold, Palette.brand))
+                    live.auction?.let { auction ->
+                        val count = if (auction.state == TasmeeSession.Auction.State.SETTLED) auction.won else auction.bids
+                        Text(stringResource(R.string.n_seats_by_auction_n_bids, auction.seats, count), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
+                    }
                 }
+            }
+            if (live.kind == TasmeeSession.Kind.VIDEO) {
+                Spacer(Modifier.height(12.dp))
+                CallButton(live, stringResource(R.string.start_the_call)) { overlays.open(teacherCall(app, store, live)) }
             }
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(16.dp)) {
                 Text(stringResource(R.string.edit), style = aqraStyle(13f, Weight.bold, Palette.brand), modifier = Modifier.pressable { editing = true })
                 Text(stringResource(R.string.cancel_session), style = aqraStyle(13f, Weight.bold, Palette.danger), modifier = Modifier.pressable { confirmingCancel = true })
+            }
+        }
+        if (live.auction != null && bids.isNotEmpty()) {
+            AqraSectionTitle(stringResource(R.string.bids), Modifier.padding(top = 10.dp))
+            AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
+                bids.forEachIndexed { index, bid ->
+                    if (index > 0) AqraRowDivider()
+                    val holding = bid.status == Bid.Status.ACTIVE || bid.status == Bid.Status.WON
+                    AqraRow(when (bid.status) { Bid.Status.WON -> "🎉"; Bid.Status.ACTIVE -> "🔨"; else -> "↩️" }, Palette.butter, bid.name, detail = bidStatus(bid)) {
+                        Text(pluralStringResource(R.plurals.n_credits, bid.amount, bid.amount), style = aqraStyle(14f, Weight.heavy, if (holding) Palette.brand else Palette.inkSoft))
+                    }
+                }
             }
         }
         AqraSectionTitle(stringResource(R.string.students), Modifier.padding(top = 10.dp))
@@ -244,6 +344,14 @@ fun SessionPage(app: AqraApp, store: MushafStore, session: TasmeeSession, naviga
         }
     }
 }
+
+@Composable
+private fun bidStatus(bid: Bid): String = stringResource(when (bid.status) {
+    Bid.Status.ACTIVE -> R.string.holding_a_seat
+    Bid.Status.OUTBID -> R.string.outbid
+    Bid.Status.WON -> R.string.won_a_seat
+    Bid.Status.RELEASED -> R.string.released
+})
 
 // MARK: - The teacher's profile
 

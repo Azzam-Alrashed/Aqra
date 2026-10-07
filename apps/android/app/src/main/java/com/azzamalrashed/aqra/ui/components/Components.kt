@@ -1,5 +1,6 @@
 package com.azzamalrashed.aqra.ui.components
 
+import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateDpAsState
 import androidx.compose.animation.core.animateFloatAsState
@@ -10,6 +11,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.absoluteOffset
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
 import androidx.compose.foundation.layout.Column
@@ -38,11 +40,13 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.remember
+import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.dropShadow
+import androidx.compose.ui.graphics.CompositingStrategy
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -80,6 +84,13 @@ fun Modifier.softShadow(shape: Shape, strength: Float = 1f, radius: Dp = 18.dp, 
     .dropShadow(shape, Shadow(radius = radius, color = Palette.shadow.copy(alpha = 0.10f * strength), offset = DpOffset(0.dp, y)))
     .dropShadow(shape, Shadow(radius = 2.dp, color = Palette.shadow.copy(alpha = 0.06f * strength), offset = DpOffset(0.dp, 1.dp)))
 
+/**
+ * Fades a view, its shadow included. A plain `alpha` draws the view offscreen first, which cuts its shadow off at its
+ * edges; this fades each thing it draws instead.
+ */
+fun Modifier.fade(alpha: Float): Modifier =
+    if (alpha >= 1f) this else graphicsLayer { this.alpha = alpha; compositingStrategy = CompositingStrategy.ModulateAlpha }
+
 /** Gives a little as it's pressed, with a spring. */
 @Composable
 fun Modifier.pressScale(interaction: MutableInteractionSource, pressed: Float = 0.97f): Modifier {
@@ -111,12 +122,16 @@ fun IconTile(icon: String, tint: Color, size: Dp = 34.dp, modifier: Modifier = M
     }
 }
 
-/** A white card lifted off the surface by a soft purple shadow. */
+/**
+ * A white card lifted off the surface by a soft purple shadow. An [animated] card grows and shrinks with its content,
+ * its shadow following (animating the size from outside would cut the shadow off).
+ */
 @Composable
 fun AqraCard(
     modifier: Modifier = Modifier,
     padding: Dp = 12.dp,
     radius: Dp = 22.dp,
+    animated: Boolean = false,
     content: @Composable ColumnScope.() -> Unit,
 ) {
     val shape = RoundedCornerShape(radius)
@@ -125,6 +140,7 @@ fun AqraCard(
             .softShadow(shape)
             .background(Color.White, shape)
             .clip(shape)
+            .then(if (animated) Modifier.animateContentSize() else Modifier)
             .padding(padding),
         content = content,
     )
@@ -212,9 +228,12 @@ fun <T> AqraSegmented(selection: T, options: List<Pair<T, String>>, onSelect: (T
             .padding(4.dp),
     ) {
         if (target != null) {
+            // The options' places are measured from the left in either reading direction, so the pill is placed
+            // from the left too.
             Box(
                 Modifier
-                    .offset { IntOffset(offset.roundToPx(), 0) }
+                    .align(AbsoluteAlignment.TopLeft)
+                    .absoluteOffset { IntOffset(offset.roundToPx(), 0) }
                     .width(width)
                     .height((38 * scale).dp)
                     .background(Brush.verticalGradient(Palette.brandGradient), CircleShape),
@@ -267,7 +286,7 @@ fun BrandButton(
         modifier
             .fillMaxWidth()
             .heightIn(min = height)
-            .alpha(if (enabled) 1f else 0.5f)
+            .fade(if (enabled) 1f else 0.5f)
             .pressScale(interaction, 0.96f)
             .dropShadow(CircleShape, Shadow(radius = 14.dp, color = Palette.brand.copy(alpha = 0.35f), offset = DpOffset(0.dp, 8.dp)))
             .background(Brush.verticalGradient(Palette.brandGradient), CircleShape)
@@ -385,7 +404,7 @@ fun MarkingButton(
     Row(
         modifier
             .heightIn(min = 46.dp)
-            .alpha(if (enabled) 1f else 0.45f)
+            .fade(if (enabled) 1f else 0.45f)
             .pressScale(interaction, 0.96f)
             .then(
                 if (prominent) Modifier

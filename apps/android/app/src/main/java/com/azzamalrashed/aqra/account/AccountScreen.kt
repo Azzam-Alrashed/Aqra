@@ -12,7 +12,6 @@ import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -65,6 +64,9 @@ import androidx.core.os.LocaleListCompat
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.BuildConfig
 import com.azzamalrashed.aqra.R
+import com.azzamalrashed.aqra.credits.WalletScreen
+import com.azzamalrashed.aqra.credits.WalletStore
+import com.azzamalrashed.aqra.ui.AqraSheet
 import com.azzamalrashed.aqra.ui.Navigator
 import com.azzamalrashed.aqra.ui.NavigatorHost
 import com.azzamalrashed.aqra.ui.TabPage
@@ -75,6 +77,7 @@ import com.azzamalrashed.aqra.ui.components.AqraRowDivider
 import com.azzamalrashed.aqra.ui.components.AqraSectionTitle
 import com.azzamalrashed.aqra.ui.components.IconTile
 import com.azzamalrashed.aqra.ui.components.ProblemLine
+import com.azzamalrashed.aqra.ui.components.fade
 import com.azzamalrashed.aqra.ui.components.pressable
 import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.ui.theme.Weight
@@ -108,6 +111,7 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
     var confirmingDeletion by remember { mutableStateOf(false) }
     var pickingTime by remember { mutableStateOf(false) }
     var notificationsDenied by remember { mutableStateOf(false) }
+    var showingWallet by remember { mutableStateOf(false) }
     var reminderOn by app.prefs.reminderOn
     val reminderMinutes by app.prefs.reminderMinutes
 
@@ -123,6 +127,13 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
     TabPage(top = 16.dp) {
         Text(stringResource(R.string.account), style = aqraStyle(30f, Weight.heavy, Palette.ink))
         AccountCard(app)
+        if (AccountStore.isAvailable) {
+            AqraCard(Modifier.fillMaxWidth().pressable { showingWallet = true }, padding = 0.dp, radius = 24.dp) {
+                AqraRow("🪙", Palette.butter, stringResource(R.string.credits),
+                    detail = if (account.profile?.isAnonymous == false) stringResource(R.string.s_credits, WalletStore.format(account.wallet.balance))
+                    else stringResource(R.string.for_seats_won_by_bidding))
+            }
+        }
 
         AqraSectionTitle(stringResource(R.string.mushaf), Modifier.padding(top = 10.dp))
         AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
@@ -132,7 +143,7 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
         }
 
         AqraSectionTitle(stringResource(R.string.revision), Modifier.padding(top = 10.dp))
-        AqraCard(Modifier.fillMaxWidth().animateContentSize(), padding = 0.dp, radius = 24.dp) {
+        AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 0.dp, radius = 24.dp) {
             AqraRow("🔔", Palette.sky, stringResource(R.string.daily_reminder),
                 detail = if (reminderOn) stringResource(R.string.every_day_at_s, formatTime(reminderMinutes / 60, reminderMinutes % 60)) else null) {
                 AqraSwitch(reminderOn) { on ->
@@ -170,6 +181,10 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
 
         AqraSectionTitle(stringResource(R.string.app), Modifier.padding(top = 10.dp))
         AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
+            AqraRow("🔔", Palette.butter, stringResource(R.string.sounds), detail = stringResource(R.string.a_gentle_chime_for_rewards)) {
+                AqraSwitch(app.prefs.soundsOn.value) { app.prefs.soundsOn.value = it }
+            }
+            AqraRowDivider()
             LanguageRow()
             AqraRowDivider()
             AqraRow("📚", Palette.butter, stringResource(R.string.sources), Modifier.pressable(pressed = 1f) { navigator.push(SourcesDestination) },
@@ -177,7 +192,7 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
         }
 
         if (account.profile?.isAnonymous == false) {
-            AqraCard(Modifier.fillMaxWidth().padding(top = 10.dp).alpha(if (account.isWorking) 0.6f else 1f), padding = 0.dp, radius = 24.dp) {
+            AqraCard(Modifier.fillMaxWidth().padding(top = 10.dp).fade(if (account.isWorking) 0.6f else 1f), padding = 0.dp, radius = 24.dp) {
                 AqraRow("🚪", Palette.lavender, stringResource(R.string.sign_out), Modifier.pressable(enabled = !account.isWorking, pressed = 1f) { confirmingSignOut = true }) {}
                 AqraRowDivider()
                 AqraRow("🗑️", Palette.rose, stringResource(R.string.delete_account), Modifier.pressable(enabled = !account.isWorking, pressed = 1f) { confirmingDeletion = true },
@@ -202,6 +217,7 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
             action = stringResource(R.string.delete), onDismiss = { confirmingDeletion = false },
         ) { context.findActivity()?.let { activity -> scope.launch { account.deleteAccount(activity) } } }
     }
+    if (showingWallet) AqraSheet(onDismiss = { showingWallet = false }) { WalletScreen(app) }
     if (pickingTime) {
         ReminderTimeDialog(reminderMinutes, onDismiss = { pickingTime = false }) { minutes ->
             app.prefs.reminderMinutes.value = minutes
@@ -239,16 +255,19 @@ private fun ReminderTimeDialog(minutes: Int, onDismiss: () -> Unit, onSet: (Int)
     AlertDialog(
         onDismissRequest = onDismiss,
         containerColor = Color.White,
-        text = {
-            TimePicker(state, colors = TimePickerDefaults.colors(
-                clockDialColor = Palette.surface, selectorColor = Palette.brand, timeSelectorSelectedContainerColor = Palette.lavender,
-                timeSelectorSelectedContentColor = Palette.brand, periodSelectorSelectedContainerColor = Palette.lavender,
-            ))
-        },
+        text = { TimePicker(state, colors = aqraTimePickerColors()) },
         confirmButton = { TextButton({ onSet(state.hour * 60 + state.minute) }) { Text(stringResource(R.string.save), style = aqraStyle(15f, Weight.bold, Palette.brand)) } },
         dismissButton = { TextButton(onDismiss) { Text(stringResource(R.string.cancel), style = aqraStyle(15f, Weight.bold, Palette.inkSoft)) } },
     )
 }
+
+/** The time picker in the app's colors: a lavender dial and fields, the hand in purple. */
+@OptIn(ExperimentalMaterial3Api::class)
+@Composable
+fun aqraTimePickerColors() = TimePickerDefaults.colors(
+    clockDialColor = Palette.surface, selectorColor = Palette.brand, timeSelectorSelectedContainerColor = Palette.lavender,
+    timeSelectorSelectedContentColor = Palette.brand, periodSelectorSelectedContainerColor = Palette.lavender,
+)
 
 /** The app's language: the system's per-app setting from Android 13, or a choice here before it. */
 @Composable
@@ -298,7 +317,7 @@ private fun AccountCard(app: AqraApp) {
     val account = app.account
     val profile = account.profile
     var editingName by remember { mutableStateOf(false) }
-    AqraCard(Modifier.fillMaxWidth().animateContentSize(), padding = 14.dp, radius = 24.dp) {
+    AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 14.dp, radius = 24.dp) {
         Column(verticalArrangement = Arrangement.spacedBy(14.dp)) {
             if (profile != null && !profile.isAnonymous) {
                 Row(Modifier.semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {

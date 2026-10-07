@@ -1,6 +1,5 @@
 package com.azzamalrashed.aqra.tasmee
 
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.background
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -37,6 +36,10 @@ import com.azzamalrashed.aqra.account.Confirm
 import com.azzamalrashed.aqra.account.Problem
 import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.credits.BidSheet
+import com.azzamalrashed.aqra.credits.EarningsScreen
+import com.azzamalrashed.aqra.credits.WalletStore
+import com.azzamalrashed.aqra.social.Competition
+import com.azzamalrashed.aqra.social.NewCompetitionScreen
 import com.azzamalrashed.aqra.ui.AqraSheet
 import com.azzamalrashed.aqra.ui.FullScreen
 import com.azzamalrashed.aqra.ui.LocalOverlays
@@ -111,6 +114,8 @@ private fun TasmeeHome(app: AqraApp, store: MushafStore, navigator: Navigator) {
     var creatingSession by remember { mutableStateOf(false) }
     var editingProfile by remember { mutableStateOf(false) }
     var reciting by remember { mutableStateOf(false) }
+    var showingEarnings by remember { mutableStateOf(false) }
+    var startingCompetition by remember { mutableStateOf(false) }
     LaunchedEffect(tasmee.uid) { tasmee.loadTeachers() }
 
     TabPage(top = 16.dp) {
@@ -124,7 +129,10 @@ private fun TasmeeHome(app: AqraApp, store: MushafStore, navigator: Navigator) {
             }
             return@TabPage
         }
-        if (tasmee.isTeacher) TeacherSections(app, navigator, onNewSession = { creatingSession = true }, onEditProfile = { editingProfile = true })
+        if (tasmee.isTeacher) {
+            TeacherSections(app, navigator, onNewSession = { creatingSession = true }, onEditProfile = { editingProfile = true },
+                onEarnings = { showingEarnings = true }, onCompetition = { startingCompetition = true })
+        }
         tasmee.nextBooking?.let { booking ->
             AqraSectionTitle(stringResource(R.string.your_next_tasmee), Modifier.padding(top = 10.dp))
             BookingCard(app, booking)
@@ -160,6 +168,12 @@ private fun TasmeeHome(app: AqraApp, store: MushafStore, navigator: Navigator) {
     if (creatingSession) AqraSheet(onDismiss = { creatingSession = false }, fullHeight = false) { SessionEditor(app, null) { creatingSession = false } }
     if (editingProfile) AqraSheet(onDismiss = { editingProfile = false }, fullHeight = false) { TeacherProfileEditor(app) { editingProfile = false } }
     if (reciting) AqraSheet(onDismiss = { reciting = false }) { PeerRequestSheet(app) { reciting = false } }
+    if (showingEarnings) AqraSheet(onDismiss = { showingEarnings = false }) { EarningsScreen(app) }
+    if (startingCompetition) {
+        AqraSheet(onDismiss = { startingCompetition = false }) {
+            NewCompetitionScreen(app, listOf(Competition.Kind.TEACHER)) { startingCompetition = false }
+        }
+    }
 }
 
 @Composable
@@ -172,7 +186,14 @@ private fun applicationLine(application: TeacherApplication?): String = stringRe
 })
 
 @Composable
-private fun TeacherSections(app: AqraApp, navigator: Navigator, onNewSession: () -> Unit, onEditProfile: () -> Unit) {
+private fun TeacherSections(
+    app: AqraApp,
+    navigator: Navigator,
+    onNewSession: () -> Unit,
+    onEditProfile: () -> Unit,
+    onEarnings: () -> Unit,
+    onCompetition: () -> Unit,
+) {
     val tasmee = app.tasmee
     tasmee.teacherProfile?.let { profile ->
         AqraCard(Modifier.fillMaxWidth().padding(top = 4.dp), padding = 0.dp, radius = 24.dp) {
@@ -180,8 +201,12 @@ private fun TeacherSections(app: AqraApp, navigator: Navigator, onNewSession: ()
                 detail = profile.about ?: stringResource(R.string.add_your_city_and_a_line_about_you)) { EditBadge() }
         }
     }
+    AqraCard(Modifier.fillMaxWidth().pressable(onClick = onEarnings), padding = 0.dp, radius = 24.dp) {
+        AqraRow("🏦", Palette.butter, stringResource(R.string.your_earnings),
+            detail = stringResource(R.string.s_credits_due_to_you, WalletStore.format(app.account.wallet.due)))
+    }
     AqraSectionTitle(stringResource(R.string.my_sessions), Modifier.padding(top = 10.dp))
-    AqraCard(Modifier.fillMaxWidth().animateContentSize(), padding = 0.dp, radius = 24.dp) {
+    AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 0.dp, radius = 24.dp) {
         for (session in tasmee.mySessions) {
             // The count first: a place name in the other script would otherwise reorder the line.
             AqraRow(if (session.kind == TasmeeSession.Kind.VIDEO) "🎥" else "📅", Palette.sky, formatWhen(session.startsAt.toInstant()),
@@ -199,6 +224,9 @@ private fun TeacherSections(app: AqraApp, navigator: Navigator, onNewSession: ()
                 AqraRow("🧑‍🎓", Palette.butter, student.name, Modifier.pressable(pressed = 1f) { navigator.push(TasmeeDestination.StudentPage(student)) },
                     detail = stringResource(R.string.last_heard_s, formatRelative(student.lastHeardAt.toInstant())))
             }
+            AqraRowDivider()
+            AqraRow("🏆", Palette.mint, stringResource(R.string.a_competition_for_my_students), Modifier.pressable(pressed = 1f, onClick = onCompetition),
+                detail = stringResource(R.string.scored_from_the_pages_you_hear_clean))
         }
     }
 }
@@ -218,6 +246,7 @@ private fun BookingCard(app: AqraApp, booking: Booking) {
     var confirming by remember { mutableStateOf(false) }
     var problem by remember { mutableStateOf<Problem?>(null) }
     val scope = rememberCoroutineScope()
+    val overlays = LocalOverlays.current
     AqraCard(Modifier.fillMaxWidth(), padding = 14.dp, radius = 24.dp) {
         Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconTile(if (booking.kind == TasmeeSession.Kind.VIDEO) "🎥" else "🎓", if (cancelled) Palette.rose else Palette.mint, size = 40.dp)
@@ -229,6 +258,10 @@ private fun BookingCard(app: AqraApp, booking: Booking) {
                 if (cancelled) Text(stringResource(R.string.the_teacher_cancelled_this_session), style = aqraStyle(12f, Weight.semibold, Palette.warning))
             }
             ChipButton(stringResource(if (cancelled) R.string.remove else R.string.cancel_booking), filled = false) { confirming = true }
+        }
+        if (booking.kind == TasmeeSession.Kind.VIDEO && live != null && !cancelled) {
+            Spacer(Modifier.height(12.dp))
+            CallButton(live, stringResource(R.string.join_the_call)) { overlays.open(studentCall(live)) }
         }
         problem?.let { ProblemLine(it, Modifier.padding(top = 12.dp)) }
     }

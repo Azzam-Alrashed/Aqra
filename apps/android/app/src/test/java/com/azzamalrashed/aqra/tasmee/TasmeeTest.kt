@@ -52,6 +52,19 @@ class TasmeeTest {
     }
 
     @Test
+    fun aVideoSessionsCallIsOpenFromAQuarterOfAnHourBeforeUntilThreeHoursAfter() {
+        val starts = day(1)
+        val session = TasmeeSession("s", "t", "الشيخ أحمد", starts, TasmeeSession.Kind.VIDEO, place = "", seats = 5)
+        assertFalse(CallModel.isOpen(session, starts + (-16 * 60.0)))
+        assertTrue(CallModel.isOpen(session, starts + (-15 * 60.0)))
+        assertTrue(CallModel.isOpen(session, starts + 3 * 3_600.0))
+        assertFalse(CallModel.isOpen(session, starts + (3 * 3_600.0 + 1)))
+        // Only a video session has a call, and not once it's cancelled.
+        assertFalse(CallModel.isOpen(session.copy(kind = TasmeeSession.Kind.IN_PERSON), starts))
+        assertFalse(CallModel.isOpen(session.copy(status = TasmeeSession.Status.CANCELLED), starts))
+    }
+
+    @Test
     fun applyingATasmeeRecordsASheikhRevisionAndVerifies() {
         val policy = ReviewPolicy.STANDARD
         val memorization = MemorizationStore(file = null)

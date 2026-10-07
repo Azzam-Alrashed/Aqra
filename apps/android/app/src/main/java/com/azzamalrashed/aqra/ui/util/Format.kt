@@ -1,6 +1,7 @@
 package com.azzamalrashed.aqra.ui.util
 
 import android.icu.text.DateFormat
+import android.icu.text.RelativeDateTimeFormatter
 import android.icu.util.IslamicCalendar
 import android.icu.util.ULocale
 import java.text.NumberFormat
@@ -53,10 +54,16 @@ fun formatTime(hour: Int, minute: Int, locale: Locale = Locale.getDefault()): St
     return java.text.DateFormat.getTimeInstance(java.text.DateFormat.SHORT, locale).format(calendar.time)
 }
 
-/** How long ago, in words: «منذ ٥ دقائق», "5 minutes ago". */
-fun formatRelative(instant: Instant): String = android.text.format.DateUtils.getRelativeTimeSpanString(
+/** How long ago, in words: «منذ ٥ دقائق», "5 minutes ago"; within a minute, «الآن», "now". */
+fun formatRelative(instant: Instant): String = nowIfWithinAMinute(instant) ?: android.text.format.DateUtils.getRelativeTimeSpanString(
     instant.toEpochMilli(), System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS,
 ).toString()
+
+/** «الآن» rather than «منذ ٠ دقيقة», as the iOS app says it. */
+private fun nowIfWithinAMinute(instant: Instant): String? =
+    if (kotlin.math.abs(System.currentTimeMillis() - instant.toEpochMilli()) >= 60_000) null
+    else RelativeDateTimeFormatter.getInstance(ULocale.forLocale(Locale.getDefault()))
+        .format(RelativeDateTimeFormatter.Direction.PLAIN, RelativeDateTimeFormatter.AbsoluteUnit.NOW)
 
 /** A weekday's narrow name for a date, and its full name. */
 fun weekdayNarrow(date: Date, locale: Locale = Locale.getDefault()): String =
@@ -96,8 +103,17 @@ fun formatDayTime(instant: Instant, locale: Locale = Locale.getDefault()): Strin
     return DateTimeFormatter.ofPattern(pattern, locale).withZone(ZoneId.systemDefault()).format(instant)
 }
 
-/** How far away, in words, ahead or behind: «بعد ساعتين», "in 2 hours". */
-fun formatRelativeAhead(instant: Instant): String = android.text.format.DateUtils.getRelativeTimeSpanString(
-    instant.toEpochMilli(), System.currentTimeMillis(), android.text.format.DateUtils.MINUTE_IN_MILLIS,
-    android.text.format.DateUtils.FORMAT_ABBREV_RELATIVE,
-).toString()
+/** How far away, ahead or behind, in words that sit in a sentence: «خلال ساعتين», "in 2 hours". */
+fun formatRelativeAhead(instant: Instant): String {
+    nowIfWithinAMinute(instant)?.let { return it }
+    val seconds = (instant.toEpochMilli() - System.currentTimeMillis()) / 1000.0
+    val span = kotlin.math.abs(seconds)
+    val (quantity, unit) = when {
+        span < 3_600 -> span / 60 to RelativeDateTimeFormatter.RelativeUnit.MINUTES
+        span < 86_400 -> span / 3_600 to RelativeDateTimeFormatter.RelativeUnit.HOURS
+        else -> span / 86_400 to RelativeDateTimeFormatter.RelativeUnit.DAYS
+    }
+    val direction = if (seconds >= 0) RelativeDateTimeFormatter.Direction.NEXT else RelativeDateTimeFormatter.Direction.LAST
+    return RelativeDateTimeFormatter.getInstance(ULocale.forLocale(Locale.getDefault()))
+        .format(Math.round(quantity).toDouble(), direction, unit)
+}

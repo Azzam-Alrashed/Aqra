@@ -583,7 +583,7 @@ opens on the setup or the home.
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| PLT-01 | An Android app on the same backend and data rules. | S | ⏳ (a project is being set up in `apps/android`) | V |
+| PLT-01 | An Android app on the same backend and data rules. | S | 🟡 (`apps/android` does everything the iOS app does, video calls included, except buying credits; it isn't registered in Firebase yet) | V |
 | PLT-02 | A web app (PWA) on the same backend. | S | ⏳ | V |
 | PLT-03 | Ayah numbering, scheduling, the strength model and manazil are platform-neutral (documented here and in REVISION.md, tested on iOS). | M | ✅ | V |
 
@@ -794,7 +794,8 @@ What remains, and why:
 | CUR-03 stars, CUR-04 stage content | ⛔ | Need an authoritative source of the rub' boundaries, and authored content (DEP-04). |
 | NTF-03 push notifications | ⛔ | Needs an APNs key in Firebase (DEP-08); messages arrive in the in-app inbox meanwhile. |
 | PERF-06 video latency | ⛔ | Needs the LiveKit Cloud project (DEP-05). |
-| PLT-01 Android, PLT-02 web app | ⏳ | After the iOS release, as planned. |
+| PLT-01 Android | 🟡 | Built in `apps/android`. Buying credits waits for the server to verify Google Play purchases; release needs the app registered in Firebase (its SHA-1 for Google sign-in) and Apple's web sign-in. |
+| PLT-02 web app | ⏳ | After the iOS release, as planned. |
 
 **Before release** (unchanged dependencies): proofreading of all 604 pages (DEP-01); Quran Foundation account and
 credit (DEP-02); the thematic Mushaf's permission (DEP-03); LiveKit Cloud keys (DEP-05); App Store Connect

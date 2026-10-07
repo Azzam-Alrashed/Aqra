@@ -34,6 +34,7 @@ import androidx.compose.runtime.staticCompositionLocalOf
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
@@ -45,6 +46,7 @@ import com.azzamalrashed.aqra.AppTab
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.account.AccountScreen
+import com.azzamalrashed.aqra.account.SessionReminders
 import com.azzamalrashed.aqra.home.HomeScreen
 import com.azzamalrashed.aqra.memorization.MemorizationSetupScreen
 import com.azzamalrashed.aqra.mushaf.MushafScreen
@@ -57,6 +59,7 @@ import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.revision.DailyAmountScreen
 import com.azzamalrashed.aqra.revision.RevisionStore
 import com.azzamalrashed.aqra.revision.WirdScreen
+import com.azzamalrashed.aqra.tasmee.Booking
 import com.azzamalrashed.aqra.tasmee.TasmeeScreen
 import com.azzamalrashed.aqra.ui.components.AqraProgress
 import com.azzamalrashed.aqra.ui.theme.MushafStyle
@@ -163,10 +166,22 @@ private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
     val router = app.router
     val navigators = remember { AppTab.entries.associateWith { Navigator() } }
 
-    // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
+    // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes; a challenge
+    // may have ended while it was away.
     val count = app.memorization.count
     LaunchedEffect(count) { app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization)) }
-    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) { app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization)) }
+    LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
+        app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization))
+        app.rewards.checkChallenges(app.revision, app.plan)
+    }
+    // A reminder an hour before each booked session, as the sessions are now; set again once the daily reminder has
+    // been allowed to notify.
+    val context = LocalContext.current
+    val bookings = app.tasmee.upcomingBookings.map { booking ->
+        val live = app.tasmee.session(booking)
+        (live?.let(::Booking) ?: booking) to live?.status
+    }
+    LaunchedEffect(bookings, app.prefs.reminderOn.value) { SessionReminders.schedule(context, bookings) }
     // After choosing to mark in the Mushaf, the app opens straight on it, with the home underneath.
     LaunchedEffect(Unit) { if (startsMarking) overlays.open(FullScreen.Mushaf(marking = true)) }
 

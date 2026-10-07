@@ -22,7 +22,8 @@ between the two.
 ```
 
 `-PuseFirebaseEmulator` makes a debug build talk only to the local emulators (`npm run emulators` in `backend/`,
-project `demo-aqra`), reached from the Android emulator at 10.0.2.2.
+project `demo-aqra`), reached from the Android emulator at 10.0.2.2. Video calls there also need a local LiveKit
+server (`livekit-server --dev`, see backend/README.md); the app reaches it at 10.0.2.2 as well.
 
 The Mushaf is drawn by the app's own font reader (WOFF2, TrueType, COLR/CPAL, GPOS kerning, and the Unicode bidi
 algorithm for the text fonts). On a Mac, the tests compare it with CoreText, the engine the iOS app draws with:

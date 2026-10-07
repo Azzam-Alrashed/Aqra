@@ -47,6 +47,11 @@ class Preferences(context: Context) {
         }?.toMap().orEmpty()
         set(value) = prefs.edit { putString("rotation.dismissed", value.entries.joinToString(",") { "${it.key}:${it.value}" }) }
 
+    /** The reminders set for the sessions booked, as JSON (see SessionReminders). */
+    var sessionReminders: String?
+        get() = prefs.getString("reminders.sessions", null)
+        set(value) = prefs.edit { if (value == null) remove("reminders.sessions") else putString("reminders.sessions", value) }
+
     /** The tasmee' records already applied on this install, so none is applied twice while its mark is on its way. */
     var appliedTasmee: List<String>
         get() = prefs.getString("tasmee.applied", null)?.split('\n')?.filter { it.isNotEmpty() }.orEmpty()

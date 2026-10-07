@@ -85,7 +85,8 @@ data class TasmeeResult(val pages: List<Int>, val stumbles: List<Int>, val mista
  * listener's phone, turned page by page as the student recites. A tap marks an ayah the student stumbled on; pressing
  * and holding one says what kind of mistake it was; each page heard is marked as such; «سجّل التسميع» hands it all to
  * [onRecord], which writes it into the student's account, where their own app applies it. The listener's own
- * memorization colors are kept off the page: this is the student's page.
+ * memorization colors are kept off the page: this is the student's page. [overlay] floats over the page's corner,
+ * such as the student's video in a call.
  */
 @Composable
 fun TasmeeMarkingScreen(
@@ -95,6 +96,7 @@ fun TasmeeMarkingScreen(
     startPage: Int,
     allowsStageTest: Boolean = false,
     onClose: () -> Unit,
+    overlay: @Composable () -> Unit = {},
     onRecord: (TasmeeResult) -> Unit,
 ) {
     val style = MushafStyle.current()
@@ -145,6 +147,7 @@ fun TasmeeMarkingScreen(
                 revisions = { sessions[it] },
                 onAyahLongPress = { classifying = it },
             ), Modifier.fillMaxSize())
+            Box(Modifier.align(Alignment.TopStart).padding(10.dp)) { overlay() }
         }
         val onThisPage = sessions[page]?.stumbles?.size ?: 0
         val pageHeard = page in recorded

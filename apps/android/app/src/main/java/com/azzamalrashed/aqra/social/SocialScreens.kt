@@ -1,7 +1,6 @@
 package com.azzamalrashed.aqra.social
 
 import android.content.Intent
-import androidx.compose.animation.animateContentSize
 import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
@@ -137,7 +136,7 @@ fun TogetherSection(app: AqraApp, store: MushafStore) {
                 SignInButtons(app)
             }
         } else {
-            AqraCard(Modifier.fillMaxWidth().animateContentSize(), padding = 0.dp, radius = 24.dp) {
+            AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 0.dp, radius = 24.dp) {
                 val friends = social.friends
                 AqraRow("🤝", Palette.peach, stringResource(R.string.friends), Modifier.pressable(pressed = 0.98f) { showingFriends = true },
                     detail = if (friends.isEmpty()) stringResource(R.string.invite_a_friend_with_a_code)

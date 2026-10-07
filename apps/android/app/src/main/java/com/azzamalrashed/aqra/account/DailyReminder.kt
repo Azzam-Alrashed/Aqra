@@ -13,12 +13,17 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.azzamalrashed.aqra.AqraApplication
 import com.azzamalrashed.aqra.MainActivity
 import com.azzamalrashed.aqra.R
+import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.core.Preferences
 import java.util.Calendar
 
-/** The daily reminder of today's wird: one notification a day at the chosen time. */
+/**
+ * The daily reminder of today's wird: one notification a day at the chosen time. On the plan's study days it also
+ * mentions the new portion.
+ */
 object DailyReminder {
     private const val CHANNEL = "daily-wird"
     internal const val ACTION = "com.azzamalrashed.aqra.DAILY_WIRD"
@@ -68,11 +73,16 @@ object DailyReminder {
             context, 0, Intent(context, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
+        // The plan is read as the reminder goes out, so it follows the plan's days as they change.
+        val plan = (context.applicationContext as? AqraApplication)?.app?.plan
+        val withPortion = plan?.plan?.paused == false && plan.isStudyDay(Moment.now())
+        val text = context.getString(if (withPortion) R.string.your_new_portion_and_your_pages_for_today_are_waiting else R.string.your_pages_for_today_are_waiting_for_you)
         val notification = NotificationCompat.Builder(context, CHANNEL)
             .setSmallIcon(R.drawable.ic_notification)
             .setColor(ContextCompat.getColor(context, R.color.brand))
             .setContentTitle(context.getString(R.string.todays_revision))
-            .setContentText(context.getString(R.string.your_pages_for_today_are_waiting_for_you))
+            .setContentText(text)
+            .setStyle(NotificationCompat.BigTextStyle().bigText(text))
             .setContentIntent(open)
             .setAutoCancel(true)
             .build()

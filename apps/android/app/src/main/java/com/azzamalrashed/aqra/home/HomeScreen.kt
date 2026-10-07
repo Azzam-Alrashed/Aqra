@@ -1,7 +1,6 @@
 package com.azzamalrashed.aqra.home
 
 import androidx.compose.animation.AnimatedVisibility
-import androidx.compose.animation.animateContentSize
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -373,7 +372,7 @@ private fun MushafCard(app: AqraApp, store: MushafStore, onOpen: () -> Unit) {
 
 @Composable
 private fun PagesCard(app: AqraApp, store: MushafStore, plan: DayPlan) {
-    AqraCard(Modifier.fillMaxWidth().animateContentSize(), padding = 14.dp, radius = 24.dp) {
+    AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 14.dp, radius = 24.dp) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
             IconTile("📄", Palette.sky, size = 40.dp)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {

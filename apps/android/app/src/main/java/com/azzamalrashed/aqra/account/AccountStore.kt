@@ -93,14 +93,15 @@ class AccountStore(
         /**
          * Sets up Firebase from the config bundled by the google-services plugin, unless it's missing; or, for the
          * emulators, with made-up options (the emulators check none of them, and the project's name keeps the
-         * Firestore cache apart from the real project's). The Android emulator reaches the computer at 10.0.2.2.
+         * Firestore cache apart from the real project's). The API key only has to look like one: Cloud Functions
+         * refuses to call out without a well-formed key. The Android emulator reaches the computer at 10.0.2.2.
          */
         fun configure(context: Context) {
             appContext = context.applicationContext
             if (usesEmulator) {
                 if (FirebaseApp.getApps(context).isEmpty()) {
                     FirebaseApp.initializeApp(context, FirebaseOptions.Builder()
-                        .setProjectId("demo-aqra").setApplicationId("1:000000000000:android:0000000000000000").setApiKey("emulator")
+                        .setProjectId("demo-aqra").setApplicationId("1:000000000000:android:0000000000000000").setApiKey("AIzaAqra-local-emulators-only-000000000")
                         .build())
                 }
                 val host = "10.0.2.2"
