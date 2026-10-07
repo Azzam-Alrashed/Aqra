@@ -24,6 +24,8 @@ const inDays = (days) => Timestamp.fromDate(new Date(Date.now() + days * 86_400_
 const named = (uid) => env.authenticatedContext(uid, { firebase: { sign_in_provider: "google.com" } }).firestore();
 /** An anonymous account, which every install starts as. */
 const anon = (uid) => env.authenticatedContext(uid, { firebase: { sign_in_provider: "anonymous" } }).firestore();
+/** An administrator: a signed-in user with the `admin` claim. */
+const admin = (uid = "admin") => env.authenticatedContext(uid, { admin: true, firebase: { sign_in_provider: "google.com" } }).firestore();
 
 /** A vetted teacher, an unvetted one, and three of the teacher's sessions: open, past and cancelled. */
 async function seed() {
@@ -140,7 +142,12 @@ describe("sessions", () => {
     await assertFails(setDoc(doc(named("teacher"), "sessions/e"), newSession({ booked: 1 })));
     await assertFails(setDoc(doc(named("teacher"), "sessions/f"), newSession({ seats: 0 })));
     await assertFails(setDoc(doc(named("teacher"), "sessions/g"), newSession({ status: "cancelled" })));
-    await assertFails(setDoc(doc(named("teacher"), "sessions/h"), newSession({ kind: "video" })));
+    await assertFails(setDoc(doc(named("teacher"), "sessions/h"), newSession({ kind: "auction" })));
+    await assertFails(setDoc(doc(named("teacher"), "sessions/i"), newSession({ seats: 31 })));
+  });
+
+  test("a session can be by video", async () => {
+    await assertSucceeds(setDoc(doc(named("teacher"), "sessions/call"), newSession({ kind: "video", place: "" })));
   });
 
   test("everyone signed in reads sessions", async () => {
@@ -158,6 +165,13 @@ describe("sessions", () => {
     await assertFails(updateDoc(doc(named("unvetted"), "sessions/open"), { place: "x" }));
     await assertSucceeds(deleteDoc(doc(teacher, "sessions/past")));
     await assertFails(deleteDoc(doc(named("alice"), "sessions/open")));
+  });
+
+  test("the teacher never sets fewer seats than the students who booked", async () => {
+    await assertSucceeds(book(named("alice"), "alice", "open"));
+    await assertSucceeds(book(named("bob"), "bob", "open"));
+    await assertFails(updateDoc(doc(named("teacher"), "sessions/open"), { seats: 1 }));
+    await assertSucceeds(updateDoc(doc(named("teacher"), "sessions/open"), { seats: 4 }));
   });
 });
 
@@ -263,6 +277,15 @@ describe("tasmee' records", () => {
     await assertFails(setDoc(doc(named("other"), "users/alice/tasmee/t1"), tasmee({ teacherId: "other", sessionId: "others" })));
   });
 
+  test("the teacher may classify mistakes and count it as a stage test", async () => {
+    const teacher = named("teacher");
+    await assertSucceeds(setDoc(doc(teacher, "users/alice/tasmee/t1"), tasmee({
+      kind: "sheikh", mistakes: [{ ayah: 7, type: "hesitation" }], test: { stage: 10, allowedMistakesPerPage: 1 },
+    })));
+    await assertFails(setDoc(doc(teacher, "users/alice/tasmee/t2"), tasmee({ kind: "peer" })));
+    await assertFails(setDoc(doc(teacher, "users/alice/tasmee/t3"), tasmee({ mistakes: "7:hesitation" })));
+  });
+
   test("a record is complete and starts unapplied", async () => {
     const teacher = named("teacher");
     const { appliedAt, ...missing } = tasmee();
@@ -290,5 +313,118 @@ describe("tasmee' records", () => {
     await assertFails(getDoc(doc(named("bob"), "users/alice/tasmee/t1")));
     await assertFails(deleteDoc(doc(named("teacher"), "users/alice/tasmee/t1")));
     await assertSucceeds(deleteDoc(doc(named("alice"), "users/alice/tasmee/t1")));
+  });
+});
+
+describe("peer tasmee'", () => {
+  const request = (overrides = {}) => ({
+    studentUid: "alice", studentName: "Alice", startPage: 582, createdAt: Timestamp.now(),
+    expiresAt: Timestamp.fromDate(new Date(Date.now() + 30 * 60_000)), ...overrides,
+  });
+  const peerRecord = (overrides = {}) => tasmee({ kind: "peer", teacherId: "bob", teacherName: "Bob", sessionId: "ABC234", ...overrides });
+
+  test("a student, anonymous or not, creates a short-lived request for themselves", async () => {
+    const { studentName, ...unnamed } = request();
+    await assertSucceeds(setDoc(doc(anon("alice"), "peerRequests/ABC234"), unnamed));
+    await assertSucceeds(setDoc(doc(named("alice"), "peerRequests/ABC235"), request()));
+    await assertFails(setDoc(doc(named("alice"), "peerRequests/ABC236"), request({ studentUid: "bob" })));
+    await assertFails(setDoc(doc(named("alice"), "peerRequests/ABC237"),
+      request({ expiresAt: Timestamp.fromDate(new Date(Date.now() + 2 * 3_600_000)) })));
+    await assertFails(setDoc(doc(named("alice"), "peerRequests/ABC238"), request({ expiresAt: inDays(-1) })));
+    await assertFails(setDoc(doc(named("alice"), "peerRequests/ABC239"), request({ extra: 1 })));
+  });
+
+  test("a request is fetched by its code, never listed, never overwritten; its student withdraws it", async () => {
+    await assertSucceeds(setDoc(doc(named("alice"), "peerRequests/ABC234"), request()));
+    await assertSucceeds(getDoc(doc(anon("bob"), "peerRequests/ABC234")));
+    await assertFails(getDocs(collection(named("bob"), "peerRequests")));
+    await assertFails(setDoc(doc(named("bob"), "peerRequests/ABC234"), request({ studentUid: "bob" })));
+    await assertFails(setDoc(doc(named("alice"), "peerRequests/ABC234"), request()));
+    await assertFails(deleteDoc(doc(named("bob"), "peerRequests/ABC234")));
+    await assertSucceeds(deleteDoc(doc(named("alice"), "peerRequests/ABC234")));
+  });
+
+  test("a friend with a valid code records a peer tasmee' into the student's account", async () => {
+    await assertSucceeds(setDoc(doc(named("alice"), "peerRequests/ABC234"), request()));
+    await assertSucceeds(setDoc(doc(anon("bob"), "users/alice/tasmee/p1"), peerRecord({ mistakes: [{ ayah: 7, type: "forgetting" }] })));
+    await assertSucceeds(getDoc(doc(anon("bob"), "users/alice/tasmee/p1")));
+  });
+
+  test("not without the code, not for another student, not themselves, not expired, never verifying", async () => {
+    await assertFails(setDoc(doc(named("bob"), "users/alice/tasmee/p1"), peerRecord()));
+    await assertSucceeds(setDoc(doc(named("alice"), "peerRequests/ABC234"), request()));
+    await assertFails(setDoc(doc(named("bob"), "users/carol/tasmee/p1"), peerRecord()));
+    await assertFails(setDoc(doc(named("alice"), "users/alice/tasmee/p1"), peerRecord({ teacherId: "alice" })));
+    await assertFails(setDoc(doc(named("bob"), "users/alice/tasmee/p1"), peerRecord({ teacherId: "carol" })));
+    await assertFails(setDoc(doc(named("bob"), "users/alice/tasmee/p1"), peerRecord({ test: { stage: 1, allowedMistakesPerPage: 1 } })));
+    await assertFails(setDoc(doc(named("bob"), "users/alice/tasmee/p1"), peerRecord({ kind: "sheikh" })));
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "peerRequests/OLD234"), request({ expiresAt: Timestamp.fromDate(new Date(Date.now() - 60_000)) }));
+    });
+    await assertFails(setDoc(doc(named("bob"), "users/alice/tasmee/p2"), peerRecord({ sessionId: "OLD234" })));
+  });
+});
+
+describe("inbox", () => {
+  beforeEach(async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "users/alice/inbox/m1"), { kind: "outbid", at: Timestamp.now(), readAt: null });
+    });
+  });
+
+  test("only its owner reads it, marks it read and deletes it; nobody writes it from the app", async () => {
+    await assertSucceeds(getDoc(doc(named("alice"), "users/alice/inbox/m1")));
+    await assertSucceeds(updateDoc(doc(named("alice"), "users/alice/inbox/m1"), { readAt: Timestamp.now() }));
+    await assertFails(updateDoc(doc(named("alice"), "users/alice/inbox/m1"), { kind: "won" }));
+    await assertFails(setDoc(doc(named("alice"), "users/alice/inbox/m2"), { kind: "won" }));
+    await assertFails(getDoc(doc(named("bob"), "users/alice/inbox/m1")));
+    await assertSucceeds(deleteDoc(doc(named("alice"), "users/alice/inbox/m1")));
+  });
+});
+
+describe("teacher applications", () => {
+  const application = (overrides = {}) => ({
+    name: "أحمد", city: "الدمام", line: "", riwayah: "حفص عن عاصم", ijazahFrom: "الشيخ فلان", ijazahDetails: "",
+    contact: "0500000000", files: ["ijazahs/alice/a.jpg"], status: "submitted", note: "", createdAt: Timestamp.now(),
+    updatedAt: Timestamp.now(), ...overrides,
+  });
+
+  test("a signed-in user applies for themselves, waiting for review", async () => {
+    await assertSucceeds(setDoc(doc(named("alice"), "teacherApplications/alice"), application()));
+    await assertFails(setDoc(doc(anon("bob"), "teacherApplications/bob"), application()));
+    await assertFails(setDoc(doc(named("bob"), "teacherApplications/alice"), application()));
+    await assertFails(setDoc(doc(named("bob"), "teacherApplications/bob"), application({ status: "approved" })));
+    await assertFails(setDoc(doc(named("bob"), "teacherApplications/bob"), application({ note: "approve me" })));
+    await assertFails(setDoc(doc(named("bob"), "teacherApplications/bob"), application({ files: ["1", "2", "3", "4", "5", "6"] })));
+  });
+
+  test("the applicant changes it while it waits, never its status; only they and administrators read it", async () => {
+    await assertSucceeds(setDoc(doc(named("alice"), "teacherApplications/alice"), application()));
+    await assertSucceeds(updateDoc(doc(named("alice"), "teacherApplications/alice"), { city: "الخبر", updatedAt: Timestamp.now() }));
+    await assertFails(updateDoc(doc(named("alice"), "teacherApplications/alice"), { status: "approved" }));
+    await assertFails(getDoc(doc(named("bob"), "teacherApplications/alice")));
+    await assertSucceeds(getDoc(doc(admin(), "teacherApplications/alice")));
+    await assertSucceeds(updateDoc(doc(admin(), "teacherApplications/alice"), { status: "interview", note: "نتواصل معك" }));
+    await assertFails(updateDoc(doc(named("alice"), "teacherApplications/alice"), { city: "x", updatedAt: Timestamp.now() }));
+    await assertFails(deleteDoc(doc(named("alice"), "teacherApplications/alice")));
+  });
+
+  test("only an administrator makes or unmakes a teacher", async () => {
+    await assertFails(setDoc(doc(named("alice"), "teachers/alice"), { name: "x", city: "y", line: "z", vetted: true }));
+    await assertSucceeds(setDoc(doc(admin(), "teachers/alice"), { name: "x", city: "y", line: "z", vetted: true }));
+    await assertSucceeds(updateDoc(doc(admin(), "teachers/alice"), { vetted: false }));
+    await assertFails(updateDoc(doc(named("alice"), "teachers/alice"), { vetted: true }));
+  });
+});
+
+describe("a teacher's student files", () => {
+  test("only the teacher reads and writes their files and notes", async () => {
+    const teacher = named("teacher");
+    await assertSucceeds(setDoc(doc(teacher, "teachers/teacher/students/alice"), { name: "Alice", lastHeardAt: Timestamp.now(), notes: "" }));
+    await assertSucceeds(setDoc(doc(teacher, "teachers/teacher/students/alice/records/r1"), tasmee()));
+    await assertSucceeds(getDocs(collection(teacher, "teachers/teacher/students")));
+    await assertFails(getDoc(doc(named("alice"), "teachers/teacher/students/alice")));
+    await assertFails(getDocs(collection(named("alice"), "teachers/teacher/students/alice/records")));
+    await assertFails(setDoc(doc(named("bob"), "teachers/teacher/students/bob"), { name: "Bob" }));
   });
 });

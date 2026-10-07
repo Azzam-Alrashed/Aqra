@@ -257,4 +257,21 @@ final class MushafStore: Sendable {
     func page(_ number: Int) -> MushafPage {
         pages[min(max(number, 1), Self.pageCount) - 1]
     }
+
+    /// An ayah's surah and its number in the surah, from its number in the Quran (0..<6236).
+    func reference(ofAyah ayah: Int) -> (surah: Int, ayah: Int) {
+        let ayah = min(max(ayah, 0), Self.ayahCount - 1)
+        guard let (surah, range) = surahAyahs.first(where: { $0.value.contains(ayah) }) else { return (1, 1) }
+        return (surah, ayah - range.lowerBound + 1)
+    }
+
+    /// The page an ayah starts on: the first page that holds any of it.
+    func page(ofAyah ayah: Int) -> Int {
+        var low = 1, high = Self.pageCount
+        while low < high {
+            let middle = (low + high) / 2
+            if pages[middle - 1].ayahs.upperBound >= ayah { high = middle } else { low = middle + 1 }
+        }
+        return low
+    }
 }

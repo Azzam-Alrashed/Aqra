@@ -210,12 +210,15 @@ struct AccountView: View {
 struct AccountCard: View {
     @Environment(AccountStore.self) private var account
     @Environment(CloudSync.self) private var sync
+    @State private var editingName = false
+    @State private var name = ""
 
     var body: some View {
         AqraCard(padding: 14, radius: 24) {
             VStack(alignment: .leading, spacing: 14) {
                 if let profile = account.profile, !profile.isAnonymous {
                     signedIn(profile)
+                    publicNameRow
                 } else {
                     invitation
                     if AccountStore.isAvailable {
@@ -280,6 +283,42 @@ struct AccountCard: View {
             Spacer(minLength: 0)
         }
         .accessibilityElement(children: .combine)
+    }
+
+    /// The name teachers, friends and peers see.
+    private var publicNameRow: some View {
+        Button {
+            name = account.publicName ?? ""
+            editingName = true
+        } label: {
+            HStack(spacing: 10) {
+                IconTile(icon: "🏷️", tint: Palette.lavender, size: 30)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("Name others see")
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.inkSoft)
+                    Text(verbatim: account.publicName ?? "—")
+                        .font(.system(size: 15, weight: .heavy))
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                }
+                Spacer(minLength: 0)
+                Image(systemName: "pencil")
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(Palette.brand)
+                    .frame(width: 30, height: 30)
+                    .background(Palette.lavender, in: Circle())
+            }
+            .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .alert("Name others see", isPresented: $editingName) {
+            TextField("Your name", text: $name)
+            Button("Save") { account.setDisplayName(name) }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Teachers, friends and those who hear your tasmee' see this name.")
+        }
     }
 }
 

@@ -3,6 +3,8 @@ import CryptoKit
 @preconcurrency import FirebaseAuth
 import FirebaseCore
 @preconcurrency import FirebaseFirestore
+@preconcurrency import FirebaseFunctions
+@preconcurrency import FirebaseStorage
 import Foundation
 @preconcurrency import GoogleSignIn
 import Observation
@@ -32,6 +34,8 @@ final class AccountStore {
     }
 
     private(set) var profile: Profile?
+    /// The name the student chose to be shown to teachers, peers and friends, kept in their account.
+    private(set) var displayName: String?
     /// A sign-in, sign-out or deletion is under way.
     private(set) var isWorking = false
     var problem: Problem?
@@ -41,6 +45,7 @@ final class AccountStore {
     @ObservationIgnored let tasmee: TasmeeStore
     @ObservationIgnored private let apple = AppleSignIn()
     @ObservationIgnored private var listener: AuthStateDidChangeListenerHandle?
+    @ObservationIgnored private var userListener: (any ListenerRegistration)?
 
     init(sync: CloudSync, tasmee: TasmeeStore) {
         self.sync = sync
@@ -51,6 +56,9 @@ final class AccountStore {
 
     /// Whether accounts are set up in this build: they need the Firebase config, which isn't in git.
     static var isAvailable: Bool { FirebaseApp.app() != nil }
+
+    /// Where the Cloud Functions run: beside the database, in Dammam (see backend/functions).
+    static let functionsRegion = "me-central2"
 
     /// Debug builds launched with `-UseFirebaseEmulator` talk to the local Auth and Firestore emulators as the
     /// project `demo-aqra`, with no real account involved (see backend/README.md).
@@ -73,12 +81,15 @@ final class AccountStore {
             let options = FirebaseOptions(googleAppID: "1:000000000000:ios:0000000000000000", gcmSenderID: "000000000000")
             options.projectID = "demo-aqra"
             options.apiKey = "emulator"
+            options.storageBucket = "demo-aqra.appspot.com"
             FirebaseApp.configure(options: options)
             Auth.auth().useEmulator(withHost: "127.0.0.1", port: 9099)
             let settings = Firestore.firestore().settings
             settings.host = "127.0.0.1:8080"
             settings.isSSLEnabled = false
             Firestore.firestore().settings = settings
+            Storage.storage().useEmulator(withHost: "127.0.0.1", port: 9199)
+            Functions.functions(region: AccountStore.functionsRegion).useEmulator(withHost: "127.0.0.1", port: 5001)
             return
         }
         #endif
@@ -97,6 +108,7 @@ final class AccountStore {
             MainActor.assumeIsolated {
                 guard let self else { return }
                 self.refreshProfile(user)
+                self.watchDisplayName(uid: user?.uid)
                 if let user {
                     Task {
                         // The backup first, so a tasmee' arriving isn't applied over a copy being restored.
@@ -129,6 +141,38 @@ final class AccountStore {
                           name: user.displayName ?? linked?.displayName,
                           email: user.email ?? linked?.email,
                           provider: linked.flatMap { Provider(rawValue: $0.providerID) })
+    }
+
+    // MARK: - The name shown to others
+
+    /// The name others see: the one the student chose, else their sign-in's name. Never an email, and never for an
+    /// anonymous account.
+    var publicName: String? {
+        guard let profile, !profile.isAnonymous else { return nil }
+        return displayName ?? profile.name
+    }
+
+    private func watchDisplayName(uid: String?) {
+        userListener?.remove()
+        userListener = nil
+        displayName = nil
+        guard let uid else { return }
+        userListener = Firestore.firestore().collection("users").document(uid).addSnapshotListener { [weak self] snapshot, _ in
+            MainActor.assumeIsolated {
+                guard let self, let snapshot else { return }
+                let name = (snapshot.data()?["displayName"] as? String)?.trimmingCharacters(in: .whitespacesAndNewlines)
+                self.displayName = name?.isEmpty == false ? name : nil
+            }
+        }
+    }
+
+    /// Changes the name shown to others (queued while offline); an empty name goes back to the sign-in's.
+    func setDisplayName(_ name: String) {
+        guard let uid = profile?.uid else { return }
+        let trimmed = String(name.trimmingCharacters(in: .whitespacesAndNewlines).prefix(40))
+        displayName = trimmed.isEmpty ? nil : trimmed
+        Firestore.firestore().collection("users").document(uid)
+            .setData(["displayName": trimmed.isEmpty ? FieldValue.delete() : trimmed], merge: true)
     }
 
     // MARK: - Signing in

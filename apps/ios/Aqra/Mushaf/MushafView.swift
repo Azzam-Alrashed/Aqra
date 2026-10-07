@@ -269,6 +269,7 @@ struct MushafRootView: View {
     @State private var revision: RevisionStore
     /// The account the progress is backed up to.
     @State private var account: AccountStore
+    @State private var router = AppRouter()
     /// Whether the student has said what they've memorized (or that they're just starting).
     @AppStorage("memorization.hasDeclared") private var hasDeclared = false
     @State private var startsMarking = false
@@ -319,9 +320,12 @@ struct MushafRootView: View {
         .environment(account)
         .environment(account.sync)
         .environment(account.tasmee)
+        .environment(router)
         // After signing out, setup starts from «ماذا تحفظ؟» again.
         .onChange(of: hasDeclared) { if !hasDeclared { askingDailyAmount = false } }
-        .onOpenURL { url in _ = GIDSignIn.sharedInstance.handle(url) }
+        .onOpenURL { url in
+            if !router.open(url) { _ = GIDSignIn.sharedInstance.handle(url) }
+        }
         .task { account.start() }
         .task {
             guard store == nil else { return }

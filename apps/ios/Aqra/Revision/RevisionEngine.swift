@@ -19,13 +19,17 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
     /// How much more a clean revision counts when a sheikh heard it in a tasmee', compared with self-revision.
     /// Provisional, see docs/REVISION.md.
     var sheikhWeight = 1.5
+    /// A peer's tasmee' sits between self-revision and a sheikh's. Provisional, see docs/REVISION.md.
+    var peerWeight = 1.25
 
     static let standard = ReviewPolicy()
 
-    /// The weight of a revision's evidence: self-revision, in or outside the app, counts once; a sheikh's more.
+    /// The weight of a revision's evidence: self-revision, in or outside the app, counts once; a peer's more,
+    /// and a sheikh's more still.
     func weight(of source: RevisionRecord.Source) -> Double {
         switch source {
         case .app, .outside: 1
+        case .peer: peerWeight
         case .sheikh: sheikhWeight
         }
     }
@@ -38,8 +42,8 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
 
 /// One page revised: when, how, and which of its ayat the student stumbled on.
 struct RevisionRecord: Codable, Hashable {
-    /// Who heard the revision: the student alone, in the app or outside it, or a sheikh in a tasmee'.
-    enum Source: String, Codable { case app, outside, sheikh }
+    /// Who heard the revision: the student alone, in the app or outside it, a peer, or a sheikh in a tasmee'.
+    enum Source: String, Codable { case app, outside, peer, sheikh }
 
     var date: Date
     var page: Int
@@ -354,5 +358,15 @@ final class RevisionSession {
 
     func revealAll() {
         revealed = ayahs.count
+    }
+
+    /// Marks an ayah as stumbled on, whatever it was (a listener classifying the stumble).
+    func markStumble(_ ayah: Int) {
+        guard covers(ayah) else { return }
+        stumbles.insert(ayah)
+    }
+
+    func clearStumble(_ ayah: Int) {
+        stumbles.remove(ayah)
     }
 }

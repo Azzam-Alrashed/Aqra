@@ -196,6 +196,134 @@
         }
       }
     },
+    "%lld files" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ملفات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ملفًا"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ملف واحد"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ملف"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ملفان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا ملفات"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld file"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld files"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld files attached" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ملفات مرفقة"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ملفًا مرفقًا"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ملف واحد مرفق"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ملف مرفق"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "ملفان مرفقان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا ملفات مرفقة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld file attached"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld files attached"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld juz'" : {
       "localizations" : {
         "ar" : {
@@ -256,6 +384,80 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld mistakes per page" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld أخطاء في الصفحة"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld خطأً في الصفحة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "خطأ واحد في الصفحة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld خطأ في الصفحة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "خطآن في الصفحة"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "دون أخطاء في الصفحة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld mistake per page"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld mistakes per page"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld mistakes, %lld allowed per page heard" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld من الأخطاء، والمسموح %2$lld في كل صفحة مسموعة"
           }
         }
       }
@@ -492,16 +694,6 @@
         }
       }
     },
-    "%lld pages · %lld stumbles" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%lld صفحات · %lld تعثّرات"
-          }
-        }
-      }
-    },
     "%lld stumbles" : {
       "localizations" : {
         "ar" : {
@@ -562,6 +754,90 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "%lld stumbles · added to your revision" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تعثّرات · أُضيف إلى مراجعتك"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تعثّرًا · أُضيف إلى مراجعتك"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تعثّر واحد · أُضيف إلى مراجعتك"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld تعثّر · أُضيف إلى مراجعتك"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "تعثّران · أُضيف إلى مراجعتك"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا تعثّر · أُضيف إلى مراجعتك"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld stumble · added to your revision"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld stumbles · added to your revision"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "A copy of your ijazah" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صورة من إجازتك"
+          }
+        }
+      }
+    },
+    "A friend" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صديق"
           }
         }
       }
@@ -630,12 +906,32 @@
         }
       }
     },
+    "A photo or a PDF, up to 10 MB" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صورة أو ملف PDF، حتى ١٠ ميغابايت"
+          }
+        }
+      }
+    },
     "A student" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "طالب"
+          }
+        }
+      }
+    },
+    "About you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نبذة عنك"
           }
         }
       }
@@ -660,6 +956,16 @@
         }
       }
     },
+    "Add your city and a line about you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أضف مدينتك ونبذة عنك"
+          }
+        }
+      }
+    },
     "and rise, ayah by ayah." : {
       "localizations" : {
         "ar" : {
@@ -676,6 +982,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "التطبيق"
+          }
+        }
+      }
+    },
+    "Approved" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقبول"
           }
         }
       }
@@ -750,12 +1066,12 @@
         }
       }
     },
-    "Booked · Cancel" : {
+    "Booked" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "محجوز · إلغاء"
+            "value" : "محجوز"
           }
         }
       }
@@ -820,6 +1136,16 @@
         }
       }
     },
+    "Change it" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عدّله"
+          }
+        }
+      }
+    },
     "Choose what you've memorized" : {
       "localizations" : {
         "ar" : {
@@ -840,6 +1166,26 @@
         }
       }
     },
+    "City" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المدينة"
+          }
+        }
+      }
+    },
+    "Clear error (لحن جلي)" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لحن جلي"
+          }
+        }
+      }
+    },
     "Close" : {
       "localizations" : {
         "ar" : {
@@ -850,12 +1196,42 @@
         }
       }
     },
+    "Code" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرمز"
+          }
+        }
+      }
+    },
+    "Code %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرمز %@"
+          }
+        }
+      }
+    },
     "Colors" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "الألوان"
+          }
+        }
+      }
+    },
+    "Contact" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التواصل"
           }
         }
       }
@@ -970,6 +1346,26 @@
         }
       }
     },
+    "Edit" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل"
+          }
+        }
+      }
+    },
+    "Edit session" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعديل الجلسة"
+          }
+        }
+      }
+    },
     "Edit what you've memorized" : {
       "localizations" : {
         "ar" : {
@@ -990,12 +1386,32 @@
         }
       }
     },
+    "Enter their code" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدخل رمزه"
+          }
+        }
+      }
+    },
     "Every day at %@" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "كل يوم الساعة %@"
+          }
+        }
+      }
+    },
+    "Every tasmee'" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل التسميع"
           }
         }
       }
@@ -1030,6 +1446,26 @@
         }
       }
     },
+    "Forgot" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسيان"
+          }
+        }
+      }
+    },
+    "From" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من"
+          }
+        }
+      }
+    },
     "Full" : {
       "localizations" : {
         "ar" : {
@@ -1040,12 +1476,52 @@
         }
       }
     },
+    "Hear a friend" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسمع صديقك"
+          }
+        }
+      }
+    },
+    "Hear students recite" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "واسمع الطلاب"
+          }
+        }
+      }
+    },
     "Heard" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "سُمعت"
+          }
+        }
+      }
+    },
+    "Hesitated" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تردّد"
+          }
+        }
+      }
+    },
+    "Hold an ijazah? Apply to hear students" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لديك إجازة؟ قدّم لتسمع الطلاب"
           }
         }
       }
@@ -1080,6 +1556,26 @@
         }
       }
     },
+    "Ijazah from %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إجازة من %@"
+          }
+        }
+      }
+    },
+    "Ijazah, riwayah, halaqah" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الإجازة، الرواية، الحلقة"
+          }
+        }
+      }
+    },
     "in one place." : {
       "localizations" : {
         "ar" : {
@@ -1090,12 +1586,52 @@
         }
       }
     },
+    "In person" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حضوريًا"
+          }
+        }
+      }
+    },
     "Index" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "الفهرس"
+          }
+        }
+      }
+    },
+    "Interview" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المقابلة"
+          }
+        }
+      }
+    },
+    "It's been added to your revision." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُضيف إلى مراجعتك."
+          }
+        }
+      }
+    },
+    "Its chain, its date, anything else" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سندها، وتاريخها، وأي تفاصيل أخرى"
           }
         }
       }
@@ -1166,6 +1702,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "اللغة"
+          }
+        }
+      }
+    },
+    "Last heard %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "آخر تسميع %@"
           }
         }
       }
@@ -1250,12 +1796,32 @@
         }
       }
     },
+    "Memorization error" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خطأ في الحفظ"
+          }
+        }
+      }
+    },
     "Memorization strength" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "قوة الحفظ"
+          }
+        }
+      }
+    },
+    "Mistakes allowed per page" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الأخطاء المسموحة في الصفحة"
           }
         }
       }
@@ -1286,6 +1852,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "جلساتي"
+          }
+        }
+      }
+    },
+    "My students" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طلابي"
+          }
+        }
+      }
+    },
+    "Name" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاسم"
+          }
+        }
+      }
+    },
+    "Name others see" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاسم الذي يراه الآخرون"
+          }
+        }
+      }
+    },
+    "Needed prompting" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احتاج إلى تلقين"
           }
         }
       }
@@ -1330,6 +1936,16 @@
         }
       }
     },
+    "No stumbles: the ayat heard are verified" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دون تعثّر: وُثّقت الآيات المسموعة"
+          }
+        }
+      }
+    },
     "No teachers have joined yet." : {
       "localizations" : {
         "ar" : {
@@ -1340,12 +1956,72 @@
         }
       }
     },
+    "Not a mistake" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس خطأً"
+          }
+        }
+      }
+    },
+    "Not a test" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس اختبارًا"
+          }
+        }
+      }
+    },
+    "Not passed yet" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُجتز بعد"
+          }
+        }
+      }
+    },
     "Not revised" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "لم تُراجَع"
+          }
+        }
+      }
+    },
+    "Not yet" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس بعد"
+          }
+        }
+      }
+    },
+    "Notes" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملاحظات"
+          }
+        }
+      }
+    },
+    "Nothing recorded yet." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُسجَّل شيء بعد."
           }
         }
       }
@@ -1420,6 +2096,16 @@
         }
       }
     },
+    "Pages heard" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصفحات المسموعة"
+          }
+        }
+      }
+    },
     "Pages revised this week" : {
       "localizations" : {
         "ar" : {
@@ -1430,12 +2116,52 @@
         }
       }
     },
+    "Passed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اجتاز"
+          }
+        }
+      }
+    },
+    "PDF" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "PDF"
+          }
+        }
+      }
+    },
     "Peace be upon you" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "السلام عليكم"
+          }
+        }
+      }
+    },
+    "Phone or email, for the interview" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الجوال أو البريد، لترتيب المقابلة"
+          }
+        }
+      }
+    },
+    "Photo" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صورة"
           }
         }
       }
@@ -1470,6 +2196,16 @@
         }
       }
     },
+    "Recite to a friend" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سمِّع لصديقك"
+          }
+        }
+      }
+    },
     "Record tasmee'" : {
       "localizations" : {
         "ar" : {
@@ -1486,6 +2222,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "إزالة"
+          }
+        }
+      }
+    },
+    "Remove all" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إزالة الكل"
           }
         }
       }
@@ -1634,13 +2380,12 @@
         }
       }
     },
-    "Rotation" : {
-      "extractionState" : "stale",
+    "Riwayah" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "الوِرد"
+            "value" : "الرواية"
           }
         }
       }
@@ -1655,12 +2400,32 @@
         }
       }
     },
+    "Save changes" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ التعديلات"
+          }
+        }
+      }
+    },
     "Save your progress" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "احفظ تقدّمك"
+          }
+        }
+      }
+    },
+    "Scan their QR code" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "امسح رمز QR"
           }
         }
       }
@@ -1685,12 +2450,42 @@
         }
       }
     },
+    "Send application" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أرسل الطلب"
+          }
+        }
+      }
+    },
     "Show page" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "أظهر الصفحة"
+          }
+        }
+      }
+    },
+    "Show them this code" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أره هذا الرمز"
+          }
+        }
+      }
+    },
+    "Sign in to apply" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل الدخول لتقدّم"
           }
         }
       }
@@ -1745,6 +2540,36 @@
         }
       }
     },
+    "Stage %lld" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المرحلة %lld"
+          }
+        }
+      }
+    },
+    "Stage %lld test" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختبار المرحلة %lld"
+          }
+        }
+      }
+    },
+    "Stage test" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختبار مرحلة"
+          }
+        }
+      }
+    },
     "Start today's revision" : {
       "localizations" : {
         "ar" : {
@@ -1795,6 +2620,36 @@
         }
       }
     },
+    "Students who book join the call from the session's page, from 15 minutes before it starts." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ينضم الطلاب الذين حجزوا إلى المكالمة من صفحة الجلسة، قبل بدئها بربع ساعة."
+          }
+        }
+      }
+    },
+    "Stumbles" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "التعثّرات"
+          }
+        }
+      }
+    },
+    "Submitted" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُرسل"
+          }
+        }
+      }
+    },
     "Suggested: %lld" : {
       "localizations" : {
         "ar" : {
@@ -1811,6 +2666,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "السور"
+          }
+        }
+      }
+    },
+    "Tajweed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تجويد"
           }
         }
       }
@@ -1835,12 +2700,12 @@
         }
       }
     },
-    "Tap an ayah the student stumbled on, and mark each page you heard." : {
+    "Tap an ayah the student stumbled on, press and hold it to say what kind, and mark each page you heard." : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "انقر الآية التي تعثّر فيها الطالب، وعلّم كل صفحة سمعتها."
+            "value" : "انقر الآية التي تعثّر فيها الطالب، واضغط عليها مطوّلًا لتحدّد نوع الخطأ، وعلّم كل صفحة سمعتها."
           }
         }
       }
@@ -1885,12 +2750,72 @@
         }
       }
     },
+    "Tasmee' with a friend" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسميع مع صديق"
+          }
+        }
+      }
+    },
+    "Tasmee' with a teacher" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسميع مع معلّم"
+          }
+        }
+      }
+    },
+    "Teach on Aqra" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "علِّم في اقرأ"
+          }
+        }
+      }
+    },
     "Teachers" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "المعلّمون"
+          }
+        }
+      }
+    },
+    "Teachers are vetted: the team reviews your ijazah, then meets you for an interview." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُعتمد المعلّمون بعد التحقق: يراجع الفريق إجازتك، ثم يلتقي بك في مقابلة."
+          }
+        }
+      }
+    },
+    "Teachers on Aqra hold an ijazah in the Quran. Tell us about yours; the team reviews it and then meets you for a short interview." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "معلّمو اقرأ مُجازون في القرآن الكريم. حدّثنا عن إجازتك؛ يراجعها الفريق ثم يلتقي بك في مقابلة قصيرة."
+          }
+        }
+      }
+    },
+    "Teachers, friends and those who hear your tasmee' see this name." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يرى هذا الاسمَ معلّموك وأصدقاؤك ومن يسمع تسميعك."
           }
         }
       }
@@ -1911,6 +2836,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "خطوط صفحات المصحف من المجمع، طبعة ١٤٤١هـ، بألوان التجويد."
+          }
+        }
+      }
+    },
+    "The file couldn't be uploaded. Check your connection, or try a smaller file." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر رفع الملف. تحقّق من اتصالك، أو جرّب ملفًا أصغر."
           }
         }
       }
@@ -1965,6 +2900,16 @@
         }
       }
     },
+    "The sheikh who granted it" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الشيخ الذي أجازك"
+          }
+        }
+      }
+    },
     "The students who booked will see it cancelled." : {
       "localizations" : {
         "ar" : {
@@ -1981,6 +2926,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ألغى المعلّم هذه الجلسة."
+          }
+        }
+      }
+    },
+    "The team will review your application and your ijazah." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سيراجع الفريق طلبك وإجازتك."
+          }
+        }
+      }
+    },
+    "The test was passed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اجتاز الاختبار"
           }
         }
       }
@@ -2011,6 +2976,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "القرآن كاملًا"
+          }
+        }
+      }
+    },
+    "They mark your stumbles on their phone" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعلّم تعثّراتك على جواله"
+          }
+        }
+      }
+    },
+    "This code isn't valid, or it has expired. Ask your friend for a new one." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "هذا الرمز غير صالح أو انتهت مدته. اطلب من صديقك رمزًا جديدًا."
           }
         }
       }
@@ -2075,12 +3060,86 @@
         }
       }
     },
+    "Try again" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حاول مرة أخرى"
+          }
+        }
+      }
+    },
     "Upcoming sessions" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "الجلسات القادمة"
+          }
+        }
+      }
+    },
+    "Valid for %lld minutes" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صالح لمدة %lld دقائق"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صالح لمدة %lld دقيقة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صالح لمدة دقيقة واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صالح لمدة %lld دقيقة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صالح لمدة دقيقتين"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "صالح لمدة %lld دقيقة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Valid for %lld minute"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Valid for %lld minutes"
+                }
+              }
+            }
           }
         }
       }
@@ -2095,12 +3154,102 @@
         }
       }
     },
+    "Video" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مرئي"
+          }
+        }
+      }
+    },
+    "Video call" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مكالمة مرئية"
+          }
+        }
+      }
+    },
+    "We'll be in touch for your interview" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سنتواصل معك لترتيب المقابلة"
+          }
+        }
+      }
+    },
+    "Welcome! Your sessions appear in the Tasmee' tab." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أهلًا بك! تظهر جلساتك في تبويب التسميع."
+          }
+        }
+      }
+    },
     "What have you memorized" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ماذا تحفظ"
+          }
+        }
+      }
+    },
+    "What kind of mistake?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما نوع الخطأ؟"
+          }
+        }
+      }
+    },
+    "What others heard" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما سمعه الآخرون منك"
+          }
+        }
+      }
+    },
+    "What students will read" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما سيقرؤه الطلاب"
+          }
+        }
+      }
+    },
+    "What to work on next time" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما يُعمل عليه في المرة القادمة"
+          }
+        }
+      }
+    },
+    "What you heard" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما سمعته"
           }
         }
       }
@@ -2135,6 +3284,56 @@
         }
       }
     },
+    "With a friend" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مع صديق"
+          }
+        }
+      }
+    },
+    "With a teacher" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مع معلّم"
+          }
+        }
+      }
+    },
+    "With the code your friend shows you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بالرمز الذي يريك إياه صديقك"
+          }
+        }
+      }
+    },
+    "Withdraw" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سحب الطلب"
+          }
+        }
+      }
+    },
+    "Withdraw your application?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسحب طلبك؟"
+          }
+        }
+      }
+    },
     "You need an internet connection for this." : {
       "localizations" : {
         "ar" : {
@@ -2151,6 +3350,160 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يُحذف حسابك والنسخة الاحتياطية من تقدّمك نهائيًا، ويبقى التقدّم المحفوظ على هذا الجهاز."
+          }
+        }
+      }
+    },
+    "Your application and the copy of your ijazah are deleted." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُحذف طلبك وصورة إجازتك."
+          }
+        }
+      }
+    },
+    "Your application is waiting for review" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "طلبك في انتظار المراجعة"
+          }
+        }
+      }
+    },
+    "Your application wasn't accepted" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُقبل طلبك"
+          }
+        }
+      }
+    },
+    "Your application wasn't accepted." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُقبل طلبك."
+          }
+        }
+      }
+    },
+    "Your friend heard %lld pages" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع صديقك %lld صفحات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع صديقك %lld صفحة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع صديقك صفحة واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع صديقك %lld صفحة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع صديقك صفحتين"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع صديقك %lld صفحة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your friend heard %lld page"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your friend heard %lld pages"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Your friend opens Aqra, taps «Hear a friend» and scans this, or types the code." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يفتح صديقك اقرأ، وينقر «اسمع صديقك»، ثم يمسح هذا الرمز أو يكتبه."
+          }
+        }
+      }
+    },
+    "Your friend recorded it" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّله صديقك"
+          }
+        }
+      }
+    },
+    "Your ijazah" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إجازتك"
+          }
+        }
+      }
+    },
+    "Your ijazah was reviewed. The team will contact you to arrange the interview." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رُوجعت إجازتك. سيتواصل معك الفريق لترتيب المقابلة."
+          }
+        }
+      }
+    },
+    "Your name" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اسمك"
           }
         }
       }
@@ -2231,6 +3584,80 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يعود مقعدك إلى الجلسة."
+          }
+        }
+      }
+    },
+    "Your teacher heard %lld pages" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع معلّمك %lld صفحات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع معلّمك %lld صفحة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع معلّمك صفحة واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع معلّمك %lld صفحة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع معلّمك صفحتين"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "سمع معلّمك %lld صفحة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your teacher heard %lld page"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your teacher heard %lld pages"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Your teacher profile" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ملفك معلّمًا"
           }
         }
       }

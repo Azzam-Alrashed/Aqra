@@ -1,0 +1,42 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "NSCameraUsageDescription" : {
+      "comment" : "Why Aqra asks for the camera.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليراك معلّمك وأنت تُسمِّع في التسميع المرئي، ولتقرأ رمز صديقك."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your teacher sees you while you recite, and you can scan a friend's code."
+          }
+        }
+      }
+    },
+    "NSMicrophoneUsageDescription" : {
+      "comment" : "Why Aqra asks for the microphone.",
+      "extractionState" : "extracted_with_value",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليسمعك معلّمك وأنت تُسمِّع في التسميع المرئي."
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "new",
+            "value" : "Your teacher hears you recite in a video tasmee'."
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

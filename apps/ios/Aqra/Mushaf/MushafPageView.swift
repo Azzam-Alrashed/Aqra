@@ -222,6 +222,9 @@ extension EnvironmentValues {
     @Entry var mushafTajweed = true
     /// Whether the Mushaf colors each topic section with a soft highlight behind its words.
     @Entry var mushafTopics = true
+    /// In a revision, what pressing and holding an ayah does (a listener classifying a stumble); nil when it does
+    /// nothing more than a tap.
+    @Entry var mushafAyahLongPress: (@MainActor (Int) -> Void)? = nil
 }
 
 /// One Mushaf page: 15 lines in the page's own font, framed by the surah, juz' and page number.
@@ -235,6 +238,7 @@ struct MushafPageView: View {
     @Environment(MemorizationStore.self) private var memorization: MemorizationStore?
     @Environment(MarkingSession.self) private var marking: MarkingSession?
     @Environment(RevisionSession.self) private var revisionSession: RevisionSession?
+    @Environment(\.mushafAyahLongPress) private var ayahLongPress
     /// Set when a press in marking mode lasts long enough to start a range.
     @State private var pressedLong = false
 
@@ -290,14 +294,32 @@ struct MushafPageView: View {
         revisionSession.flatMap { $0.page == page.number ? $0 : nil }
     }
 
-    /// Revision: a tap reveals the next ayah, or marks a stumble on an ayah already revealed.
+    /// Revision: a tap reveals the next ayah, or marks a stumble on an ayah already revealed. When a listener can
+    /// classify stumbles, pressing and holding an ayah does that instead.
     private func revisionLayer(_ revision: RevisionSession) -> some View {
         GeometryReader { geometry in
-            Color.clear
-                .contentShape(Rectangle())
-                .onTapGesture { location in
-                    revision.tap(Self.ayah(at: location, on: page, size: geometry.size))
-                }
+            if let ayahLongPress {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in pressedLong = true })
+                    .simultaneousGesture(
+                        SpatialTapGesture().onEnded { value in
+                            defer { pressedLong = false }
+                            let ayah = Self.ayah(at: value.location, on: page, size: geometry.size)
+                            if pressedLong, let ayah, revision.covers(ayah) {
+                                ayahLongPress(ayah)
+                            } else {
+                                revision.tap(ayah)
+                            }
+                        }
+                    )
+            } else {
+                Color.clear
+                    .contentShape(Rectangle())
+                    .onTapGesture { location in
+                        revision.tap(Self.ayah(at: location, on: page, size: geometry.size))
+                    }
+            }
         }
         .environment(\.layoutDirection, .leftToRight)
     }

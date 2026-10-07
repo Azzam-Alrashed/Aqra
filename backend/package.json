@@ -3,12 +3,14 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "test:rules": "firebase emulators:exec --only firestore --project demo-aqra \"node --test test/*.test.js\"",
-    "emulators": "firebase emulators:start --only auth,firestore --project demo-aqra",
-    "seed": "node scripts/seed-emulator.mjs"
+    "test:rules": "firebase emulators:exec --only firestore,storage --project demo-aqra \"node --test test/*.rules.test.js\"",
+    "emulators": "firebase emulators:start --only auth,firestore,storage --project demo-aqra",
+    "seed": "node scripts/seed-emulator.mjs",
+    "admin": "node scripts/admin.mjs"
   },
   "devDependencies": {
     "@firebase/rules-unit-testing": "^4.0.1",
-    "firebase": "^11.0.0"
+    "firebase": "^11.0.0",
+    "firebase-admin": "^13.10.0"
   }
 }

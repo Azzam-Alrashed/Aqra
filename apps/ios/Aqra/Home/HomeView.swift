@@ -31,12 +31,13 @@ struct AppTabView: View {
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(RevisionStore.self) private var revision
+    @Environment(AppRouter.self) private var router
     @Environment(\.scenePhase) private var scenePhase
-    @State private var tab = AppTab.home
 
     var body: some View {
-        TabView(selection: $tab) {
-            HomeView(store: store, startsMarking: startsMarking, tab: $tab)
+        @Bindable var router = router
+        TabView(selection: $router.tab) {
+            HomeView(store: store, startsMarking: startsMarking, tab: $router.tab)
                 .reservesTabBarSpace()
                 .toolbar(.hidden, for: .tabBar)
                 .tag(AppTab.home)
@@ -54,7 +55,7 @@ struct AppTabView: View {
                 .tag(AppTab.account)
         }
         .overlay(alignment: .bottom) {
-            AqraTabBar(selection: $tab)
+            AqraTabBar(selection: $router.tab)
                 .padding(.bottom, AqraTabBar.bottomPadding)
         }
         .environment(\.colorScheme, .light)
@@ -106,6 +107,8 @@ struct HomeView: View {
     @State private var destination: Destination?
     /// «لاحقًا» on the invitation to sign in hides it until this date.
     @AppStorage("home.saveProgressSnoozedUntil") private var saveProgressSnoozedUntil = 0.0
+    /// The newest tasmee' whose card was closed, so it isn't shown again.
+    @AppStorage("home.seenTasmee") private var seenTasmee = ""
     @State private var editingMemorization = false
     @State private var editingAmount = false
     @State private var openedMarking = false
@@ -129,6 +132,10 @@ struct HomeView: View {
                     action
                         .padding(.top, 24)
                     VStack(spacing: 14) {
+                        if let record = newTasmee {
+                            heardCard(record)
+                                .transition(.scale(scale: 0.95).combined(with: .opacity))
+                        }
                         if let booking = tasmee.nextBooking {
                             tasmeeCard(booking)
                                 .transition(.scale(scale: 0.95).combined(with: .opacity))
@@ -542,7 +549,8 @@ struct HomeView: View {
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(Palette.ink)
                             .lineLimit(1)
-                        Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + " · " + (live?.place ?? booking.place))
+                        (Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + " · ")
+                            + TasmeeFormat.place(live.map { Booking($0) } ?? booking))
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(cancelled ? Palette.inkSoft : Palette.brand)
                             .strikethrough(cancelled)
@@ -556,6 +564,64 @@ struct HomeView: View {
         }
         .buttonStyle(AqraPressStyle())
         .accessibilityElement(children: .combine)
+    }
+
+    /// A tasmee' applied in the last two days that the student hasn't closed yet.
+    private var newTasmee: TasmeeRecord? {
+        guard let record = tasmee.history.first(where: { $0.appliedAt != nil }), record.id != seenTasmee,
+              record.at > Date.now.addingTimeInterval(-2 * 86_400) else { return nil }
+        return record
+    }
+
+    /// What a teacher or a friend heard, now applied to the student's progress.
+    private func heardCard(_ record: TasmeeRecord) -> some View {
+        let pages = Set(record.pages).count
+        return Button {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { tab = .tasmee }
+        } label: {
+            AqraCard(padding: 12, radius: 24) {
+                HStack(spacing: 12) {
+                    IconTile(icon: record.kind == .peer ? "🤝" : "🎓", tint: record.kind == .peer ? Palette.peach : Palette.mint, size: 40)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Group {
+                            if record.kind == .peer {
+                                Text("Your friend heard \(pages) pages")
+                            } else {
+                                Text("Your teacher heard \(pages) pages")
+                            }
+                        }
+                        .font(.system(size: 16, weight: .heavy))
+                        .foregroundStyle(Palette.ink)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                        Group {
+                            if record.kind == .sheikh && record.stumbles.isEmpty {
+                                Text("No stumbles: the ayat heard are verified")
+                            } else {
+                                Text("\(record.stumbles.count) stumbles · added to your revision")
+                            }
+                        }
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.brand)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    }
+                    Spacer(minLength: 8)
+                    Button {
+                        withAnimation(.snappy) { seenTasmee = record.id }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 12, weight: .heavy))
+                            .foregroundStyle(Palette.brand)
+                            .frame(width: 28, height: 28)
+                            .background(Palette.lavender, in: Circle())
+                    }
+                    .buttonStyle(.plain)
+                    .accessibilityLabel(Text("Close"))
+                }
+            }
+        }
+        .buttonStyle(AqraPressStyle())
     }
 
     // MARK: - Saving progress

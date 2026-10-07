@@ -7,6 +7,8 @@ service cloud.firestore {
     function isOwner(uid) { return signedIn() && request.auth.uid == uid; }
     // Anonymous accounts can't book a seat or hold anything that names them.
     function isNamed() { return signedIn() && request.auth.token.firebase.sign_in_provider != 'anonymous'; }
+    // Administrators carry the `admin` custom claim, set by backend/scripts/admin.mjs.
+    function isAdmin() { return signedIn() && request.auth.token.get('admin', false) == true; }
     function isVettedTeacher() {
       return signedIn()
         && exists(/databases/$(database)/documents/teachers/$(request.auth.uid))
@@ -18,39 +20,98 @@ service cloud.firestore {
     function hasKeys(required, optional) {
       return request.resource.data.keys().hasAll(required) && request.resource.data.keys().hasOnly(required.concat(optional));
     }
+    function peerRequest(code) { return get(/databases/$(database)/documents/peerRequests/$(code)).data; }
+    // What every tasmee' record holds, whoever heard it.
+    function isTasmeeRecord() {
+      return request.resource.data.teacherId == request.auth.uid
+        && request.resource.data.teacherName is string
+        && request.resource.data.sessionId is string
+        && request.resource.data.at is timestamp
+        && request.resource.data.pages is list
+        && request.resource.data.stumbles is list
+        && request.resource.data.get('mistakes', []) is list
+        && request.resource.data.appliedAt == null;
+    }
 
-    // A student's progress is theirs alone. A tasmee' record is written by the teacher who heard it, and the
-    // student only marks it applied.
+    // A student's progress is theirs alone. A tasmee' record is written by whoever heard it — a vetted teacher with
+    // the student in their session, or a peer holding the student's code — and the student only marks it applied.
     match /users/{uid} {
       allow read, write: if isOwner(uid);
       match /memory/{block} { allow read, write: if isOwner(uid); }
       match /revision/{document} { allow read, write: if isOwner(uid); }
+      match /journey/{document} { allow read, write: if isOwner(uid); }
       match /bookings/{sessionId} { allow read, write: if isOwner(uid); }
       match /tasmee/{id} {
         allow read: if isOwner(uid) || (signedIn() && resource.data.teacherId == request.auth.uid);
-        allow create: if isVettedTeacher()
-          && hasKeys(['teacherId', 'teacherName', 'sessionId', 'at', 'pages', 'stumbles', 'appliedAt'], [])
-          && request.resource.data.teacherId == request.auth.uid
-          && request.resource.data.teacherName is string
-          && request.resource.data.at is timestamp
-          && request.resource.data.pages is list
-          && request.resource.data.stumbles is list
-          && request.resource.data.appliedAt == null
-          && session(request.resource.data.sessionId).teacherId == request.auth.uid
-          && exists(seat(request.resource.data.sessionId, uid));
+        allow create: if signedIn() && isTasmeeRecord() && (
+          // A teacher, in one of their sessions where the student holds a seat. It may be a stage test.
+          (isVettedTeacher()
+            && hasKeys(['teacherId', 'teacherName', 'sessionId', 'at', 'pages', 'stumbles', 'appliedAt'], ['kind', 'mistakes', 'test'])
+            && request.resource.data.get('kind', 'sheikh') == 'sheikh'
+            && session(request.resource.data.sessionId).teacherId == request.auth.uid
+            && exists(seat(request.resource.data.sessionId, uid)))
+          // A peer, with the student's code while it's valid. Never the student themselves.
+          || (request.auth.uid != uid
+            && hasKeys(['kind', 'teacherId', 'teacherName', 'sessionId', 'at', 'pages', 'stumbles', 'appliedAt'], ['mistakes'])
+            && request.resource.data.kind == 'peer'
+            && exists(/databases/$(database)/documents/peerRequests/$(request.resource.data.sessionId))
+            && peerRequest(request.resource.data.sessionId).studentUid == uid
+            && peerRequest(request.resource.data.sessionId).expiresAt > request.time));
         allow update: if isOwner(uid) && changesOnly(['appliedAt']) && request.resource.data.appliedAt is timestamp;
         allow delete: if isOwner(uid);
       }
+      // Messages from the server (outbid, seat won, refunds, the application's status): read and dismissed here.
+      match /inbox/{id} {
+        allow read, delete: if isOwner(uid);
+        allow update: if isOwner(uid) && changesOnly(['readAt']);
+      }
     }
 
-    // Vetted teachers, written by hand after vetting. A teacher edits only their own name, city and line.
+    // A student's invitation to a friend to hear their tasmee', by its short code. It can be fetched by its code,
+    // never listed.
+    match /peerRequests/{code} {
+      allow get: if signedIn();
+      allow list: if false;
+      allow create: if signedIn() && request.resource.data.studentUid == request.auth.uid
+        && hasKeys(['studentUid', 'createdAt', 'expiresAt'], ['studentName', 'startPage'])
+        && request.resource.data.get('studentName', '') is string
+        && request.resource.data.get('startPage', 1) is int
+        && request.resource.data.expiresAt is timestamp
+        && request.resource.data.expiresAt > request.time
+        && request.resource.data.expiresAt < request.time + duration.value(31, 'm');
+      allow delete: if signedIn() && resource.data.studentUid == request.auth.uid;
+      allow update: if false;
+    }
+
+    // Applications to teach: the applicant writes theirs while it waits for review; administrators review it.
+    match /teacherApplications/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow create: if isOwner(uid) && isNamed()
+        && hasKeys(['name', 'city', 'line', 'riwayah', 'ijazahFrom', 'ijazahDetails', 'contact', 'files', 'status', 'note',
+                    'createdAt', 'updatedAt'], [])
+        && request.resource.data.status == 'submitted' && request.resource.data.note == ''
+        && request.resource.data.files is list && request.resource.data.files.size() <= 5;
+      allow update: if (isOwner(uid) && resource.data.status == 'submitted'
+          && changesOnly(['name', 'city', 'line', 'riwayah', 'ijazahFrom', 'ijazahDetails', 'contact', 'files', 'updatedAt'])
+          && request.resource.data.files is list && request.resource.data.files.size() <= 5)
+        || isAdmin();
+      allow delete: if (isOwner(uid) && resource.data.status == 'submitted') || isAdmin();
+    }
+
+    // Vetted teachers, made by an administrator after vetting. A teacher edits only their own name, city and line.
     match /teachers/{uid} {
       allow read: if signedIn();
-      allow update: if isOwner(uid) && changesOnly(['name', 'city', 'line']);
-      allow create, delete: if false;
+      allow update: if (isOwner(uid) && changesOnly(['name', 'city', 'line'])) || isAdmin();
+      allow create, delete: if isAdmin();
+
+      // The teacher's own files on the students they heard: what they heard, and their notes. Only the teacher.
+      match /students/{studentUid} {
+        allow read, write: if isOwner(uid);
+        match /records/{id} { allow read, write: if isOwner(uid); }
+      }
     }
 
-    // In-person sessions: everyone signed in reads them; a vetted teacher writes their own.
+    // Sessions, in person or by video: everyone signed in reads them; a vetted teacher writes their own.
     match /sessions/{id} {
       allow read: if signedIn();
       allow create: if isVettedTeacher()
@@ -58,18 +119,20 @@ service cloud.firestore {
         && request.resource.data.teacherId == request.auth.uid
         && request.resource.data.teacherName is string
         && request.resource.data.place is string
-        && request.resource.data.kind == 'inPerson'
+        && request.resource.data.kind in ['inPerson', 'video']
         && request.resource.data.status == 'open'
-        && request.resource.data.seats is int && request.resource.data.seats > 0
+        && request.resource.data.seats is int && request.resource.data.seats > 0 && request.resource.data.seats <= 30
         && request.resource.data.booked == 0
         && request.resource.data.startsAt is timestamp && request.resource.data.startsAt > request.time;
       allow update: if
-        // The teacher changes the session's details, cancels it, or corrects the seat count.
+        // The teacher changes the session's details, cancels it, or corrects the seat count — never below the
+        // students who booked.
         (isVettedTeacher() && resource.data.teacherId == request.auth.uid
           && changesOnly(['startsAt', 'place', 'seats', 'booked', 'status'])
           && request.resource.data.status in ['open', 'cancelled']
-          && request.resource.data.seats is int && request.resource.data.seats > 0
-          && request.resource.data.booked is int && request.resource.data.booked >= 0)
+          && request.resource.data.seats is int && request.resource.data.seats > 0 && request.resource.data.seats <= 30
+          && request.resource.data.booked is int && request.resource.data.booked >= 0
+          && request.resource.data.seats >= request.resource.data.booked)
         // Booking takes a seat: the student's seat appears in the same write, and the count moves up by one.
         || (isNamed() && changesOnly(['booked'])
           && request.resource.data.booked == resource.data.booked + 1

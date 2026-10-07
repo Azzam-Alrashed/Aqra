@@ -191,6 +191,22 @@ struct MushafStoreTests {
         }
     }
 
+    /// An ayah's surah and number, and the page it starts on.
+    @Test func referencesAndPagesOfAyat() {
+        #expect(store.reference(ofAyah: 0) == (1, 1))
+        #expect(store.reference(ofAyah: 7) == (2, 1))
+        #expect(store.reference(ofAyah: 7 + 254) == (2, 255))
+        #expect(store.reference(ofAyah: MushafStore.ayahCount - 1) == (114, 6))
+        #expect(store.page(ofAyah: 0) == 1 && store.page(ofAyah: 7) == 2 && store.page(ofAyah: 12) == 3)
+        #expect(store.page(ofAyah: MushafStore.ayahCount - 1) == 604)
+        // Every ayah's page holds it, and the page before doesn't.
+        for ayah in stride(from: 0, to: MushafStore.ayahCount, by: 37) {
+            let page = store.page(ofAyah: ayah)
+            #expect(store.page(page).ayahs.contains(ayah), "ayah \(ayah)")
+            if page > 1 { #expect(store.page(page - 1).ayahs.upperBound < ayah, "ayah \(ayah)") }
+        }
+    }
+
     /// A tap lands on the ayah drawn under it, or the nearest one on its line; headers have none.
     @Test func findsTheAyahUnderAPoint() {
         let size = CGSize(width: 402, height: 874)

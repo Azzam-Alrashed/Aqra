@@ -33,26 +33,32 @@ struct Teacher: Identifiable, Hashable {
     }
 }
 
-/// An in-person tasmee' session a teacher holds, with a limited number of seats.
+/// A tasmee' session a teacher holds, in person or by video, with a limited number of seats.
 struct TasmeeSession: Identifiable, Hashable {
     enum Status: String { case open, cancelled }
+
+    /// In person, at a place; or by video, in the session's own call.
+    enum Kind: String { case inPerson, video }
 
     let id: String
     var teacherId: String
     var teacherName: String
     var startsAt: Date
+    var kind: Kind
+    /// Where it's held, for a session in person; empty for a video session.
     var place: String
     var seats: Int
     var booked: Int
     var status: Status
     var createdAt: Date
 
-    init(id: String, teacherId: String, teacherName: String, startsAt: Date, place: String, seats: Int,
-         booked: Int = 0, status: Status = .open, createdAt: Date = .now) {
+    init(id: String, teacherId: String, teacherName: String, startsAt: Date, kind: Kind = .inPerson, place: String,
+         seats: Int, booked: Int = 0, status: Status = .open, createdAt: Date = .now) {
         self.id = id
         self.teacherId = teacherId
         self.teacherName = teacherName
         self.startsAt = startsAt
+        self.kind = kind
         self.place = place
         self.seats = seats
         self.booked = booked
@@ -64,13 +70,19 @@ struct TasmeeSession: Identifiable, Hashable {
         guard let teacherId = document.string("teacherId"), let startsAt = document.date("startsAt"),
               let seats = document.int("seats"), let status = document.string("status").flatMap(Status.init) else { return nil }
         self.init(id: id, teacherId: teacherId, teacherName: document.string("teacherName") ?? "", startsAt: startsAt,
-                  place: document.string("place") ?? "", seats: seats, booked: document.int("booked") ?? 0, status: status,
+                  kind: document.string("kind").flatMap(Kind.init) ?? .inPerson, place: document.string("place") ?? "",
+                  seats: seats, booked: document.int("booked") ?? 0, status: status,
                   createdAt: document.date("createdAt") ?? .distantPast)
     }
 
     var document: [String: Any] {
         ["teacherId": teacherId, "teacherName": teacherName, "startsAt": startsAt, "place": place, "seats": seats,
-         "booked": booked, "kind": "inPerson", "status": status.rawValue, "createdAt": createdAt]
+         "booked": booked, "kind": kind.rawValue, "status": status.rawValue, "createdAt": createdAt]
+    }
+
+    /// The fields a teacher may change after creating it.
+    var editableDocument: [String: Any] {
+        ["startsAt": startsAt, "place": place, "seats": seats]
     }
 
     var seatsLeft: Int { max(seats - booked, 0) }
@@ -121,75 +133,153 @@ struct Booking: Identifiable, Hashable {
     var teacherId: String
     var teacherName: String
     var startsAt: Date
+    var kind: TasmeeSession.Kind
     var place: String
 
-    init(id: String, teacherId: String, teacherName: String, startsAt: Date, place: String) {
+    init(id: String, teacherId: String, teacherName: String, startsAt: Date, kind: TasmeeSession.Kind = .inPerson,
+         place: String) {
         self.id = id
         self.teacherId = teacherId
         self.teacherName = teacherName
         self.startsAt = startsAt
+        self.kind = kind
         self.place = place
     }
 
     init(_ session: TasmeeSession) {
         self.init(id: session.id, teacherId: session.teacherId, teacherName: session.teacherName,
-                  startsAt: session.startsAt, place: session.place)
+                  startsAt: session.startsAt, kind: session.kind, place: session.place)
     }
 
     init?(id: String, document: [String: Any]) {
         guard let teacherId = document.string("teacherId"), let startsAt = document.date("startsAt") else { return nil }
         self.init(id: id, teacherId: teacherId, teacherName: document.string("teacherName") ?? "", startsAt: startsAt,
+                  kind: document.string("kind").flatMap(TasmeeSession.Kind.init) ?? .inPerson,
                   place: document.string("place") ?? "")
     }
 
     var document: [String: Any] {
-        ["teacherId": teacherId, "teacherName": teacherName, "startsAt": startsAt, "place": place]
+        ["teacherId": teacherId, "teacherName": teacherName, "startsAt": startsAt, "kind": kind.rawValue, "place": place]
     }
 }
 
-/// A tasmee' a student recited to a teacher: the pages heard and the ayat stumbled on. The teacher writes it
-/// into the student's account; the student's app applies it to the progress on the device and marks it applied.
+/// How a teacher classifies a stumble. A plain tap records a memorization error; the rest are chosen by pressing
+/// and holding the ayah. Weights, if any, live in the stage policy (see docs/SRS.md, open issue A-11).
+enum MistakeType: String, CaseIterable, Codable, Hashable, Sendable {
+    /// A wrong or missing word.
+    case memorization
+    /// The student couldn't go on.
+    case forgetting
+    /// The listener had to prompt (تلقين).
+    case prompting
+    /// The student hesitated before getting it right.
+    case hesitation
+    /// A clear error in the Arabic (لحن جلي).
+    case lahn
+    /// A tajweed rule not observed.
+    case tajweed
+}
+
+/// A stumble with its type.
+struct Mistake: Codable, Hashable, Sendable {
+    var ayah: Int
+    var type: MistakeType
+}
+
+/// A tasmee' a student recited to a teacher or a peer: the pages heard and the ayat stumbled on. The listener writes
+/// it into the student's account; the student's app applies it to the progress on the device and marks it applied.
 struct TasmeeRecord: Identifiable, Hashable {
+    /// Who heard it: a vetted teacher in one of their sessions, or a peer with the student's code.
+    enum Kind: String { case sheikh, peer }
+
+    /// A teacher's test of a stage: the tasmee' counts toward passing it when its mistakes are within the allowed
+    /// number per page heard.
+    struct StageTest: Hashable {
+        var stage: Int
+        var allowedMistakesPerPage: Int
+    }
+
     let id: String
+    var kind: Kind
+    /// The listener: the teacher, or the peer.
     var teacherId: String
     var teacherName: String
+    /// The session it was heard in, or the peer request's code.
     var sessionId: String
     var at: Date
     var pages: [Int]
     var stumbles: [Int]
+    /// The stumbles' types, where the listener gave them; a stumble without one is a memorization error.
+    var mistakes: [Mistake]
+    var test: StageTest?
     var appliedAt: Date?
 
-    init(id: String, teacherId: String, teacherName: String, sessionId: String, at: Date, pages: [Int], stumbles: [Int],
-         appliedAt: Date? = nil) {
+    init(id: String, kind: Kind = .sheikh, teacherId: String, teacherName: String, sessionId: String, at: Date,
+         pages: [Int], stumbles: [Int], mistakes: [Mistake] = [], test: StageTest? = nil, appliedAt: Date? = nil) {
         self.id = id
+        self.kind = kind
         self.teacherId = teacherId
         self.teacherName = teacherName
         self.sessionId = sessionId
         self.at = at
         self.pages = pages
         self.stumbles = stumbles
+        self.mistakes = mistakes
+        self.test = test
         self.appliedAt = appliedAt
     }
 
     init?(id: String, document: [String: Any]) {
         guard let teacherId = document.string("teacherId"), let sessionId = document.string("sessionId"),
               let at = document.date("at"), let pages = document.ints("pages"), let stumbles = document.ints("stumbles") else { return nil }
-        self.init(id: id, teacherId: teacherId, teacherName: document.string("teacherName") ?? "", sessionId: sessionId, at: at,
-                  pages: pages, stumbles: stumbles, appliedAt: document.date("appliedAt"))
+        let mistakes = (document["mistakes"] as? [[String: Any]] ?? []).compactMap { entry -> Mistake? in
+            guard let ayah = (entry["ayah"] as? NSNumber)?.intValue,
+                  let type = (entry["type"] as? String).flatMap(MistakeType.init) else { return nil }
+            return Mistake(ayah: ayah, type: type)
+        }
+        let test = (document["test"] as? [String: Any]).flatMap { test -> StageTest? in
+            guard let stage = (test["stage"] as? NSNumber)?.intValue,
+                  let allowed = (test["allowedMistakesPerPage"] as? NSNumber)?.intValue else { return nil }
+            return StageTest(stage: stage, allowedMistakesPerPage: allowed)
+        }
+        self.init(id: id, kind: document.string("kind").flatMap(Kind.init) ?? .sheikh, teacherId: teacherId,
+                  teacherName: document.string("teacherName") ?? "", sessionId: sessionId, at: at, pages: pages,
+                  stumbles: stumbles, mistakes: mistakes, test: test, appliedAt: document.date("appliedAt"))
     }
 
-    /// The fields as written: `appliedAt` is null, not missing, so the student's app can query for it.
+    /// The fields as written: `appliedAt` is null, not missing, so the student's app can tell it's waiting.
     var document: [String: Any] {
-        ["teacherId": teacherId, "teacherName": teacherName, "sessionId": sessionId, "at": at, "pages": pages,
-         "stumbles": stumbles, "appliedAt": appliedAt ?? NSNull()]
+        var document: [String: Any] = [
+            "kind": kind.rawValue, "teacherId": teacherId, "teacherName": teacherName, "sessionId": sessionId, "at": at,
+            "pages": pages, "stumbles": stumbles, "appliedAt": appliedAt ?? NSNull(),
+        ]
+        if !mistakes.isEmpty {
+            document["mistakes"] = mistakes.map { ["ayah": $0.ayah, "type": $0.type.rawValue] as [String: Any] }
+        }
+        if let test {
+            document["test"] = ["stage": test.stage, "allowedMistakesPerPage": test.allowedMistakesPerPage]
+        }
+        return document
+    }
+
+    /// Each stumble's type: the one the listener chose, or a memorization error.
+    func mistakeType(of ayah: Int) -> MistakeType {
+        mistakes.first { $0.ayah == ayah }?.type ?? .memorization
+    }
+
+    /// Whether a stage test passed: no more mistakes than allowed per page heard.
+    var passesTest: Bool? {
+        guard let test else { return nil }
+        return stumbles.count <= test.allowedMistakesPerPage * max(Set(pages).count, 1)
     }
 }
 
 /// How a tasmee' changes the progress on the student's device.
 enum TasmeeApply {
-    /// Each page heard is recorded as a sheikh's revision of its memorized ayat: the stumbled ones weaken and
-    /// lose their verified mark, the rest grow by the sheikh's weight and are marked verified. Ayat the student
-    /// never marked as memorized are left alone: the student owns the map of what they know.
+    /// Each page heard is recorded as a revision of its memorized ayat, by a sheikh or a peer: the stumbled ones
+    /// weaken, the rest grow by the listener's weight. Only a sheikh's tasmee' verifies: the clean ayat get the
+    /// mark and the stumbled ones lose it. Ayat the student never marked as memorized are left alone: the student
+    /// owns the map of what they know.
     /// - Parameter pageAyahs: the ayat of a page (from the Mushaf; a closure so this stays testable).
     @MainActor
     static func apply(_ record: TasmeeRecord, memorization: MemorizationStore, revision: RevisionStore,
@@ -199,9 +289,11 @@ enum TasmeeApply {
             let memorized = pageAyahs(page).filter { memorization.isMemorized($0) }
             guard !memorized.isEmpty else { continue }
             let pageStumbles = stumbles.intersection(memorized)
-            revision.record(page: page, ayahs: memorized, stumbles: pageStumbles, source: .sheikh,
-                            memorization: memorization, now: record.at)
-            memorization.verify(memorized, except: pageStumbles)
+            revision.record(page: page, ayahs: memorized, stumbles: pageStumbles,
+                            source: record.kind == .peer ? .peer : .sheikh, memorization: memorization, now: record.at)
+            if record.kind == .sheikh {
+                memorization.verify(memorized, except: pageStumbles)
+            }
         }
     }
 }
