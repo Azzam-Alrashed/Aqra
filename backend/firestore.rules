@@ -1,0 +1,11 @@
+rules_version = '2';
+
+// Each user's progress lives under users/{uid}, and only that user can read or write it.
+// Everything else is closed until a later step opens it on purpose.
+service cloud.firestore {
+  match /databases/{database}/documents {
+    match /users/{uid}/{document=**} {
+      allow read, write: if request.auth != null && request.auth.uid == uid;
+    }
+  }
+}

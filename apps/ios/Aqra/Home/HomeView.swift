@@ -93,7 +93,10 @@ struct HomeView: View {
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.layoutDirection) private var direction
     @AppStorage("mushaf.lastPage") private var lastPage = 1
+    @Environment(AccountStore.self) private var account
     @State private var destination: Destination?
+    /// «لاحقًا» on the invitation to sign in hides it until this date.
+    @AppStorage("home.saveProgressSnoozedUntil") private var saveProgressSnoozedUntil = 0.0
     @State private var editingMemorization = false
     @State private var editingAmount = false
     @State private var openedMarking = false
@@ -120,6 +123,10 @@ struct HomeView: View {
                         mushafCard
                         if let plan = revision.plan, !plan.items.isEmpty {
                             pagesCard(plan)
+                        }
+                        if showsSaveProgress {
+                            saveProgressCard
+                                .transition(.scale(scale: 0.95).combined(with: .opacity))
                         }
                         memorizationCard
                     }
@@ -494,6 +501,48 @@ struct HomeView: View {
             }
         }
         .accessibilityValue(item.done ? Text("Revised") : Text(verbatim: ""))
+    }
+
+    // MARK: - Saving progress
+
+    /// The invitation to sign in: only for an anonymous student, and only once they've revised at least once, so
+    /// it comes after something worth keeping.
+    private var showsSaveProgress: Bool {
+        AccountStore.isAvailable && account.profile?.isAnonymous == true && !revision.revisedDays.isEmpty
+            && Date.now.timeIntervalSince1970 > saveProgressSnoozedUntil
+    }
+
+    private var saveProgressCard: some View {
+        AqraCard(padding: 14, radius: 24) {
+            VStack(alignment: .leading, spacing: 14) {
+                HStack(alignment: .top, spacing: 12) {
+                    IconTile(icon: "🪪", tint: Palette.butter, size: 40)
+                    VStack(alignment: .leading, spacing: 3) {
+                        Text("Save your progress")
+                            .font(.system(size: 17, weight: .heavy))
+                            .foregroundStyle(Palette.ink)
+                        Text("Your progress is only on this device until you sign in.")
+                            .font(.system(size: 12, weight: .semibold))
+                            .foregroundStyle(Palette.inkSoft)
+                            .fixedSize(horizontal: false, vertical: true)
+                    }
+                    Spacer(minLength: 4)
+                    Button("Later") {
+                        withAnimation(.snappy) { saveProgressSnoozedUntil = Date.now.addingTimeInterval(7 * 86_400).timeIntervalSince1970 }
+                    }
+                    .font(.system(size: 13, weight: .bold))
+                    .foregroundStyle(Palette.brand)
+                    .padding(.horizontal, 10)
+                    .frame(height: 28)
+                    .background(Palette.lavender, in: Capsule())
+                    .buttonStyle(.plain)
+                }
+                SignInButtons()
+                if let problem = account.problem {
+                    ProblemLine(problem: problem)
+                }
+            }
+        }
     }
 
     /// What's memorized and how much is revised each day, each opening its editor.

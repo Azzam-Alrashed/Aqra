@@ -1,3 +1,4 @@
+import GoogleSignIn
 import SwiftUI
 
 /// The Mushaf, opened full screen from the home on the last page read, and turned like a book (right to left).
@@ -264,13 +265,23 @@ struct MushafSpreadView: View {
 /// Loads the Mushaf once, then shows it — or explains what's missing.
 struct MushafRootView: View {
     @State private var store: Result<MushafStore, Error>?
-    @State private var memorization = MemorizationStore()
-    @State private var revision = RevisionStore()
+    @State private var memorization: MemorizationStore
+    @State private var revision: RevisionStore
+    /// The account the progress is backed up to.
+    @State private var account: AccountStore
     /// Whether the student has said what they've memorized (or that they're just starting).
     @AppStorage("memorization.hasDeclared") private var hasDeclared = false
     @State private var startsMarking = false
     /// After choosing what they've memorized, the student chooses how much to revise each day.
     @State private var askingDailyAmount = false
+
+    init() {
+        let memorization = MemorizationStore()
+        let revision = RevisionStore()
+        _memorization = State(initialValue: memorization)
+        _revision = State(initialValue: revision)
+        _account = State(initialValue: AccountStore(sync: CloudSync(memorization: memorization, revision: revision)))
+    }
 
     var body: some View {
         Group {
@@ -304,6 +315,12 @@ struct MushafRootView: View {
         }
         .environment(memorization)
         .environment(revision)
+        .environment(account)
+        .environment(account.sync)
+        // After signing out, setup starts from «ماذا تحفظ؟» again.
+        .onChange(of: hasDeclared) { if !hasDeclared { askingDailyAmount = false } }
+        .onOpenURL { url in _ = GIDSignIn.sharedInstance.handle(url) }
+        .task { account.start() }
         .task {
             guard store == nil else { return }
             // Decoding the Quran data takes a moment; keep it off the main thread so the app stays responsive.

@@ -1,0 +1,312 @@
+import AuthenticationServices
+import CryptoKit
+@preconcurrency import FirebaseAuth
+import FirebaseCore
+import Foundation
+@preconcurrency import GoogleSignIn
+import Observation
+import UIKit
+
+/// Who the student is. Every install starts as an anonymous account, so progress is backed up from the first
+/// day; signing in with Apple or Google links that sign-in to the same account, so nothing is lost.
+@MainActor @Observable
+final class AccountStore {
+    enum Provider: String {
+        case apple = "apple.com"
+        case google = "google.com"
+    }
+
+    struct Profile: Equatable {
+        var uid: String
+        var isAnonymous: Bool
+        var name: String?
+        var email: String?
+        var provider: Provider?
+    }
+
+    /// Something that went wrong, shown as a short line where it happened.
+    enum Problem: Equatable {
+        case offline
+        case failed
+    }
+
+    private(set) var profile: Profile?
+    /// A sign-in, sign-out or deletion is under way.
+    private(set) var isWorking = false
+    var problem: Problem?
+
+    @ObservationIgnored let sync: CloudSync
+    @ObservationIgnored private let apple = AppleSignIn()
+    @ObservationIgnored private var listener: AuthStateDidChangeListenerHandle?
+
+    init(sync: CloudSync) {
+        self.sync = sync
+    }
+
+    // MARK: - Starting
+
+    /// Whether accounts are set up in this build: they need the Firebase config, which isn't in git.
+    static var isAvailable: Bool { FirebaseApp.app() != nil }
+
+    /// Configures Firebase from `Firebase/GoogleService-Info.plist` in the bundle, unless it's missing or this is
+    /// a unit-test run (tests never touch the network).
+    static func configure() {
+        guard FirebaseApp.app() == nil,
+              ProcessInfo.processInfo.environment["XCTestConfigurationFilePath"] == nil,
+              let url = Bundle.main.url(forResource: "GoogleService-Info", withExtension: "plist", subdirectory: "Firebase"),
+              let options = FirebaseOptions(contentsOfFile: url.path) else { return }
+        FirebaseApp.configure(options: options)
+        if let clientID = options.clientID {
+            GIDSignIn.sharedInstance.configuration = GIDConfiguration(clientID: clientID)
+        }
+    }
+
+    /// Follows the signed-in account, and signs in anonymously when there's none.
+    func start() {
+        guard Self.isAvailable, listener == nil else { return }
+        listener = Auth.auth().addStateDidChangeListener { [weak self] _, user in
+            MainActor.assumeIsolated {
+                guard let self else { return }
+                self.refreshProfile(user)
+                if let user {
+                    Task { await self.sync.attach(uid: user.uid) }
+                } else {
+                    Auth.auth().signInAnonymously { _, _ in }
+                }
+            }
+        }
+    }
+
+    private func refreshProfile(_ user: User? = Auth.auth().currentUser) {
+        guard let user else {
+            profile = nil
+            return
+        }
+        let linked = user.providerData.first { Provider(rawValue: $0.providerID) != nil }
+        profile = Profile(uid: user.uid, isAnonymous: user.isAnonymous,
+                          name: user.displayName ?? linked?.displayName,
+                          email: user.email ?? linked?.email,
+                          provider: linked.flatMap { Provider(rawValue: $0.providerID) })
+    }
+
+    // MARK: - Signing in
+
+    /// Prepares the Sign in with Apple button's request.
+    func prepareApple(_ request: ASAuthorizationAppleIDRequest) {
+        apple.prepare(request)
+    }
+
+    /// Finishes signing in with Apple, from the button's result.
+    func completeApple(_ result: Result<ASAuthorization, Error>) async {
+        switch result {
+        case .success(let authorization):
+            guard let (credential, name) = apple.credential(from: authorization) else {
+                problem = .failed
+                return
+            }
+            await link(credential, name: name)
+        case .failure(let error):
+            if (error as? ASAuthorizationError)?.code != .canceled { problem = .failed }
+        }
+    }
+
+    func signInWithGoogle() async {
+        guard let presenter = UIApplication.shared.topViewController else { return }
+        problem = nil
+        do {
+            let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenter)
+            guard let idToken = result.user.idToken?.tokenString else {
+                problem = .failed
+                return
+            }
+            let credential = GoogleAuthProvider.credential(withIDToken: idToken, accessToken: result.user.accessToken.tokenString)
+            await link(credential, name: nil)
+        } catch {
+            if (error as NSError).code != GIDSignInError.canceled.rawValue { problem = Self.problem(for: error) }
+        }
+    }
+
+    /// Links a sign-in to the current account, keeping its progress. When the sign-in already belongs to another
+    /// account (a previous install, another device), that account is used instead and this device's progress is
+    /// merged into it.
+    private func link(_ credential: AuthCredential, name: PersonNameComponents?) async {
+        isWorking = true
+        problem = nil
+        defer { isWorking = false }
+        do {
+            if let user = Auth.auth().currentUser {
+                do {
+                    let result = try await user.link(with: credential)
+                    await setName(name, of: result.user)
+                } catch let error as NSError where error.code == AuthErrorCode.credentialAlreadyInUse.rawValue {
+                    let existing = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential ?? credential
+                    // The state listener attaches the backup to that account, which merges this device's progress in.
+                    try await Auth.auth().signIn(with: existing)
+                }
+            } else {
+                try await Auth.auth().signIn(with: credential)
+            }
+            refreshProfile()
+        } catch {
+            problem = Self.problem(for: error)
+        }
+    }
+
+    /// Apple shares the name only on the first sign-in; it's kept as the account's display name.
+    private func setName(_ name: PersonNameComponents?, of user: User) async {
+        guard user.displayName == nil, let name else { return }
+        let formatted = PersonNameComponentsFormatter().string(from: name)
+        guard !formatted.isEmpty else { return }
+        let change = user.createProfileChangeRequest()
+        change.displayName = formatted
+        try? await change.commitChanges()
+    }
+
+    // MARK: - Signing out and deleting
+
+    /// Signs out after making sure the account holds everything, then clears this device and starts afresh.
+    /// Returns false when the account couldn't be reached, so nothing was changed.
+    @discardableResult
+    func signOut() async -> Bool {
+        isWorking = true
+        problem = nil
+        defer { isWorking = false }
+        do {
+            try await sync.uploadNow()
+        } catch {
+            problem = .offline
+            return false
+        }
+        sync.detach()
+        GIDSignIn.sharedInstance.signOut()
+        try? Auth.auth().signOut()
+        sync.clearDevice()
+        // Back to «ماذا تحفظ؟», as on a new install; the listener signs in anonymously.
+        UserDefaults.standard.set(false, forKey: "memorization.hasDeclared")
+        return true
+    }
+
+    /// Deletes the account and everything it holds. The progress on this device stays, under a new anonymous
+    /// account. Apple accounts are signed in again first, so Apple's token can be revoked as Apple requires.
+    @discardableResult
+    func deleteAccount() async -> Bool {
+        guard let user = Auth.auth().currentUser else { return false }
+        isWorking = true
+        problem = nil
+        defer { isWorking = false }
+        do {
+            if profile?.provider == .apple {
+                let authorization = try await apple.request()
+                guard let (credential, _) = apple.credential(from: authorization) else { throw CloudSyncError.timedOut }
+                try await user.reauthenticate(with: credential)
+                if let appleCredential = authorization.credential as? ASAuthorizationAppleIDCredential,
+                   let code = appleCredential.authorizationCode.flatMap({ String(data: $0, encoding: .utf8) }) {
+                    try? await Auth.auth().revokeToken(withAuthorizationCode: code)
+                }
+            }
+            try await sync.deleteAccountData(uid: user.uid)
+            do {
+                try await user.delete()
+            } catch let error as NSError where error.code == AuthErrorCode.requiresRecentLogin.rawValue {
+                try await reauthenticateWithGoogle(user)
+                try await user.delete()
+            }
+            sync.detach()
+            GIDSignIn.sharedInstance.signOut()
+            return true
+        } catch {
+            if (error as? ASAuthorizationError)?.code != .canceled,
+               (error as NSError).code != GIDSignInError.canceled.rawValue {
+                problem = Self.problem(for: error)
+            }
+            return false
+        }
+    }
+
+    private func reauthenticateWithGoogle(_ user: User) async throws {
+        guard let presenter = UIApplication.shared.topViewController else { throw CloudSyncError.timedOut }
+        let result = try await GIDSignIn.sharedInstance.signIn(withPresenting: presenter)
+        guard let idToken = result.user.idToken?.tokenString else { throw CloudSyncError.timedOut }
+        try await user.reauthenticate(with: GoogleAuthProvider.credential(withIDToken: idToken, accessToken: result.user.accessToken.tokenString))
+    }
+
+    private static func problem(for error: Error) -> Problem {
+        let error = error as NSError
+        let offline = error.code == AuthErrorCode.networkError.rawValue || error.domain == NSURLErrorDomain
+            || error is CloudSyncError
+        return offline ? .offline : .failed
+    }
+}
+
+/// Sign in with Apple: the nonce Firebase needs, and the request for signing in again before deleting.
+@MainActor
+private final class AppleSignIn: NSObject {
+    private var nonce: String?
+    private var continuation: CheckedContinuation<ASAuthorization, Error>?
+
+    func prepare(_ request: ASAuthorizationAppleIDRequest) {
+        let nonce = Self.randomNonce()
+        self.nonce = nonce
+        request.requestedScopes = [.fullName, .email]
+        request.nonce = Self.sha256(nonce)
+    }
+
+    func credential(from authorization: ASAuthorization) -> (AuthCredential, PersonNameComponents?)? {
+        guard let apple = authorization.credential as? ASAuthorizationAppleIDCredential, let nonce,
+              let token = apple.identityToken.flatMap({ String(data: $0, encoding: .utf8) }) else { return nil }
+        let credential = OAuthProvider.appleCredential(withIDToken: token, rawNonce: nonce, fullName: apple.fullName)
+        return (credential, apple.fullName)
+    }
+
+    /// Asks for Sign in with Apple without the button.
+    func request() async throws -> ASAuthorization {
+        let request = ASAuthorizationAppleIDProvider().createRequest()
+        prepare(request)
+        let controller = ASAuthorizationController(authorizationRequests: [request])
+        controller.delegate = self
+        controller.presentationContextProvider = self
+        return try await withCheckedThrowingContinuation { continuation in
+            self.continuation = continuation
+            controller.performRequests()
+        }
+    }
+
+    private static func randomNonce(length: Int = 32) -> String {
+        let characters = Array("0123456789ABCDEFGHIJKLMNOPQRSTUVXYZabcdefghijklmnopqrstuvwxyz-._")
+        var generator = SystemRandomNumberGenerator()
+        return String((0..<length).map { _ in characters[Int.random(in: 0..<characters.count, using: &generator)] })
+    }
+
+    private static func sha256(_ input: String) -> String {
+        SHA256.hash(data: Data(input.utf8)).map { String(format: "%02x", $0) }.joined()
+    }
+}
+
+extension AppleSignIn: @preconcurrency ASAuthorizationControllerDelegate, @preconcurrency ASAuthorizationControllerPresentationContextProviding {
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
+        continuation?.resume(returning: authorization)
+        continuation = nil
+    }
+
+    func authorizationController(controller: ASAuthorizationController, didCompleteWithError error: Error) {
+        continuation?.resume(throwing: error)
+        continuation = nil
+    }
+
+    func presentationAnchor(for controller: ASAuthorizationController) -> ASPresentationAnchor {
+        UIApplication.shared.activeWindow ?? ASPresentationAnchor()
+    }
+}
+
+extension UIApplication {
+    var activeWindow: UIWindow? {
+        connectedScenes.compactMap { ($0 as? UIWindowScene)?.keyWindow }.first
+    }
+
+    /// The view controller on top, to present Google's sign-in from.
+    var topViewController: UIViewController? {
+        var top = activeWindow?.rootViewController
+        while let presented = top?.presentedViewController { top = presented }
+        return top
+    }
+}

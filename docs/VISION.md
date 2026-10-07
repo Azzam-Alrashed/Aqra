@@ -30,7 +30,7 @@ Each wave is complete and usable on its own, and each depends on the one before 
 | Wave | Scope | Status |
 |---|---|---|
 | **1. The student alone** | Offline, no account: the Mushaf, the memorization map, the revision engine, and today's wird. | Built (2026-10-07) |
-| **2. The student with others** | Accounts, teachers and tasmee', the "verified" mark, peer tasmee'. | Next |
+| **2. The student with others** | Accounts, teachers and tasmee', the "verified" mark, peer tasmee'. | In progress: accounts and backup built (2026-10-07) |
 | **3. The full journey** | The personal plan with new memorization and a completion date, stages and tests, competitions, the seat auction, payments. | Later |
 
 ## Platform
@@ -134,7 +134,12 @@ See [REVISION.md](REVISION.md) for the policy, its defaults, and the open questi
 
 ## Accounts
 
-Every user starts as an anonymous Firebase user. Their progress lives on the device until they sign in with Apple or Google, which links the credential to the anonymous account so nothing is lost. Signing in is required before booking tasmee' or buying credits.
+Every user starts as an anonymous Firebase user, and their progress is backed up to that account from the first day. Signing in with Apple or Google links the sign-in to the same account, so nothing is lost. If the sign-in already belongs to an account (another device, an earlier install), that account is used and this device's progress is merged into it. Signing in is required before booking tasmee' or buying credits.
+
+- **What's stored:** what's memorized (with each ayah's strength and the verified mark) and the revision record. The device's copy is the one the app works from; the account is its backup, restored on a new device or after a reinstall. It isn't live editing on two devices at once.
+- **Where:** Firestore in Dammam, Saudi Arabia (me-central2).
+- **Signing out** keeps the progress in the account and clears the device.
+- **Deleting the account** deletes the account and everything backed up in it, as Apple requires; the progress on the device stays.
 
 ## Roles
 
@@ -152,8 +157,9 @@ A separate role. Becoming a teacher requires:
 
 ## Tasmee' sessions
 
-- **Booking:** the student chooses a teacher and books a tasmee' time slot.
-- **Format:** a live audio and video call in which the student recites and the teacher corrects, marking mistakes on the ayat.
+- **Booking:** the student chooses any vetted teacher and books a seat in one of their sessions. In wave 2 seats are free, first come first served; the auction adds paid seats in wave 3.
+- **In person or by video:** in person, the teacher marks each student's mistakes on his own phone during the session; remotely, a live video call. In person comes first.
+- **By video:** a live audio and video call in which the student recites and the teacher corrects, marking mistakes on the ayat.
 - **Video provider:** LiveKit Cloud. Self-hosting is an option later if costs grow.
 - **Access:** room tokens are issued by Cloud Functions only after verifying that the user holds a seat in that session.
 
@@ -222,7 +228,6 @@ Public standing should rest on verified evidence (a sheikh's tasmee'), not on se
 - **Topic sections:** the stand-in data must be replaced by a published thematic Mushaf's division, with the publisher's permission.
 - **Revision policy:** the numbers in [REVISION.md](REVISION.md) need trying with real huffaz.
 - **Stages and tests:** how Etqan's ten stages and tests map onto Aqra's منازل (the ten stairs match the ten stages).
-- **The sheikh's role:** an ongoing sheikh who follows a student, or booking any teacher, or both.
 - **Free seats:** how many reserved free seats each session has.
 - **Commission:** the app's commission percentage.
 - **Teacher vetting:** the full acceptance procedure beyond the ijazah and interview.

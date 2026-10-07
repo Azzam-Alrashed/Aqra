@@ -1,11 +1,12 @@
+import AuthenticationServices
 import SwiftUI
 import UIKit
 import UserNotifications
 
-/// حسابي: where the progress lives, the Mushaf's colors, the daily reminder, the app's language, and the sources
-/// Aqra is built on. What's memorized and the daily amount are edited from the home. Signing in comes with the
-/// second wave.
+/// حسابي: the account the progress is backed up to, the Mushaf's colors, the daily reminder, the app's language,
+/// and the sources Aqra is built on. What's memorized and the daily amount are edited from the home.
 struct AccountView: View {
+    @Environment(AccountStore.self) private var account
     @Environment(\.openURL) private var openURL
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @AppStorage("mushaf.topics") private var topicColors = true
@@ -13,6 +14,8 @@ struct AccountView: View {
     /// Minutes after midnight.
     @AppStorage("reminder.minutes") private var reminderMinutes = 5 * 60 + 30
     @State private var notificationsDenied = false
+    @State private var confirmingSignOut = false
+    @State private var confirmingDeletion = false
 
     var body: some View {
         NavigationStack {
@@ -23,7 +26,7 @@ struct AccountView: View {
                         .foregroundStyle(Palette.ink)
                         .padding(.top, 16)
                         .accessibilityAddTraits(.isHeader)
-                    deviceCard
+                    AccountCard()
 
                     AqraSectionTitle(title: "Mushaf").padding(.top, 10)
                     AqraCard(padding: 0, radius: 24) {
@@ -90,6 +93,29 @@ struct AccountView: View {
                         }
                     }
 
+                    if account.profile?.isAnonymous == false {
+                        AqraCard(padding: 0, radius: 24) {
+                            VStack(spacing: 0) {
+                                Button {
+                                    confirmingSignOut = true
+                                } label: {
+                                    AqraRow(icon: "🚪", tint: Palette.lavender, title: Text("Sign out")) { EmptyView() }
+                                }
+                                .buttonStyle(.plain)
+                                AqraRowDivider()
+                                Button {
+                                    confirmingDeletion = true
+                                } label: {
+                                    AqraRow(icon: "🗑️", tint: Palette.rose,
+                                            title: Text("Delete account").foregroundStyle(Color(light: 0xB3261E, dark: 0xB3261E))) { EmptyView() }
+                                }
+                                .buttonStyle(.plain)
+                            }
+                        }
+                        .disabled(account.isWorking)
+                        .padding(.top, 10)
+                    }
+
                     Text("Version \(version)")
                         .font(.system(size: 12, weight: .semibold))
                         .foregroundStyle(Palette.inkSoft)
@@ -114,26 +140,18 @@ struct AccountView: View {
         .environment(\.colorScheme, .light)
         .onChange(of: reminderOn) { updateReminder() }
         .onChange(of: reminderMinutes) { updateReminder() }
-    }
-
-    /// Progress lives on the device until accounts come; the onboarding's promise, repeated where it's kept.
-    private var deviceCard: some View {
-        AqraCard(padding: 14, radius: 24) {
-            HStack(alignment: .top, spacing: 12) {
-                IconTile(icon: "📱", tint: Palette.sky, size: 40)
-                VStack(alignment: .leading, spacing: 3) {
-                    Text("On this device")
-                        .font(.system(size: 16, weight: .heavy))
-                        .foregroundStyle(Palette.ink)
-                    Text("Your progress is saved on your device, and you can link it to your account anytime.")
-                        .font(.system(size: 12, weight: .semibold))
-                        .foregroundStyle(Palette.inkSoft)
-                        .fixedSize(horizontal: false, vertical: true)
-                }
-                Spacer(minLength: 0)
-            }
+        .alert("Sign out?", isPresented: $confirmingSignOut) {
+            Button("Sign out", role: .destructive) { Task { await account.signOut() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your progress stays in your account, and this device starts afresh. Sign in again to bring it back.")
         }
-        .accessibilityElement(children: .combine)
+        .alert("Delete your account?", isPresented: $confirmingDeletion) {
+            Button("Delete", role: .destructive) { Task { await account.deleteAccount() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Your account and the progress backed up in it are deleted for good. The progress on this device stays.")
+        }
     }
 
     private func toggle(_ isOn: Binding<Bool>) -> some View {
@@ -185,6 +203,143 @@ struct AccountView: View {
 
     private func openSettings() {
         if let url = URL(string: UIApplication.openSettingsURLString) { openURL(url) }
+    }
+}
+
+/// The account the progress is backed up to: an invitation to sign in while anonymous, and who's signed in after.
+struct AccountCard: View {
+    @Environment(AccountStore.self) private var account
+    @Environment(CloudSync.self) private var sync
+
+    var body: some View {
+        AqraCard(padding: 14, radius: 24) {
+            VStack(alignment: .leading, spacing: 14) {
+                if let profile = account.profile, !profile.isAnonymous {
+                    signedIn(profile)
+                } else {
+                    invitation
+                    if AccountStore.isAvailable {
+                        SignInButtons()
+                    }
+                }
+                if let problem = account.problem {
+                    ProblemLine(problem: problem)
+                }
+            }
+        }
+        .animation(.snappy, value: account.profile)
+        .animation(.snappy, value: account.problem)
+    }
+
+    private var invitation: some View {
+        HStack(alignment: .top, spacing: 12) {
+            IconTile(icon: "🪪", tint: Palette.butter, size: 40)
+            VStack(alignment: .leading, spacing: 3) {
+                Text("Save your progress")
+                    .font(.system(size: 16, weight: .heavy))
+                    .foregroundStyle(Palette.ink)
+                Text("Your progress is only on this device until you sign in.")
+                    .font(.system(size: 12, weight: .semibold))
+                    .foregroundStyle(Palette.inkSoft)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
+
+    private func signedIn(_ profile: AccountStore.Profile) -> some View {
+        HStack(alignment: .center, spacing: 12) {
+            IconTile(icon: profile.provider == .apple ? "🍎" : "🌐", tint: Palette.sky, size: 40)
+            VStack(alignment: .leading, spacing: 2) {
+                Text(verbatim: profile.name ?? profile.email ?? "")
+                    .font(.system(size: 16, weight: .heavy))
+                    .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+                if let email = profile.email, profile.name != nil {
+                    Text(verbatim: email)
+                        .font(.system(size: 12, weight: .semibold))
+                        .foregroundStyle(Palette.inkSoft)
+                        .lineLimit(1)
+                }
+                Group {
+                    if let backup = sync.lastBackup {
+                        Text("Backed up \(backup.formatted(.relative(presentation: .named)))")
+                    } else {
+                        Text("Backing up…")
+                    }
+                }
+                .font(.system(size: 12, weight: .semibold))
+                .foregroundStyle(Palette.brand)
+            }
+            Spacer(minLength: 0)
+        }
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// Sign in with Apple and with Google, one above the other.
+struct SignInButtons: View {
+    @Environment(AccountStore.self) private var account
+
+    private static let googleLogo: UIImage? = Bundle.main.url(forResource: "GoogleSignIn_GoogleSignIn", withExtension: "bundle")
+        .flatMap(Bundle.init(url:))
+        .flatMap { UIImage(named: "google", in: $0, with: nil) }
+
+    var body: some View {
+        VStack(spacing: 10) {
+            SignInWithAppleButton(.continue) { request in
+                account.prepareApple(request)
+            } onCompletion: { result in
+                Task { await account.completeApple(result) }
+            }
+            .signInWithAppleButtonStyle(.black)
+            .frame(height: 48)
+            .clipShape(Capsule())
+
+            Button {
+                Task { await account.signInWithGoogle() }
+            } label: {
+                // Google's light button: its own logo, from the Google Sign-In package, on white with a grey outline.
+                HStack(spacing: 10) {
+                    if let logo = Self.googleLogo {
+                        Image(uiImage: logo)
+                            .resizable()
+                            .frame(width: 18, height: 18)
+                    }
+                    Text("Continue with Google")
+                        .font(.system(size: 17, weight: .semibold, design: .default))
+                        .foregroundStyle(Color(light: 0x1F1F1F, dark: 0x1F1F1F))
+                }
+                .frame(maxWidth: .infinity, minHeight: 48)
+                .background(.white, in: Capsule())
+                .overlay(Capsule().strokeBorder(Color(light: 0x747775, dark: 0x747775), lineWidth: 1))
+                .contentShape(Capsule())
+            }
+            .buttonStyle(AqraPressStyle())
+        }
+        .disabled(account.isWorking)
+        .opacity(account.isWorking ? 0.6 : 1)
+        .overlay {
+            if account.isWorking { ProgressView().tint(Palette.brand) }
+        }
+    }
+}
+
+/// What went wrong, in one calm line.
+struct ProblemLine: View {
+    var problem: AccountStore.Problem
+
+    var body: some View {
+        Group {
+            switch problem {
+            case .offline: Text("You need an internet connection for this.")
+            case .failed: Text("That didn't work. Please try again.")
+            }
+        }
+        .font(.system(size: 12, weight: .semibold))
+        .foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
+        .transition(.opacity)
     }
 }
 

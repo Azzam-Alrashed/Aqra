@@ -8,7 +8,7 @@ apps/
   ios/        iOS app (SwiftUI, XcodeGen: edit project.yml, then run `xcodegen generate`)
   android/    Android app (planned)
   web/        Web PWA (planned)
-backend/      Firebase: Cloud Functions, Firestore rules and indexes (planned)
+backend/      Firebase: Firestore rules and their tests; Cloud Functions (planned)
 shared/       Platform-neutral data, e.g. the verified Quran text and its checksums (planned)
 docs/         Product and technical documentation, see docs/VISION.md
 ```
@@ -19,5 +19,12 @@ The 604 Mushaf page fonts (~50 MB, with tajweed) aren't in git. After cloning, r
 
 ```
 scripts/fetch-mushaf-fonts.sh
+```
+
+The app's Firebase config isn't in git either. Restore it with the Firebase CLI (signed in with access to the
+`aqra-quran` project); without it the app still runs, with accounts and backup turned off:
+
+```
+scripts/fetch-firebase-config.sh
 ```
 

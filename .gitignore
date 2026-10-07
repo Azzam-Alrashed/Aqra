@@ -6,3 +6,8 @@ build/
 
 # Mushaf page fonts with tajweed (QCF V4, 1441H print, ~50 MB): restore with scripts/fetch-mushaf-fonts.sh
 shared/quran/qcf4/
+
+# The app's Firebase config (project aqra-quran): restore with scripts/fetch-firebase-config.sh
+apps/ios/Firebase/GoogleService-Info.plist
+backend/node_modules/
+backend/*.log

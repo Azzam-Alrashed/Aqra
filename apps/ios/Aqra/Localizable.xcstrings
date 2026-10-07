@@ -596,6 +596,26 @@
         }
       }
     },
+    "Backed up %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "آخر نسخة احتياطية %@"
+          }
+        }
+      }
+    },
+    "Backing up…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "جارٍ النسخ الاحتياطي…"
+          }
+        }
+      }
+    },
     "Begin" : {
       "localizations" : {
         "ar" : {
@@ -622,6 +642,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الصفحتان"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء"
           }
         }
       }
@@ -686,6 +716,16 @@
         }
       }
     },
+    "Continue with Google" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المتابعة باستخدام Google"
+          }
+        }
+      }
+    },
     "Daily reminder" : {
       "localizations" : {
         "ar" : {
@@ -702,6 +742,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "مراجعة يومية، وتسميع على شيوخ مُجازين، ومكافآت تحفّزك."
+          }
+        }
+      }
+    },
+    "Delete" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف"
+          }
+        }
+      }
+    },
+    "Delete account" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف الحساب"
+          }
+        }
+      }
+    },
+    "Delete your account?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف حسابك؟"
           }
         }
       }
@@ -866,6 +936,16 @@
         }
       }
     },
+    "Later" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لاحقًا"
+          }
+        }
+      }
+    },
     "Leave revision" : {
       "localizations" : {
         "ar" : {
@@ -982,16 +1062,6 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "من القرآن؟"
-          }
-        }
-      }
-    },
-    "On this device" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "على هذا الجهاز"
           }
         }
       }
@@ -1231,12 +1301,42 @@
         }
       }
     },
+    "Save your progress" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احفظ تقدّمك"
+          }
+        }
+      }
+    },
     "Show page" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "أظهر الصفحة"
+          }
+        }
+      }
+    },
+    "Sign out" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل الخروج"
+          }
+        }
+      }
+    },
+    "Sign out?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسجيل الخروج؟"
           }
         }
       }
@@ -1327,6 +1427,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "اضغط لإظهار الآية التالية، واضغط على آية ظاهرة إن تعثّرت فيها"
+          }
+        }
+      }
+    },
+    "That didn't work. Please try again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر ذلك، حاول مرة أخرى."
           }
         }
       }
@@ -1511,6 +1621,26 @@
         }
       }
     },
+    "You need an internet connection for this." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحتاج إلى اتصال بالإنترنت لذلك."
+          }
+        }
+      }
+    },
+    "Your account and the progress backed up in it are deleted for good. The progress on this device stays." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُحذف حسابك والنسخة الاحتياطية من تقدّمك نهائيًا، ويبقى التقدّم المحفوظ على هذا الجهاز."
+          }
+        }
+      }
+    },
     "Your pages for today are waiting for you." : {
       "localizations" : {
         "ar" : {
@@ -1531,12 +1661,32 @@
         }
       }
     },
+    "Your progress is only on this device until you sign in." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تقدّمك على هذا الجهاز فقط حتى تسجّل الدخول."
+          }
+        }
+      }
+    },
     "Your progress is saved on your device, and you can link it to your account anytime." : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "تقدّمك يُحفظ على جهازك، ويمكنك ربطه بحسابك متى شئت."
+          }
+        }
+      }
+    },
+    "Your progress stays in your account, and this device starts afresh. Sign in again to bring it back." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يبقى تقدّمك في حسابك، ويبدأ هذا الجهاز من جديد. سجّل الدخول مرة أخرى لاستعادته."
           }
         }
       }

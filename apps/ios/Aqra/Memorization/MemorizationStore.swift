@@ -58,11 +58,13 @@ struct AyahMemory: Codable, Hashable {
     }
 }
 
-/// The ayat the student has memorized, numbered 0..<6236 in Quran order, kept on the device.
-/// It will sync to the student's account once accounts exist.
+/// The ayat the student has memorized, numbered 0..<6236 in Quran order, kept on the device and backed up to the
+/// student's account (see `CloudSync`).
 @MainActor @Observable
 final class MemorizationStore {
     private(set) var ayahs: [Int: AyahMemory] = [:]
+    /// Called after every change, so the backup can follow.
+    @ObservationIgnored var onChange: (() -> Void)?
     @ObservationIgnored private let fileURL: URL?
     @ObservationIgnored private var pendingSave: Task<Void, Never>?
 
@@ -129,6 +131,14 @@ final class MemorizationStore {
         mark([ayah], memorized: !isMemorized(ayah))
     }
 
+    /// Replaces everything memorized: restoring from the account, or clearing the device on signing out.
+    func replaceAll(_ memories: [Int: AyahMemory]) {
+        guard memories != ayahs else { return }
+        ayahs = memories.filter { (0..<MushafStore.ayahCount).contains($0.key) }
+        scheduleSave()
+        saveNow()
+    }
+
     /// Marks ayat as memorized (keeping what's already known about them) or as not memorized.
     func mark(_ range: some Sequence<Int>, memorized: Bool) {
         var changed = false
@@ -152,6 +162,7 @@ final class MemorizationStore {
 
     /// Writes shortly after the last change, so marking many ayat at once writes once.
     private func scheduleSave() {
+        onChange?()
         guard let fileURL else { return }
         pendingSave?.cancel()
         let file = File(ayahs: ayahs.sorted { $0.key < $1.key }.map { File.Record(ayah: $0.key, memory: $0.value) })

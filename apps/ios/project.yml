@@ -5,6 +5,13 @@ options:
     iOS: "17.0"
   developmentLanguage: en
   createIntermediateGroups: true
+packages:
+  Firebase:
+    url: https://github.com/firebase/firebase-ios-sdk
+    from: 12.19.0
+  GoogleSignIn:
+    url: https://github.com/google/GoogleSignIn-iOS
+    from: 9.1.0
 settings:
   base:
     SWIFT_VERSION: "6.0"
@@ -20,6 +27,21 @@ targets:
       - path: ../../shared/quran
         type: folder
         buildPhase: resources
+      # The Firebase config, bundled as a "Firebase" folder; it isn't in git (see Firebase/README.md).
+      - path: Firebase
+        type: folder
+        buildPhase: resources
+    dependencies:
+      - package: Firebase
+        product: FirebaseAuth
+      - package: Firebase
+        product: FirebaseFirestore
+      - package: GoogleSignIn
+        product: GoogleSignIn
+    entitlements:
+      path: Aqra/Aqra.entitlements
+      properties:
+        com.apple.developer.applesignin: [Default]
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.azzamalrashed.aqra
@@ -27,6 +49,8 @@ targets:
         CURRENT_PROJECT_VERSION: "2"
         CODE_SIGN_IDENTITY: iPhone Developer
         GENERATE_INFOPLIST_FILE: YES
+        # Only what the generated Info.plist can't hold: the URL scheme Google's sign-in returns to.
+        INFOPLIST_FILE: Aqra/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: "اقْرَأْ"
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
         INFOPLIST_KEY_UILaunchScreen_Generation: YES

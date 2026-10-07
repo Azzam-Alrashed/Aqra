@@ -83,6 +83,10 @@ final class RevisionStore {
     /// The days on which at least one page was revised, kept apart from the history so a long streak isn't cut
     /// short when old records are dropped.
     private(set) var revisedDays: Set<Date> = []
+    /// When any of it last changed, to tell which copy is newer when merging with the account's.
+    private(set) var updatedAt = Date.distantPast
+    /// Called after every change, so the backup can follow.
+    @ObservationIgnored var onChange: (() -> Void)?
 
     @ObservationIgnored private let fileURL: URL?
     @ObservationIgnored private let calendar: Calendar
@@ -105,6 +109,42 @@ final class RevisionStore {
         plan = file.plan
         history = file.history
         revisedDays = Set(file.revisedDays ?? file.history.map { calendar.startOfDay(for: $0.date) })
+        // Files from before backups were kept don't say when they changed; the file's own date does.
+        updatedAt = file.updatedAt
+            ?? (try? fileURL.resourceValues(forKeys: [.contentModificationDateKey]))?.contentModificationDate
+            ?? .distantPast
+    }
+
+    // MARK: - Backup
+
+    /// Everything the store keeps, as one value: what's backed up to the account and restored from it.
+    struct Snapshot: Codable, Equatable {
+        var dailyPages: Int?
+        var rotationCursor = 1
+        var followUps: [Int: FollowUp] = [:]
+        var plan: DayPlan?
+        var history: [RevisionRecord] = []
+        var revisedDays: [Date] = []
+        var updatedAt = Date.distantPast
+
+        static let empty = Snapshot()
+    }
+
+    var snapshot: Snapshot {
+        Snapshot(dailyPages: dailyPages, rotationCursor: rotationCursor, followUps: followUps, plan: plan,
+                 history: history, revisedDays: revisedDays.sorted(), updatedAt: updatedAt)
+    }
+
+    /// Replaces everything with a snapshot: restoring from the account, or clearing the device on signing out.
+    func apply(_ snapshot: Snapshot) {
+        guard snapshot != self.snapshot else { return }
+        dailyPages = snapshot.dailyPages.map { min(max($0, 1), 40) }
+        rotationCursor = min(max(snapshot.rotationCursor, 1), MushafStore.pageCount)
+        followUps = snapshot.followUps
+        plan = snapshot.plan
+        history = Array(snapshot.history.suffix(1_000))
+        revisedDays = Set(snapshot.revisedDays)
+        save()
     }
 
     /// The daily amount in effect: the student's choice, or the suggestion for what they've memorized.
@@ -242,14 +282,17 @@ final class RevisionStore {
         var history: [RevisionRecord]
         /// Missing from files written before the streak was kept; it's then rebuilt from the history.
         var revisedDays: [Date]?
+        var updatedAt: Date?
     }
 
     private func save() {
+        updatedAt = .now
+        onChange?()
         guard let fileURL else { return }
         let file = File(
             dailyPages: dailyPages, rotationCursor: rotationCursor,
             followUps: followUps.sorted { $0.key < $1.key }.map { File.FollowUpRecord(page: $0.key, due: $0.value.due, step: $0.value.step) },
-            plan: plan, history: history, revisedDays: revisedDays.sorted()
+            plan: plan, history: history, revisedDays: revisedDays.sorted(), updatedAt: updatedAt
         )
         try? FileManager.default.createDirectory(at: fileURL.deletingLastPathComponent(), withIntermediateDirectories: true)
         try? JSONEncoder().encode(file).write(to: fileURL, options: .atomic)

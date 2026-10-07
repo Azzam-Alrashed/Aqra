@@ -6,6 +6,7 @@ struct AqraApp: App {
 
     init() {
         AqraFont.registerBundledFonts()
+        AccountStore.configure()
     }
 
     var body: some Scene {
