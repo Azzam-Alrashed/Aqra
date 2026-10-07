@@ -18,6 +18,8 @@ struct AccountView: View {
     @State private var notificationsDenied = false
     @State private var confirmingSignOut = false
     @State private var confirmingDeletion = false
+    @State private var showingWallet = false
+    @Environment(WalletStore.self) private var wallet
 
     var body: some View {
         NavigationStack {
@@ -29,6 +31,20 @@ struct AccountView: View {
                         .padding(.top, 16)
                         .accessibilityAddTraits(.isHeader)
                     AccountCard()
+
+                    if AccountStore.isAvailable {
+                        Button {
+                            showingWallet = true
+                        } label: {
+                            AqraCard(padding: 0, radius: 24) {
+                                AqraRow(icon: "🪙", tint: Palette.butter, title: Text("Credits"),
+                                        detail: account.profile?.isAnonymous == false
+                                            ? Text("\(CreditsFormat.credits(wallet.balance)) credits")
+                                            : Text("For seats won by bidding"))
+                            }
+                        }
+                        .buttonStyle(AqraPressStyle())
+                    }
 
                     AqraSectionTitle(title: "Mushaf").padding(.top, 10)
                     AqraCard(padding: 0, radius: 24) {
@@ -143,6 +159,7 @@ struct AccountView: View {
         .fontDesign(.rounded)
         .tint(Palette.brand)
         .environment(\.colorScheme, .light)
+        .sheet(isPresented: $showingWallet) { WalletView() }
         .onChange(of: reminderOn) { updateReminder() }
         .onChange(of: reminderMinutes) { updateReminder() }
         .onChange(of: plan.plan == nil) { if reminderOn { updateReminder() } }

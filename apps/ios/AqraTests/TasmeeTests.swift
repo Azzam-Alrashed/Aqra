@@ -168,4 +168,35 @@ struct TasmeeTests {
         #expect(file?.name == "Alice" && file?.lastHeardAt == day(2) && file?.notes == "سورة الملك")
         #expect(StudentFile(id: "bob", document: ["notes": "x"]) == nil)
     }
+
+    @Test func auctionsSeatsAndBidsSurviveTheirDocuments() {
+        let auction = TasmeeSession.Auction(seats: 3, minBid: 2, closesAt: day(1), state: .open)
+        let session = TasmeeSession(id: "s", teacherId: "t", teacherName: "x", startsAt: day(1).addingTimeInterval(3 * 3_600),
+                                    kind: .video, place: "", seats: 1, createdAt: day(0), auction: auction)
+        let document = session.document
+        #expect(document["auctionSeats"] as? Int == 3 && document["auctionState"] as? String == "open")
+        #expect(document["auctionBids"] == nil && document["auctionFloor"] == nil)
+        #expect(TasmeeSession(id: "s", document: document) == session)
+        // The server's counts come back with it.
+        var counted = document
+        counted["auctionBids"] = Int64(3)
+        counted["auctionFloor"] = NSNumber(value: 6)
+        let read = TasmeeSession(id: "s", document: counted)?.auction
+        #expect(read?.bids == 3 && read?.nextAtLeast == 6 && read?.isOpen(at: day(0)) == true && read?.isOpen(at: day(2)) == false)
+        #expect(auction.nextAtLeast == 2)
+        // A session without auctioned seats writes none of the fields.
+        let plain = TasmeeSession(id: "p", teacherId: "t", teacherName: "x", startsAt: day(1), place: "y", seats: 2)
+        #expect(plain.document["auctionSeats"] == nil && TasmeeSession(id: "p", document: plain.document)?.auction == nil)
+
+        let seat = Seat(id: "bob", name: "Bob", bookedAt: day(0), memorizedPages: 10, paid: 5)
+        #expect(Seat(id: "bob", document: seat.document.merging(["paid": 5]) { $1 })?.paid == 5)
+        #expect(Seat(id: "bob", document: Seat(id: "bob", name: "Bob", memorizedPages: 1).document)?.paid == nil)
+
+        let bid = Bid(id: "bob", document: ["name": "Bob", "amount": NSNumber(value: 4), "at": day(0), "status": "outbid",
+                                            "memorizedPages": 12])
+        #expect(bid?.amount == 4 && bid?.status == .outbid && bid?.memorizedPages == 12)
+        #expect(Bid(id: "x", document: ["amount": 1, "status": "maybe"]) == nil)
+        #expect(WalletStore.credits(of: "aqra.credits.30") == 30)
+        #expect(CreditsFormat.credits(8) == 8.formatted() && CreditsFormat.credits(6.4) == 6.4.formatted(.number.precision(.fractionLength(2))))
+    }
 }

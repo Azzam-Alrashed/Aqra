@@ -4,6 +4,56 @@
     "" : {
 
     },
+    "%@ cancelled a session you were in." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغى %@ جلسة كنت فيها."
+          }
+        }
+      }
+    },
+    "%@ cancelled a session: your %lld credits are back." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغى %1$@ جلسة: عادت إليك %2$lld عملة."
+          }
+        }
+      }
+    },
+    "%@ credits" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ عملة"
+          }
+        }
+      }
+    },
+    "%@ credits due to you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ عملة مستحقة لك"
+          }
+        }
+      }
+    },
+    "%@ recorded your tasmee' of %lld pages." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل %1$@ تسميعك لـ%2$lld صفحة."
+          }
+        }
+      }
+    },
     "%lld ayat" : {
       "localizations" : {
         "ar" : {
@@ -125,6 +175,70 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld ayat memorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld credits" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld عملات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld عملة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "عملة واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld عملة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "عملتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld عملة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld credit"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld credits"
                 }
               }
             }
@@ -1080,6 +1194,80 @@
         }
       }
     },
+    "%lld seats by auction" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld مقاعد بالمزايدة"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld مقعدًا بالمزايدة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مقعد واحد بالمزايدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld مقعد بالمزايدة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "مقعدان بالمزايدة"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا مقاعد بالمزايدة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld seat by auction"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld seats by auction"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld seats by auction · %lld bids" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%1$lld مقاعد بالمزايدة · %2$lld عروض"
+          }
+        }
+      }
+    },
     "%lld stumbles" : {
       "localizations" : {
         "ar" : {
@@ -1220,6 +1408,16 @@
         }
       }
     },
+    "%lld unread" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%lld غير مقروءة"
+          }
+        }
+      }
+    },
     "+%lld points" : {
       "comment" : "A label that shows the number of points the user has earned.",
       "isCommentAutoGenerated" : true,
@@ -1346,6 +1544,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "٧ أيام متتالية"
+          }
+        }
+      }
+    },
+    "A bid now needs at least %lld credits." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يلزم العرض الآن %lld عملة على الأقل."
           }
         }
       }
@@ -1544,6 +1752,16 @@
         }
       }
     },
+    "A payout of %lld credits was sent to you." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حُوّلت إليك دفعة بقيمة %lld عملة."
+          }
+        }
+      }
+    },
     "A photo or a PDF, up to 10 MB" : {
       "localizations" : {
         "ar" : {
@@ -1572,6 +1790,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يوم راحة من الحفظ الجديد"
+          }
+        }
+      }
+    },
+    "A seat by auction" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقعد بالمزايدة"
+          }
+        }
+      }
+    },
+    "A seat won" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقعد فزت به"
+          }
+        }
+      }
+    },
+    "A seat won in your session" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقعد فِيز به في جلستك"
           }
         }
       }
@@ -1824,6 +2072,16 @@
         }
       }
     },
+    "Beside the free seats, these go to the highest bids, in credits. Bidding closes three hours before the session; you earn most of each winning bid." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلى جانب المقاعد المجانية، تذهب هذه لأعلى العروض بالعملات. تُغلق المزايدة قبل الجلسة بثلاث ساعات، ولك معظم كل عرض فائز."
+          }
+        }
+      }
+    },
     "Best score %@" : {
       "comment" : "A label that shows the best score a user has achieved on a test. The argument is the score, as a percentage.",
       "isCommentAutoGenerated" : true,
@@ -1844,6 +2102,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "بينك وبين نفسك: لا يراه أحد غيرك."
+          }
+        }
+      }
+    },
+    "Bid" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زايد"
+          }
+        }
+      }
+    },
+    "Bidding closes %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُغلق المزايدة %@"
+          }
+        }
+      }
+    },
+    "Bidding has closed for this session." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُغلقت المزايدة على هذه الجلسة."
+          }
+        }
+      }
+    },
+    "Bids" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العروض"
           }
         }
       }
@@ -1886,6 +2184,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الصفحتان"
+          }
+        }
+      }
+    },
+    "Buy credits" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اشترِ عملات"
           }
         }
       }
@@ -2206,6 +2514,76 @@
         }
       }
     },
+    "Credits" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العملات"
+          }
+        }
+      }
+    },
+    "credits" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عملة"
+          }
+        }
+      }
+    },
+    "Credits bought" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عملات اشتريتها"
+          }
+        }
+      }
+    },
+    "Credits pay for seats won by bidding in teachers' sessions. A bid holds its credits; they come back if someone outbids you or the session is cancelled." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُدفع العملات للمقاعد التي تفوز بها بالمزايدة في جلسات المعلّمين. يحجز عرضك عملاته، وتعود إليك إن زايد عليك أحد أو أُلغيت الجلسة."
+          }
+        }
+      }
+    },
+    "Credits stay with your account, so they're never lost with a device." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تبقى العملات في حسابك، فلا تضيع بضياع الجهاز."
+          }
+        }
+      }
+    },
+    "credits to bid with" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عملة للمزايدة"
+          }
+        }
+      }
+    },
+    "credits · free while seats remain" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عملة · مجانًا ما دامت المقاعد متاحة"
+          }
+        }
+      }
+    },
     "Daily amount" : {
       "comment" : "A label displayed above a selection of daily memorization amounts.",
       "isCommentAutoGenerated" : true,
@@ -2284,6 +2662,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تم"
+          }
+        }
+      }
+    },
+    "Due to you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المستحق لك"
           }
         }
       }
@@ -2511,6 +2899,26 @@
         }
       }
     },
+    "for seats in sessions" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لمقاعد الجلسات"
+          }
+        }
+      }
+    },
+    "For seats won by bidding" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "للمقاعد التي تُنال بالمزايدة"
+          }
+        }
+      }
+    },
     "for this week" : {
       "comment" : "A description of the challenge picker.",
       "isCommentAutoGenerated" : true,
@@ -2529,6 +2937,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "نسيان"
+          }
+        }
+      }
+    },
+    "Free while seats remain" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مجانًا ما دامت المقاعد متاحة"
           }
         }
       }
@@ -2609,6 +3027,16 @@
         }
       }
     },
+    "from seats won" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من المقاعد المكسوبة"
+          }
+        }
+      }
+    },
     "From the beginning of the Mushaf, in its order." : {
       "comment" : "A description of the plan's order.",
       "isCommentAutoGenerated" : true,
@@ -2683,6 +3111,26 @@
         }
       }
     },
+    "Held for a bid" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "محجوزة لعرض"
+          }
+        }
+      }
+    },
+    "held for bids" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "محجوزة للعروض"
+          }
+        }
+      }
+    },
     "Hesitated" : {
       "localizations" : {
         "ar" : {
@@ -2705,12 +3153,32 @@
         }
       }
     },
+    "History" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "السجل"
+          }
+        }
+      }
+    },
     "Hold an ijazah? Apply to hear students" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "لديك إجازة؟ قدّم لتسمع الطلاب"
+          }
+        }
+      }
+    },
+    "Holding a seat" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحجز مقعدًا"
           }
         }
       }
@@ -3061,6 +3529,16 @@
         }
       }
     },
+    "Lowest bid" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أدنى عرض"
+          }
+        }
+      }
+    },
     "Make my code" : {
       "localizations" : {
         "ar" : {
@@ -3295,6 +3773,16 @@
         }
       }
     },
+    "Messages" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الرسائل"
+          }
+        }
+      }
+    },
     "Microphone" : {
       "localizations" : {
         "ar" : {
@@ -3435,6 +3923,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الآية التالية"
+          }
+        }
+      }
+    },
+    "Next bid from %lld credits" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "العرض التالي من %lld عملة"
           }
         }
       }
@@ -3595,6 +4093,16 @@
         }
       }
     },
+    "Nothing new." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا جديد."
+          }
+        }
+      }
+    },
     "Nothing recorded yet." : {
       "localizations" : {
         "ar" : {
@@ -3697,6 +4205,16 @@
         }
       }
     },
+    "Outbid" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زُويد عليه"
+          }
+        }
+      }
+    },
     "Page %lld" : {
       "localizations" : {
         "ar" : {
@@ -3765,6 +4283,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "صفحات راجعتها هذا الأسبوع"
+          }
+        }
+      }
+    },
+    "Paid" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "المدفوع"
+          }
+        }
+      }
+    },
+    "Paid to you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دُفعت لك"
           }
         }
       }
@@ -3875,6 +4413,16 @@
         }
       }
     },
+    "Place my bid" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قدّم عرضي"
+          }
+        }
+      }
+    },
     "Press and hold an ayah to mark from it to another" : {
       "localizations" : {
         "ar" : {
@@ -3891,6 +4439,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تقدّمي"
+          }
+        }
+      }
+    },
+    "Raise my bid" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ارفع عرضي"
           }
         }
       }
@@ -3945,6 +4503,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "سجّل التسميع"
+          }
+        }
+      }
+    },
+    "Refunded: session cancelled" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مستردّة: أُلغيت الجلسة"
+          }
+        }
+      }
+    },
+    "Released" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مُعادة"
+          }
+        }
+      }
+    },
+    "Released: outbid" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُعيدت: زايد عليك أحد"
           }
         }
       }
@@ -4021,6 +4609,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "استئناف"
+          }
+        }
+      }
+    },
+    "Reversed: session cancelled" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسترجعة: أُلغيت الجلسة"
           }
         }
       }
@@ -4349,6 +4947,16 @@
         }
       }
     },
+    "Seats by auction" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مقاعد بالمزايدة"
+          }
+        }
+      }
+    },
     "Seats left: %lld" : {
       "localizations" : {
         "ar" : {
@@ -4471,6 +5079,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "سجّل الدخول لحجز مقعد"
+          }
+        }
+      }
+    },
+    "Sign in to buy credits" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل الدخول لتشتري عملات"
           }
         }
       }
@@ -5008,6 +5626,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تعذّر ذلك، حاول مرة أخرى."
+          }
+        }
+      }
+    },
+    "The App Store can't be reached right now." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يتعذّر الوصول إلى App Store الآن."
           }
         }
       }
@@ -5794,6 +6422,16 @@
         }
       }
     },
+    "Won a seat" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فاز بمقعد"
+          }
+        }
+      }
+    },
     "You can take the test again %@" : {
       "comment" : "A message that appears in the stage view when the user can take the test again, with a suggested date.",
       "isCommentAutoGenerated" : true,
@@ -5802,6 +6440,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يمكنك إعادة الاختبار %@"
+          }
+        }
+      }
+    },
+    "You need %lld more credits." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحتاج %lld عملة أخرى."
           }
         }
       }
@@ -5822,6 +6470,46 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "اجتزت اختبار المرحلة"
+          }
+        }
+      }
+    },
+    "You were outbid" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زايد عليك أحد"
+          }
+        }
+      }
+    },
+    "You were outbid in %@'s session. Your %lld credits are back." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "زايد عليك أحد في جلسة %1$@. عادت إليك %2$lld عملة."
+          }
+        }
+      }
+    },
+    "You won a seat" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فزت بمقعد"
+          }
+        }
+      }
+    },
+    "You won a seat in %@'s session." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "فزت بمقعد في جلسة %@."
           }
         }
       }
@@ -5876,6 +6564,46 @@
         }
       }
     },
+    "Your application to teach was approved. Welcome!" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "قُبل طلبك للتعليم. أهلًا بك!"
+          }
+        }
+      }
+    },
+    "Your application to teach was reviewed: the team will be in touch for the interview." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رُوجع طلبك للتعليم: سيتواصل معك الفريق لترتيب المقابلة."
+          }
+        }
+      }
+    },
+    "Your application to teach was updated." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حُدّث طلبك للتعليم."
+          }
+        }
+      }
+    },
+    "Your application to teach wasn't accepted." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يُقبل طلبك للتعليم."
+          }
+        }
+      }
+    },
     "Your application wasn't accepted" : {
       "localizations" : {
         "ar" : {
@@ -5892,6 +6620,56 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "لم يُقبل طلبك."
+          }
+        }
+      }
+    },
+    "Your balance: %@ credits" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رصيدك: %@ عملة"
+          }
+        }
+      }
+    },
+    "Your bid holds its credits. If someone outbids you, they come back at once; if you win, they pay for the seat when bidding closes." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يحجز عرضك عملاته. إن زايد عليك أحد عادت إليك فورًا، وإن فزت دُفعت ثمنًا للمقعد عند إغلاق المزايدة."
+          }
+        }
+      }
+    },
+    "Your bid of %lld holds a seat" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عرضك بـ%lld يحجز مقعدًا"
+          }
+        }
+      }
+    },
+    "Your bid was released" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُعيد عرضك"
+          }
+        }
+      }
+    },
+    "Your earnings" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أرباحك"
           }
         }
       }
@@ -6142,6 +6920,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يعود مقعدك إلى الجلسة."
+          }
+        }
+      }
+    },
+    "Your share of each seat won by bidding, after the app's commission, in credits. The team pays it by bank transfer." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حصتك من كل مقعد فِيز به بالمزايدة بعد عمولة التطبيق، بالعملات. يحوّلها الفريق إليك بتحويل بنكي."
           }
         }
       }

@@ -315,12 +315,59 @@ final class TasmeeStore {
     // A teacher's writes aren't waited for: Firestore keeps them while offline (a halaqah's mosque may have no
     // signal) and sends them when it can. What's refused is reported after the fact.
 
-    func createSession(startsAt: Date, kind: TasmeeSession.Kind, place: String, seats: Int) {
+    /// How long before a session its auction closes (the server's policy, mirrored).
+    static let biddingClosesBefore: TimeInterval = 3 * 3_600
+
+    func createSession(startsAt: Date, kind: TasmeeSession.Kind, place: String, seats: Int, auctionSeats: Int = 0, minBid: Int = 0) {
         guard let uid, let profile = teacherProfile else { return }
         let reference = database.collection("sessions").document()
+        let auction = auctionSeats > 0
+            ? TasmeeSession.Auction(seats: auctionSeats, minBid: minBid, closesAt: startsAt.addingTimeInterval(-Self.biddingClosesBefore), state: .open)
+            : nil
         let session = TasmeeSession(id: reference.documentID, teacherId: uid, teacherName: profile.name, startsAt: startsAt,
-                                    kind: kind, place: kind == .video ? "" : place, seats: seats)
+                                    kind: kind, place: kind == .video ? "" : place, seats: seats, auction: auction)
         reference.setData(session.document, completion: report)
+    }
+
+    /// A session as it changes, until the stream is dropped.
+    func session(id: String) -> AsyncStream<TasmeeSession?> {
+        AsyncStream { continuation in
+            let registration = database.collection("sessions").document(id).addSnapshotListener { snapshot, _ in
+                continuation.yield(snapshot?.data().flatMap { TasmeeSession(id: id, document: Self.dated($0)) })
+            }
+            let listener = ListenerBox(registration)
+            continuation.onTermination = { _ in listener.remove() }
+        }
+    }
+
+    /// This student's bid in a session, as it stands, until the stream is dropped.
+    func myBid(in sessionId: String) -> AsyncStream<Bid?> {
+        AsyncStream { continuation in
+            guard let uid else {
+                continuation.finish()
+                return
+            }
+            let registration = database.collection("sessions").document(sessionId).collection("bids").document(uid)
+                .addSnapshotListener { snapshot, _ in
+                    continuation.yield(snapshot?.data().flatMap { Bid(id: uid, document: Self.dated($0)) })
+                }
+            let listener = ListenerBox(registration)
+            continuation.onTermination = { _ in listener.remove() }
+        }
+    }
+
+    /// Every bid in one of the teacher's sessions, best first.
+    func bids(of sessionId: String) -> AsyncStream<[Bid]> {
+        AsyncStream { continuation in
+            let registration = database.collection("sessions").document(sessionId).collection("bids")
+                .addSnapshotListener { snapshot, _ in
+                    guard let snapshot else { return }
+                    continuation.yield(snapshot.documents.compactMap { Bid(id: $0.documentID, document: Self.dated($0.data())) }
+                        .sorted { ($0.status == .active || $0.status == .won ? 0 : 1, -$0.amount, $0.at) < ($1.status == .active || $1.status == .won ? 0 : 1, -$1.amount, $1.at) })
+                }
+            let listener = ListenerBox(registration)
+            continuation.onTermination = { _ in listener.remove() }
+        }
     }
 
     /// Changes a session's time, place or seats. Students who booked see the change on their booking.

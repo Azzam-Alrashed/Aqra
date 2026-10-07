@@ -95,5 +95,7 @@ schemes:
       commandLineArguments:
         # Tick it in the scheme's Run arguments to use the local Firebase emulators (see backend/README.md).
         "-UseFirebaseEmulator": false
+      # Credit packs for testing purchases in Xcode, with no App Store Connect (see backend/README.md, Credits).
+      storeKitConfiguration: Credits.storekit
     test:
       targets: [AqraTests]

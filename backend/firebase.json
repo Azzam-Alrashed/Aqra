@@ -15,7 +15,8 @@
         "node_modules",
         ".git",
         "*.local",
-        "src"
+        "src",
+        "scripts"
       ],
       "predeploy": [
         "npm --prefix \"$RESOURCE_DIR\" run build"

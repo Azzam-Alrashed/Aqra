@@ -111,6 +111,38 @@ service cloud.firestore {
       }
     }
 
+    // Credits: a wallet and its ledger, written only by the functions; seen by their owner.
+    match /wallets/{uid} {
+      allow read: if isOwner(uid);
+      allow write: if false;
+      match /ledger/{id} {
+        allow read: if isOwner(uid);
+        allow write: if false;
+      }
+    }
+
+    // App Store purchases, as credited: only the functions see them.
+    match /purchases/{transactionId} {
+      allow read, write: if false;
+    }
+
+    // A teacher's earnings from won seats and the payouts made to them: written by the functions and the
+    // administrators' scripts; seen by the teacher and administrators.
+    match /teacherBalances/{uid} {
+      allow read: if isOwner(uid) || isAdmin();
+      allow write: if false;
+      match /entries/{id} {
+        allow read: if isOwner(uid) || isAdmin();
+        allow write: if false;
+      }
+    }
+
+    // The server's policy (config/policy): everyone signed in reads it; administrators change it.
+    match /config/{document} {
+      allow read: if signedIn();
+      allow write: if isAdmin();
+    }
+
     // Friends: an invitation by a short code, valid a week, fetched by its code and never listed.
     match /friendInvites/{code} {
       allow get: if signedIn();
@@ -204,7 +236,15 @@ service cloud.firestore {
     match /sessions/{id} {
       allow read: if signedIn();
       allow create: if isVettedTeacher()
-        && hasKeys(['teacherId', 'teacherName', 'startsAt', 'place', 'seats', 'booked', 'kind', 'status', 'createdAt'], [])
+        && hasKeys(['teacherId', 'teacherName', 'startsAt', 'place', 'seats', 'booked', 'kind', 'status', 'createdAt'],
+                   ['auctionSeats', 'minBid', 'biddingClosesAt', 'auctionState'])
+        // Auctioned seats, beside the free ones: bidding closes before the session starts.
+        && (request.resource.data.get('auctionSeats', 0) == 0
+          || (request.resource.data.auctionSeats is int && request.resource.data.auctionSeats > 0 && request.resource.data.auctionSeats <= 20
+            && request.resource.data.minBid is int && request.resource.data.minBid >= 0
+            && request.resource.data.biddingClosesAt is timestamp
+            && request.resource.data.biddingClosesAt < request.resource.data.startsAt
+            && request.resource.data.auctionState == 'open'))
         && request.resource.data.teacherId == request.auth.uid
         && request.resource.data.teacherName is string
         && request.resource.data.place is string
@@ -221,7 +261,9 @@ service cloud.firestore {
           && request.resource.data.status in ['open', 'cancelled']
           && request.resource.data.seats is int && request.resource.data.seats > 0 && request.resource.data.seats <= 30
           && request.resource.data.booked is int && request.resource.data.booked >= 0
-          && request.resource.data.seats >= request.resource.data.booked)
+          && request.resource.data.seats >= request.resource.data.booked
+          // An auction's session keeps its time: its bidding closes by it.
+          && (resource.data.get('auctionSeats', 0) == 0 || request.resource.data.startsAt == resource.data.startsAt))
         // Booking takes a seat: the student's seat appears in the same write, and the count moves up by one.
         || (isNamed() && changesOnly(['booked'])
           && request.resource.data.booked == resource.data.booked + 1
@@ -232,6 +274,12 @@ service cloud.firestore {
           && request.resource.data.booked == resource.data.booked - 1
           && exists(seat(id, request.auth.uid)) && !existsAfter(seat(id, request.auth.uid)));
       allow delete: if isVettedTeacher() && resource.data.teacherId == request.auth.uid;
+
+      // Bids for auctioned seats: written only by the functions; seen by the bidder and the session's teacher.
+      match /bids/{bidderUid} {
+        allow read: if isOwner(bidderUid) || (signedIn() && session(id).teacherId == request.auth.uid);
+        allow write: if false;
+      }
 
       // A seat is a student's booking, seen by them and by the session's teacher.
       match /seats/{studentUid} {

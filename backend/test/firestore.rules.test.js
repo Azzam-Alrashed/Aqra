@@ -529,3 +529,60 @@ describe("competitions", () => {
     await assertFails(setDoc(doc(bob, "competitions/k1/parts/31"), { claimedBy: null, claimedName: "", done: false }));
   });
 });
+
+describe("credits, bids and earnings", () => {
+  beforeEach(async () => {
+    await seed();
+    await env.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "wallets/alice"), { balance: 30, held: 10 });
+      await setDoc(doc(db, "wallets/alice/ledger/l1"), { kind: "purchase", amount: 30 });
+      await setDoc(doc(db, "sessions/open/bids/alice"), { name: "Alice", amount: 10, status: "active" });
+      await setDoc(doc(db, "teacherBalances/teacher"), { earned: 8, paidOut: 0 });
+      await setDoc(doc(db, "teacherBalances/teacher/entries/e1"), { kind: "seat", amount: 8 });
+      await setDoc(doc(db, "purchases/t1"), { uid: "alice", credits: 30 });
+      await setDoc(doc(db, "config/policy"), { commissionRate: 0.2 });
+    });
+  });
+
+  test("a wallet and its ledger are read by their owner only, and written by no one in the app", async () => {
+    await assertSucceeds(getDoc(doc(named("alice"), "wallets/alice")));
+    await assertSucceeds(getDocs(collection(named("alice"), "wallets/alice/ledger")));
+    await assertFails(getDoc(doc(named("bob"), "wallets/alice")));
+    await assertFails(setDoc(doc(named("alice"), "wallets/alice"), { balance: 1_000 }));
+    await assertFails(setDoc(doc(named("alice"), "wallets/alice/ledger/l2"), { kind: "purchase", amount: 1_000 }));
+    await assertFails(getDoc(doc(named("alice"), "purchases/t1")));
+  });
+
+  test("a bid is seen by its bidder and the session's teacher, and written by no one in the app", async () => {
+    await assertSucceeds(getDoc(doc(named("alice"), "sessions/open/bids/alice")));
+    await assertSucceeds(getDocs(collection(named("teacher"), "sessions/open/bids")));
+    await assertFails(getDoc(doc(named("bob"), "sessions/open/bids/alice")));
+    await assertFails(setDoc(doc(named("bob"), "sessions/open/bids/bob"), { amount: 100, status: "active" }));
+  });
+
+  test("a teacher's earnings are seen by them and administrators; the policy by everyone, changed by admins", async () => {
+    await assertSucceeds(getDoc(doc(named("teacher"), "teacherBalances/teacher")));
+    await assertSucceeds(getDocs(collection(named("teacher"), "teacherBalances/teacher/entries")));
+    await assertSucceeds(getDoc(doc(admin(), "teacherBalances/teacher")));
+    await assertFails(getDoc(doc(named("alice"), "teacherBalances/teacher")));
+    await assertFails(updateDoc(doc(named("teacher"), "teacherBalances/teacher"), { earned: 1_000 }));
+    await assertSucceeds(getDoc(doc(anon("alice"), "config/policy")));
+    await assertFails(setDoc(doc(named("teacher"), "config/policy"), { commissionRate: 0 }));
+    await assertSucceeds(setDoc(doc(admin(), "config/policy"), { commissionRate: 0.15 }));
+  });
+
+  test("a session may offer auctioned seats, closing before it starts, and then keeps its time", async () => {
+    const auction = {
+      teacherId: "teacher", teacherName: "الشيخ أحمد", startsAt: inDays(2), place: "", seats: 1, booked: 0, kind: "video",
+      status: "open", createdAt: Timestamp.now(), auctionSeats: 3, minBid: 0, biddingClosesAt: inDays(1), auctionState: "open",
+    };
+    await assertSucceeds(setDoc(doc(named("teacher"), "sessions/a1"), auction));
+    await assertFails(setDoc(doc(named("teacher"), "sessions/a2"), { ...auction, biddingClosesAt: inDays(3) }));
+    await assertFails(setDoc(doc(named("teacher"), "sessions/a3"), { ...auction, auctionSeats: 30 }));
+    await assertFails(setDoc(doc(named("teacher"), "sessions/a4"), { ...auction, auctionState: "settled" }));
+    await assertFails(updateDoc(doc(named("teacher"), "sessions/a1"), { startsAt: inDays(5) }));
+    await assertFails(updateDoc(doc(named("teacher"), "sessions/a1"), { auctionSeats: 10 }));
+    await assertSucceeds(updateDoc(doc(named("teacher"), "sessions/a1"), { place: "x", status: "cancelled" }));
+  });
+});

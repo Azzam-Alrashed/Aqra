@@ -15,6 +15,7 @@ struct TeacherView: View {
     /// The session being booked or given back.
     @State private var working: String?
     @State private var problem: AccountStore.Problem?
+    @State private var bidding: TasmeeSession?
 
     private var signedIn: Bool { account.profile?.isAnonymous == false }
 
@@ -55,6 +56,9 @@ struct TeacherView: View {
                                 ForEach(Array(sessions.enumerated()), id: \.element.id) { index, session in
                                     if index > 0 { AqraRowDivider() }
                                     sessionRow(session)
+                                    if let auction = session.auction, auction.isOpen() {
+                                        auctionStrip(session, auction)
+                                    }
                                 }
                             }
                         }
@@ -95,6 +99,31 @@ struct TeacherView: View {
         .fontDesign(.rounded)
         .task { await load() }
         .refreshable { await load() }
+        .sheet(item: $bidding) { session in BidSheet(session: session, store: store) }
+    }
+
+    /// A session's seats by auction: what a bid takes now, and «زايد».
+    private func auctionStrip(_ session: TasmeeSession, _ auction: TasmeeSession.Auction) -> some View {
+        HStack(spacing: 10) {
+            Text(verbatim: "🔨")
+                .font(.system(size: 16))
+                .frame(width: 38)
+            VStack(alignment: .leading, spacing: 1) {
+                Text("\(auction.seats) seats by auction")
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(Palette.ink)
+                (auction.nextAtLeast == 0 ? Text("Free while seats remain") : Text("Next bid from \(auction.nextAtLeast) credits"))
+                    .font(.system(size: 11, weight: .semibold))
+                    .foregroundStyle(Palette.inkSoft)
+            }
+            Spacer()
+            if signedIn && !tasmee.hasBooked(session) {
+                Button("Bid") { bidding = session }
+                    .buttonStyle(ChipButtonStyle(filled: false))
+            }
+        }
+        .padding(.horizontal, 14)
+        .padding(.bottom, 12)
     }
 
     private func note(_ text: Text) -> some View {
@@ -205,6 +234,8 @@ struct SessionEditor: View {
     @State private var kind: TasmeeSession.Kind
     @State private var place: String
     @State private var seats: Int
+    @State private var auctionSeats = 0
+    @State private var minBid = 0
 
     init(session: TasmeeSession?) {
         self.session = session
@@ -226,6 +257,7 @@ struct SessionEditor: View {
     private var isValid: Bool { kind == .video || !trimmedPlace.isEmpty }
 
     var body: some View {
+        ScrollView {
         VStack(alignment: .leading, spacing: 18) {
             Text(session == nil ? "New session" : "Edit session")
                 .font(.system(size: 26, weight: .heavy))
@@ -263,6 +295,44 @@ struct SessionEditor: View {
                     }
                 }
             }
+            if session == nil {
+                AqraCard(padding: 0, radius: 24) {
+                    VStack(spacing: 0) {
+                        row(Text("Seats by auction")) {
+                            HStack(spacing: 10) {
+                                stepButton("minus", enabled: auctionSeats > 0) { auctionSeats -= 1 }
+                                Text(auctionSeats.formatted())
+                                    .font(.system(size: 17, weight: .heavy).monospacedDigit())
+                                    .foregroundStyle(Palette.ink)
+                                    .frame(minWidth: 28)
+                                    .contentTransition(.numericText())
+                                stepButton("plus", enabled: auctionSeats < 20) { auctionSeats += 1 }
+                            }
+                        }
+                        if auctionSeats > 0 {
+                            AqraRowDivider().padding(.leading, -50)
+                            row(Text("Lowest bid")) {
+                                HStack(spacing: 10) {
+                                    stepButton("minus", enabled: minBid > 0) { minBid -= 1 }
+                                    Text(minBid.formatted())
+                                        .font(.system(size: 17, weight: .heavy).monospacedDigit())
+                                        .foregroundStyle(Palette.ink)
+                                        .frame(minWidth: 28)
+                                        .contentTransition(.numericText())
+                                    stepButton("plus", enabled: minBid < 100) { minBid += 1 }
+                                }
+                            }
+                        }
+                    }
+                }
+                if auctionSeats > 0 {
+                    Text("Beside the free seats, these go to the highest bids, in credits. Bidding closes three hours before the session; you earn most of each winning bid.")
+                        .font(.system(size: 12, weight: .medium))
+                        .foregroundStyle(Palette.inkSoft)
+                        .fixedSize(horizontal: false, vertical: true)
+                        .padding(.horizontal, 6)
+                }
+            }
             if kind == .video {
                 Text("Students who book join the call from the session's page, from 15 minutes before it starts.")
                     .font(.system(size: 12, weight: .medium))
@@ -281,7 +351,9 @@ struct SessionEditor: View {
         .padding(.horizontal, 24)
         .padding(.bottom, 24)
         .frame(maxWidth: 520)
-        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .frame(maxWidth: .infinity)
+        }
+        .scrollIndicators(.hidden)
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
         .tint(Palette.brand)
@@ -290,6 +362,7 @@ struct SessionEditor: View {
         .presentationDragIndicator(.visible)
         .animation(.snappy, value: seats)
         .animation(.snappy, value: kind)
+        .animation(.snappy, value: auctionSeats)
     }
 
     private func save() {
@@ -299,7 +372,8 @@ struct SessionEditor: View {
             session.seats = max(seats, minimumSeats)
             tasmee.updateSession(session)
         } else {
-            tasmee.createSession(startsAt: startsAt, kind: kind, place: trimmedPlace, seats: seats)
+            tasmee.createSession(startsAt: startsAt, kind: kind, place: trimmedPlace, seats: seats, auctionSeats: auctionSeats,
+                                 minBid: minBid)
         }
     }
 
@@ -343,6 +417,7 @@ struct SessionView: View {
     @State private var editing = false
     @State private var confirmingCancel = false
     @State private var calling = false
+    @State private var bids: [Bid] = []
 
     /// The session as it is now; the one navigated to is only a snapshot.
     private var live: TasmeeSession { tasmee.mySessions.first { $0.id == session.id } ?? session }
@@ -361,9 +436,14 @@ struct SessionView: View {
                                 TasmeeFormat.place(live)
                                     .font(.system(size: 13, weight: .semibold))
                                     .foregroundStyle(Palette.inkSoft)
-                                Text("\(seats.count) of \(live.seats) seats")
+                                Text("\(live.booked) of \(live.seats) seats")
                                     .font(.system(size: 13, weight: .bold))
                                     .foregroundStyle(Palette.brand)
+                                if let auction = live.auction {
+                                    Text("\(auction.seats) seats by auction · \(auction.state == .settled ? auction.won : auction.bids) bids")
+                                        .font(.system(size: 12, weight: .semibold))
+                                        .foregroundStyle(Palette.inkSoft)
+                                }
                             }
                             Spacer(minLength: 0)
                         }
@@ -392,6 +472,23 @@ struct SessionView: View {
                                 .font(.system(size: 13, weight: .bold))
                                 .foregroundStyle(Color(light: 0xB3261E, dark: 0xB3261E))
                                 .buttonStyle(.plain)
+                        }
+                    }
+                }
+
+                if live.auction != nil, !bids.isEmpty {
+                    AqraSectionTitle(title: "Bids").padding(.top, 10)
+                    AqraCard(padding: 0, radius: 24) {
+                        VStack(spacing: 0) {
+                            ForEach(Array(bids.enumerated()), id: \.element.id) { index, bid in
+                                if index > 0 { AqraRowDivider() }
+                                AqraRow(icon: bid.status == .won ? "🎉" : bid.status == .active ? "🔨" : "↩️", tint: Palette.butter,
+                                        title: Text(verbatim: bid.name), detail: bidStatus(bid)) {
+                                    Text("\(bid.amount) credits")
+                                        .font(.system(size: 14, weight: .heavy).monospacedDigit())
+                                        .foregroundStyle(bid.status == .active || bid.status == .won ? Palette.brand : Palette.inkSoft)
+                                }
+                            }
                         }
                     }
                 }
@@ -440,6 +537,10 @@ struct SessionView: View {
                 self.seats = seats
             }
         }
+        .task {
+            guard session.auction != nil else { return }
+            for await bids in tasmee.bids(of: session.id) { self.bids = bids }
+        }
         .sheet(isPresented: $editing) { SessionEditor(session: live) }
         .fullScreenCover(isPresented: $calling) {
             TeacherCallView(session: live, store: store, seats: seats)
@@ -458,6 +559,15 @@ struct SessionView: View {
             Button("Keep it", role: .cancel) {}
         } message: {
             Text("The students who booked will see it cancelled.")
+        }
+    }
+
+    private func bidStatus(_ bid: Bid) -> Text {
+        switch bid.status {
+        case .active: Text("Holding a seat")
+        case .outbid: Text("Outbid")
+        case .won: Text("Won a seat")
+        case .released: Text("Released")
         }
     }
 

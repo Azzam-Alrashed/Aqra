@@ -45,6 +45,10 @@ final class AccountStore {
     @ObservationIgnored let tasmee: TasmeeStore
     /// Friends and competitions, through the same account.
     @ObservationIgnored let social: SocialStore
+    /// Credits, and a teacher's earnings.
+    @ObservationIgnored let wallet = WalletStore()
+    /// Messages from the server and the team.
+    @ObservationIgnored let inbox = InboxStore()
     @ObservationIgnored private let apple = AppleSignIn()
     @ObservationIgnored private var listener: AuthStateDidChangeListenerHandle?
     @ObservationIgnored private var userListener: (any ListenerRegistration)?
@@ -112,6 +116,10 @@ final class AccountStore {
                 guard let self else { return }
                 self.refreshProfile(user)
                 self.watchDisplayName(uid: user?.uid)
+                if let user {
+                    self.inbox.attach(uid: user.uid)
+                    self.wallet.attach(uid: user.uid, named: !user.isAnonymous)
+                }
                 if let user {
                     Task {
                         // The backup first, so a tasmee' arriving isn't applied over a copy being restored.
@@ -228,6 +236,7 @@ final class AccountStore {
                 do {
                     let result = try await user.link(with: credential)
                     await setName(name, of: result.user)
+                    wallet.attach(uid: result.user.uid, named: true)
                 } catch let error as NSError where error.code == AuthErrorCode.credentialAlreadyInUse.rawValue {
                     let existing = error.userInfo[AuthErrorUserInfoUpdatedCredentialKey] as? AuthCredential ?? credential
                     // The state listener attaches the backup to that account, which merges this device's progress in.
@@ -270,6 +279,8 @@ final class AccountStore {
         sync.detach()
         tasmee.detach()
         social.detach()
+        wallet.detach()
+        inbox.detach()
         GIDSignIn.sharedInstance.signOut()
         try? Auth.auth().signOut()
         sync.clearDevice()
@@ -308,6 +319,8 @@ final class AccountStore {
             sync.detach()
             tasmee.detach()
             social.detach()
+            wallet.detach()
+            inbox.detach()
             GIDSignIn.sharedInstance.signOut()
             return true
         } catch {

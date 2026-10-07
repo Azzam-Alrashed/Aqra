@@ -275,6 +275,9 @@ struct HomeView: View {
                 AqraChip(icon: "🔥", tint: Palette.peach) { Text("\(streak) days") }
                     .accessibilityLabel(Text("Revision streak: \(streak) days"))
             }
+            if AccountStore.isAvailable {
+                InboxButton()
+            }
         }
         .padding(.top, 8)
     }

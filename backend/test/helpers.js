@@ -1,5 +1,6 @@
 // Shared by the functions' tests: signed-in clients and an admin handle, all on the local emulators.
 import { getApps as getAdminApps, initializeApp as initializeAdmin } from "firebase-admin/app";
+import { getAuth as getAdminAuth } from "firebase-admin/auth";
 import { getFirestore as getAdminFirestore, Timestamp } from "firebase-admin/firestore";
 import { deleteApp, initializeApp } from "firebase/app";
 import { connectAuthEmulator, getAuth, GoogleAuthProvider, signInAnonymously, signInWithCredential } from "firebase/auth";
@@ -11,12 +12,14 @@ export const REGION = "me-central2";
 if (!getAdminApps().length) initializeAdmin({ projectId: PROJECT });
 /** Firestore with no rules, for seeding and checking. */
 export const adminDb = getAdminFirestore();
+export const adminAuth = getAdminAuth();
 
 let count = 0;
 const apps = [];
 
-/** A client signed in as a new Google account (named), or anonymously; returns its uid and a callable maker. */
-export async function client({ anonymous = false, email } = {}) {
+/** A client signed in as a new Google account (named), or anonymously, or as an administrator; returns its uid and
+ * a callable maker. */
+export async function client({ anonymous = false, email, admin = false } = {}) {
   const app = initializeApp({ projectId: PROJECT, apiKey: "test" }, `client-${++count}`);
   apps.push(app);
   const auth = getAuth(app);
@@ -27,6 +30,10 @@ export async function client({ anonymous = false, email } = {}) {
   const credential = anonymous
     ? await signInAnonymously(auth)
     : await signInWithCredential(auth, GoogleAuthProvider.credential(JSON.stringify({ sub: address, email: address, email_verified: true })));
+  if (admin) {
+    await adminAuth.setCustomUserClaims(credential.user.uid, { admin: true });
+    await credential.user.getIdToken(true);
+  }
   return {
     uid: credential.user.uid,
     call: async (name, data) => (await httpsCallable(functions, name)(data)).data,

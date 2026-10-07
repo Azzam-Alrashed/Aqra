@@ -343,6 +343,8 @@ struct MushafRootView: View {
         .environment(account.sync)
         .environment(account.tasmee)
         .environment(account.social)
+        .environment(account.wallet)
+        .environment(account.inbox)
         .environment(router)
         // After signing out, setup starts from «ماذا تحفظ؟» again.
         .onChange(of: hasDeclared) { if !hasDeclared { setupStep = .memorized } }

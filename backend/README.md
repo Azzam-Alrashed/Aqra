@@ -12,6 +12,12 @@ The Firebase project `aqra-quran`, shared by all apps. Firestore lives in Dammam
   override any of them in `config/policy`.
   - `joinCall`: a LiveKit room token for a video session, only for its teacher or a student holding a seat, from
     15 minutes before the session until 3 hours after.
+  - `onTasmeeRecorded`: when a teacher records a tasmee', tells the student in their inbox and scores the pages
+    heard clean in that teacher's running competitions.
+  - `redeemPurchase`: credits an App Store purchase of credits once its signed transaction is verified.
+  - `placeBid`, `settleAuctions` (every 5 minutes), `settleAuctionNow` (administrators), `onSessionChanged`: the
+    seat auction, its settlement, and the releases and refunds when a session is cancelled.
+  - `onAccountDeleted`: deletes a deleted account's wallet and ledger.
 
 ### Setting up video (LiveKit Cloud)
 
@@ -121,5 +127,61 @@ vetted teacher creates, edits (never below the seats booked), cancels and delete
 - Booking writes the seat, the student's copy under `bookings`, and `booked + 1` in one transaction; the rules
   let the count move only by one, only together with that student's own seat, and never past `seats`.
   Cancelling does the reverse.
+
+### Credits: `wallets/{uid}`, `purchases/{transactionId}`
+
+`wallets/{uid}` holds `balance` and `held` (credits set aside for active bids), and `ledger/{id}` every movement
+(`purchase`, `hold`, `release`, `spend`, `refund`, with `amount`, `at` and what it was for). Only the functions
+write them; their owner reads them. `purchases/{transactionId}` records each App Store purchase credited (`uid`,
+`productId`, `credits`, `environment`), so none is credited twice; no client reads it.
+
+The credit packs are App Store consumables, `aqra.credits.10`, `.30` and `.60`, in `config/policy.creditPacks`.
+To test purchases without App Store Connect, run the app from Xcode: the scheme uses `apps/ios/Credits.storekit`,
+whose purchases are signed by Xcode, which `redeemPurchase` accepts only on the emulators. In production it verifies
+purchases with Apple's App Store Server Library against Apple's root certificates in `functions/certs` (see its
+README), with `APPLE_BUNDLE_ID` and `APPLE_APP_ID` (the app's App Store id) set in `functions/.env.aqra-quran`.
+
+### The seat auction
+
+A session may offer auctioned seats beside its free ones: `auctionSeats` (1–20), `minBid`, `biddingClosesAt`
+(before `startsAt`; the app sets it three hours before) and `auctionState` (`open`, then `settled`, `cancelled`
+or `refunded`). The functions keep `auctionBids` (the active bids), `auctionFloor` (what the next bid must reach)
+and `auctionWon` on the session.
+
+- `sessions/{id}/bids/{uid}`: a bid (`name`, `amount`, `at`, `status`: `active`, `outbid`, `won` or `released`, and
+  what the bidder has memorized). Written only by `placeBid`; seen by the bidder and the session's teacher.
+- While auctioned seats remain, any bid of at least `minBid` holds one; once all are held, a new bid must beat the
+  lowest by `minIncrement` and outbids it (ties go to the earlier bid). A bid holds its credits; an outbid one is
+  released at once, and its bidder told in their inbox. A bidder may raise their own bid.
+- When bidding closes, `settleAuctions` spends the winners' holds, makes their seats (with `paid`) and bookings,
+  and records the teacher's share in `teacherBalances`.
+- A session cancelled while bidding releases every hold; once settled, the credits paid are refunded and the
+  teacher's share reversed. Everyone who had a seat is told.
+
+### A teacher's earnings: `teacherBalances/{uid}`
+
+`earned` and `paidOut`, and `entries/{id}`: each won seat's share (`kind: seat`, `amount` after the commission,
+`gross`, `commission`), reversals, and payouts. Written by the functions and by `npm run admin -- payout`; read by
+the teacher and administrators. Teachers are paid by bank transfer; record each with
+`npm run admin -- payout --teacher <uid> --amount <credits> --reference "..."`.
+
+### The server's policy: `config/policy`
+
+Overrides of the defaults in `functions/src/policy.ts` (the call's window, the auction's minimum bid, increment and
+closing time, the commission, the credit packs). Everyone signed in reads it; administrators change it with
+`npm run admin -- policy --set commissionRate=0.15`.
+
+### Friends and competitions
+
+- `friendInvites/{code}`: an invitation (`ownerUid`, `ownerName`, `createdAt`, `expiresAt`, a week); fetched by its
+  code, listed only by its owner.
+- `friendships/{a_b}`: two friends (`members`, `names`, `inviteCode`, `createdAt`), made by the one accepting the
+  other's valid invitation; either reads or deletes it.
+- `competitions/{id}`: `kind` (`friends`, `khatmah` or `teacher`), `title`, `metric` (`pagesRevised`,
+  `daysRevised`, `ayatMemorized`, `parts` or `cleanPages`), `ownerUid`, `ownerName`, `startsAt`, `endsAt`,
+  `memberUids` (at most 50), `createdAt`. Only members read it; its owner manages it; any member leaves.
+  - `members/{uid}`: `name`, `score`, `updatedAt`. In a race among friends each member's app writes its own; in a
+    teacher's competition only `onTasmeeRecorded` does, from the pages that teacher heard clean.
+  - `parts/{1…30}`: a khatmah's parts (`claimedBy`, `claimedName`, `done`), claimed and finished by members.
 
 See [docs/VISION.md](../docs/VISION.md).

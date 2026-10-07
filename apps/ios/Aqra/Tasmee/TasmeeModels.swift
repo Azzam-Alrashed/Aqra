@@ -47,13 +47,34 @@ struct TasmeeSession: Identifiable, Hashable {
     var kind: Kind
     /// Where it's held, for a session in person; empty for a video session.
     var place: String
+    /// The free seats, booked first come first served.
     var seats: Int
     var booked: Int
     var status: Status
     var createdAt: Date
+    /// Seats won by bidding, beside the free ones (none when zero).
+    var auction: Auction?
+
+    /// A session's auctioned seats: they start free; once all are held, each new bid must beat the lowest.
+    struct Auction: Hashable {
+        enum State: String { case open, settled, cancelled, refunded }
+
+        var seats: Int
+        var minBid: Int
+        var closesAt: Date
+        var state: State
+        /// Written by the server: the active bids, what the next bid must reach, and the seats won.
+        var bids = 0
+        var floor: Int?
+        var won = 0
+
+        func isOpen(at date: Date = .now) -> Bool { state == .open && date < closesAt }
+        /// What a new bid must reach now.
+        var nextAtLeast: Int { floor ?? minBid }
+    }
 
     init(id: String, teacherId: String, teacherName: String, startsAt: Date, kind: Kind = .inPerson, place: String,
-         seats: Int, booked: Int = 0, status: Status = .open, createdAt: Date = .now) {
+         seats: Int, booked: Int = 0, status: Status = .open, createdAt: Date = .now, auction: Auction? = nil) {
         self.id = id
         self.teacherId = teacherId
         self.teacherName = teacherName
@@ -64,20 +85,38 @@ struct TasmeeSession: Identifiable, Hashable {
         self.booked = booked
         self.status = status
         self.createdAt = createdAt
+        self.auction = auction
     }
 
     init?(id: String, document: [String: Any]) {
         guard let teacherId = document.string("teacherId"), let startsAt = document.date("startsAt"),
               let seats = document.int("seats"), let status = document.string("status").flatMap(Status.init) else { return nil }
+        var auction: Auction?
+        if let auctionSeats = document.int("auctionSeats"), auctionSeats > 0, let closesAt = document.date("biddingClosesAt") {
+            auction = Auction(seats: auctionSeats, minBid: document.int("minBid") ?? 0, closesAt: closesAt,
+                              state: document.string("auctionState").flatMap(Auction.State.init) ?? .open,
+                              bids: document.int("auctionBids") ?? 0, floor: document.int("auctionFloor"),
+                              won: document.int("auctionWon") ?? 0)
+        }
         self.init(id: id, teacherId: teacherId, teacherName: document.string("teacherName") ?? "", startsAt: startsAt,
                   kind: document.string("kind").flatMap(Kind.init) ?? .inPerson, place: document.string("place") ?? "",
                   seats: seats, booked: document.int("booked") ?? 0, status: status,
-                  createdAt: document.date("createdAt") ?? .distantPast)
+                  createdAt: document.date("createdAt") ?? .distantPast, auction: auction)
     }
 
+    /// The fields the teacher writes; the server keeps the auction's own counts.
     var document: [String: Any] {
-        ["teacherId": teacherId, "teacherName": teacherName, "startsAt": startsAt, "place": place, "seats": seats,
-         "booked": booked, "kind": kind.rawValue, "status": status.rawValue, "createdAt": createdAt]
+        var document: [String: Any] = [
+            "teacherId": teacherId, "teacherName": teacherName, "startsAt": startsAt, "place": place, "seats": seats,
+            "booked": booked, "kind": kind.rawValue, "status": status.rawValue, "createdAt": createdAt,
+        ]
+        if let auction {
+            document["auctionSeats"] = auction.seats
+            document["minBid"] = auction.minBid
+            document["biddingClosesAt"] = auction.closesAt
+            document["auctionState"] = auction.state.rawValue
+        }
+        return document
     }
 
     /// The fields a teacher may change after creating it.
@@ -104,19 +143,22 @@ struct Seat: Identifiable, Hashable {
     var memorizedPages: Int
     /// The juz' memorized in full, as the student's app describes them, or nil when none is.
     var juzSummary: String?
+    /// The credits paid for a seat won by bidding; nil for a free seat.
+    var paid: Int?
 
-    init(id: String, name: String, bookedAt: Date = .now, memorizedPages: Int, juzSummary: String? = nil) {
+    init(id: String, name: String, bookedAt: Date = .now, memorizedPages: Int, juzSummary: String? = nil, paid: Int? = nil) {
         self.id = id
         self.name = name
         self.bookedAt = bookedAt
         self.memorizedPages = memorizedPages
         self.juzSummary = juzSummary
+        self.paid = paid
     }
 
     init?(id: String, document: [String: Any]) {
         guard let name = document.string("name"), let bookedAt = document.date("bookedAt") else { return nil }
         self.init(id: id, name: name, bookedAt: bookedAt, memorizedPages: document.int("memorizedPages") ?? 0,
-                  juzSummary: document.string("juzSummary"))
+                  juzSummary: document.string("juzSummary"), paid: document.int("paid"))
     }
 
     var document: [String: Any] {
@@ -160,6 +202,36 @@ struct Booking: Identifiable, Hashable {
 
     var document: [String: Any] {
         ["teacherId": teacherId, "teacherName": teacherName, "startsAt": startsAt, "kind": kind.rawValue, "place": place]
+    }
+}
+
+/// A bid for an auctioned seat, written by the server: who, how much, and where it stands.
+struct Bid: Identifiable, Hashable {
+    enum Status: String { case active, outbid, won, released }
+
+    /// The bidder's uid.
+    let id: String
+    var name: String
+    var amount: Int
+    var at: Date
+    var status: Status
+    var memorizedPages: Int
+    var juzSummary: String?
+
+    init(id: String, name: String, amount: Int, at: Date, status: Status, memorizedPages: Int = 0, juzSummary: String? = nil) {
+        self.id = id
+        self.name = name
+        self.amount = amount
+        self.at = at
+        self.status = status
+        self.memorizedPages = memorizedPages
+        self.juzSummary = juzSummary
+    }
+
+    init?(id: String, document: [String: Any]) {
+        guard let amount = document.int("amount"), let status = document.string("status").flatMap(Status.init) else { return nil }
+        self.init(id: id, name: document.string("name") ?? "", amount: amount, at: document.date("at") ?? .distantPast,
+                  status: status, memorizedPages: document.int("memorizedPages") ?? 0, juzSummary: document.string("juzSummary"))
     }
 }
 

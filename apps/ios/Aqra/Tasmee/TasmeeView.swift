@@ -7,6 +7,7 @@ struct TasmeeView: View {
 
     @Environment(TasmeeStore.self) private var tasmee
     @Environment(AccountStore.self) private var account
+    @Environment(WalletStore.self) private var wallet
     @Environment(AppRouter.self) private var router
     @State private var creatingSession = false
     @State private var editingProfile = false
@@ -15,6 +16,7 @@ struct TasmeeView: View {
     @State private var reciting = false
     @State private var hearing: HearingFriend?
     @State private var startingCompetition = false
+    @State private var showingEarnings = false
 
     var body: some View {
         NavigationStack {
@@ -80,6 +82,7 @@ struct TasmeeView: View {
         .sheet(isPresented: $editingProfile) { TeacherProfileEditor() }
         .sheet(isPresented: $reciting) { PeerRequestView() }
         .sheet(isPresented: $startingCompetition) { NewCompetitionView(kinds: [.teacher]) }
+        .sheet(isPresented: $showingEarnings) { EarningsView() }
         .fullScreenCover(item: $hearing) { hearing in
             HearFriendView(store: store, initialCode: hearing.code)
         }
@@ -141,6 +144,16 @@ struct TasmeeView: View {
             }
             .padding(.top, 4)
         }
+
+        Button {
+            showingEarnings = true
+        } label: {
+            AqraCard(padding: 0, radius: 24) {
+                AqraRow(icon: "🏦", tint: Palette.butter, title: Text("Your earnings"),
+                        detail: Text("\(CreditsFormat.credits(wallet.due)) credits due to you"))
+            }
+        }
+        .buttonStyle(AqraPressStyle())
 
         AqraSectionTitle(title: "My sessions").padding(.top, 10)
         AqraCard(padding: 0, radius: 24) {
