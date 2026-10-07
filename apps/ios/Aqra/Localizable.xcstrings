@@ -1,16 +1,6 @@
 {
   "sourceLanguage" : "en",
   "strings" : {
-    "%@ of the Quran" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "%@ من القرآن"
-          }
-        }
-      }
-    },
     "%lld ayat" : {
       "localizations" : {
         "ar" : {
@@ -139,6 +129,70 @@
         }
       }
     },
+    "%lld juz'" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld أجزاء"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld جزءًا"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "جزء واحد"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld جزء"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "جزءان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا أجزاء"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld juz'"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld juz'"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "Begin" : {
       "localizations" : {
         "ar" : {
@@ -159,12 +213,12 @@
         }
       }
     },
-    "Choose the juz' and surahs you know. You can mark pages and ayat in the Mushaf anytime." : {
+    "Choose what you've memorized to start climbing" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "اختر الأجزاء والسور التي تحفظها، ويمكنك تحديد الصفحات والآيات في المصحف متى شئت."
+            "value" : "اختر ما تحفظه لتبدأ الصعود"
           }
         }
       }
@@ -289,32 +343,12 @@
         }
       }
     },
-    "Memorized by" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "الحفظ حسب"
-          }
-        }
-      }
-    },
     "My memorization" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "حفظي"
-          }
-        }
-      }
-    },
-    "Nothing chosen yet" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "لم تختر شيئًا بعد"
           }
         }
       }
@@ -495,6 +529,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "في مكان واحد"
+          }
+        }
+      }
+    },
+    "of the Quran" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "من القرآن"
           }
         }
       }

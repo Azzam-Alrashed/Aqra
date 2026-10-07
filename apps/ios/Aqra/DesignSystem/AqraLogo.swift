@@ -11,7 +11,8 @@ struct AqraLogoMark: View {
     /// -1...1, drives a gentle sparkle on the star.
     var twinkle: Double = 0
 
-    private static let faces: [(top: UInt32, bottom: UInt32)] = [
+    /// The steps' colors, bottom to top: butter, peach, rose, lavender, sky. The منازل stairs use them too.
+    static let faces: [(top: UInt32, bottom: UInt32)] = [
         (0xFFE7A3, 0xF4C65E), // butter
         (0xFFCDAE, 0xF29D72), // peach
         (0xFBBCD0, 0xE7849F), // rose

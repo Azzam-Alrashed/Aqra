@@ -55,6 +55,21 @@ struct WelcomeSnapshotTests {
         }
     }
 
+    /// The منازل stairs of the «ماذا تحفظ؟» screen: none climbed, a quarter, and all ten with the star lit.
+    @Test func renderManazilStairs() throws {
+        guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }
+        for climb in [0.0, 2.5, 10] {
+            let view = ManazilStairs(climb: climb)
+                .frame(width: 360, height: 130)
+                .padding(20)
+                .background(OnboardingPalette.surface)
+            let renderer = ImageRenderer(content: view)
+            renderer.scale = 2
+            let data = try #require(renderer.uiImage?.pngData())
+            try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("stairs-\(climb).png"))
+        }
+    }
+
     /// Renders Mushaf pages on iPhone (with and without tajweed and topic colors, light and dark), and full-screen iPad landscape spreads.
     @Test func renderMushafLayouts() throws {
         guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }
