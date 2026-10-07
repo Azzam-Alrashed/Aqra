@@ -1,22 +1,29 @@
 import SwiftUI
 
-/// The plan at the end of setup, one question to a page in the onboarding's own style: how much a day, on which
-/// days, where to begin — then the completion date they lead to, with the منازل stairs climbing to it.
-struct PlanSetupView: View {
+/// «كم تحفظ يوميًا؟»: the personal plan, one question to a page in the onboarding's own style — how much a day, on
+/// which days, where to begin — then the completion date they lead to, with the منازل stairs climbing to it.
+/// The last step of setup, and later a sheet to change, pause or stop the plan.
+struct PlanEditorView: View {
     var store: MushafStore
-    /// Called with the plan chosen, or nil when it's left for later.
+    /// The last step of setup, where it can be left for later, rather than a sheet changing the plan.
+    var isSetup = false
+    /// Called with the plan chosen, or nil when it's left for later or stopped.
     var onDone: (MemorizationPlan?) -> Void
 
     @Environment(PlanStore.self) private var planStore
     @Environment(MemorizationStore.self) private var memorization
+    @Environment(\.dismiss) private var dismiss
 
     @State private var draft = MemorizationPlan(dailyLines: PlanPolicy.standard.defaultAmount,
                                                 studyDays: PlanPolicy.standard.defaultStudyDays, order: .fromEnd)
     @State private var page = 0
     @State private var prepared = false
+    @State private var confirmingStop = false
     private let pageCount = 4
 
     var body: some View {
+        // The plan being changed: its completion date is shown beside the new one, and it can be paused or stopped.
+        let current = isSetup ? nil : planStore.plan
         ZStack(alignment: .topTrailing) {
             Palette.surface.ignoresSafeArea()
             TabView(selection: $page) {
@@ -26,28 +33,66 @@ struct PlanSetupView: View {
                     .tag(1)
                 PlanOrderPage(order: $draft.order, pageCount: pageCount) { next() }
                     .tag(2)
-                PlanFinishPage(plan: draft, store: store, pageCount: pageCount, isActive: page == 3) {
+                PlanFinishPage(plan: draft, previous: current, store: store, pageCount: pageCount, isActive: page == 3,
+                               title: current == nil ? "Start my plan" : "Save") {
                     var plan = draft
                     plan.paused = false
-                    planStore.setPlan(plan)
-                    onDone(plan)
+                    finish(plan)
+                } extra: {
+                    if let current { manage(current) }
                 }
                 .tag(3)
             }
             .tabViewStyle(.page(indexDisplayMode: .never))
             .ignoresSafeArea(edges: .bottom)
 
-            Button("Not now") { onDone(nil) }
-                .font(.system(size: 15, weight: .semibold))
-                .foregroundStyle(Palette.inkSoft)
-                .padding(.horizontal, 20)
-                .padding(.vertical, 10)
+            if isSetup {
+                Button("Not now") { finish(nil) }
+                    .font(.system(size: 15, weight: .semibold))
+                    .foregroundStyle(Palette.inkSoft)
+                    .padding(.horizontal, 20)
+                    .padding(.vertical, 10)
+            } else {
+                Button { dismiss() } label: {
+                    Image(systemName: "xmark")
+                        .font(.system(size: 14, weight: .heavy))
+                        .foregroundStyle(Palette.inkSoft)
+                        .frame(width: 36, height: 36)
+                        .background(.white, in: Circle())
+                        .shadow(color: Palette.shadow.opacity(0.10), radius: 8, y: 4)
+                }
+                .buttonStyle(AqraPressStyle())
+                .accessibilityLabel(Text("Close"))
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+            }
         }
         .fontDesign(.rounded)
         .tint(Palette.brand)
         .environment(\.colorScheme, .light)
         .sensoryFeedback(.selection, trigger: draft)
         .onAppear(perform: prepare)
+        .alert("Stop your plan?", isPresented: $confirmingStop) {
+            Button("Stop", role: .destructive) { finish(nil) }
+            Button("Keep it", role: .cancel) {}
+        } message: {
+            Text("What you've memorized stays, and its revision goes on. You can start a plan again anytime.")
+        }
+    }
+
+    /// «إيقاف مؤقت» and «إيقاف الخطة», under «حفظ» when changing a plan.
+    private func manage(_ plan: MemorizationPlan) -> some View {
+        HStack(spacing: 24) {
+            Button(plan.paused ? "Resume" : "Pause") {
+                var changed = plan
+                changed.paused.toggle()
+                finish(changed)
+            }
+            Button("Stop the plan") { confirmingStop = true }
+                .foregroundStyle(Color(light: 0xB3261E, dark: 0xB3261E))
+        }
+        .font(.system(size: 15, weight: .semibold))
+        .foregroundStyle(Palette.brand)
     }
 
     private func next() {
@@ -57,7 +102,18 @@ struct PlanSetupView: View {
     private func prepare() {
         guard !prepared else { return }
         prepared = true
-        draft.order = PlanStore.suggestedOrder(memorization: memorization, store: store)
+        if !isSetup, let plan = planStore.plan {
+            draft = plan
+        } else {
+            draft.order = PlanStore.suggestedOrder(memorization: memorization, store: store)
+        }
+    }
+
+    private func finish(_ plan: MemorizationPlan?) {
+        // In setup, «ليس الآن» leaves no plan; outside it, only «إيقاف الخطة» removes one.
+        if plan != nil || !isSetup { planStore.setPlan(plan) }
+        onDone(plan)
+        if !isSetup { dismiss() }
     }
 }
 
@@ -391,13 +447,18 @@ private struct PlanOrderPage: View {
 
 // MARK: - 4. The finish
 
-/// The completion date the choices lead to, with the منازل stairs climbing from what's memorized to the star.
-private struct PlanFinishPage: View {
+/// The completion date the choices lead to, with the منازل stairs climbing from what's memorized to the star — and,
+/// when a plan is being changed, the date it led to before.
+private struct PlanFinishPage<Extra: View>: View {
     var plan: MemorizationPlan
+    var previous: MemorizationPlan?
     var store: MushafStore
     var pageCount: Int
     var isActive: Bool
-    var onStart: () -> Void
+    var title: LocalizedStringKey
+    var onSave: () -> Void
+    /// Beneath the button: pausing or stopping a plan being changed.
+    @ViewBuilder var extra: Extra
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(\.layoutDirection) private var direction
@@ -410,9 +471,10 @@ private struct PlanFinishPage: View {
     var body: some View {
         let remaining = PlanStore.remainingLines(memorization: memorization, store: store)
         let date = PlanStore.estimate(plan, remainingLines: remaining, pace: nil, from: .now)
+        let before = previous.flatMap { PlanStore.estimate($0, remainingLines: remaining, pace: nil, from: .now) }
         OnboardingPageLayout(
             pageCount: pageCount, currentPage: 3, actionsVisible: true,
-            stage: { stage },
+            stage: { stage(before: moved(from: before, to: date) ? before : nil) },
             copy: { scale in
                 if let date {
                     OnboardingHeadline(
@@ -426,7 +488,12 @@ private struct PlanFinishPage: View {
                     OnboardingHeadline(first: "You've memorized", second: "the whole Quran", detail: "", scale: scale, visible: true)
                 }
             },
-            buttons: { metrics in BrandButton("Start my plan", metrics: metrics, action: onStart) }
+            buttons: { metrics in
+                VStack(spacing: 14) {
+                    BrandButton(title, metrics: metrics, action: onSave)
+                    extra
+                }
+            }
         )
         .sensoryFeedback(.success, trigger: reached) { _, done in done }
         .onChange(of: isActive, initial: true) {
@@ -447,14 +514,15 @@ private struct PlanFinishPage: View {
         }
     }
 
-    /// «ذي الحجة ١٤٤٩»: the Hijri month and year, to follow «في» — which puts ذو in the genitive.
-    private func month(_ date: Date) -> String {
+    /// «ذي الحجة ١٤٤٩»: the Hijri month and year — to follow «في», which puts ذو in the genitive, unless `genitive`
+    /// is false.
+    private func month(_ date: Date, genitive: Bool = true) -> String {
         var calendar = Calendar(identifier: .islamicUmmAlQura)
         calendar.locale = locale
         let name = calendar.monthSymbols[calendar.component(.month, from: date) - 1]
         let year = calendar.component(.year, from: date).formatted(.number.grouping(.never).locale(locale))
-        let genitive = locale.language.languageCode == .arabic && name.hasPrefix("ذو ") ? "ذي " + name.dropFirst(3) : name
-        return "\(genitive) \(year)"
+        let inflected = genitive && locale.language.languageCode == .arabic && name.hasPrefix("ذو ") ? "ذي " + name.dropFirst(3) : name
+        return "\(inflected) \(year)"
     }
 
     /// «نصف وجه · ٦ أيام في الأسبوع»
@@ -462,14 +530,30 @@ private struct PlanFinishPage: View {
         PlanFormat.amount(plan.dailyLines) + Text(verbatim: " · ") + Text("\(plan.studyDays.count) days a week")
     }
 
-    private var stage: some View {
-        ZStack {
+    /// Whether a change moves the completion to another month.
+    private func moved(from before: Date?, to date: Date?) -> Bool {
+        guard let before, let date else { return false }
+        return month(before) != month(date)
+    }
+
+    /// The stairs, and «قبل التعديل: ذو الحجة ١٤٥٠» below them when the change moves the date.
+    private func stage(before: Date?) -> some View {
+        let mirror: CGFloat = direction == .rightToLeft ? -1 : 1
+        return ZStack {
             AqraGlowRings(open: true, breath: 0, glow: [Palette.butter, Palette.peach.opacity(0.5)])
                 .scaleEffect(1.1)
             GlossyStairs(climb: climb)
                 .environment(\.layoutDirection, direction)
                 .scaleEffect(1.15)
+            if let before {
+                AqraChip(icon: "🗓️", tint: Palette.lavender) { Text("Before: \(month(before, genitive: false))") }
+                    .rotationEffect(.degrees(-4 * mirror))
+                    // Beneath the stairs, away from their low end; the offset follows the reading direction itself.
+                    .offset(x: 70, y: 150)
+                    .transition(.scale(scale: 0.5).combined(with: .opacity))
+            }
         }
+        .animation(.spring(response: 0.45, dampingFraction: 0.7), value: before)
         .frame(width: 420, height: 440)
     }
 }
