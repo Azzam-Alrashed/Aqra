@@ -12,10 +12,12 @@ struct MemorizationSetupView: View {
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    @Environment(\.layoutDirection) private var direction
 
     @State private var section = SetupSection.juz
     /// The stairs' climb as shown; it follows the memorized count with a spring, starting from the bottom.
     @State private var shownClimb = 0.0
+    @State private var climbAnimation: Animation?
 
     var body: some View {
         GeometryReader { geometry in
@@ -74,21 +76,18 @@ struct MemorizationSetupView: View {
 
     /// How many of the ten steps are climbed: three juz' make a step.
     private var targetClimb: Double {
-        quranShare * Double(ManazilStairs.stepCount)
+        quranShare * Double(GlossyStairs.stepCount)
     }
 
+    /// The animation is the stairs' own: in a `withAnimation`, the rest of the screen's first layout would be
+    /// animated with it.
     private func climb(to value: Double, entrance: Bool) {
-        guard !reduceMotion else {
-            shownClimb = value
-            return
-        }
-        withAnimation(entrance ? .spring(duration: 1.4, bounce: 0.1).delay(0.25) : .spring(duration: 0.9, bounce: 0.15)) {
-            shownClimb = value
-        }
+        climbAnimation = reduceMotion ? nil : entrance ? .spring(duration: 1.4, bounce: 0.1).delay(0.25) : .spring(duration: 0.9, bounce: 0.15)
+        shownClimb = value
     }
 
     private func hero(scale: CGFloat) -> some View {
-        VStack(spacing: 12 * scale) {
+        VStack(spacing: 4 * scale) {
             VStack(spacing: 0) {
                 Text("What have you memorized").foregroundStyle(Palette.ink)
                 Text("of the Quran?").foregroundStyle(Palette.brand)
@@ -97,52 +96,63 @@ struct MemorizationSetupView: View {
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             .multilineTextAlignment(.center)
-
-            ManazilStairs(climb: shownClimb)
-                .frame(maxWidth: 420 * scale)
-                .frame(height: 118 * scale)
-
-            numbers(scale: scale)
-                .frame(minHeight: 64 * scale)
+            summary
+                .font(.system(size: 15 * scale, weight: .semibold))
+                .foregroundStyle(Palette.inkSoft)
+                .multilineTextAlignment(.center)
+                .contentTransition(.numericText(value: Double(memorization.count)))
+                .animation(.snappy, value: memorization.count)
+            stage(scale: scale)
         }
         .accessibilityElement(children: .combine)
     }
 
-    private func numbers(scale: CGFloat) -> some View {
+    /// «٥٦٤ آية · جزء واحد», or how to start when nothing is chosen yet.
+    private var summary: Text {
         let count = memorization.count
-        let share = quranShare.formatted(.percent.precision(.fractionLength(0...1)))
+        guard count > 0 else { return Text("Choose what you've memorized to start climbing") }
         let fullJuz = (1...30).filter { juz in
             store.juzAyahs[juz].map { memorization.memorizedCount(in: $0) == $0.count } ?? false
         }.count
-        return VStack(spacing: 4 * scale) {
-            if count == 0 {
-                Text("Choose what you've memorized to start climbing")
-                    .font(.system(size: 16 * scale, weight: .semibold))
-                    .foregroundStyle(Palette.inkSoft)
-                    .multilineTextAlignment(.center)
-            } else {
-                HStack(alignment: .firstTextBaseline, spacing: 8 * scale) {
-                    Text(verbatim: share)
-                        .font(.system(size: 40 * scale, weight: .heavy))
-                        .foregroundStyle(Palette.brand)
-                        .contentTransition(.numericText(value: Double(count)))
-                    Text("of the Quran")
-                        .font(.system(size: 17 * scale, weight: .bold))
-                        .foregroundStyle(Palette.ink)
-                }
-                HStack(spacing: 6) {
-                    Text("\(count) ayat")
-                    if fullJuz > 0 {
-                        Text(verbatim: "·")
-                        Text("\(fullJuz) juz'")
+        let ayat = Text("\(count) ayat")
+        return fullJuz > 0 ? ayat + Text(verbatim: " · ") + Text("\(fullJuz) juz'") : ayat
+    }
+
+    /// The home's stage, smaller: the stairs in their glowing rings, climbing as juz' and surahs are chosen,
+    /// with the share of the Quran floating beside them.
+    private func stage(scale: CGFloat) -> some View {
+        let mirror: CGFloat = direction == .rightToLeft ? 1 : -1
+        let share = quranShare
+        return ZStack {
+            GlossyStairs(climb: shownClimb)
+                .animation(climbAnimation, value: shownClimb)
+                .environment(\.layoutDirection, direction)
+                .scaleEffect(0.66 * scale)
+                .offset(x: 6 * mirror * scale)
+            if memorization.count > 0 {
+                AqraChip(icon: "🪜", tint: Palette.lavender) {
+                    HStack(spacing: 4) {
+                        Text(verbatim: share.formatted(.percent.precision(.fractionLength(0...1))))
+                            .contentTransition(.numericText(value: share))
+                        Text("of the Quran")
                     }
                 }
-                .font(.system(size: 14 * scale, weight: .semibold))
-                .foregroundStyle(Palette.inkSoft)
-                .contentTransition(.numericText(value: Double(count)))
+                .environment(\.layoutDirection, direction)
+                .rotationEffect(.degrees(-4 * mirror))
+                .offset(x: 100 * mirror * scale, y: -52 * scale)
+                .transition(.scale(scale: 0.4).combined(with: .opacity))
+                .animation(.snappy, value: share)
             }
         }
-        .animation(.snappy, value: count)
+        .environment(\.layoutDirection, .leftToRight)
+        .animation(.spring(response: 0.5, dampingFraction: 0.7), value: memorization.count > 0)
+        .frame(height: 168 * scale)
+        .frame(maxWidth: .infinity)
+        // Behind the stage, so the glow spreads past its edges without widening the screen.
+        .background {
+            AqraGlowRings(open: true, breath: 0)
+                .scaleEffect(0.62 * scale)
+        }
     }
 
     // MARK: - Controls
@@ -150,7 +160,7 @@ struct MemorizationSetupView: View {
     private func controls(scale: CGFloat) -> some View {
         let isAll = memorization.count == MushafStore.ayahCount
         return HStack(spacing: 10) {
-            SectionSwitch(selection: $section, scale: scale)
+            AqraSegmented(selection: $section, options: [(.juz, "Juz'"), (.surahs, "Surahs")], scale: scale)
             Spacer(minLength: 0)
             Button {
                 memorization.mark(0..<MushafStore.ayahCount, memorized: !isAll)
@@ -326,44 +336,6 @@ struct MemorizationSetupView: View {
 /// Which list the setup screen shows.
 private enum SetupSection: Hashable {
     case juz, surahs
-}
-
-/// «الأجزاء / السور»: a white capsule with a brand-colored thumb that slides to the chosen side.
-private struct SectionSwitch: View {
-    @Binding var selection: SetupSection
-    var scale: CGFloat = 1
-    @Namespace private var thumb
-
-    var body: some View {
-        HStack(spacing: 2) {
-            item(.juz, title: "Juz'")
-            item(.surahs, title: "Surahs")
-        }
-        .padding(4)
-        .background(.white, in: Capsule())
-        .overlay(Capsule().strokeBorder(Palette.lavender, lineWidth: 1.5))
-    }
-
-    private func item(_ value: SetupSection, title: LocalizedStringKey) -> some View {
-        Button {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.78)) { selection = value }
-        } label: {
-            Text(title)
-                .font(.system(size: 15 * scale, weight: .bold))
-                .foregroundStyle(selection == value ? .white : Palette.inkSoft)
-                .padding(.horizontal, 18 * scale)
-                .frame(height: 38 * scale)
-                .background {
-                    if selection == value {
-                        Capsule()
-                            .fill(LinearGradient(colors: [Palette.brand, Palette.brandDeep], startPoint: .top, endPoint: .bottom))
-                            .matchedGeometryEffect(id: "thumb", in: thumb)
-                    }
-                }
-                .contentShape(Capsule())
-        }
-        .buttonStyle(.plain)
-    }
 }
 
 /// Tiles, rows and chips shrink a little under the finger.

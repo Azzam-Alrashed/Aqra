@@ -17,8 +17,15 @@ struct WirdView: View {
     var body: some View {
         GeometryReader { geometry in
             let facingPages = geometry.size.width > geometry.size.height && geometry.size.width >= 900
-            ZStack {
+            // The bars stay for the whole revision, so the page sits between them rather than under them:
+            // every ayah stays in sight as it's revealed.
+            VStack(spacing: 6) {
                 if let session {
+                    MushafTopBar(page: store.page(session.page), store: store) {
+                        EmptyView()
+                    } trailing: {
+                        FloatingCapsule { MushafColorsMenu() }
+                    }
                     // A revision holds its page still: no turning until it's done.
                     Group {
                         if facingPages {
@@ -32,16 +39,8 @@ struct WirdView: View {
                     .environment(session)
                     .id(session.page)
                     .transition(.opacity)
-
-                    VStack(spacing: 0) {
-                        MushafTopBar(page: store.page(session.page), store: store) {
-                            EmptyView()
-                        } trailing: {
-                            MushafColorsMenu()
-                        }
-                        Spacer()
-                        revisionBar(session)
-                    }
+                    .frame(maxHeight: .infinity)
+                    revisionBar(session)
                 }
             }
         }
@@ -75,60 +74,60 @@ struct WirdView: View {
     }
 
     private func revisionBar(_ session: RevisionSession) -> some View {
-        VStack(spacing: 12) {
-            HStack(alignment: .center, spacing: 12) {
-                Button {
-                    finish(session, record: false)
-                } label: {
-                    Label("Leave revision", systemImage: "xmark")
-                        .labelStyle(.iconOnly)
-                        .font(.system(size: 15, weight: .bold))
-                        .frame(width: 36, height: 36)
-                        .background(MushafStyle.markerFill, in: Circle())
+        FloatingPanel {
+            VStack(spacing: 12) {
+                HStack(alignment: .center, spacing: 12) {
+                    Button {
+                        finish(session, record: false)
+                    } label: {
+                        Label("Leave revision", systemImage: "xmark")
+                            .labelStyle(.iconOnly)
+                            .font(.system(size: 15, weight: .heavy))
+                            .foregroundStyle(MushafStyle.barAccent)
+                            .frame(width: 38, height: 38)
+                            .background(MushafStyle.barAccentFill, in: Circle())
+                    }
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Page \(session.page)")
+                            .font(.system(size: 17, weight: .heavy, design: .rounded))
+                            .foregroundStyle(MushafStyle.ink)
+                        Text("\(min(session.revealed, session.ayahs.count)) of \(session.ayahs.count)")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
+                            .foregroundStyle(MushafStyle.chrome)
+                            .contentTransition(.numericText())
+                    }
+                    Spacer()
+                    if !session.stumbles.isEmpty {
+                        Text("\(session.stumbles.count) stumbles")
+                            .font(.system(size: 13, weight: .bold, design: .rounded))
+                            .foregroundStyle(Color(light: 0x9A3E26, dark: 0xF6C9B8))
+                            .padding(.horizontal, 12)
+                            .frame(height: 30)
+                            .background(MushafStyle.stumble.opacity(0.6), in: Capsule())
+                            .transition(.scale.combined(with: .opacity))
+                    }
                 }
-                VStack(alignment: .leading, spacing: 2) {
-                    Text("Page \(session.page)")
-                        .font(.system(size: 16, weight: .bold, design: .rounded))
-                    Text("\(min(session.revealed, session.ayahs.count)) of \(session.ayahs.count)")
-                        .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
-                        .foregroundStyle(MushafStyle.chrome)
-                        .contentTransition(.numericText())
+                Text("Tap to reveal the next ayah, and tap a revealed ayah if you stumbled on it")
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(MushafStyle.chrome)
+                    .lineLimit(2)
+                    .multilineTextAlignment(.center)
+                    .frame(maxWidth: .infinity)
+                HStack(spacing: 10) {
+                    Button("Next ayah") { withAnimation(.easeOut(duration: 0.2)) { session.revealNext() } }
+                        .buttonStyle(MarkingButtonStyle())
+                        .disabled(session.isComplete)
+                    Button("Show page") { withAnimation(.easeOut(duration: 0.2)) { session.revealAll() } }
+                        .buttonStyle(MarkingButtonStyle())
+                        .disabled(session.isComplete)
+                    Button("Done") { finish(session, record: true) }
+                        .buttonStyle(MarkingButtonStyle(prominent: true))
                 }
-                Spacer()
-                if !session.stumbles.isEmpty {
-                    Text("\(session.stumbles.count) stumbles")
-                        .font(.system(size: 13, weight: .bold, design: .rounded))
-                        .padding(.horizontal, 12)
-                        .frame(height: 30)
-                        .background(MushafStyle.stumble, in: Capsule())
-                        .transition(.scale.combined(with: .opacity))
-                }
-            }
-            Text("Tap to reveal the next ayah, and tap a revealed ayah if you stumbled on it")
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(MushafStyle.chrome)
-                .lineLimit(2)
-                .multilineTextAlignment(.center)
-                .frame(maxWidth: .infinity)
-            HStack(spacing: 10) {
-                Button("Next ayah") { withAnimation(.easeOut(duration: 0.2)) { session.revealNext() } }
-                    .buttonStyle(MarkingButtonStyle())
-                    .disabled(session.isComplete)
-                Button("Show page") { withAnimation(.easeOut(duration: 0.2)) { session.revealAll() } }
-                    .buttonStyle(MarkingButtonStyle())
-                    .disabled(session.isComplete)
-                Button("Done") { finish(session, record: true) }
-                    .buttonStyle(MarkingButtonStyle(prominent: true))
             }
         }
         .animation(.snappy, value: session.stumbles.count)
         .sensoryFeedback(.selection, trigger: session.revealed)
         .sensoryFeedback(.impact(weight: .light), trigger: session.stumbles.count)
-        .foregroundStyle(MushafStyle.ink)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity)
-        .background(.ultraThinMaterial)
         .environment(\.layoutDirection, .rightToLeft)
     }
 }

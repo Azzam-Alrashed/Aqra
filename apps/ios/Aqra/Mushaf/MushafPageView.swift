@@ -16,6 +16,10 @@ enum MushafStyle {
     /// In revision, the soft bars that veil words not yet revealed, and the wash behind an ayah stumbled on.
     static let veil = Color(light: 0xE6DAC2, dark: 0x3C3228)
     static let stumble = Color(light: 0xF4BFAE, dark: 0x7C3B2D)
+    /// The bars floating over the page, in the app's colors: white capsules, purple controls on lavender.
+    static let barFill = Color(light: 0xFFFFFF, dark: 0x2B2622)
+    static let barAccent = Color(light: 0x5B2D91, dark: 0xCDB8F2)
+    static let barAccentFill = Color(light: 0xE9DEFA, dark: 0x3B3150)
     /// Topic sections, in the soft pastels of a colored Mushaf: mint, sky, rose, lavender, butter and peach.
     /// Neighboring sections always take different colors.
     static let topics = [

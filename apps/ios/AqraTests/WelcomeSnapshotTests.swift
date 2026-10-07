@@ -55,12 +55,12 @@ struct WelcomeSnapshotTests {
         }
     }
 
-    /// The منازل stairs of the «ماذا تحفظ؟» screen: none climbed, a quarter, and all ten with the star lit.
+    /// The منازل stairs of the home and «ماذا تحفظ؟»: none climbed, a quarter, and all ten.
     @Test func renderManazilStairs() throws {
         guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }
         for climb in [0.0, 2.5, 10] {
-            let view = ManazilStairs(climb: climb)
-                .frame(width: 360, height: 130)
+            let view = GlossyStairs(climb: climb)
+                .environment(\.layoutDirection, .rightToLeft)
                 .padding(20)
                 .background(OnboardingPalette.surface)
             let renderer = ImageRenderer(content: view)

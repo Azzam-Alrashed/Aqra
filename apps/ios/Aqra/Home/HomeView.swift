@@ -219,12 +219,6 @@ struct HomeView: View {
         let share = memorization.quranShare(in: store)
         let strength = memorization.averageStrength()
         return ZStack {
-            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !isVisible || reduceMotion)) { timeline in
-                AqraGlowRings(open: entered, breath: sin(timeline.date.timeIntervalSinceReferenceDate * 0.9))
-                    .scaleEffect(1.05)
-                    // Drawn on the GPU, so the breathing doesn't redraw the gradients on the CPU every frame.
-                    .drawingGroup()
-            }
             GlossyStairs(climb: shownClimb)
                 .animation(climbAnimation, value: shownClimb)
                 .environment(\.layoutDirection, direction)
@@ -247,6 +241,15 @@ struct HomeView: View {
         .environment(\.layoutDirection, .leftToRight)
         .frame(height: 360)
         .frame(maxWidth: .infinity)
+        // Behind the stage, so the glow spreads past its edges without widening the page.
+        .background {
+            TimelineView(.animation(minimumInterval: 1.0 / 20, paused: !isVisible || reduceMotion)) { timeline in
+                AqraGlowRings(open: entered, breath: sin(timeline.date.timeIntervalSinceReferenceDate * 0.9))
+                    .scaleEffect(1.05)
+                    // Drawn on the GPU, so the breathing doesn't redraw the gradients on the CPU every frame.
+                    .drawingGroup()
+            }
+        }
     }
 
     private func floating<Content: View>(_ index: Int, at target: CGPoint, tilt: Double, time: TimeInterval,

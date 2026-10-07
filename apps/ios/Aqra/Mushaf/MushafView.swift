@@ -141,39 +141,37 @@ struct MushafView: View {
 
     private func markingBar(_ marking: MarkingSession, pages: [Int]) -> some View {
         let ayahs = store.page(pages.first ?? lastPage).ayahs.lowerBound...store.page(pages.last ?? lastPage).ayahs.upperBound
-        return VStack(spacing: 12) {
-            VStack(spacing: 3) {
-                // While a range waits for its end, the bar says so.
-                Text(marking.rangeStart == nil ? "Tap the ayat you've memorized" : "Now tap the last ayah of the range")
-                    .font(.system(size: 16, weight: .bold, design: .rounded))
-                HStack(spacing: 6) {
-                    Text("\(memorization.count) ayat memorized")
-                    Text(verbatim: "·")
-                    Text("Press and hold an ayah to mark from it to another")
+        return FloatingPanel {
+            VStack(spacing: 14) {
+                VStack(spacing: 3) {
+                    // While a range waits for its end, the bar says so.
+                    Text(marking.rangeStart == nil ? "Tap the ayat you've memorized" : "Now tap the last ayah of the range")
+                        .font(.system(size: 17, weight: .heavy, design: .rounded))
+                        .foregroundStyle(MushafStyle.ink)
+                    HStack(spacing: 6) {
+                        Text("\(memorization.count) ayat memorized")
+                        Text(verbatim: "·")
+                        Text("Press and hold an ayah to mark from it to another")
+                    }
+                    .font(.system(size: 12, weight: .semibold, design: .rounded))
+                    .foregroundStyle(MushafStyle.chrome)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
                 }
-                .font(.system(size: 12, weight: .medium, design: .rounded))
-                .foregroundStyle(MushafStyle.chrome)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            }
-            .animation(.easeInOut(duration: 0.2), value: marking.rangeStart)
-            HStack(spacing: 10) {
-                Button(pages.count > 1 ? "Both pages" : "Whole page") { marking.toggle(ayahs) }
-                    .buttonStyle(MarkingButtonStyle())
-                Button("Juz' & surahs") { showingSetup = true }
-                    .buttonStyle(MarkingButtonStyle())
-                Button("Done") {
-                    memorization.saveNow()
-                    withAnimation(.easeInOut(duration: 0.2)) { self.marking = nil }
+                .animation(.easeInOut(duration: 0.2), value: marking.rangeStart)
+                HStack(spacing: 10) {
+                    Button(pages.count > 1 ? "Both pages" : "Whole page") { marking.toggle(ayahs) }
+                        .buttonStyle(MarkingButtonStyle())
+                    Button("Juz' & surahs") { showingSetup = true }
+                        .buttonStyle(MarkingButtonStyle())
+                    Button("Done") {
+                        memorization.saveNow()
+                        withAnimation(.easeInOut(duration: 0.2)) { self.marking = nil }
+                    }
+                    .buttonStyle(MarkingButtonStyle(prominent: true))
                 }
-                .buttonStyle(MarkingButtonStyle(prominent: true))
             }
         }
-        .foregroundStyle(MushafStyle.ink)
-        .padding(.horizontal, 16)
-        .padding(.vertical, 14)
-        .frame(maxWidth: .infinity)
-        .background(.ultraThinMaterial)
         .environment(\.layoutDirection, .rightToLeft)
     }
 
@@ -181,24 +179,32 @@ struct MushafView: View {
 
     private var topBar: some View {
         MushafTopBar(page: store.page(lastPage), store: store) {
-            Button {
-                if marking != nil { memorization.saveNow() }
-                dismiss()
-            } label: {
-                MushafBarIcon("Home", systemImage: "house")
-            }
-            Button {
-                showingIndex = true
-            } label: {
-                MushafBarIcon("Index", systemImage: "list.bullet")
+            FloatingCapsule {
+                HStack(spacing: 0) {
+                    Button {
+                        if marking != nil { memorization.saveNow() }
+                        dismiss()
+                    } label: {
+                        MushafBarIcon("Home", systemImage: "house.fill")
+                    }
+                    Button {
+                        showingIndex = true
+                    } label: {
+                        MushafBarIcon("Index", systemImage: "list.bullet")
+                    }
+                }
             }
         } trailing: {
-            Button {
-                if marking == nil { startMarking() } else { marking = nil }
-            } label: {
-                MushafBarIcon("My memorization", systemImage: marking == nil ? "checkmark.seal" : "checkmark.seal.fill")
+            FloatingCapsule {
+                HStack(spacing: 0) {
+                    Button {
+                        if marking == nil { startMarking() } else { marking = nil }
+                    } label: {
+                        MushafBarIcon("My memorization", systemImage: marking == nil ? "checkmark.seal" : "checkmark.seal.fill")
+                    }
+                    MushafColorsMenu()
+                }
             }
-            MushafColorsMenu()
         }
     }
 
@@ -208,23 +214,29 @@ struct MushafView: View {
             get: { sliderPage ?? Double(lastPage) },
             set: { sliderPage = $0 }
         )
-        return HStack(spacing: 14) {
-            Text(verbatim: arabic(Int(position.wrappedValue.rounded())))
-                .font(.system(size: 15, weight: .bold, design: .rounded).monospacedDigit())
-                .frame(minWidth: 36)
-            Slider(value: position, in: 1...Double(MushafStore.pageCount), step: 1) { editing in
-                guard !editing, let target = sliderPage else { return }
-                let page = Int(target.rounded())
-                movedByToolbar = page != lastPage
-                lastPage = page
-                sliderPage = nil
+        return FloatingCapsule {
+            HStack(spacing: 12) {
+                Text(verbatim: arabic(Int(position.wrappedValue.rounded())))
+                    .font(.system(size: 16, weight: .heavy, design: .rounded).monospacedDigit())
+                    .foregroundStyle(MushafStyle.barAccent)
+                    .frame(minWidth: 40)
+                    .padding(.vertical, 6)
+                    .background(MushafStyle.barAccentFill, in: Capsule())
+                Slider(value: position, in: 1...Double(MushafStore.pageCount), step: 1) { editing in
+                    guard !editing, let target = sliderPage else { return }
+                    let page = Int(target.rounded())
+                    movedByToolbar = page != lastPage
+                    lastPage = page
+                    sliderPage = nil
+                }
+                .tint(MushafStyle.barAccent)
             }
-            .tint(MushafStyle.marker)
+            .padding(.leading, 4)
+            .padding(.trailing, 14)
         }
-        .foregroundStyle(MushafStyle.ink)
-        .padding(.horizontal, 20)
-        .padding(.vertical, 14)
-        .background(.ultraThinMaterial)
+        .frame(maxWidth: 620)
+        .padding(.horizontal, 16)
+        .padding(.bottom, 6)
         // Page 1 at the right end of the slider, matching the direction pages turn.
         .environment(\.layoutDirection, .rightToLeft)
     }
@@ -308,26 +320,29 @@ struct MushafTopBar<Leading: View, Trailing: View>: View {
     @ViewBuilder var trailing: Trailing
 
     var body: some View {
-        HStack(spacing: 0) {
+        HStack(spacing: 8) {
             leading
-            Spacer()
+            Spacer(minLength: 8)
             trailing
         }
         // The title stays centered, whatever the buttons on either side.
         .overlay {
-            VStack(spacing: 2) {
-                Text(verbatim: store.surahNames[page.surah] ?? "")
-                    .font(.system(size: 17, weight: .bold, design: .rounded))
-                Text(verbatim: "الجزء \(arabic(page.juz)) · الصفحة \(arabic(page.number))")
-                    .font(.system(size: 12, weight: .medium, design: .rounded))
-                    .foregroundStyle(MushafStyle.chrome)
+            FloatingCapsule {
+                VStack(spacing: 1) {
+                    Text(verbatim: store.surahNames[page.surah] ?? "")
+                        .font(.system(size: 15, weight: .heavy, design: .rounded))
+                        .foregroundStyle(MushafStyle.ink)
+                    Text(verbatim: "الجزء \(arabic(page.juz)) · الصفحة \(arabic(page.number))")
+                        .font(.system(size: 11, weight: .semibold, design: .rounded))
+                        .foregroundStyle(MushafStyle.chrome)
+                }
+                .lineLimit(1)
+                .padding(.horizontal, 14)
             }
         }
-        .foregroundStyle(MushafStyle.ink)
-        .tint(MushafStyle.marker)
+        .tint(MushafStyle.barAccent)
         .padding(.horizontal, 12)
-        .padding(.bottom, 8)
-        .background(.ultraThinMaterial)
+        .padding(.top, 2)
         .environment(\.layoutDirection, .rightToLeft)
     }
 
@@ -349,8 +364,10 @@ struct MushafBarIcon: View {
     var body: some View {
         Label(title, systemImage: systemImage)
             .labelStyle(.iconOnly)
-            .font(.system(size: 18, weight: .semibold))
-            .frame(width: 44, height: 44)
+            .font(.system(size: 17, weight: .bold))
+            .foregroundStyle(MushafStyle.barAccent)
+            .frame(width: 42, height: 42)
+            .contentShape(Rectangle())
     }
 }
 
@@ -369,20 +386,39 @@ struct MushafColorsMenu: View {
     }
 }
 
-/// The marking and revision bars' buttons: soft capsules, the main one in the marker's gold-brown.
+/// The marking and revision bars' buttons, in the app's colors: lavender capsules, the main one the purple of
+/// the app's buttons.
 struct MarkingButtonStyle: ButtonStyle {
     var prominent = false
 
     func makeBody(configuration: Configuration) -> some View {
-        configuration.label
-            .font(.system(size: 15, weight: .semibold, design: .rounded))
-            .lineLimit(1)
-            .minimumScaleFactor(0.8)
-            .foregroundStyle(prominent ? MushafStyle.paper : MushafStyle.ink)
-            .padding(.horizontal, 14)
-            .frame(maxWidth: .infinity, minHeight: 44)
-            .background(prominent ? MushafStyle.marker : MushafStyle.markerFill, in: Capsule())
-            .scaleEffect(configuration.isPressed ? 0.96 : 1)
-            .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
+        MarkingButton(configuration: configuration, prominent: prominent)
+    }
+
+    private struct MarkingButton: View {
+        var configuration: Configuration
+        var prominent: Bool
+        @Environment(\.isEnabled) private var isEnabled
+
+        var body: some View {
+            configuration.label
+                .font(.system(size: 15, weight: .bold, design: .rounded))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
+                .foregroundStyle(prominent ? .white : MushafStyle.barAccent)
+                .padding(.horizontal, 14)
+                .frame(maxWidth: .infinity, minHeight: 46)
+                .background {
+                    if prominent {
+                        Capsule().fill(LinearGradient(colors: [OnboardingPalette.brand, OnboardingPalette.brandDeep], startPoint: .top, endPoint: .bottom))
+                    } else {
+                        Capsule().fill(MushafStyle.barAccentFill)
+                    }
+                }
+                .shadow(color: prominent ? OnboardingPalette.brand.opacity(0.3) : .clear, radius: 10, y: 5)
+                .opacity(isEnabled ? 1 : 0.45)
+                .scaleEffect(configuration.isPressed ? 0.96 : 1)
+                .animation(.spring(response: 0.25, dampingFraction: 0.6), value: configuration.isPressed)
+        }
     }
 }

@@ -126,6 +126,49 @@ struct AqraSectionTitle: View {
     }
 }
 
+/// A few choices in a white capsule, the chosen one in a purple pill that slides to it.
+struct AqraSegmented<Value: Hashable>: View {
+    @Binding var selection: Value
+    var options: [(value: Value, title: LocalizedStringKey)]
+    var scale: CGFloat = 1
+    @Namespace private var thumb
+
+    var body: some View {
+        HStack(spacing: 2) {
+            ForEach(options.indices, id: \.self) { index in
+                item(options[index].value, title: options[index].title)
+            }
+        }
+        .padding(4)
+        .background(.white, in: Capsule())
+        .overlay(Capsule().strokeBorder(OnboardingPalette.lavender, lineWidth: 1.5))
+        .sensoryFeedback(.selection, trigger: selection)
+    }
+
+    private func item(_ value: Value, title: LocalizedStringKey) -> some View {
+        let selected = selection == value
+        return Button {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.78)) { selection = value }
+        } label: {
+            Text(title)
+                .font(.system(size: 15 * scale, weight: .bold))
+                .foregroundStyle(selected ? .white : OnboardingPalette.inkSoft)
+                .padding(.horizontal, 18 * scale)
+                .frame(height: 38 * scale)
+                .background {
+                    if selected {
+                        Capsule()
+                            .fill(LinearGradient(colors: [OnboardingPalette.brand, OnboardingPalette.brandDeep], startPoint: .top, endPoint: .bottom))
+                            .matchedGeometryEffect(id: "thumb", in: thumb)
+                    }
+                }
+                .contentShape(Capsule())
+        }
+        .buttonStyle(.plain)
+        .accessibilityAddTraits(selected ? .isSelected : [])
+    }
+}
+
 /// A card or tile that gives a little as it's pressed.
 struct AqraPressStyle: ButtonStyle {
     func makeBody(configuration: Configuration) -> some View {
@@ -142,7 +185,7 @@ struct AqraPressStyle: ButtonStyle {
 ///
 /// `climb` animates (0...10): change it with an animation and the steps fill one after another.
 struct GlossyStairs: View, Animatable {
-    static let stepCount = 10
+    static let stepCount = ManazilStairs.stepCount
     static let size = CGSize(width: block.width + CGFloat(stepCount - 1) * rise.width,
                              height: block.height + CGFloat(stepCount) * rise.height + 26)
     private static let block = CGSize(width: 44, height: 24)
@@ -275,5 +318,38 @@ extension View {
         safeAreaInset(edge: .bottom, spacing: 0) {
             Color.clear.frame(height: AqraTabBar.height + AqraTabBar.bottomPadding)
         }
+    }
+}
+
+// MARK: - Over the Mushaf
+
+/// A white capsule floating over the Mushaf's page, holding its buttons or its title. It follows the page into
+/// dark mode.
+struct FloatingCapsule<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        content
+            .padding(.horizontal, 4)
+            .frame(minHeight: 48)
+            .background(MushafStyle.barFill, in: Capsule())
+            .shadow(color: OnboardingPalette.shadow.opacity(0.12), radius: 14, y: 6)
+            .shadow(color: OnboardingPalette.shadow.opacity(0.05), radius: 2, y: 1)
+    }
+}
+
+/// A white card floating over the Mushaf's page: the marking and revision bars.
+struct FloatingPanel<Content: View>: View {
+    @ViewBuilder var content: Content
+
+    var body: some View {
+        content
+            .padding(16)
+            .frame(maxWidth: 620)
+            .background(MushafStyle.barFill, in: RoundedRectangle(cornerRadius: 28, style: .continuous))
+            .shadow(color: OnboardingPalette.shadow.opacity(0.14), radius: 20, y: 8)
+            .shadow(color: OnboardingPalette.shadow.opacity(0.05), radius: 2, y: 1)
+            .padding(.horizontal, 12)
+            .padding(.bottom, 6)
     }
 }

@@ -90,7 +90,7 @@ Where the progress lives (on the device, until accounts come in wave 2), the Mus
 
 ### Mushaf
 
-The Mushaf is where the student reads and marks what they have memorized. It opens on the last page read, and its top bar leads back home.
+The Mushaf is where the student reads and marks what they have memorized. It opens on the last page read, and its top bar leads back home. Its bars float over the page as white capsules in the app's colors, so the paper stays the Mushaf's own.
 
 - **Memorized ayat are colored.** Each ayah takes the color of its topic section, as in a printed thematic Mushaf, drawn as a soft highlight behind its words. The color is faint when the ayah is newly memorized, fuller as it grows strong, and fades when revision is overdue. Unmemorized ayat stay plain paper.
 - **Tajweed colors** on the letters, with their own toggle.
