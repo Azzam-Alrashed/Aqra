@@ -59,11 +59,10 @@ targets:
         CURRENT_PROJECT_VERSION: "2"
         CODE_SIGN_IDENTITY: iPhone Developer
         GENERATE_INFOPLIST_FILE: YES
-        # Only what the generated Info.plist can't hold: the URL scheme Google's sign-in returns to.
+        # Only what the generated Info.plist can't hold: the URL schemes, and the launch screen.
         INFOPLIST_FILE: Aqra/Info.plist
         INFOPLIST_KEY_CFBundleDisplayName: "اقْرَأْ"
         INFOPLIST_KEY_LSApplicationCategoryType: public.app-category.education
-        INFOPLIST_KEY_UILaunchScreen_Generation: YES
         # Video tasmee' and scanning a friend's code (localized in InfoPlist.xcstrings).
         INFOPLIST_KEY_NSCameraUsageDescription: "Your teacher sees you while you recite, and you can scan a friend's code."
         INFOPLIST_KEY_NSMicrophoneUsageDescription: "Your teacher hears you recite in a video tasmee'."

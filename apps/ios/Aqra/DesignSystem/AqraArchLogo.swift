@@ -16,6 +16,14 @@ struct AqraArchLogo: View {
     var starReveal: CGFloat = 1
     /// Seconds since some reference, for the idle sparkle; constant keeps it still.
     var time: TimeInterval = 0
+    /// Draw the arch, the doorway and the book. Off leaves only the star and its sparkles, for the splash to animate apart.
+    var showsBody = true
+
+    /// Where the star and the sparkles sit on the canvas, before the mark is lifted.
+    static let starCenter = CGPoint(x: 512, y: 380)
+    static let sparkleCenters = [CGPoint(x: 353, y: 461), CGPoint(x: 671, y: 461), CGPoint(x: 372, y: 590), CGPoint(x: 651, y: 590)]
+    /// How far the mark is lifted on the canvas at a mark scale of 1: its visual center sits ~20pt below the canvas center.
+    static let markLift: CGFloat = 20
 
     var body: some View {
         ZStack {
@@ -24,8 +32,8 @@ struct AqraArchLogo: View {
             }
             mark
                 .scaleEffect(markScale)
-                // The mark's visual center sits ~20pt below the canvas center; lift it as it grows.
-                .offset(y: -20 * markScale)
+                // Lifted to center it visually, more as it grows.
+                .offset(y: -Self.markLift * markScale)
         }
         .frame(width: 1024, height: 1024)
         .clipped()
@@ -35,6 +43,7 @@ struct AqraArchLogo: View {
 
     private var mark: some View {
         ZStack {
+            if showsBody {
             Group {
             // A soft white halo around the arch.
             ArchPath.outer.fill(.white).blur(radius: 34).opacity(0.85)
@@ -78,6 +87,7 @@ struct AqraArchLogo: View {
             .offset(y: (1 - bookReveal) * 260)
             .mask(ArchPath.outer)
             .opacity(min(1, bookReveal * 1.5))
+            }
 
             // The star and its sparkles.
             StarShape(points: 8, innerRatio: 0.38, cornerRadius: 0.04)
@@ -87,8 +97,8 @@ struct AqraArchLogo: View {
                 .scaleEffect(max(0.01, starReveal) * (1 + 0.03 * sin(time * 2)))
                 .rotationEffect(.degrees((1 - starReveal) * -120))
                 .opacity(starReveal)
-                .position(x: 512, y: 380)
-            ForEach(Array([CGPoint(x: 353, y: 461), CGPoint(x: 671, y: 461), CGPoint(x: 372, y: 590), CGPoint(x: 651, y: 590)].enumerated()), id: \.offset) { index, point in
+                .position(Self.starCenter)
+            ForEach(Array(Self.sparkleCenters.enumerated()), id: \.offset) { index, point in
                 StarShape(points: 4, innerRatio: 0.38, cornerRadius: 0.1)
                     .fill(hex(0xEFC47C))
                     .frame(width: 22, height: 22)

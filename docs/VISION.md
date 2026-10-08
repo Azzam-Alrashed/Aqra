@@ -67,6 +67,8 @@ See `shared/quran/README.md` for the sources, the provisional ones, and what mus
 
 Every screen speaks the onboarding's language: the colored-Mushaf pastels on a soft lavender surface, two-line headlines with the second line in purple, emoji in tinted rounded squares, white cards lifted by soft shadows, chips that float, and entrances that build up with gentle springs and haptics. The building blocks are shared (`DesignSystem/AqraComponents.swift`), so the onboarding and the app stay identical.
 
+The app opens on that lavender, in light and dark mode alike, with a faint, out-of-focus glimmer of the arch logo. While the Mushaf loads, the logo fades in out of a soft light and comes into focus as it settles; the star turns in and lands with a soft tap, the sparkles follow one by one, and gold light swells around the star as the logo breathes. Then it drifts out of focus and the home rises with its own entrance. On the very first launch the glimmer fades as the welcome builds the logo itself.
+
 ### Tabs
 
 A floating tab bar holds الرئيسية, التسميع, تقدّمي and حسابي. The Mushaf is not a tab: it's a button on the home. The Mushaf and today's wird open full screen over everything and close back where they were opened, so revising never moves the student's place in the Mushaf.

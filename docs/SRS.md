@@ -280,6 +280,7 @@ Developer documentation lives in the repository READMEs.
 | UI-08 | Layouts adapt to iPhone and iPad in every orientation; the Mushaf shows two facing pages on a wide iPad in landscape. | M | ✅ | V |
 | UI-09 | Rewards are celebrated with animation and a short, gentle sound (never on the welcome screen); sounds respect the silent switch. | S | ✅ | V |
 | UI-10 | Navigation: a floating tab bar with Home, Tasmee', Progress and Account; the Mushaf and today's wird open full screen from the home and close back to where they were opened. | M | ✅ | V |
+| UI-11 | Launch: the launch screen is the lavender surface with a faint blurred hint of the arch logo, in light and dark mode (no white or black flash, no spinner). The splash continues from the hint without a seam: the logo fades in and comes into focus, the star turns in and lands with a soft haptic, the sparkles follow, and gold light swells as the logo breathes, while the Mushaf loads and the home is built beneath; then it drifts out of focus for the home's entrance. On first launch the hint fades as the welcome builds the logo. Reduce Motion cross-fades in place. The motion runs in Core Animation, so building the first screen never freezes it. | S | ✅ | V |
 
 #### 3.1.2 Hardware interfaces
 

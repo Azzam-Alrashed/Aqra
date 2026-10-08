@@ -21,5 +21,13 @@
 			</array>
 		</dict>
 	</array>
+	<!-- Lavender in light and dark alike, with a faint hint of the logo where the splash fades it in (see LaunchSplash.swift). -->
+	<key>UILaunchScreen</key>
+	<dict>
+		<key>UIColorName</key>
+		<string>LaunchBackground</string>
+		<key>UIImageName</key>
+		<string>LaunchLogoHint</string>
+	</dict>
 </dict>
 </plist>

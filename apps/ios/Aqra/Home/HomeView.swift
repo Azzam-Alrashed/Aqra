@@ -129,6 +129,8 @@ struct HomeView: View {
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @Environment(AccountStore.self) private var account
     @Environment(TasmeeStore.self) private var tasmee
+    /// The app's launch: the entrance waits until the splash has stepped back.
+    @Environment(LaunchState.self) private var launch: LaunchState?
     @State private var destination: Destination?
     /// «لاحقًا» on the invitation to sign in hides it until this date.
     @AppStorage("home.saveProgressSnoozedUntil") private var saveProgressSnoozedUntil = 0.0
@@ -221,8 +223,8 @@ struct HomeView: View {
             }
         }
         .onDisappear { isVisible = false }
-        .task {
-            guard !entered else { return }
+        .task(id: launch?.isRevealed ?? true) {
+            guard launch?.isRevealed ?? true, !entered else { return }
             // A beat after the first layout, so the entrance animates only what it means to.
             try? await Task.sleep(for: .milliseconds(80))
             await playEntrance()

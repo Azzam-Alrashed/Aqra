@@ -76,6 +76,7 @@
 		CFE907F55F9252A073A6EBF5 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AB3061F1929AE7431B17E2DF /* FirebaseFirestore */; };
 		D1532B8C85C494E67336552E /* JourneyTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 951585A6E1740996615236BA /* JourneyTests.swift */; };
 		D35482B4BEF2062E268AE3A3 /* RotationAdvisor.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1E7A36665EF8F19D147219B7 /* RotationAdvisor.swift */; };
+		D5989D69BAF347FBBA14A74F /* LaunchSplash.swift in Sources */ = {isa = PBXBuildFile; fileRef = 535BA1416084DEBC5F4513BD /* LaunchSplash.swift */; };
 		D8D65C91045C897D90F7FE9D /* MemorizeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = F21BFEDE7189234BAC56C6A6 /* MemorizeView.swift */; };
 		DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A5BD4368E1C3CCFCDBDB66 /* StartPageView.swift */; };
 		DDA79F6E3E69BAB3DC2025FF /* AyahText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C91AADA1D8AFB8D6B84C661 /* AyahText.swift */; };
@@ -137,6 +138,7 @@
 		4971E9222377B2D0AE1D25DD /* AqraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraApp.swift; sourceTree = "<group>"; };
 		4A47588193D1079299865C4E /* PlanEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanEditorView.swift; sourceTree = "<group>"; };
 		4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		535BA1416084DEBC5F4513BD /* LaunchSplash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchSplash.swift; sourceTree = "<group>"; };
 		5374F6DB7F1FFAF810B695C4 /* MushafView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafView.swift; sourceTree = "<group>"; };
 		56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraTests.swift; sourceTree = "<group>"; };
 		5AFD0E449B711A6CCC382C42 /* SocialModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialModels.swift; sourceTree = "<group>"; };
@@ -212,6 +214,7 @@
 			children = (
 				01744F945BA643B14B7465BE /* AqraWelcomeView.swift */,
 				D44E6BE584D0B5057F1DD97B /* FeaturesPageView.swift */,
+				535BA1416084DEBC5F4513BD /* LaunchSplash.swift */,
 				269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */,
 				C3D871D9287AF47EBED70889 /* OnboardingPageLayout.swift */,
 				4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */,
@@ -620,6 +623,7 @@
 				E6D739A0C33389C53A815393 /* InboxStore.swift in Sources */,
 				8CF39089CE8EE76FBDE98BEB /* InboxView.swift in Sources */,
 				B1DF2B5429CB727F3AAC7E65 /* Journey.swift in Sources */,
+				D5989D69BAF347FBBA14A74F /* LaunchSplash.swift in Sources */,
 				C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */,
 				4964D378F5949856F3745F53 /* ManazilStairs.swift in Sources */,
 				2A203B4FCA716C993ACC5786 /* MemorizationSetupView.swift in Sources */,
@@ -690,7 +694,6 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Your teacher sees you while you recite, and you can scan a friend's code.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Your teacher hears you recite in a video tasmee'.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",
@@ -821,7 +824,6 @@
 				INFOPLIST_KEY_NSCameraUsageDescription = "Your teacher sees you while you recite, and you can scan a friend's code.";
 				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Your teacher hears you recite in a video tasmee'.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
-				INFOPLIST_KEY_UILaunchScreen_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
 					"$(inherited)",

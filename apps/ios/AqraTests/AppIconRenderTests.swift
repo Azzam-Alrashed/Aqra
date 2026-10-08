@@ -23,4 +23,18 @@ struct AppIconRenderTests {
         let data = try #require(renderer.uiImage?.pngData())
         try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("arch-logo-mark.png"))
     }
+
+    /// The splash's logo layers (`LaunchLogoBody`, `LaunchLogoHaze`, `LaunchLogoStars` in the asset catalog), at @2x and @3x.
+    @Test func renderLaunchLogo() throws {
+        guard let directory = ProcessInfo.processInfo.environment["AQRA_ICON_OUT"] else { return }
+        for layer in LaunchLogo.Layer.allCases {
+            for scale in [2, 3] {
+                let renderer = ImageRenderer(content: LaunchLogo(layer: layer))
+                renderer.scale = CGFloat(scale)
+                renderer.isOpaque = false
+                let data = try #require(renderer.uiImage?.pngData())
+                try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("\(layer.imageName)@\(scale)x.png"))
+            }
+        }
+    }
 }

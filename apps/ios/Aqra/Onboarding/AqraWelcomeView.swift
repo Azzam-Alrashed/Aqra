@@ -12,6 +12,8 @@ struct AqraWelcomeView: View {
 
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.locale) private var locale
+    /// The app's launch: the entrance waits until the splash has stepped back.
+    @Environment(LaunchState.self) private var launch: LaunchState?
 
     @State private var archReveal: CGFloat = 0
     @State private var bookReveal: CGFloat = 0
@@ -45,8 +47,8 @@ struct AqraWelcomeView: View {
             copy: { scale in hadith(scale: scale) },
             buttons: { metrics in BrandButton("Begin", metrics: metrics, action: onBegin) }
         )
-        .onChange(of: isActive, initial: true) {
-            guard isActive, !played else { return }
+        .onChange(of: isActive && (launch?.isRevealed ?? true), initial: true) {
+            guard isActive, launch?.isRevealed ?? true, !played else { return }
             played = true
             Task { await playEntrance() }
         }
