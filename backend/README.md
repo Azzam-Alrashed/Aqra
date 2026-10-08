@@ -4,7 +4,9 @@ The Firebase project `aqra-quran`, shared by all apps. Firestore, Storage and th
 region, Belgium (`europe-west1`): Google refuses new resources in the Middle East regions for this project.
 
 - `firestore.rules`, `storage.rules`: who may read and write what (see below), with tests on the emulators.
-- `firestore.indexes.json`: none yet. Every query filters on one field and sorts on the device.
+- `firestore.indexes.json`: the two composite indexes the functions' queries need (the due auctions, a teacher's
+  competitions a student is in). The emulators don't enforce indexes, so deploy them with the rules:
+  `firebase deploy --only firestore`.
 - `scripts/seed-emulator.mjs`: makes an emulator account a vetted teacher, for trying the teacher's side.
 - `scripts/admin.mjs`: administration from the command line (applications, teachers, administrators, payouts,
   the server policy).
@@ -44,7 +46,7 @@ npm run test:functions                              # the functions' tests, on t
 npm run emulators                                   # every emulator, functions built first; UI at http://localhost:4000
 npm run seed -- --email teacher@example.com         # make that emulator account a vetted teacher (+ a session)
 npm run admin -- applications --emulator            # administration (see scripts/admin.mjs; drop --emulator for real)
-firebase deploy --only firestore:rules,storage      # publish the rules
+firebase deploy --only firestore,storage            # publish the rules and the indexes
 ```
 
 ## Trying the app against the emulators
