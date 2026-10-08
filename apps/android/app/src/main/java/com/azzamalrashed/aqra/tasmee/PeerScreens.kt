@@ -133,7 +133,8 @@ fun PeerRequestSheet(app: AqraApp, onDone: () -> Unit) {
                         }
                         var now by remember { mutableStateOf(Moment.now()) }
                         LaunchedEffect(request.id) { while (true) { now = Moment.now(); delay(30_000) } }
-                        val minutes = maxOf(((request.expiresAt - now) / 60).toInt(), 0)
+                        // Rounded up, so a fresh code says 30 rather than 29.
+                        val minutes = maxOf(kotlin.math.ceil((request.expiresAt - now) / 60).toInt(), 0)
                         Text(pluralStringResource(R.plurals.valid_for_n_minutes, minutes, minutes), style = aqraStyle(13f, Weight.semibold, Palette.inkSoft))
                         Text(stringResource(R.string.your_friend_opens_aqra_taps_hear_a_friend_and_scans), style = aqraStyle(13f, Weight.medium, Palette.inkSoft),
                             textAlign = TextAlign.Center)
