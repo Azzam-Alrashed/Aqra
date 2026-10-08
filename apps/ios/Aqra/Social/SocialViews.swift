@@ -384,6 +384,7 @@ struct CompetitionView: View {
                     HStack(spacing: 6) {
                         Text(live.metric.title)
                         Text(verbatim: "·")
+                            .accessibilityHidden(true)
                         if live.isRunning() {
                             Text("Until \(live.endsAt.formatted(date: .abbreviated, time: .omitted))")
                         } else {

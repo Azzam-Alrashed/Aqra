@@ -482,6 +482,7 @@ struct HomeView: View {
                         HStack(spacing: 5) {
                             Text(verbatim: store.surahNames[page.surah] ?? "")
                             Text(verbatim: "·")
+                                .accessibilityHidden(true)
                             Text("Page \(page.number)")
                         }
                         .font(.system(size: 16, weight: .heavy))

@@ -153,6 +153,7 @@ struct MushafView: View {
                     HStack(spacing: 6) {
                         Text("\(memorization.count) ayat memorized")
                         Text(verbatim: "·")
+                            .accessibilityHidden(true)
                         Text("Press and hold an ayah to mark from it to another")
                     }
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
