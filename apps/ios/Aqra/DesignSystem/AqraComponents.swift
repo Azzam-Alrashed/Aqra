@@ -152,6 +152,9 @@ struct AqraSegmented<Value: Hashable>: View {
         } label: {
             Text(title)
                 .font(.system(size: 15 * scale, weight: .bold))
+                // On a narrow phone a label shrinks a little rather than breaking a word across lines.
+                .lineLimit(1)
+                .minimumScaleFactor(0.75)
                 .foregroundStyle(selected ? .white : OnboardingPalette.inkSoft)
                 .padding(.horizontal, 18 * scale)
                 .frame(height: 38 * scale)

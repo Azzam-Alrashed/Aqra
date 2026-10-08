@@ -54,10 +54,16 @@ final class CloudSync {
         uploadedRevision = nil
         uploadedJourney = nil
         lastBackup = nil
-        if UserDefaults.standard.string(forKey: Self.restoredKey) != uid {
+        if !hasRestored(uid) {
             await restoreAndMerge(uid: uid)
         }
         scheduleUpload(after: .zero)
+    }
+
+    /// Whether this install has merged the account's copy. Until it has, nothing is written to the account: the
+    /// device's copy (empty after a reinstall, when the sign-in survives in the keychain) would replace it.
+    private func hasRestored(_ uid: String) -> Bool {
+        UserDefaults.standard.string(forKey: Self.restoredKey) == uid
     }
 
     /// Stops backing up, before signing out or deleting the account.
@@ -82,9 +88,11 @@ final class CloudSync {
 
     private func restoreAndMerge(uid: String) async {
         do {
-            let blocks = try await user(uid).collection("memory").getDocuments()
-            let state = try await user(uid).collection("revision").document("state").getDocument()
-            let journeyState = try await user(uid).collection("journey").document("state").getDocument()
+            // From the server only: offline, the cache answers with whatever this install happens to hold, and
+            // merging with that would count as restored.
+            let blocks = try await user(uid).collection("memory").getDocuments(source: .server)
+            let state = try await user(uid).collection("revision").document("state").getDocument(source: .server)
+            let journeyState = try await user(uid).collection("journey").document("state").getDocument(source: .server)
             guard uid == self.uid else { return }
 
             var remoteBlocks: [Int: CloudBackup.Block] = [:]
@@ -139,6 +147,12 @@ final class CloudSync {
     /// confirm it. Throws when it can't be reached.
     func upload() async throws {
         guard let uid else { return }
+        // The account's copy is merged first (an earlier try may have failed offline), or nothing is written.
+        if !hasRestored(uid) {
+            await restoreAndMerge(uid: uid)
+            guard uid == self.uid else { return }
+            guard hasRestored(uid) else { throw CloudSyncError.notRestored }
+        }
         let blocks = CloudBackup.blocks(memorization.ayahs)
         let changed = uploadedBlocks.map { uploaded in blocks.filter { uploaded[$0.key, default: [:]] != $0.value } } ?? blocks
         let snapshot = revision.snapshot
@@ -177,15 +191,7 @@ final class CloudSync {
     /// Uploads, giving up after a while: signing out and deleting need the account to answer, not a queue.
     func uploadNow(timeout: Duration = .seconds(12)) async throws {
         pendingUpload?.cancel()
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            group.addTask { try await self.upload() }
-            group.addTask {
-                try await Task.sleep(for: timeout)
-                throw CloudSyncError.timedOut
-            }
-            try await group.next()
-            group.cancelAll()
-        }
+        try await withServerTimeout(timeout) { try await self.upload() }
     }
 
     // MARK: - Deleting
@@ -206,4 +212,45 @@ final class CloudSync {
 
 enum CloudSyncError: Error {
     case timedOut
+    /// The account's copy couldn't be fetched to merge with this device's, so nothing was written.
+    case notRestored
+}
+
+/// Waits for something that needs the server's answer, but no longer than `timeout`. Firestore keeps a write until
+/// it reaches the server and only answers then, so offline it would wait forever. A task group can't give up on it:
+/// a group waits for every child, and Firestore's calls don't stop when cancelled.
+@MainActor
+func withServerTimeout<T: Sendable>(_ timeout: Duration = .seconds(12),
+                                    _ work: @escaping @MainActor () async throws -> T) async throws -> T {
+    try await withCheckedThrowingContinuation { continuation in
+        let answer = FirstAnswer(continuation)
+        answer.timer = Task {
+            try? await Task.sleep(for: timeout)
+            if !Task.isCancelled { answer.resume(with: .failure(CloudSyncError.timedOut)) }
+        }
+        Task {
+            do {
+                answer.resume(with: .success(try await work()))
+            } catch {
+                answer.resume(with: .failure(error))
+            }
+        }
+    }
+}
+
+/// Resumes a continuation once, with whichever answer comes first.
+@MainActor
+private final class FirstAnswer<T: Sendable> {
+    private var continuation: CheckedContinuation<T, Error>?
+    var timer: Task<Void, Never>?
+
+    init(_ continuation: CheckedContinuation<T, Error>) {
+        self.continuation = continuation
+    }
+
+    func resume(with result: Result<T, Error>) {
+        timer?.cancel()
+        continuation?.resume(with: result)
+        continuation = nil
+    }
 }

@@ -62,6 +62,7 @@ struct MemorizeView: View {
             bar
         }
         .background(MushafStyle.paper.ignoresSafeArea())
+        .followsSystemColorScheme()
         .interactiveDismissDisabled()
         .sensoryFeedback(.selection, trigger: page)
         .sensoryFeedback(.impact(weight: .light), trigger: repetitions)

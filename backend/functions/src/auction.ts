@@ -119,6 +119,8 @@ export async function settle(sessionId: string, { force = false } = {}): Promise
     if (!force && Date.now() < closesAt) return 0;
     const bids = (await tx.get(sessionRef.collection("bids").where("status", "==", "active"))).docs;
     const wallets = await Promise.all(bids.map((bid) => tx.get(db.doc(`wallets/${bid.id}`))));
+    // A bidder may have taken a free seat after bidding; they keep it, and their bid is let go.
+    const freeSeats = await Promise.all(bids.map((bid) => tx.get(sessionRef.collection("seats").doc(bid.id))));
     const teacherId = session.get("teacherId");
     const startsAt = session.get("startsAt");
 
@@ -128,6 +130,11 @@ export async function settle(sessionId: string, { force = false } = {}): Promise
       const amount = bid.get("amount") as number;
       // A bidder whose account was deleted has no wallet left to spend from: no seat.
       if (!wallets[index].exists) {
+        tx.update(bid.ref, { status: "released" });
+        return;
+      }
+      if (freeSeats[index].exists) {
+        if (amount > 0) move(tx, bid.id, "release", { balance: amount, held: -amount }, amount, { sessionId });
         tx.update(bid.ref, { status: "released" });
         return;
       }

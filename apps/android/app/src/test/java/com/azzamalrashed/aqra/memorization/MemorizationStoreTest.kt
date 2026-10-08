@@ -1,5 +1,7 @@
 package com.azzamalrashed.aqra.memorization
 
+import com.azzamalrashed.aqra.TestQuran
+import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.revision.ReviewPolicy
 import org.junit.Assert.assertEquals
@@ -48,6 +50,21 @@ class MemorizationStoreTest {
         memorization.verify(listOf(11, 12), except = setOf(12))
         assertTrue(memorization.memory(11)!!.verified && !memorization.memory(12)!!.verified)
         assertEquals(3, changes)
+    }
+
+    @Test
+    fun theQuransSharesCountEveryJuzEquallyInEveryMeasure() {
+        val store = TestQuran.store
+        val memorization = MemorizationStore(file = null)
+        // Juz' ʿAmma, all mastered and verified: a ninth of the Quran's ayat, but a thirtieth of the Mushaf. Mastered
+        // and verified are measured as memorized is, so they can't read more than it.
+        val amma = store.juzAyahs.getValue(30)
+        memorization.replaceAll(amma.associateWith { AyahMemory(stability = 90.0, since = Moment.now()) })
+        memorization.verify(amma)
+        val memorized = memorization.quranShare(store)
+        assertEquals(1.0 / 30, memorized, 0.000_1)
+        assertEquals(memorized, memorization.quranShare(store) { memorization.masteredCount(it) }, 0.0)
+        assertEquals(memorized, memorization.quranShare(store) { memorization.verifiedCount(it) }, 0.0)
     }
 
     @Test

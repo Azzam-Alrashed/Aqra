@@ -103,8 +103,10 @@ fun DailyAmountScreen(memorizedPages: Int, initial: Int, isEditor: Boolean, onDo
                     }, label = "amount") { value ->
                         Text(formatNumber(value), style = aqraStyle(76f, Weight.heavy, Palette.brand))
                     }
-                    // A unit label under the large number, read the same whatever the number.
-                    Text(stringResource(R.string.pages_a_day), style = aqraStyle(15f, Weight.bold, Palette.ink))
+                    // «صفحات يوميًا» under the large number: the app's "%d pages a day", which already agrees with the
+                    // number in each language («صفحتان», «صفحات», «صفحة»), with the number itself taken out (as on iOS).
+                    val unit = pluralStringResource(R.plurals.n_pages_a_day, amount, amount).replace(formatNumber(amount), "").trim()
+                    Text(unit, style = aqraStyle(15f, Weight.bold, Palette.ink))
                 }
                 StepButton(Icons.Rounded.Add, enabled = amount < 40) { amount = (amount + 1).coerceAtMost(40) }
             }

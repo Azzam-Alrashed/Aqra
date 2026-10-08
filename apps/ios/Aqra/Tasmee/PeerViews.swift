@@ -62,7 +62,8 @@ struct PeerRequestView: View {
                         .environment(\.layoutDirection, .leftToRight)
                         .accessibilityLabel(Text("Code \(request.id)"))
                     TimelineView(.periodic(from: .now, by: 30)) { timeline in
-                        let minutes = max(Int(request.expiresAt.timeIntervalSince(timeline.date) / 60), 0)
+                        // Rounded up, so a fresh code says 30 rather than 29.
+                        let minutes = max(Int((request.expiresAt.timeIntervalSince(timeline.date) / 60).rounded(.up)), 0)
                         Text("Valid for \(minutes) minutes")
                             .font(.system(size: 13, weight: .semibold))
                             .foregroundStyle(Palette.inkSoft)

@@ -298,6 +298,8 @@ final class AccountStore {
         problem = nil
         defer { isWorking = false }
         do {
+            // Deleting needs the server: offline, say so now, before anything is asked or half of it is queued.
+            _ = try await Firestore.firestore().collection("users").document(user.uid).getDocument(source: .server)
             if profile?.provider == .apple {
                 let authorization = try await apple.request()
                 guard let (credential, _) = apple.credential(from: authorization) else { throw CloudSyncError.timedOut }
@@ -307,9 +309,11 @@ final class AccountStore {
                     try? await Auth.auth().revokeToken(withAuthorizationCode: code)
                 }
             }
-            try await tasmee.deleteAccountData(uid: user.uid)
-            try await social.deleteAccountData(uid: user.uid)
-            try await sync.deleteAccountData(uid: user.uid)
+            try await withServerTimeout(.seconds(60)) {
+                try await self.tasmee.deleteAccountData(uid: user.uid)
+                try await self.social.deleteAccountData(uid: user.uid)
+                try await self.sync.deleteAccountData(uid: user.uid)
+            }
             do {
                 try await user.delete()
             } catch let error as NSError where error.code == AuthErrorCode.requiresRecentLogin.rawValue {
@@ -344,6 +348,8 @@ final class AccountStore {
         let error = error as NSError
         let offline = error.code == AuthErrorCode.networkError.rawValue || error.domain == NSURLErrorDomain
             || error is CloudSyncError
+            || (error.domain == FirestoreErrorDomain && error.code == FirestoreErrorCode.unavailable.rawValue)
+            || (error.domain == FunctionsErrorDomain && error.code == FunctionsErrorCode.unavailable.rawValue)
         return offline ? .offline : .failed
     }
 }
@@ -392,7 +398,7 @@ private final class AppleSignIn: NSObject {
     }
 }
 
-extension AppleSignIn: @preconcurrency ASAuthorizationControllerDelegate, @preconcurrency ASAuthorizationControllerPresentationContextProviding {
+extension AppleSignIn: ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         continuation?.resume(returning: authorization)
         continuation = nil

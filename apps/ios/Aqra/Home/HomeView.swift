@@ -482,6 +482,7 @@ struct HomeView: View {
                         HStack(spacing: 5) {
                             Text(verbatim: store.surahNames[page.surah] ?? "")
                             Text(verbatim: "·")
+                                .accessibilityHidden(true)
                             Text("Page \(page.number)")
                         }
                         .font(.system(size: 16, weight: .heavy))
@@ -662,7 +663,7 @@ struct HomeView: View {
                         Text("These pages keep slipping")
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(Palette.ink)
-                        Text("Pages \(pages.map(String.init).joined(separator: "، ")): bring them back tomorrow to make them firm?")
+                        Text("Pages \(pages.map { $0.formatted() }.formatted(.list(type: .and, width: .narrow))): bring them back tomorrow to make them firm?")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Palette.inkSoft)
                             .fixedSize(horizontal: false, vertical: true)

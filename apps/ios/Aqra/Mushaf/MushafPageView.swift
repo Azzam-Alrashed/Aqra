@@ -1,5 +1,6 @@
 import CoreText
 import SwiftUI
+import UIKit
 
 /// The Mushaf's look: warm paper, dark ink, gold ornament — and in dark mode,
 /// a deep warm page (not pure black) with cream ink and lighter gold.
@@ -229,6 +230,33 @@ extension EnvironmentValues {
     @Entry var mushafAyahLongPress: (@MainActor (Int) -> Void)? = nil
     /// While a new portion is memorized: its ayat, in focus on the page.
     @Entry var mushafFocus: MemorizeFocus? = nil
+    /// The system's light or dark mode, read at the app's root before any screen sets its own.
+    @Entry var systemColorScheme: ColorScheme = .light
+}
+
+extension View {
+    /// Keeps the system's light or dark mode in reach of the screens below, whatever they set for themselves.
+    func readsSystemColorScheme() -> some View { modifier(SystemColorSchemeReader()) }
+
+    /// The Mushaf follows the system's light or dark mode, while the app's own screens around it stay light
+    /// (docs/SRS.md A-23): they set a light color scheme that the Mushaf, opened from them, would otherwise inherit.
+    func followsSystemColorScheme() -> some View { modifier(SystemColorScheme()) }
+}
+
+private struct SystemColorSchemeReader: ViewModifier {
+    @Environment(\.colorScheme) private var scheme
+
+    func body(content: Content) -> some View {
+        content.environment(\.systemColorScheme, scheme)
+    }
+}
+
+private struct SystemColorScheme: ViewModifier {
+    @Environment(\.systemColorScheme) private var scheme
+
+    func body(content: Content) -> some View {
+        content.environment(\.colorScheme, scheme)
+    }
 }
 
 /// A new portion being memorized: its ayat stand out on the page and the rest fade back; a tap hides an ayah to
@@ -287,8 +315,6 @@ struct MushafPageView: View {
     @Environment(RevisionSession.self) private var revisionSession: RevisionSession?
     @Environment(\.mushafAyahLongPress) private var ayahLongPress
     @Environment(\.mushafFocus) private var focus
-    /// Set when a press in marking mode lasts long enough to start a range.
-    @State private var pressedLong = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -323,18 +349,12 @@ struct MushafPageView: View {
     /// Marking mode: a tap marks or unmarks an ayah; pressing and holding one starts a range that the next tap ends.
     private func markingLayer(_ marking: MarkingSession) -> some View {
         GeometryReader { geometry in
-            // Both gestures run alongside the pager's swipe, so pages still turn in marking mode.
-            // A press held long enough, then lifted, starts a range at that ayah instead of toggling it.
-            Color.clear
-                .contentShape(Rectangle())
-                .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in pressedLong = true })
-                .simultaneousGesture(
-                    SpatialTapGesture().onEnded { value in
-                        defer { pressedLong = false }
-                        guard let ayah = Self.ayah(at: value.location, on: page, size: geometry.size) else { return }
-                        if pressedLong { marking.beginRange(at: ayah) } else { marking.tap(ayah) }
-                    }
-                )
+            // A press held long enough starts a range at that ayah instead of toggling it. Pages still turn.
+            MushafTouches { location in
+                if let ayah = Self.ayah(at: location, on: page, size: geometry.size) { marking.tap(ayah) }
+            } onPress: { location in
+                if let ayah = Self.ayah(at: location, on: page, size: geometry.size) { marking.beginRange(at: ayah) }
+            }
         }
         // Locations are measured from the page's left edge, like the lines' own layout.
         .environment(\.layoutDirection, .leftToRight)
@@ -362,20 +382,12 @@ struct MushafPageView: View {
     private func revisionLayer(_ revision: RevisionSession) -> some View {
         GeometryReader { geometry in
             if let ayahLongPress {
-                Color.clear
-                    .contentShape(Rectangle())
-                    .simultaneousGesture(LongPressGesture(minimumDuration: 0.4).onEnded { _ in pressedLong = true })
-                    .simultaneousGesture(
-                        SpatialTapGesture().onEnded { value in
-                            defer { pressedLong = false }
-                            let ayah = Self.ayah(at: value.location, on: page, size: geometry.size)
-                            if pressedLong, let ayah, revision.covers(ayah) {
-                                ayahLongPress(ayah)
-                            } else {
-                                revision.tap(ayah)
-                            }
-                        }
-                    )
+                MushafTouches { location in
+                    revision.tap(Self.ayah(at: location, on: page, size: geometry.size))
+                } onPress: { location in
+                    let ayah = Self.ayah(at: location, on: page, size: geometry.size)
+                    if let ayah, revision.covers(ayah) { ayahLongPress(ayah) } else { revision.tap(ayah) }
+                }
             } else {
                 Color.clear
                     .contentShape(Rectangle())
@@ -494,6 +506,50 @@ struct MushafPageView: View {
             .padding(.horizontal, 14)
             .padding(.vertical, 3)
             .overlay(Capsule().stroke(MushafStyle.gold.opacity(0.6), lineWidth: 1))
+    }
+}
+
+/// Taps and presses on a page, read by UIKit. A press acts as soon as it has been held long enough, however long
+/// the finger then stays down; SwiftUI's tap gives up on a press held past about three quarters of a second, so a
+/// natural press and hold did nothing. Pages still turn: a swipe moves, and neither a tap nor a press survives that.
+struct MushafTouches: UIViewRepresentable {
+    var onTap: (CGPoint) -> Void
+    var onPress: (CGPoint) -> Void
+
+    func makeUIView(context: Context) -> UIView {
+        let view = UIView()
+        view.backgroundColor = .clear
+        let press = UILongPressGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.pressed(_:)))
+        press.minimumPressDuration = 0.4
+        let tap = UITapGestureRecognizer(target: context.coordinator, action: #selector(Coordinator.tapped(_:)))
+        // A touch lifted before the press is due is a tap; one held past it is only a press.
+        tap.require(toFail: press)
+        view.addGestureRecognizer(press)
+        view.addGestureRecognizer(tap)
+        return view
+    }
+
+    func updateUIView(_ view: UIView, context: Context) {
+        context.coordinator.touches = self
+    }
+
+    func makeCoordinator() -> Coordinator { Coordinator(touches: self) }
+
+    @MainActor final class Coordinator: NSObject {
+        var touches: MushafTouches
+
+        init(touches: MushafTouches) {
+            self.touches = touches
+        }
+
+        @objc func tapped(_ recognizer: UITapGestureRecognizer) {
+            touches.onTap(recognizer.location(in: recognizer.view))
+        }
+
+        @objc func pressed(_ recognizer: UILongPressGestureRecognizer) {
+            guard recognizer.state == .began else { return }
+            touches.onPress(recognizer.location(in: recognizer.view))
+        }
     }
 }
 

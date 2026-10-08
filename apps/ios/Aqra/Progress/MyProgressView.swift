@@ -57,12 +57,11 @@ struct MyProgressView: View {
 
     // MARK: - Memorized, mastered, verified
 
-    /// Kept apart: how much is memorized, how much of it is mastered, and how much a teacher heard clean.
+    /// Kept apart: how much is memorized, how much of it is mastered, and how much a teacher heard clean — each
+    /// counting every juz' equally, so mastered and verified never read more than memorized.
     private var sharesCard: some View {
-        let all = 0...(MushafStore.ayahCount - 1)
-        let total = Double(MushafStore.ayahCount)
-        let mastered = Double(memorization.masteredCount(in: all)) / total
-        let verified = Double(memorization.verifiedCount(in: all)) / total
+        let mastered = memorization.quranShare(in: store) { memorization.masteredCount(in: $0) }
+        let verified = memorization.quranShare(in: store) { memorization.verifiedCount(in: $0) }
         return AqraCard(padding: 14, radius: 24) {
             HStack(spacing: 0) {
                 share(memorization.quranShare(in: store), label: Text("Memorized"), color: Palette.brand.opacity(0.45))

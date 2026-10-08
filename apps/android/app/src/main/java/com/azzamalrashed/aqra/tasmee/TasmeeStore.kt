@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.azzamalrashed.aqra.account.AccountStore
 import com.azzamalrashed.aqra.account.Problem
+import com.azzamalrashed.aqra.account.SERVER_TIMEOUT
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.core.Preferences
 import com.azzamalrashed.aqra.memorization.MemorizationStore
@@ -25,6 +26,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import java.util.Date
 import java.util.UUID
 
@@ -439,7 +441,8 @@ class TasmeeStore(
         repeat(5) {
             val request = PeerRequest(PeerRequest.randomCode(), uid, studentName, startPage)
             try {
-                database.collection("peerRequests").document(request.id).set(stamped(request.document)).await()
+                // The friend can only find the code once it's on the server: offline, say so rather than wait.
+                withTimeout(SERVER_TIMEOUT) { database.collection("peerRequests").document(request.id).set(stamped(request.document)).await() }
                 return request
             } catch (error: FirebaseFirestoreException) {
                 // The code exists already (the rules refuse to overwrite it); try another.
@@ -534,7 +537,11 @@ class TasmeeStore(
         }
         // Uploads are let go of even if the storage can't be reached: the account's deletion mustn't hang on them.
         deleteFiles(uid)
-        references += database.collection("teacherApplications").document(uid)
+        // An application still waiting is withdrawn here. One already reviewed, or none, is left to the server, which
+        // deletes it with the account (functions/src/accounts.ts): the rules let an applicant withdraw only while it
+        // waits, and refusing one delete would refuse the whole batch.
+        val application = database.collection("teacherApplications").document(uid)
+        if (application.get().await().getString("status") == TeacherApplication.Status.SUBMITTED.raw) references += application
         delete(references, database)
     }
 }

@@ -132,9 +132,15 @@ class MemorizationStore(
      * The share of the Quran memorized, counting every juz' equally (a juz' is a twentieth of the Mushaf's pages,
      * whatever its number of ayat) and a juz' memorized in part by the share of its ayat.
      */
-    fun quranShare(store: MushafStore): Double = (1..30).sumOf { juz ->
+    fun quranShare(store: MushafStore): Double = quranShare(store) { memorizedCount(it) }
+
+    /**
+     * A share of the Quran by another count of a range's ayat (mastered, verified), every juz' counted equally as in
+     * [quranShare], so the shares can be set side by side.
+     */
+    fun quranShare(store: MushafStore, count: (IntRange) -> Int): Double = (1..30).sumOf { juz ->
         val range = store.juzAyahs[juz] ?: return@sumOf 0.0
-        memorizedCount(range).toDouble() / range.count()
+        count(range).toDouble() / range.count()
     } / 30
 
     /** The average strength of everything memorized, from 0 to 1; null when nothing is memorized. */

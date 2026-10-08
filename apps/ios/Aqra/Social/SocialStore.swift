@@ -72,7 +72,8 @@ final class SocialStore {
         for _ in 0..<5 {
             let invite = FriendInvite(id: PeerRequest.randomCode(), ownerUid: uid, ownerName: name)
             do {
-                try await database.collection("friendInvites").document(invite.id).setData(invite.document)
+                // The friend can only find the invitation once it's on the server: offline, say so rather than wait.
+                try await withServerTimeout { try await self.database.collection("friendInvites").document(invite.id).setData(invite.document) }
                 return invite
             } catch let error as NSError where error.domain == FirestoreErrorDomain
                 && error.code == FirestoreErrorCode.permissionDenied.rawValue {
@@ -95,7 +96,9 @@ final class SocialStore {
         guard let uid, invite.ownerUid != uid else { return }
         let friendship = Friendship(id: Friendship.id(uid, invite.ownerUid), members: [invite.ownerUid, uid],
                                     names: [invite.ownerUid: invite.ownerName, uid: name])
-        try await database.collection("friendships").document(friendship.id).setData(friendship.document(inviteCode: invite.id))
+        try await withServerTimeout {
+            try await self.database.collection("friendships").document(friendship.id).setData(friendship.document(inviteCode: invite.id))
+        }
     }
 
     func remove(friendUid: String) {
@@ -123,7 +126,7 @@ final class SocialStore {
                 batch.setData(KhatmahPart(id: juz).document, forDocument: reference.collection("parts").document(String(juz)))
             }
         }
-        try await batch.commit()
+        try await withServerTimeout { try await batch.commit() }
     }
 
     /// Leaves a competition: this member's standing goes with them.

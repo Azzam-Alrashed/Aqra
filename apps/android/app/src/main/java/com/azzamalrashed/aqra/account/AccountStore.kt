@@ -32,12 +32,14 @@ import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import com.google.firebase.functions.FirebaseFunctions
 import com.google.firebase.storage.FirebaseStorage
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.TimeoutCancellationException
 import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import java.io.IOException
 
 /**
@@ -344,14 +346,18 @@ class AccountStore(
         isWorking = true
         problem = null
         try {
+            // Deleting needs the server: offline, say so now, before anything is asked or half of it is queued.
+            FirebaseFirestore.getInstance().collection("users").document(user.uid).get(Source.SERVER).await()
             if (profile?.provider == Provider.APPLE) {
                 val provider = OAuthProvider.newBuilder(Provider.APPLE.id).build()
                 val result = user.startActivityForReauthenticateWithProvider(activity, provider).await()
                 (result.credential as? OAuthCredential)?.accessToken?.let { token -> runCatching { auth.revokeAccessToken(token).await() } }
             }
-            tasmee.deleteAccountData(user.uid)
-            social.deleteAccountData(user.uid)
-            sync.deleteAccountData(user.uid)
+            withTimeout(60_000) {
+                tasmee.deleteAccountData(user.uid)
+                social.deleteAccountData(user.uid)
+                sync.deleteAccountData(user.uid)
+            }
             try {
                 user.delete().await()
             } catch (_: FirebaseAuthRecentLoginRequiredException) {

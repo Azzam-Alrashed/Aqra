@@ -58,6 +58,7 @@ import com.azzamalrashed.aqra.ui.components.pressable
 import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
+import com.azzamalrashed.aqra.ui.util.formatNumberList
 import com.azzamalrashed.aqra.ui.util.formatRelative
 import com.azzamalrashed.aqra.ui.util.formatWhen
 import kotlinx.coroutines.launch
@@ -430,6 +431,9 @@ fun startPage(seat: Seat, store: MushafStore): Int =
 @Composable
 fun seatDetail(seat: Seat): String {
     val pages = pluralStringResource(R.plurals.n_pages, seat.memorizedPages, seat.memorizedPages)
-    val juz = seat.juzSummary ?: return pages
+    val summary = seat.juzSummary ?: return pages
+    // The student's app writes the juz' as plain numbers, «29, 30»; they're shown in the teacher's language.
+    val numbers = summary.split(",").mapNotNull { it.trim().toIntOrNull() }
+    val juz = if (numbers.isEmpty()) summary else formatNumberList(numbers)
     return pages + " · " + stringResource(R.string.juz_s, juz)
 }

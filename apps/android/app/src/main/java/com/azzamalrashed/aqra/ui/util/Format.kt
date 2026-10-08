@@ -18,6 +18,10 @@ fun arabicDigits(number: Int): String = number.toString().map { if (it in '0'..'
 /** A number as the app's language writes it (Arabic-Indic digits in Arabic). */
 fun formatNumber(number: Int, locale: Locale = Locale.getDefault()): String = NumberFormat.getIntegerInstance(locale).format(number)
 
+/** Numbers as a list in the app's language: «12, 45, and 60», «١٢ و٤٥ و٦٠». */
+fun formatNumberList(numbers: List<Int>, locale: Locale = Locale.getDefault()): String =
+    android.icu.text.ListFormatter.getInstance(locale).format(numbers.map { formatNumber(it, locale) })
+
 /** A share as a percentage, with at most [maxFraction] decimals: 12.5%. */
 fun formatPercent(share: Double, maxFraction: Int = 1, locale: Locale = Locale.getDefault()): String =
     NumberFormat.getPercentInstance(locale).apply {

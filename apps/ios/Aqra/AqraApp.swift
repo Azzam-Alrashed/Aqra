@@ -23,6 +23,7 @@ struct AqraApp: App {
                 }
             }
             .environment(launch)
+            .readsSystemColorScheme()
         }
     }
 }

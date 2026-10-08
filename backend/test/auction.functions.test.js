@@ -140,6 +140,24 @@ describe("the seat auction", () => {
     assert.equal(refund.size, 1);
   });
 
+  test("a bidder who took a free seat meanwhile keeps it, and isn't charged for another", async () => {
+    const teacher = await client();
+    const admin = await client({ admin: true });
+    const bob = await client();
+    await auctionSession("s1", teacher.uid);
+    await adminDb.doc(`wallets/${bob.uid}`).set({ balance: 10, held: 0 });
+    await bob.call("placeBid", { sessionId: "s1", amount: 3, name: "Bob" });
+    // Bob books the free seat after bidding, as the app lets him.
+    await adminDb.doc(`sessions/s1/seats/${bob.uid}`).set({ name: "Bob", bookedAt: Timestamp.now(), memorizedPages: 1 });
+    await adminDb.doc("sessions/s1").update({ booked: 1 });
+
+    assert.deepEqual(await admin.call("settleAuctionNow", { sessionId: "s1" }), { won: 0 });
+    assert.deepEqual([(await wallet(bob.uid)).balance, (await wallet(bob.uid)).held], [10, 0]);
+    assert.equal((await adminDb.doc(`sessions/s1/bids/${bob.uid}`).get()).data().status, "released");
+    assert.equal((await adminDb.doc(`sessions/s1/seats/${bob.uid}`).get()).data().paid, undefined);
+    assert.equal((await adminDb.doc(`teacherBalances/${teacher.uid}`).get()).exists, false);
+  });
+
   test("cancelling while bidding is open releases every hold", async () => {
     const teacher = await client();
     const bob = await client();
@@ -152,12 +170,14 @@ describe("the seat auction", () => {
     assert.equal((await adminDb.doc("sessions/s1").get()).data().auctionState, "cancelled");
   });
 
-  test("a deleted account's wallet goes with it", async () => {
+  test("a deleted account's wallet goes with it, and its application in any state", async () => {
     const bob = await client();
     await adminDb.doc(`wallets/${bob.uid}`).set({ balance: 10, held: 0 });
     await adminDb.doc(`wallets/${bob.uid}/ledger/l1`).set({ kind: "purchase", amount: 10 });
+    await adminDb.doc(`teacherApplications/${bob.uid}`).set({ name: "Bob", status: "approved", note: "" });
     await adminAuth.deleteUser(bob.uid);
     await eventually(async () => assert.equal((await adminDb.doc(`wallets/${bob.uid}`).get()).exists, false));
     assert.equal((await adminDb.collection(`wallets/${bob.uid}/ledger`).get()).size, 0);
+    await eventually(async () => assert.equal((await adminDb.doc(`teacherApplications/${bob.uid}`).get()).exists, false));
   });
 });

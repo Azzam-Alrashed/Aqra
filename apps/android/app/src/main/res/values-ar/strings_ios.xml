@@ -40,7 +40,7 @@
     </plurals>
     <!-- %lld days -->
     <plurals name="n_days">
-        <item quantity="zero">%d يوم</item>
+        <item quantity="zero">%d أيام</item>
         <item quantity="one">يوم واحد</item>
         <item quantity="two">يومان</item>
         <item quantity="few">%d أيام</item>

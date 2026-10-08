@@ -7,6 +7,9 @@ struct MushafIndexView: View {
     var onSelect: (Int) -> Void
 
     private enum Section: Hashable { case surahs, juz }
+    /// A row's place in the list, apart for each section: the lazy list would otherwise keep showing a surah's
+    /// row for the juz' of the same number after switching.
+    private enum Row: Hashable { case surah(Int), juz(Int) }
     @State private var section = Section.surahs
 
     var body: some View {
@@ -32,14 +35,14 @@ struct MushafIndexView: View {
                                 let page = store.surahStartPages[surah] ?? 1
                                 row(number: surah, title: store.surahNames[surah] ?? "", page: page,
                                     subtitle: store.surahAyahs[surah].map { Text("\($0.count) ayat") }, isCurrent: surah == currentSurah)
-                                    .id(surah)
+                                    .id(Row.surah(surah))
                             }
                         case .juz:
                             ForEach(1...30, id: \.self) { juz in
                                 let page = store.juzStartPages[juz] ?? 1
                                 row(number: juz, title: "الجزء \(arabic(juz))", page: page,
                                     subtitle: Text(verbatim: store.surahNames[store.page(page).surah] ?? ""), isCurrent: juz == currentJuz)
-                                    .id(juz)
+                                    .id(Row.juz(juz))
                             }
                         }
                     }
@@ -49,9 +52,9 @@ struct MushafIndexView: View {
                 }
                 .scrollIndicators(.hidden)
                 // Open on the surah (or juz') being read.
-                .onAppear { proxy.scrollTo(currentSurah, anchor: .center) }
+                .onAppear { proxy.scrollTo(Row.surah(currentSurah), anchor: .center) }
                 .onChange(of: section) {
-                    proxy.scrollTo(section == .surahs ? currentSurah : currentJuz, anchor: .center)
+                    proxy.scrollTo(section == .surahs ? Row.surah(currentSurah) : Row.juz(currentJuz), anchor: .center)
                 }
             }
         }

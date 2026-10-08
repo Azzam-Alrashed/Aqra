@@ -115,6 +115,7 @@ import com.azzamalrashed.aqra.ui.theme.StepFaces
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.formatNumber
+import com.azzamalrashed.aqra.ui.util.formatNumberList
 import com.azzamalrashed.aqra.ui.util.formatPercent
 import com.azzamalrashed.aqra.ui.util.formatWhen
 import com.azzamalrashed.aqra.ui.util.hijriToday
@@ -480,7 +481,7 @@ private fun SuggestionCard(app: AqraApp, store: MushafStore) {
                 IconTile("🌿", Palette.mint, size = 40.dp)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(stringResource(R.string.these_pages_keep_slipping), style = aqraStyle(16f, Weight.heavy, Palette.ink))
-                    Text(stringResource(R.string.pages_s_bring_them_back_tomorrow_to_make_them_firm, pages.joinToString("، ") { formatNumber(it) }),
+                    Text(stringResource(R.string.pages_s_bring_them_back_tomorrow_to_make_them_firm, formatNumberList(pages)),
                         style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
                 }
             }

@@ -98,6 +98,8 @@ struct MemorizationSetupView: View {
             .multilineTextAlignment(.center)
             summary
                 .font(.system(size: 15 * scale, weight: .semibold))
+                .lineLimit(1)
+                .minimumScaleFactor(0.8)
                 .foregroundStyle(Palette.inkSoft)
                 .multilineTextAlignment(.center)
                 .contentTransition(.numericText(value: Double(memorization.count)))
@@ -171,6 +173,8 @@ struct MemorizationSetupView: View {
                                              startPoint: .top, endPoint: .bottom))
                         .frame(width: 16 * scale, height: 16 * scale)
                     Text("The whole Quran")
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.75)
                 }
                 .font(.system(size: 14 * scale, weight: .bold))
                 .foregroundStyle(isAll ? Color(light: 0x8A5A12, dark: 0x8A5A12) : Palette.brand)

@@ -129,6 +129,7 @@ struct FriendsView: View {
     @State private var code = ""
     @State private var accepting: FriendCode?
     @State private var removing: (uid: String, name: String)?
+    @State private var problem: AccountStore.Problem?
 
     var body: some View {
         ScrollView {
@@ -187,6 +188,9 @@ struct FriendsView: View {
                             }
                             .buttonStyle(ChipButtonStyle(filled: true))
                             .disabled(making || account.publicName == nil)
+                        }
+                        if let problem {
+                            ProblemLine(problem: problem)
                         }
                     }
                 }
@@ -253,8 +257,13 @@ struct FriendsView: View {
 
     private func makeInvite() async {
         making = true
+        problem = nil
         defer { making = false }
-        invite = try? await social.createInvite(name: account.publicName ?? "")
+        do {
+            invite = try await social.createInvite(name: account.publicName ?? "")
+        } catch {
+            problem = AccountStore.problem(for: error)
+        }
     }
 }
 
@@ -384,6 +393,7 @@ struct CompetitionView: View {
                     HStack(spacing: 6) {
                         Text(live.metric.title)
                         Text(verbatim: "·")
+                            .accessibilityHidden(true)
                         if live.isRunning() {
                             Text("Until \(live.endsAt.formatted(date: .abbreviated, time: .omitted))")
                         } else {

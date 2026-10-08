@@ -286,6 +286,9 @@ service cloud.firestore {
         allow read: if isOwner(studentUid) || (signedIn() && session(id).teacherId == request.auth.uid);
         allow create: if isOwner(studentUid) && isNamed()
           && session(id).status == 'open' && session(id).startsAt > request.time
+          // Only with the count moving up in the same write (which the session's rule holds to its seats), so a
+          // full session never takes another student. Seats won at auction are written by the functions.
+          && getAfter(/databases/$(database)/documents/sessions/$(id)).data.booked == session(id).booked + 1
           && hasKeys(['bookedAt', 'name', 'memorizedPages'], ['juzSummary'])
           && request.resource.data.bookedAt is timestamp
           && request.resource.data.name is string

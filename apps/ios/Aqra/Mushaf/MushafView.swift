@@ -62,6 +62,7 @@ struct MushafView: View {
             }
         }
         .background(MushafStyle.paper.ignoresSafeArea())
+        .followsSystemColorScheme()
         .statusBarHidden(!toolbarVisible)
         // Swiping down closes the Mushaf, but not while marking, where a stray swipe would lose the place.
         .interactiveDismissDisabled(marking != nil)
@@ -152,6 +153,7 @@ struct MushafView: View {
                     HStack(spacing: 6) {
                         Text("\(memorization.count) ayat memorized")
                         Text(verbatim: "·")
+                            .accessibilityHidden(true)
                         Text("Press and hold an ayah to mark from it to another")
                     }
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
