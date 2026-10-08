@@ -586,10 +586,13 @@ struct SessionView: View {
         return firstJuz.flatMap { store.juzStartPages[$0] } ?? 1
     }
 
-    /// «٤٠ صفحة · الأجزاء 29, 30»
+    /// «٤٠ صفحة · الأجزاء ٢٩، ٣٠»: the student's app writes the juz' as plain numbers, «29, 30»; they're shown in the
+    /// teacher's language.
     private func detail(of seat: Seat) -> Text {
         let pages = Text("\(seat.memorizedPages) pages")
-        guard let juz = seat.juzSummary else { return pages }
+        guard let summary = seat.juzSummary else { return pages }
+        let numbers = summary.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
+        let juz = numbers.isEmpty ? summary : numbers.map { $0.formatted() }.formatted(.list(type: .and, width: .narrow))
         return pages + Text(verbatim: " · ") + Text("Juz' \(juz)")
     }
 }
