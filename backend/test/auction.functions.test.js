@@ -140,6 +140,24 @@ describe("the seat auction", () => {
     assert.equal(refund.size, 1);
   });
 
+  test("a bidder who took a free seat meanwhile keeps it, and isn't charged for another", async () => {
+    const teacher = await client();
+    const admin = await client({ admin: true });
+    const bob = await client();
+    await auctionSession("s1", teacher.uid);
+    await adminDb.doc(`wallets/${bob.uid}`).set({ balance: 10, held: 0 });
+    await bob.call("placeBid", { sessionId: "s1", amount: 3, name: "Bob" });
+    // Bob books the free seat after bidding, as the app lets him.
+    await adminDb.doc(`sessions/s1/seats/${bob.uid}`).set({ name: "Bob", bookedAt: Timestamp.now(), memorizedPages: 1 });
+    await adminDb.doc("sessions/s1").update({ booked: 1 });
+
+    assert.deepEqual(await admin.call("settleAuctionNow", { sessionId: "s1" }), { won: 0 });
+    assert.deepEqual([(await wallet(bob.uid)).balance, (await wallet(bob.uid)).held], [10, 0]);
+    assert.equal((await adminDb.doc(`sessions/s1/bids/${bob.uid}`).get()).data().status, "released");
+    assert.equal((await adminDb.doc(`sessions/s1/seats/${bob.uid}`).get()).data().paid, undefined);
+    assert.equal((await adminDb.doc(`teacherBalances/${teacher.uid}`).get()).exists, false);
+  });
+
   test("cancelling while bidding is open releases every hold", async () => {
     const teacher = await client();
     const bob = await client();
