@@ -92,7 +92,6 @@ struct TeacherView: View {
             .animation(.snappy, value: tasmee.bookings)
         }
         .scrollIndicators(.hidden)
-        .reservesTabBarSpace()
         .background(Palette.surface.ignoresSafeArea())
         .toolbar(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
@@ -538,7 +537,6 @@ struct SessionView: View {
             .animation(.snappy, value: seats)
         }
         .scrollIndicators(.hidden)
-        .reservesTabBarSpace()
         .background(Palette.surface.ignoresSafeArea())
         .toolbar(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
@@ -729,7 +727,6 @@ struct StudentFileView: View {
         }
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
-        .reservesTabBarSpace()
         .background(Palette.surface.ignoresSafeArea())
         .toolbar(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)

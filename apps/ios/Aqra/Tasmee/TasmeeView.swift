@@ -59,7 +59,6 @@ struct TasmeeView: View {
                 .animation(.snappy, value: tasmee.history)
             }
             .scrollIndicators(.hidden)
-            .reservesTabBarSpace()
             .background(Palette.surface.ignoresSafeArea())
             .fadesUnderStatusBar()
             .toolbar(.hidden, for: .navigationBar)

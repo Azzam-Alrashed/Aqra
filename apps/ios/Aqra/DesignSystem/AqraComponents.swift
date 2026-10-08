@@ -244,61 +244,6 @@ private struct GlossyStep: View {
     }
 }
 
-// MARK: - The tab bar
-
-/// The app's tab bar: a floating white capsule, the selected tab in a lavender pill that slides between them.
-struct AqraTabBar: View {
-    /// The bar's height (its items and the capsule's padding) and the gap below it, above the home indicator.
-    static let height: CGFloat = 64
-    static let bottomPadding: CGFloat = 2
-
-    @Binding var selection: AppTab
-    @Namespace private var pill
-
-    var body: some View {
-        HStack(spacing: 2) {
-            ForEach(AppTab.allCases, id: \.self) { tab in
-                let selected = selection == tab
-                Button {
-                    guard !selected else { return }
-                    withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { selection = tab }
-                } label: {
-                    VStack(spacing: 3) {
-                        Image(systemName: tab.symbol)
-                            .font(.system(size: 19, weight: .semibold))
-                            .accessibilityHidden(true)
-                        Text(tab.title)
-                            .font(.system(size: 11, weight: .bold))
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                    .foregroundStyle(selected ? OnboardingPalette.brand : OnboardingPalette.inkSoft)
-                    .frame(maxWidth: .infinity)
-                    .frame(height: 54)
-                    .background {
-                        if selected {
-                            Capsule()
-                                .fill(OnboardingPalette.lavender)
-                                .matchedGeometryEffect(id: "pill", in: pill)
-                        }
-                    }
-                    .contentShape(Capsule())
-                }
-                .buttonStyle(.plain)
-                .accessibilityAddTraits(selected ? .isSelected : [])
-            }
-        }
-        .padding(5)
-        .background(.white, in: Capsule())
-        .shadow(color: OnboardingPalette.shadow.opacity(0.14), radius: 18, y: 8)
-        .shadow(color: OnboardingPalette.shadow.opacity(0.06), radius: 2, y: 1)
-        .frame(maxWidth: 440)
-        .padding(.horizontal, 22)
-        .fontDesign(.rounded)
-        .sensoryFeedback(.selection, trigger: selection)
-    }
-}
-
 extension View {
     /// What scrolls up fades away under the status bar instead of running into it.
     func fadesUnderStatusBar() -> some View {
@@ -309,14 +254,6 @@ extension View {
                     .offset(y: -geometry.safeAreaInsets.top)
             }
             .allowsHitTesting(false)
-        }
-    }
-
-    /// Keeps scrolling content clear of the floating tab bar: it scrolls under the bar, and its end stops above it.
-    /// Neither a tab view nor a navigation stack passes its insets on, so each scrolling page reserves the space itself.
-    func reservesTabBarSpace() -> some View {
-        safeAreaInset(edge: .bottom, spacing: 0) {
-            Color.clear.frame(height: AqraTabBar.height + AqraTabBar.bottomPadding)
         }
     }
 }

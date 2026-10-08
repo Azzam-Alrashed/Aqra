@@ -55,20 +55,6 @@ struct WelcomeSnapshotTests {
         }
     }
 
-    /// The tab bar with its four tabs, in Arabic, at a phone's width.
-    @Test func renderTabBar() throws {
-        guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }
-        let view = AqraTabBar(selection: .constant(.tasmee))
-            .frame(width: 402, height: 90)
-            .background(OnboardingPalette.surface)
-            .environment(\.locale, Locale(identifier: "ar"))
-            .environment(\.layoutDirection, .rightToLeft)
-        let renderer = ImageRenderer(content: view)
-        renderer.scale = 2
-        let data = try #require(renderer.uiImage?.pngData())
-        try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("tab-bar.png"))
-    }
-
     /// The منازل stairs of the home and «ماذا تحفظ؟»: none climbed, a quarter, and all ten.
     @Test func renderManazilStairs() throws {
         guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }

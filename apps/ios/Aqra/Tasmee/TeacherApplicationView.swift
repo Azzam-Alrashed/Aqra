@@ -46,7 +46,6 @@ struct TeacherApplicationView: View {
         }
         .scrollIndicators(.hidden)
         .scrollDismissesKeyboard(.interactively)
-        .reservesTabBarSpace()
         .background(Palette.surface.ignoresSafeArea())
         .toolbar(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)

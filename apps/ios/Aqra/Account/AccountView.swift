@@ -151,7 +151,6 @@ struct AccountView: View {
                 .animation(.snappy, value: notificationsDenied)
             }
             .scrollIndicators(.hidden)
-            .reservesTabBarSpace()
             .background(Palette.surface.ignoresSafeArea())
             .fadesUnderStatusBar()
             .toolbar(.hidden, for: .navigationBar)
@@ -557,7 +556,6 @@ struct SourcesView: View {
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)
-        .reservesTabBarSpace()
         .background(Palette.surface.ignoresSafeArea())
         .toolbar(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)

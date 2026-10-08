@@ -37,7 +37,6 @@ struct TasmeeHistoryView: View {
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)
-        .reservesTabBarSpace()
         .background(Palette.surface.ignoresSafeArea())
         .toolbar(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)

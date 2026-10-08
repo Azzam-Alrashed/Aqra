@@ -22,9 +22,11 @@ enum AppTab: Hashable, CaseIterable {
         case .account: "person.crop.circle.fill"
         }
     }
+
+    var label: Label<Text, Image> { Label(title, systemImage: symbol) }
 }
 
-/// The app after setup: the home, tasmee', progress and account tabs, under the app's own floating tab bar.
+/// The app after setup: the home, tasmee', progress and account tabs, under the system tab bar.
 struct AppTabView: View {
     var store: MushafStore
     var startsMarking = false
@@ -43,26 +45,20 @@ struct AppTabView: View {
         @Bindable var router = router
         TabView(selection: $router.tab) {
             HomeView(store: store, startsMarking: startsMarking, tab: $router.tab)
-                .reservesTabBarSpace()
-                .toolbar(.hidden, for: .tabBar)
+                .tabItem { AppTab.home.label }
                 .tag(AppTab.home)
-            // Its pages reserve the tab bar's space inside its navigation stack.
             TasmeeView(store: store)
-                .toolbar(.hidden, for: .tabBar)
+                .tabItem { AppTab.tasmee.label }
                 .tag(AppTab.tasmee)
             MyProgressView(store: store)
-                .reservesTabBarSpace()
-                .toolbar(.hidden, for: .tabBar)
+                .tabItem { AppTab.progress.label }
                 .tag(AppTab.progress)
-            // Its pages reserve the tab bar's space inside its navigation stack.
             AccountView()
-                .toolbar(.hidden, for: .tabBar)
+                .tabItem { AppTab.account.label }
                 .tag(AppTab.account)
         }
-        .overlay(alignment: .bottom) {
-            AqraTabBar(selection: $router.tab)
-                .padding(.bottom, AqraTabBar.bottomPadding)
-        }
+        .tint(OnboardingPalette.brand)
+        .minimizesTabBarOnScroll()
         .overlay { CelebrationOverlay() }
         .environment(\.colorScheme, .light)
         // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
@@ -867,3 +863,15 @@ extension View {
 }
 
 private typealias Palette = OnboardingPalette
+
+private extension View {
+    /// The tab bar shrinks to the selected tab while a page scrolls down, and comes back on scrolling up (iOS 26 and later).
+    @ViewBuilder
+    func minimizesTabBarOnScroll() -> some View {
+        if #available(iOS 26, *) {
+            tabBarMinimizeBehavior(.onScrollDown)
+        } else {
+            self
+        }
+    }
+}
