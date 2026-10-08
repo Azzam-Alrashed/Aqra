@@ -1,4 +1,5 @@
 import SwiftUI
+import UIKit
 
 extension Achievement {
     var title: LocalizedStringKey {
@@ -46,18 +47,16 @@ extension Challenge.Kind {
 struct CelebrationOverlay: View {
     @Environment(RewardStore.self) private var rewards
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
+    /// The celebration on screen. One earned under the wird, the Mushaf or a sheet waits until they close, rather
+    /// than chiming unseen behind them.
+    @State private var shown: UUID?
 
     var body: some View {
         VStack {
-            if let celebration = rewards.celebration {
+            if let celebration = rewards.celebration, shown == celebration.id {
                 content(celebration)
                     .id(celebration.id)
                     .transition(reduceMotion ? .opacity : .move(edge: .top).combined(with: .scale(scale: 0.8)).combined(with: .opacity))
-                    .task(id: celebration.id) {
-                        Chime.play(big: celebration.isBig)
-                        try? await Task.sleep(for: .seconds(celebration.isBig ? 2.6 : 1.6))
-                        withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) { rewards.finishCelebration() }
-                    }
                     .onTapGesture {
                         withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) { rewards.finishCelebration() }
                     }
@@ -65,9 +64,24 @@ struct CelebrationOverlay: View {
             Spacer()
         }
         .padding(.top, 8)
-        .animation(.spring(response: 0.5, dampingFraction: 0.72), value: rewards.celebration)
-        .sensoryFeedback(.success, trigger: rewards.celebration?.id) { _, id in id != nil }
-        .allowsHitTesting(rewards.celebration != nil)
+        .animation(.spring(response: 0.5, dampingFraction: 0.72), value: shown)
+        .sensoryFeedback(.success, trigger: shown) { _, id in id != nil }
+        .allowsHitTesting(shown != nil)
+        .task(id: rewards.celebration?.id) {
+            guard let celebration = rewards.celebration else {
+                shown = nil
+                return
+            }
+            while UIApplication.shared.topViewController !== UIApplication.shared.activeWindow?.rootViewController {
+                try? await Task.sleep(for: .milliseconds(250))
+                if Task.isCancelled { return }
+            }
+            shown = celebration.id
+            Chime.play(big: celebration.isBig)
+            try? await Task.sleep(for: .seconds(celebration.isBig ? 2.6 : 1.6))
+            guard !Task.isCancelled else { return }
+            withAnimation(.spring(response: 0.45, dampingFraction: 0.85)) { rewards.finishCelebration() }
+        }
     }
 
     @ViewBuilder
