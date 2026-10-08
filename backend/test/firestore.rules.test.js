@@ -212,6 +212,14 @@ describe("seats", () => {
     await assertFails(book(named("carol"), "carol", "open"));
   });
 
+  test("a seat is never taken without the count, so a full session takes nobody else", async () => {
+    const seat = (db, uid) => setDoc(doc(db, `sessions/open/seats/${uid}`), { bookedAt: Timestamp.now(), name: "x", memorizedPages: 1 });
+    await assertFails(seat(named("alice"), "alice"));
+    await assertSucceeds(book(named("alice"), "alice", "open"));
+    await assertSucceeds(book(named("bob"), "bob", "open"));
+    await assertFails(seat(named("carol"), "carol"));
+  });
+
   test("the student and the teacher see the seat; another student doesn't", async () => {
     await assertSucceeds(book(named("alice"), "alice", "open"));
     await assertSucceeds(getDoc(doc(named("alice"), "sessions/open/seats/alice")));
