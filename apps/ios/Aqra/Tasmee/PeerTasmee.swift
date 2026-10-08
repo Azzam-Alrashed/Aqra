@@ -78,7 +78,8 @@ extension TasmeeStore {
             let request = PeerRequest(id: PeerRequest.randomCode(), studentUid: uid, studentName: studentName,
                                       startPage: startPage)
             do {
-                try await database.collection("peerRequests").document(request.id).setData(request.document)
+                // The friend can only find the code once it's on the server: offline, say so rather than wait.
+                try await withServerTimeout { try await self.database.collection("peerRequests").document(request.id).setData(request.document) }
                 return request
             } catch let error as NSError where error.domain == FirestoreErrorDomain
                 && error.code == FirestoreErrorCode.permissionDenied.rawValue {

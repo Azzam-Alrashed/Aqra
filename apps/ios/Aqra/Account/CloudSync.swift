@@ -191,15 +191,7 @@ final class CloudSync {
     /// Uploads, giving up after a while: signing out and deleting need the account to answer, not a queue.
     func uploadNow(timeout: Duration = .seconds(12)) async throws {
         pendingUpload?.cancel()
-        try await withThrowingTaskGroup(of: Void.self) { group in
-            group.addTask { try await self.upload() }
-            group.addTask {
-                try await Task.sleep(for: timeout)
-                throw CloudSyncError.timedOut
-            }
-            try await group.next()
-            group.cancelAll()
-        }
+        try await withServerTimeout(timeout) { try await self.upload() }
     }
 
     // MARK: - Deleting
@@ -222,4 +214,43 @@ enum CloudSyncError: Error {
     case timedOut
     /// The account's copy couldn't be fetched to merge with this device's, so nothing was written.
     case notRestored
+}
+
+/// Waits for something that needs the server's answer, but no longer than `timeout`. Firestore keeps a write until
+/// it reaches the server and only answers then, so offline it would wait forever. A task group can't give up on it:
+/// a group waits for every child, and Firestore's calls don't stop when cancelled.
+@MainActor
+func withServerTimeout<T: Sendable>(_ timeout: Duration = .seconds(12),
+                                    _ work: @escaping @MainActor () async throws -> T) async throws -> T {
+    try await withCheckedThrowingContinuation { continuation in
+        let answer = FirstAnswer(continuation)
+        answer.timer = Task {
+            try? await Task.sleep(for: timeout)
+            if !Task.isCancelled { answer.resume(with: .failure(CloudSyncError.timedOut)) }
+        }
+        Task {
+            do {
+                answer.resume(with: .success(try await work()))
+            } catch {
+                answer.resume(with: .failure(error))
+            }
+        }
+    }
+}
+
+/// Resumes a continuation once, with whichever answer comes first.
+@MainActor
+private final class FirstAnswer<T: Sendable> {
+    private var continuation: CheckedContinuation<T, Error>?
+    var timer: Task<Void, Never>?
+
+    init(_ continuation: CheckedContinuation<T, Error>) {
+        self.continuation = continuation
+    }
+
+    func resume(with result: Result<T, Error>) {
+        timer?.cancel()
+        continuation?.resume(with: result)
+        continuation = nil
+    }
 }

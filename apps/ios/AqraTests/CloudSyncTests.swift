@@ -97,4 +97,26 @@ struct CloudSyncTests {
         revision.apply(.empty)
         #expect(memorization.count == 0 && revision.dailyPages == nil && revision.revisedDays.isEmpty)
     }
+
+    @Test func waitingForTheServerGivesUpWhenItNeverAnswers() async throws {
+        // Like a Firestore write while offline: it answers only once the server has it, and ignores cancelling.
+        let pending = Pending()
+        let start = Date.now
+        await #expect(throws: CloudSyncError.self) {
+            try await withServerTimeout(.milliseconds(200)) {
+                try await withCheckedThrowingContinuation { pending.continuation = $0 }
+            }
+        }
+        #expect(Date.now.timeIntervalSince(start) < 2)
+        pending.continuation?.resume()
+
+        // An answer in time is passed on.
+        #expect(try await withServerTimeout(.seconds(5)) { 7 } == 7)
+    }
+}
+
+/// A call left waiting by a test, answered once the test has seen what it needed.
+@MainActor
+private final class Pending {
+    var continuation: CheckedContinuation<Void, Error>?
 }
