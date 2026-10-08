@@ -7,7 +7,7 @@ import { connectAuthEmulator, getAuth, GoogleAuthProvider, signInAnonymously, si
 import { connectFunctionsEmulator, getFunctions, httpsCallable } from "firebase/functions";
 
 export const PROJECT = "demo-aqra";
-export const REGION = "me-central2";
+export const REGION = "europe-west1";
 
 if (!getAdminApps().length) initializeAdmin({ projectId: PROJECT });
 /** Firestore with no rules, for seeding and checking. */
