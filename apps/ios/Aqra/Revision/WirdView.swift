@@ -47,6 +47,7 @@ struct WirdView: View {
             }
         }
         .background(MushafStyle.paper.ignoresSafeArea())
+        .followsSystemColorScheme()
         // A revision under way is never closed by a stray swipe.
         .interactiveDismissDisabled()
         .onAppear {

@@ -230,6 +230,33 @@ extension EnvironmentValues {
     @Entry var mushafAyahLongPress: (@MainActor (Int) -> Void)? = nil
     /// While a new portion is memorized: its ayat, in focus on the page.
     @Entry var mushafFocus: MemorizeFocus? = nil
+    /// The system's light or dark mode, read at the app's root before any screen sets its own.
+    @Entry var systemColorScheme: ColorScheme = .light
+}
+
+extension View {
+    /// Keeps the system's light or dark mode in reach of the screens below, whatever they set for themselves.
+    func readsSystemColorScheme() -> some View { modifier(SystemColorSchemeReader()) }
+
+    /// The Mushaf follows the system's light or dark mode, while the app's own screens around it stay light
+    /// (docs/SRS.md A-23): they set a light color scheme that the Mushaf, opened from them, would otherwise inherit.
+    func followsSystemColorScheme() -> some View { modifier(SystemColorScheme()) }
+}
+
+private struct SystemColorSchemeReader: ViewModifier {
+    @Environment(\.colorScheme) private var scheme
+
+    func body(content: Content) -> some View {
+        content.environment(\.systemColorScheme, scheme)
+    }
+}
+
+private struct SystemColorScheme: ViewModifier {
+    @Environment(\.systemColorScheme) private var scheme
+
+    func body(content: Content) -> some View {
+        content.environment(\.colorScheme, scheme)
+    }
 }
 
 /// A new portion being memorized: its ayat stand out on the page and the rest fade back; a tap hides an ayah to

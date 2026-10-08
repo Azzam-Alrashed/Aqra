@@ -62,6 +62,7 @@ struct MushafView: View {
             }
         }
         .background(MushafStyle.paper.ignoresSafeArea())
+        .followsSystemColorScheme()
         .statusBarHidden(!toolbarVisible)
         // Swiping down closes the Mushaf, but not while marking, where a stray swipe would lose the place.
         .interactiveDismissDisabled(marking != nil)

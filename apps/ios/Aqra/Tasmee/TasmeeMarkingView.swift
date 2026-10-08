@@ -72,6 +72,7 @@ struct TasmeeMarkingView<Overlay: View>: View {
             markingBar
         }
         .background(MushafStyle.paper.ignoresSafeArea())
+        .followsSystemColorScheme()
         .interactiveDismissDisabled()
         .onChange(of: page, initial: true) { prepare(page) }
         .sensoryFeedback(.selection, trigger: page)
