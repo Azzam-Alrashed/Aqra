@@ -1,13 +1,14 @@
 # Aqra — Backend
 
-The Firebase project `aqra-quran`, shared by all apps. Firestore lives in Dammam, Saudi Arabia (`me-central2`).
+The Firebase project `aqra-quran`, shared by all apps. Firestore, Storage and the Cloud Functions all live in one
+region, Belgium (`europe-west1`): Google refuses new resources in the Middle East regions for this project.
 
 - `firestore.rules`, `storage.rules`: who may read and write what (see below), with tests on the emulators.
 - `firestore.indexes.json`: none yet. Every query filters on one field and sorts on the device.
 - `scripts/seed-emulator.mjs`: makes an emulator account a vetted teacher, for trying the teacher's side.
 - `scripts/admin.mjs`: administration from the command line (applications, teachers, administrators, payouts,
   the server policy).
-- `functions/`: the Cloud Functions (TypeScript, Node 22, region `me-central2`), for everything that must be
+- `functions/`: the Cloud Functions (TypeScript, Node 22, region `europe-west1`), for everything that must be
   trusted rather than left to one client. Their defaults live in `functions/src/policy.ts`; an administrator can
   override any of them in `config/policy`.
   - `joinCall`: a LiveKit room token for a video session, only for its teacher or a student holding a seat, from

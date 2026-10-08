@@ -3,7 +3,7 @@
 import * as functionsV1 from "firebase-functions/v1";
 import { db } from "./admin.js";
 
-export const onAccountDeleted = functionsV1.region("me-central2").auth.user().onDelete(async (user) => {
+export const onAccountDeleted = functionsV1.region("europe-west1").auth.user().onDelete(async (user) => {
   const wallet = db.doc(`wallets/${user.uid}`);
   const ledger = await wallet.collection("ledger").get();
   const refs = [...ledger.docs.map((doc) => doc.ref), wallet];

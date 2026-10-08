@@ -11,3 +11,4 @@ shared/quran/qcf4/
 apps/ios/Firebase/GoogleService-Info.plist
 backend/node_modules/
 backend/*.log
+backend/backups/

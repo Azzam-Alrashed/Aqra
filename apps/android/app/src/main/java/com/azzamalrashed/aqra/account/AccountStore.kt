@@ -85,8 +85,8 @@ class AccountStore(
 
         private var appContext: Context? = null
 
-        /** Where the Cloud Functions run: beside the database, in Dammam. */
-        const val FUNCTIONS_REGION = "me-central2"
+        /** Where the Cloud Functions run: beside the database and files, in Belgium. */
+        const val FUNCTIONS_REGION = "europe-west1"
 
         val functions: FirebaseFunctions get() = FirebaseFunctions.getInstance(FUNCTIONS_REGION)
 

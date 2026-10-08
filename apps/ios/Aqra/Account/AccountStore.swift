@@ -64,8 +64,8 @@ final class AccountStore {
     /// Whether accounts are set up in this build: they need the Firebase config, which isn't in git.
     static var isAvailable: Bool { FirebaseApp.app() != nil }
 
-    /// Where the Cloud Functions run: beside the database, in Dammam (see backend/functions).
-    static let functionsRegion = "me-central2"
+    /// Where the Cloud Functions run: beside the database and files, in Belgium (see backend/functions).
+    static let functionsRegion = "europe-west1"
 
     /// Debug builds launched with `-UseFirebaseEmulator` talk to the local Auth and Firestore emulators as the
     /// project `demo-aqra`, with no real account involved (see backend/README.md).
