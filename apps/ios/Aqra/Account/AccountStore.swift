@@ -398,7 +398,7 @@ private final class AppleSignIn: NSObject {
     }
 }
 
-extension AppleSignIn: @preconcurrency ASAuthorizationControllerDelegate, @preconcurrency ASAuthorizationControllerPresentationContextProviding {
+extension AppleSignIn: ASAuthorizationControllerDelegate, ASAuthorizationControllerPresentationContextProviding {
     func authorizationController(controller: ASAuthorizationController, didCompleteWithAuthorization authorization: ASAuthorization) {
         continuation?.resume(returning: authorization)
         continuation = nil
