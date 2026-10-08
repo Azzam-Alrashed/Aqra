@@ -1,0 +1,134 @@
+<!doctype html>
+<html lang="ar" dir="rtl">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>الدعم — اقرأ</title>
+  <meta name="title-ar" content="الدعم — اقرأ">
+  <meta name="title-en" content="Support — Aqra">
+  <meta name="description" content="أسئلة شائعة عن تطبيق اقرأ، وكيف تتواصل معنا.">
+  <meta name="theme-color" content="#F7F4FB">
+  <meta name="color-scheme" content="light">
+  <link rel="icon" type="image/png" sizes="32x32" href="img/favicon-32.png">
+  <link rel="apple-touch-icon" href="img/apple-touch-icon.png">
+
+  <!-- The language is applied before the first paint, as on index.html. -->
+  <script>
+    (function () {
+      var lang = 'ar';
+      try {
+        var q = new URLSearchParams(location.search).get('lang');
+        lang = q || localStorage.getItem('aqra-lang') || 'ar';
+      } catch (e) {}
+      if (lang !== 'en') lang = 'ar';
+      document.documentElement.lang = lang;
+      document.documentElement.dir = lang === 'ar' ? 'rtl' : 'ltr';
+    })();
+  </script>
+
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Rubik:wght@500;700;800;900&display=swap">
+  <link rel="stylesheet" href="page.css">
+</head>
+<body>
+
+<header class="nav">
+  <div class="wrap">
+    <a class="brand" href="./" aria-label="اقرأ">
+      <img src="img/apple-touch-icon.png" width="40" height="40" alt="">
+      <span class="ar">اقرأ</span><span class="en" lang="en">Aqra</span>
+    </a>
+    <button class="lang" type="button" data-lang-toggle aria-label="Switch language">English</button>
+  </div>
+</header>
+
+<main class="wrap doc">
+  <span class="eyebrow"><span class="ar">الدعم</span><span class="en" lang="en">Support</span></span>
+  <h1>
+    <span class="ar">كيف نساعدك؟<span class="accent">نحن هنا.</span></span>
+    <span class="en" lang="en">How can we help?<span class="accent">We're here.</span></span>
+  </h1>
+
+  <!-- Arabic -->
+  <div class="ar">
+    <section class="card">
+      <h2>تواصل معنا</h2>
+      <p>اكتب لنا سؤالك أو ما واجهك من مشكلة، وسنردّ عليك في أقرب وقت بإذن الله.</p>
+      <a class="btn" href="https://github.com/Azzam-Alrashed/Aqra/issues/new">راسلنا</a>
+    </section>
+
+    <section class="card">
+      <h2>كيف أحفظ تقدّمي أو أنقله إلى جهاز آخر؟</h2>
+      <p>سجّل الدخول بحساب Apple أو Google من «حسابي»، فيُحفظ تقدّمك في حسابك. وعلى الجهاز الآخر سجّل الدخول بالحساب نفسه، فيعود إليك كما تركته. وقبل تسجيل الدخول يبقى تقدّمك على جهازك وحده.</p>
+    </section>
+
+    <section class="card">
+      <h2>كيف أحذف حسابي؟</h2>
+      <p>من «حسابي» ثم «حذف الحساب». يُحذف حسابك وكل ما فيه، كما تشرح <a href="privacy.html">سياسة الخصوصية</a>.</p>
+    </section>
+
+    <section class="card">
+      <h2>اشتريت عملات ولم تصل</h2>
+      <p>افتح «حسابي» ثم العملات، وانتظر قليلًا وأنت متصل بالإنترنت، فالتطبيق يُكمل ما لم يكتمل من الشراء. وإن لم تصل فراسلنا. أما استرداد المبلغ فتتولّاه Apple من <a href="https://reportaproblem.apple.com">reportaproblem.apple.com</a>.</p>
+    </section>
+
+    <section class="card">
+      <h2>كيف أصبح معلّمًا في اقرأ؟</h2>
+      <p>سجّل الدخول، ثم قدّم طلبك من «التسميع» مع صورة إجازتك. يراجع الفريق طلبك، ثم نتواصل معك لمقابلة شخصية قبل القبول.</p>
+    </section>
+
+    <section class="card">
+      <h2>وجدت خطأً في المصحف</h2>
+      <p>نصّ المصحف وصفحاته من مجمع الملك فهد لطباعة المصحف الشريف كما هي، دون أي تعديل. فإن رأيت ما يبدو خطأً، فراسلنا برقم الصفحة والآية، وسنراجعه فورًا.</p>
+    </section>
+  </div>
+
+  <!-- English -->
+  <div class="en" lang="en">
+    <section class="card">
+      <h2>Contact us</h2>
+      <p>Write to us with your question or the problem you ran into, and we'll get back to you as soon as we can.</p>
+      <a class="btn" href="https://github.com/Azzam-Alrashed/Aqra/issues/new">Write to us</a>
+    </section>
+
+    <section class="card">
+      <h2>How do I keep my progress, or move it to another device?</h2>
+      <p>Sign in with Apple or Google from Account, and your progress is saved to your account. On the other device, sign in with the same account and it comes back as you left it. Until you sign in, your progress lives on your device alone.</p>
+    </section>
+
+    <section class="card">
+      <h2>How do I delete my account?</h2>
+      <p>In Account, choose Delete account. Your account and everything in it are deleted, as the <a href="privacy.html">privacy policy</a> explains.</p>
+    </section>
+
+    <section class="card">
+      <h2>I bought credits and they didn't arrive</h2>
+      <p>Open Account, then Credits, and wait a moment while online: the app finishes any purchase left incomplete. If they still don't arrive, write to us. Refunds are handled by Apple at <a href="https://reportaproblem.apple.com">reportaproblem.apple.com</a>.</p>
+    </section>
+
+    <section class="card">
+      <h2>How do I become a teacher on Aqra?</h2>
+      <p>Sign in, then apply from Tasmee' with a copy of your ijazah. The team reviews your application, then contacts you for a personal interview before accepting it.</p>
+    </section>
+
+    <section class="card">
+      <h2>I found a mistake in the Mushaf</h2>
+      <p>The Mushaf's text and pages come from the King Fahd Glorious Quran Printing Complex, unmodified. If you see what looks like a mistake, write to us with the page and ayah, and we'll review it right away.</p>
+    </section>
+  </div>
+</main>
+
+<footer>
+  <div class="wrap">
+    <a href="./"><span class="ar">اقرأ</span><span class="en" lang="en">Aqra</span></a>
+    <nav aria-label="Footer">
+      <a href="privacy.html"><span class="ar">سياسة الخصوصية</span><span class="en" lang="en">Privacy policy</span></a>
+      <a href="https://github.com/Azzam-Alrashed/Aqra">GitHub</a>
+    </nav>
+  </div>
+</footer>
+
+<script src="page.js"></script>
+</body>
+</html>
