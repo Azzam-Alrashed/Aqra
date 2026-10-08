@@ -170,12 +170,14 @@ describe("the seat auction", () => {
     assert.equal((await adminDb.doc("sessions/s1").get()).data().auctionState, "cancelled");
   });
 
-  test("a deleted account's wallet goes with it", async () => {
+  test("a deleted account's wallet goes with it, and its application in any state", async () => {
     const bob = await client();
     await adminDb.doc(`wallets/${bob.uid}`).set({ balance: 10, held: 0 });
     await adminDb.doc(`wallets/${bob.uid}/ledger/l1`).set({ kind: "purchase", amount: 10 });
+    await adminDb.doc(`teacherApplications/${bob.uid}`).set({ name: "Bob", status: "approved", note: "" });
     await adminAuth.deleteUser(bob.uid);
     await eventually(async () => assert.equal((await adminDb.doc(`wallets/${bob.uid}`).get()).exists, false));
     assert.equal((await adminDb.collection(`wallets/${bob.uid}/ledger`).get()).size, 0);
+    await eventually(async () => assert.equal((await adminDb.doc(`teacherApplications/${bob.uid}`).get()).exists, false));
   });
 });

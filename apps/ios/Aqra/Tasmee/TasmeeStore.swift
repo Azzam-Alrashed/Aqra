@@ -502,7 +502,13 @@ final class TasmeeStore {
         }
         // Uploads are let go of even if the storage can't be reached: the account's deletion mustn't hang on them.
         await TeacherApplication.deleteFiles(of: uid)
-        references.append(database.collection("teacherApplications").document(uid))
+        // An application still waiting is withdrawn here. One already reviewed, or none, is left to the server, which
+        // deletes it with the account (functions/src/accounts.ts): the rules let an applicant withdraw only while it
+        // waits, and refusing one delete would refuse the whole batch.
+        let application = database.collection("teacherApplications").document(uid)
+        if try await application.getDocument().data()?["status"] as? String == TeacherApplication.Status.submitted.rawValue {
+            references.append(application)
+        }
         try await Self.delete(references, in: database)
     }
 
