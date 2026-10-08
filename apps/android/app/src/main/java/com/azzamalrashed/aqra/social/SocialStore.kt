@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.azzamalrashed.aqra.account.AccountStore
 import com.azzamalrashed.aqra.account.Problem
+import com.azzamalrashed.aqra.account.SERVER_TIMEOUT
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.memorization.MemorizationStore
 import com.azzamalrashed.aqra.revision.RevisionStore
@@ -23,6 +24,7 @@ import kotlinx.coroutines.channels.awaitClose
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.callbackFlow
 import kotlinx.coroutines.tasks.await
+import kotlinx.coroutines.withTimeout
 import java.text.Collator
 import java.time.ZoneId
 
@@ -255,7 +257,8 @@ class SocialStore(private val memorization: MemorizationStore, private val revis
         repeat(5) {
             val invite = FriendInvite(PeerRequest.randomCode(), uid, name)
             try {
-                database.collection("friendInvites").document(invite.id).set(stamped(invite.document)).await()
+                // The friend can only find the invitation once it's on the server: offline, say so rather than wait.
+                withTimeout(SERVER_TIMEOUT) { database.collection("friendInvites").document(invite.id).set(stamped(invite.document)).await() }
                 return invite
             } catch (error: FirebaseFirestoreException) {
                 // The code exists already (the rules refuse to overwrite it); try another.
@@ -276,7 +279,7 @@ class SocialStore(private val memorization: MemorizationStore, private val revis
         if (invite.ownerUid == uid) return
         val friendship = Friendship(Friendship.id(uid, invite.ownerUid), listOf(invite.ownerUid, uid),
             mapOf(invite.ownerUid to invite.ownerName, uid to name))
-        database.collection("friendships").document(friendship.id).set(stamped(friendship.document(invite.id))).await()
+        withTimeout(SERVER_TIMEOUT) { database.collection("friendships").document(friendship.id).set(stamped(friendship.document(invite.id))).await() }
     }
 
     fun remove(friendUid: String) {
@@ -302,7 +305,7 @@ class SocialStore(private val memorization: MemorizationStore, private val revis
         if (kind == Competition.Kind.KHATMAH) {
             for (juz in 1..30) batch.set(reference.collection("parts").document(juz.toString()), stamped(KhatmahPart(juz).document))
         }
-        batch.commit().await()
+        withTimeout(SERVER_TIMEOUT) { batch.commit().await() }
     }
 
     /** Leaves a competition: this member's standing goes with them. */

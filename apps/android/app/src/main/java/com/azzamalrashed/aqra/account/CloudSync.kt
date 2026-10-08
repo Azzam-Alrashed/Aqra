@@ -20,6 +20,12 @@ import kotlinx.coroutines.tasks.await
 import kotlinx.coroutines.withTimeout
 
 /**
+ * How long to wait for something that needs the server's answer. Firestore answers a write only once it reaches the
+ * server, so offline it would wait forever.
+ */
+const val SERVER_TIMEOUT = 12_000L
+
+/**
  * Backs the student's progress up to their account, and restores it on a new device or after a reinstall.
  *
  * The device's copy stays the one the app works from. A couple of seconds after it changes, the blocks that changed
