@@ -114,13 +114,14 @@ fun ProgressScreen(app: AqraApp, store: MushafStore) {
     openedStage?.let { stage -> StageSheet(app, store, stage) { openedStage = null } }
 }
 
-/** Kept apart: how much is memorized, how much of it is mastered, and how much a teacher heard clean. */
+/**
+ * Kept apart: how much is memorized, how much of it is mastered, and how much a teacher heard clean — each counting
+ * every juz' equally, so mastered and verified never read more than memorized.
+ */
 @Composable
 private fun SharesCard(app: AqraApp, store: MushafStore) {
-    val all = 0 until MushafStore.AYAH_COUNT
-    val total = MushafStore.AYAH_COUNT.toDouble()
-    val mastered = app.memorization.masteredCount(all) / total
-    val verified = app.memorization.verifiedCount(all) / total
+    val mastered = app.memorization.quranShare(store) { app.memorization.masteredCount(it) }
+    val verified = app.memorization.quranShare(store) { app.memorization.verifiedCount(it) }
     AqraCard(Modifier.fillMaxWidth(), padding = 14.dp, radius = 24.dp) {
         Row(Modifier.fillMaxWidth()) {
             Share(app.memorization.quranShare(store), stringResource(R.string.memorized), Palette.brand.copy(alpha = 0.45f), Modifier.weight(1f))
