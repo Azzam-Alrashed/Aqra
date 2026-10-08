@@ -11,6 +11,7 @@ import com.google.firebase.firestore.DocumentReference
 import com.google.firebase.firestore.FieldValue
 import com.google.firebase.firestore.FirebaseFirestore
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.firestore.Source
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -110,9 +111,11 @@ class CloudSync(
 
     private suspend fun restoreAndMerge(uid: String) {
         try {
-            val blocks = user(uid).collection("memory").get().await()
-            val state = user(uid).collection("revision").document("state").get().await()
-            val journeyState = user(uid).collection("journey").document("state").get().await()
+            // From the server only: offline, the cache answers with whatever this install happens to hold, and
+            // merging with that would count as restored.
+            val blocks = user(uid).collection("memory").get(Source.SERVER).await()
+            val state = user(uid).collection("revision").document("state").get(Source.SERVER).await()
+            val journeyState = user(uid).collection("journey").document("state").get(Source.SERVER).await()
             if (uid != this.uid) return
 
             val remoteBlocks = HashMap<Int, BackupBlock>()
@@ -200,6 +203,13 @@ class CloudSync(
     /** Writes whatever changed since the account last heard from this device, and waits for the account to confirm it. */
     suspend fun upload() {
         val uid = uid ?: return
+        // Nothing is written until this install has merged the account's copy (an earlier try may have failed
+        // offline): the device's copy, empty after a reinstall while the sign-in survives, would replace it.
+        if (prefs.restoredAccount != uid) {
+            restoreAndMerge(uid)
+            if (uid != this.uid) return
+            check(prefs.restoredAccount == uid) { "The account's copy couldn't be merged yet." }
+        }
         val blocks = CloudBackup.blocks(memorization.ayahs, rowExtras)
         val uploaded = uploadedBlocks
         val changed = if (uploaded == null) blocks else blocks.filter { (index, block) -> uploaded[index].orEmpty() != block }
