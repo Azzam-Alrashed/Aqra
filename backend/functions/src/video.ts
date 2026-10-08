@@ -53,7 +53,8 @@ export const joinCall = onCall({ secrets: [livekitKey, livekitSecret] }, async (
   }
 
   const room = roomName(sessionId);
-  const token = new AccessToken(livekitKey.value(), livekitSecret.value(), {
+  // Trimmed: a key pasted into `secrets:set` easily keeps its newline, and LiveKit then rejects every token.
+  const token = new AccessToken(livekitKey.value().trim(), livekitSecret.value().trim(), {
     identity: uid,
     name,
     ttl: `${rules.tokenTTLHours}h`,
