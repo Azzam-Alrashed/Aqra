@@ -54,10 +54,16 @@ final class CloudSync {
         uploadedRevision = nil
         uploadedJourney = nil
         lastBackup = nil
-        if UserDefaults.standard.string(forKey: Self.restoredKey) != uid {
+        if !hasRestored(uid) {
             await restoreAndMerge(uid: uid)
         }
         scheduleUpload(after: .zero)
+    }
+
+    /// Whether this install has merged the account's copy. Until it has, nothing is written to the account: the
+    /// device's copy (empty after a reinstall, when the sign-in survives in the keychain) would replace it.
+    private func hasRestored(_ uid: String) -> Bool {
+        UserDefaults.standard.string(forKey: Self.restoredKey) == uid
     }
 
     /// Stops backing up, before signing out or deleting the account.
@@ -82,9 +88,11 @@ final class CloudSync {
 
     private func restoreAndMerge(uid: String) async {
         do {
-            let blocks = try await user(uid).collection("memory").getDocuments()
-            let state = try await user(uid).collection("revision").document("state").getDocument()
-            let journeyState = try await user(uid).collection("journey").document("state").getDocument()
+            // From the server only: offline, the cache answers with whatever this install happens to hold, and
+            // merging with that would count as restored.
+            let blocks = try await user(uid).collection("memory").getDocuments(source: .server)
+            let state = try await user(uid).collection("revision").document("state").getDocument(source: .server)
+            let journeyState = try await user(uid).collection("journey").document("state").getDocument(source: .server)
             guard uid == self.uid else { return }
 
             var remoteBlocks: [Int: CloudBackup.Block] = [:]
@@ -139,6 +147,12 @@ final class CloudSync {
     /// confirm it. Throws when it can't be reached.
     func upload() async throws {
         guard let uid else { return }
+        // The account's copy is merged first (an earlier try may have failed offline), or nothing is written.
+        if !hasRestored(uid) {
+            await restoreAndMerge(uid: uid)
+            guard uid == self.uid else { return }
+            guard hasRestored(uid) else { throw CloudSyncError.notRestored }
+        }
         let blocks = CloudBackup.blocks(memorization.ayahs)
         let changed = uploadedBlocks.map { uploaded in blocks.filter { uploaded[$0.key, default: [:]] != $0.value } } ?? blocks
         let snapshot = revision.snapshot
@@ -206,4 +220,6 @@ final class CloudSync {
 
 enum CloudSyncError: Error {
     case timedOut
+    /// The account's copy couldn't be fetched to merge with this device's, so nothing was written.
+    case notRestored
 }
