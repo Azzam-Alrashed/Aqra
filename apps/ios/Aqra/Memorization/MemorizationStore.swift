@@ -116,9 +116,15 @@ final class MemorizationStore {
     /// The share of the Quran memorized, counting every juz' equally (a juz' is a twentieth of the Mushaf's pages,
     /// whatever its number of ayat) and a juz' memorized in part by the share of its ayat.
     func quranShare(in store: MushafStore) -> Double {
+        quranShare(in: store) { memorizedCount(in: $0) }
+    }
+
+    /// A share of the Quran by another count of a range's ayat (mastered, verified), every juz' counted equally as in
+    /// `quranShare(in:)`, so the shares can be set side by side.
+    func quranShare(in store: MushafStore, counting count: (ClosedRange<Int>) -> Int) -> Double {
         (1...30).reduce(0.0) { total, juz in
             guard let range = store.juzAyahs[juz] else { return total }
-            return total + Double(memorizedCount(in: range)) / Double(range.count)
+            return total + Double(count(range)) / Double(range.count)
         } / 30
     }
 

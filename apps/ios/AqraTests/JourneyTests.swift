@@ -184,6 +184,20 @@ struct JourneyTests {
         #expect(progress.memorized == range.count && progress.mastered == range.count && progress.verified == range.count)
     }
 
+    @Test func theQuransSharesCountEveryJuzEquallyInEveryMeasure() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        // Juz' ʿAmma, all mastered and verified: a ninth of the Quran's ayat, but a thirtieth of the Mushaf. Mastered
+        // and verified are measured as memorized is, so they can't read more than it.
+        let amma = try #require(store.juzAyahs[30])
+        memorization.replaceAll(Dictionary(uniqueKeysWithValues: amma.map { ($0, AyahMemory(since: day(0), stability: 90)) }))
+        memorization.verify(amma)
+        let memorized = memorization.quranShare(in: store)
+        #expect(abs(memorized - 1.0 / 30) < 0.000_1)
+        #expect(memorization.quranShare(in: store) { memorization.masteredCount(in: $0) } == memorized)
+        #expect(memorization.quranShare(in: store) { memorization.verifiedCount(in: $0) } == memorized)
+    }
+
     @Test func aStageTestAsksAboutWhatsMemorized() throws {
         let store = try store()
         let memorization = MemorizationStore(fileURL: nil)
