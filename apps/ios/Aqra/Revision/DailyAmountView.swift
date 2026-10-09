@@ -6,15 +6,19 @@ struct DailyAmountView: View {
     var memorizedPages: Int
     /// Changing an amount already set (from today's plan), rather than setting it the first time.
     var isEditor = false
+    /// In setup, back to the step before; nil hides «رجوع».
+    var onBack: (() -> Void)?
     var onDone: (Int) -> Void
 
     @State private var amount: Int
     @Environment(\.dismiss) private var dismiss
     @Environment(\.locale) private var locale
 
-    init(memorizedPages: Int, initial: Int, isEditor: Bool = false, onDone: @escaping (Int) -> Void) {
+    init(memorizedPages: Int, initial: Int, isEditor: Bool = false, onBack: (() -> Void)? = nil,
+         onDone: @escaping (Int) -> Void) {
         self.memorizedPages = memorizedPages
         self.isEditor = isEditor
+        self.onBack = onBack
         self.onDone = onDone
         _amount = State(initialValue: min(max(initial, 1), 40))
     }
@@ -49,6 +53,13 @@ struct DailyAmountView: View {
         .padding(.horizontal, 24)
         .padding(.bottom, 12)
         .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .topLeading) {
+            if let onBack {
+                AqraBackButton(action: onBack)
+                    .padding(.horizontal, 18)
+                    .padding(.vertical, 12)
+            }
+        }
         .fontDesign(.rounded)
         .background(Palette.surface.ignoresSafeArea())
         .environment(\.colorScheme, .light)

@@ -7,6 +7,8 @@ struct PlanEditorView: View {
     var store: MushafStore
     /// The last step of setup, where it can be left for later, rather than a sheet changing the plan.
     var isSetup = false
+    /// In setup, back to the step before the first page; nil when there's none.
+    var onBack: (() -> Void)?
     /// Called with the plan chosen, or nil when it's left for later or stopped.
     var onDone: (MemorizationPlan?) -> Void
 
@@ -47,6 +49,13 @@ struct PlanEditorView: View {
             .ignoresSafeArea(edges: .bottom)
 
             if isSetup {
+                // Each page back to the one before, and the first to the step before the plan.
+                if page > 0 || onBack != nil {
+                    AqraBackButton { page > 0 ? back() : onBack?() }
+                        .padding(.horizontal, 18)
+                        .padding(.vertical, 12)
+                        .frame(maxWidth: .infinity, alignment: .leading)
+                }
                 Button("Not now") { finish(nil) }
                     .font(.system(size: 15, weight: .semibold))
                     .foregroundStyle(Palette.inkSoft)
@@ -97,6 +106,10 @@ struct PlanEditorView: View {
 
     private func next() {
         withAnimation { page = min(page + 1, pageCount - 1) }
+    }
+
+    private func back() {
+        withAnimation { page = max(page - 1, 0) }
     }
 
     private func prepare() {
@@ -190,7 +203,8 @@ private struct PlanAmountPage: View {
 }
 
 /// Two facing pages of the fifteen-line Mushaf. `lit` lines glow from the top of the right-hand page, each
-/// lighting from right to left as Arabic is read, then on into the left-hand page.
+/// lighting from right to left as Arabic is read, then on into the left-hand page — and past two pages, into the
+/// next page, rising from behind the left one.
 private struct OpenMushaf: View, Animatable {
     var lit: Double
 
@@ -206,6 +220,11 @@ private struct OpenMushaf: View, Animatable {
         HStack(spacing: 4) {
             // The Mushaf opens right to left: the first page is on the right.
             page(first: Self.lines, outerEdge: .leading)
+                .background {
+                    page(first: Self.lines * 2, outerEdge: .leading)
+                        .rotationEffect(.degrees(-8), anchor: .bottomTrailing)
+                        .opacity(min(max(lit - Double(Self.lines * 2), 0) / 2, 1))
+                }
             page(first: 0, outerEdge: .trailing)
         }
         .environment(\.layoutDirection, .leftToRight)

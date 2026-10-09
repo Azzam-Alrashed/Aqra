@@ -103,6 +103,24 @@ struct AqraChevron: View {
     }
 }
 
+/// «رجوع» at the top of a setup step: the backward chevron in a white circle, pointing the way the screen reads.
+struct AqraBackButton: View {
+    var action: () -> Void
+
+    var body: some View {
+        Button(action: action) {
+            Image(systemName: "chevron.backward")
+                .font(.system(size: 15, weight: .heavy))
+                .foregroundStyle(OnboardingPalette.inkSoft)
+                .frame(width: 36, height: 36)
+                .background(.white, in: Circle())
+                .shadow(color: OnboardingPalette.shadow.opacity(0.10), radius: 8, y: 4)
+        }
+        .buttonStyle(AqraPressStyle())
+        .accessibilityLabel(Text("Back"))
+    }
+}
+
 /// A thin line between a card's rows, starting after their icon tiles.
 struct AqraRowDivider: View {
     var body: some View {

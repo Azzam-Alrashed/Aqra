@@ -11,6 +11,10 @@ enum PlanFormat {
         case 15: Text("1 page")
         case 19: Text("1¼ pages")
         case 23: Text("1½ pages")
+        case 26: Text("1¾ pages")
+        case 30: Text("2 pages")
+        case 34: Text("2¼ pages")
+        case 38: Text("2½ pages")
         default: Text("\(lines) lines")
         }
     }

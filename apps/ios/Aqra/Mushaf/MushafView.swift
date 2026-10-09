@@ -400,7 +400,7 @@ struct MushafRootView: View {
         switch store {
         case .success(let store) where !hasDeclared && setupStep == .plan,
              .success(let store) where afterMarking == .plan:
-            PlanEditorView(store: store, isSetup: true) { _ in
+            PlanEditorView(store: store, isSetup: true, onBack: backFromPlan) { _ in
                 withAnimation {
                     hasDeclared = true
                     afterMarking = .none
@@ -410,7 +410,8 @@ struct MushafRootView: View {
         case .success(let store) where !hasDeclared && setupStep == .dailyAmount,
              .success(let store) where afterMarking == .dailyAmount:
             let pages = RevisionStore.memorizedPages(in: store, memorization: memorization).count
-            DailyAmountView(memorizedPages: pages, initial: revision.effectiveDailyPages(memorizedPages: pages)) { amount in
+            DailyAmountView(memorizedPages: pages, initial: revision.effectiveDailyPages(memorizedPages: pages),
+                            onBack: backToMemorized) { amount in
                 revision.setDailyPages(amount)
                 withAnimation {
                     setupStep = .plan
@@ -437,6 +438,29 @@ struct MushafRootView: View {
             // Only after onboarding: the Mushaf is still loading, for a moment, before the setup.
             OnboardingPalette.surface.ignoresSafeArea()
         }
+    }
+
+    /// «رجوع» on «كم تراجع كل يوم؟»: back to «ماذا تحفظ؟», or to the marking in the Mushaf when that came before.
+    private func backToMemorized() {
+        withAnimation {
+            if afterMarking != .none {
+                startsMarking = true
+                afterMarking = .marking
+            } else {
+                setupStep = .memorized
+            }
+        }
+    }
+
+    /// «رجوع» on the plan's first page: back to the daily revision, or, with nothing memorized, to the step before it.
+    private func backFromPlan() {
+        guard memorization.count == 0 else {
+            withAnimation {
+                if afterMarking == .plan { afterMarking = .dailyAmount } else { setupStep = .dailyAmount }
+            }
+            return
+        }
+        backToMemorized()
     }
 
     /// How the stores answer one another: each revision, portion, teacher's test and stage passed earns its

@@ -1581,6 +1581,46 @@
         }
       }
     },
+    "1¾ pages" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وجه وثلاثة أرباع"
+          }
+        }
+      }
+    },
+    "2 pages" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وجهان"
+          }
+        }
+      }
+    },
+    "2¼ pages" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وجهان وربع"
+          }
+        }
+      }
+    },
+    "2½ pages" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وجهان ونصف"
+          }
+        }
+      }
+    },
     "1½ pages" : {
       "localizations" : {
         "ar" : {
@@ -2706,6 +2746,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "أضف إلى أصدقائك"
+          }
+        }
+      }
+    },
+    "Back" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "رجوع"
           }
         }
       }

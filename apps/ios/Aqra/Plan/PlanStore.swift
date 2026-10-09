@@ -3,8 +3,8 @@ import Observation
 
 /// The rules of the personal plan, in one place so they can be tuned after trying them (docs/SRS.md, §3.7).
 struct PlanPolicy: Hashable, Sendable {
-    /// The daily amounts offered, in lines of the 15-line page: ¼, ½, ¾, 1, 1¼ and 1½ pages.
-    var amountOptions = [4, 8, 11, 15, 19, 23]
+    /// The daily amounts offered, in lines of the 15-line page: from ¼ page up to 2½ pages, a quarter at a time.
+    var amountOptions = [4, 8, 11, 15, 19, 23, 26, 30, 34, 38]
     var defaultAmount = 8
     /// Calendar weekdays (1 is Sunday, 7 Saturday): every day but Friday.
     var defaultStudyDays: Set<Int> = [1, 2, 3, 4, 5, 7]
