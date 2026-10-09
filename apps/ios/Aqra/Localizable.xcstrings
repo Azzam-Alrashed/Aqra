@@ -1635,6 +1635,17 @@
         }
       }
     },
+    "A session less than an hour away offers free seats only: there's no time to bid." : {
+      "comment" : "In a new session's editor, when the start chosen is less than an hour away: auctioned seats are off.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الجلسة التي تبدأ بعد أقل من ساعة مقاعدها مجانية فقط، فلا وقت للمزايدة."
+          }
+        }
+      }
+    },
     "Also booked" : {
       "comment" : "Section title in the Tasmee' tab, below the next booking: the student's later bookings.",
       "localizations" : {
@@ -1664,6 +1675,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الآية %1$lld من سورة %2$@"
+          }
+        }
+      }
+    },
+    "Beside the free seats, these go to the highest bids, in credits. The session is soon, so bidding closes 30 minutes before it; you earn most of each winning bid." : {
+      "comment" : "Under the auctioned seats in a new session's editor, for a session less than three and a half hours away.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلى جانب المقاعد المجانية، تذهب هذه لأعلى العروض بالعملات. الجلسة قريبة، فتُغلق المزايدة قبلها بنصف ساعة، ولك معظم كل عرض فائز."
           }
         }
       }

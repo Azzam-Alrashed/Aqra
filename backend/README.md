@@ -147,7 +147,10 @@ README), with `APPLE_BUNDLE_ID` and `APPLE_APP_ID` (the app's App Store id) set 
 ### The seat auction
 
 A session may offer auctioned seats beside its free ones: `auctionSeats` (1–20), `minBid`, `biddingClosesAt`
-(before `startsAt`; the app sets it three hours before) and `auctionState` (`open`, then `settled`, `cancelled`
+(still ahead and at least 30 minutes before `startsAt`, which is at least an hour away; the app sets it three hours
+before, or 30 minutes before a session sooner than three and a half hours; the policy's
+`lateBiddingClosesBeforeMinutes` and `minAuctionLeadMinutes`, which the rules and the apps mirror, so changing them
+means changing those too) and `auctionState` (`open`, then `settled`, `cancelled`
 or `refunded`). The functions keep `auctionBids` (the active bids), `auctionFloor` (what the next bid must reach)
 and `auctionWon` on the session.
 

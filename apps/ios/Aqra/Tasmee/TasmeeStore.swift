@@ -320,15 +320,26 @@ final class TasmeeStore {
     // A teacher's writes aren't waited for: Firestore keeps them while offline (a halaqah's mosque may have no
     // signal) and sends them when it can. What's refused is reported after the fact.
 
-    /// How long before a session its auction closes (the server's policy, mirrored).
+    /// How long before a session its auction closes, and for a session sooner than that, how long before it closes
+    /// instead; a session less than an hour away offers free seats only (the server's policy, mirrored; AUC-04).
     static let biddingClosesBefore: TimeInterval = 3 * 3_600
+    static let lateBiddingClosesBefore: TimeInterval = 30 * 60
+    static let minAuctionLead: TimeInterval = 3_600
+
+    /// When bidding closes for a session starting at `startsAt` and created `now`: three hours before it, unless that
+    /// would leave less than half an hour to bid, then 30 minutes before it. Nil when it's less than an hour away.
+    static func biddingClosesAt(startsAt: Date, now: Date = .now) -> Date? {
+        let lead = startsAt.timeIntervalSince(now)
+        guard lead >= minAuctionLead else { return nil }
+        let closesBefore = lead - biddingClosesBefore >= lateBiddingClosesBefore ? biddingClosesBefore : lateBiddingClosesBefore
+        return startsAt.addingTimeInterval(-closesBefore)
+    }
 
     func createSession(startsAt: Date, kind: TasmeeSession.Kind, place: String, seats: Int, auctionSeats: Int = 0, minBid: Int = 0) {
         guard let uid, let profile = teacherProfile else { return }
         let reference = database.collection("sessions").document()
-        let auction = auctionSeats > 0
-            ? TasmeeSession.Auction(seats: auctionSeats, minBid: minBid, closesAt: startsAt.addingTimeInterval(-Self.biddingClosesBefore), state: .open)
-            : nil
+        let closesAt = auctionSeats > 0 ? Self.biddingClosesAt(startsAt: startsAt) : nil
+        let auction = closesAt.map { TasmeeSession.Auction(seats: auctionSeats, minBid: minBid, closesAt: $0, state: .open) }
         let session = TasmeeSession(id: reference.documentID, teacherId: uid, teacherName: profile.name, startsAt: startsAt,
                                     kind: kind, place: kind == .video ? "" : place, seats: seats, auction: auction)
         reference.setData(session.document, completion: report)

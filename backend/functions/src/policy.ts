@@ -12,7 +12,12 @@ export interface Policy {
   minFreeSeats: number;
   minBid: number;
   minIncrement: number;
+  /** Bidding closes this long before a session; for a session sooner than that (with less than the late close left
+   * to bid), the late close instead; a session less than the minimum lead away offers free seats only. The session
+   * rules and the apps' session editors mirror these (docs/SRS.md AUC-04). */
   biddingClosesBeforeHours: number;
+  lateBiddingClosesBeforeMinutes: number;
+  minAuctionLeadMinutes: number;
   /** The share of a won seat's price the app keeps; the teacher earns the rest. */
   commissionRate: number;
   /** Credits in each pack, by App Store product id. */
@@ -29,6 +34,8 @@ export const defaultPolicy: Policy = {
   minBid: 0,
   minIncrement: 1,
   biddingClosesBeforeHours: 3,
+  lateBiddingClosesBeforeMinutes: 30,
+  minAuctionLeadMinutes: 60,
   commissionRate: 0.2,
   creditPacks: { "aqra.credits.10": 10, "aqra.credits.30": 30, "aqra.credits.60": 60 },
   allowLocalStoreKit: false,

@@ -544,7 +544,7 @@ opens on the setup or the home.
 | AUC-01 | A session offers reserved free seats (at least one; first come first served, not biddable) and optionally auctioned seats. | M | ✅ | V |
 | AUC-02 | Auctioned seats start free: while seats remain, any bid ≥ the minimum (0) holds one. When all are held, a new bid must beat the lowest winning bid by the increment (1 credit), which outbids it. | M | ✅ | V |
 | AUC-03 | Bidding holds credits; outbid holds are released at once; a bidder may raise their bid (holding the difference); ties go to the earlier bid. | M | ✅ | V |
-| AUC-04 | Bidding closes before the session (3 h); a scheduled function settles it: winning holds are spent, seats and bookings created, teacher earnings recorded. | M | ✅ | V |
+| AUC-04 | Bidding closes before the session: 3 h before, or 30 min before for a session sooner than that (when 3 h would leave under 30 min to bid); a session less than 1 h away offers free seats only. A scheduled function settles it: winning holds are spent, seats and bookings created, teacher earnings recorded. | M | ✅ | V |
 | AUC-05 | All bids go through a Cloud Function in a Firestore transaction, so a seat is never won twice. | M | ✅ | V |
 | AUC-06 | Cancelling a session releases holds (before settlement) or refunds spent credits and reverses the teacher's earnings (after). | M | ✅ | P |
 | AUC-07 | The student sees the current lowest winning bid, their own standing (winning / outbid), and is told when outbid or when they've won. | M | ✅ | V |
@@ -716,6 +716,8 @@ Every number below is a default, kept in one place in code, and open to tuning w
 | minBid | 0 credits |
 | minIncrement | 1 credit |
 | biddingClosesBeforeHours | 3 |
+| lateBiddingClosesBeforeMinutes | 30 (a session sooner than 3 h 30 min) |
+| minAuctionLeadMinutes | 60 (sooner: free seats only) |
 | commissionRate | 0.20 |
 | creditPacks | `aqra.credits.10` → 10, `aqra.credits.30` → 30, `aqra.credits.60` → 60 |
 
@@ -769,7 +771,7 @@ default adopted is given; every one lives in a policy and can be changed without
 | A-14 | Free seats per session. | At least one; the teacher chooses. | AUC-01 |
 | A-15 | Commission. | 20%. | ERN-01 |
 | A-16 | Credit packs and prices. | 10 / 30 / 60 credits; App Store price tiers set in App Store Connect. | PAY-01 |
-| A-17 | Bidding close. | 3 h before the session. | AUC-04 |
+| A-17 | Bidding close. | 3 h before the session; for a session sooner than 3 h 30 min, 30 min before it; under 1 h away, no auctioned seats (decided 2026-10-09). | AUC-04 |
 | A-18 | Teacher vetting beyond ijazah and interview. | Application → interview → approval by an administrator. | TCH-02/04 |
 | A-19 | Competition scope. | Personal challenges, friends' competitions, group khatmah, teacher-run (verified). No public leaderboard. | SOC |
 | A-20 | Points values. | RewardPolicy table. | RWD-01 |

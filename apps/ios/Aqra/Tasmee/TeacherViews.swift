@@ -263,6 +263,8 @@ struct SessionEditor: View {
     }
 
     private var trimmedPlace: String { place.trimmingCharacters(in: .whitespacesAndNewlines) }
+    /// When bidding would close for the start chosen; nil when it's too soon for auctioned seats.
+    private var biddingClosesAt: Date? { TasmeeStore.biddingClosesAt(startsAt: startsAt) }
     /// A session's seats can't go below the students who already booked.
     private var minimumSeats: Int { max(session?.booked ?? 0, 1) }
     private var isValid: Bool { kind == .video || !trimmedPlace.isEmpty }
@@ -317,7 +319,7 @@ struct SessionEditor: View {
                                     .foregroundStyle(Palette.ink)
                                     .frame(minWidth: 28)
                                     .contentTransition(.numericText())
-                                stepButton("plus", enabled: auctionSeats < 20) { auctionSeats += 1 }
+                                stepButton("plus", enabled: auctionSeats < 20 && biddingClosesAt != nil) { auctionSeats += 1 }
                             }
                         }
                         if auctionSeats > 0 {
@@ -336,13 +338,23 @@ struct SessionEditor: View {
                         }
                     }
                 }
-                if auctionSeats > 0 {
-                    Text("Beside the free seats, these go to the highest bids, in credits. Bidding closes three hours before the session; you earn most of each winning bid.")
-                        .aqraFont(size: 12, weight: .medium)
-                        .foregroundStyle(Palette.inkSoft)
-                        .fixedSize(horizontal: false, vertical: true)
-                        .padding(.horizontal, 6)
+                Group {
+                    if let closesAt = biddingClosesAt {
+                        if auctionSeats > 0 {
+                            if startsAt.timeIntervalSince(closesAt) >= TasmeeStore.biddingClosesBefore {
+                                Text("Beside the free seats, these go to the highest bids, in credits. Bidding closes three hours before the session; you earn most of each winning bid.")
+                            } else {
+                                Text("Beside the free seats, these go to the highest bids, in credits. The session is soon, so bidding closes 30 minutes before it; you earn most of each winning bid.")
+                            }
+                        }
+                    } else {
+                        Text("A session less than an hour away offers free seats only: there's no time to bid.")
+                    }
                 }
+                .aqraFont(size: 12, weight: .medium)
+                .foregroundStyle(Palette.inkSoft)
+                .fixedSize(horizontal: false, vertical: true)
+                .padding(.horizontal, 6)
             }
             if kind == .video {
                 Text("Students who book join the call from the session's page, from 15 minutes before it starts.")
@@ -374,6 +386,10 @@ struct SessionEditor: View {
         .animation(.snappy, value: seats)
         .animation(.snappy, value: kind)
         .animation(.snappy, value: auctionSeats)
+        // A start moved too close for bidding takes the auctioned seats away.
+        .onChange(of: startsAt) {
+            if biddingClosesAt == nil { auctionSeats = 0 }
+        }
     }
 
     private func save() {

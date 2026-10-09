@@ -238,12 +238,16 @@ service cloud.firestore {
       allow create: if isVettedTeacher()
         && hasKeys(['teacherId', 'teacherName', 'startsAt', 'place', 'seats', 'booked', 'kind', 'status', 'createdAt'],
                    ['auctionSeats', 'minBid', 'biddingClosesAt', 'auctionState'])
-        // Auctioned seats, beside the free ones: bidding closes before the session starts.
+        // Auctioned seats, beside the free ones: bidding is still open and closes at least 30 minutes before the
+        // session, which is at least an hour away (the policy's lateBiddingClosesBeforeMinutes and
+        // minAuctionLeadMinutes; docs/SRS.md AUC-04).
         && (request.resource.data.get('auctionSeats', 0) == 0
           || (request.resource.data.auctionSeats is int && request.resource.data.auctionSeats > 0 && request.resource.data.auctionSeats <= 20
             && request.resource.data.minBid is int && request.resource.data.minBid >= 0
             && request.resource.data.biddingClosesAt is timestamp
-            && request.resource.data.biddingClosesAt < request.resource.data.startsAt
+            && request.resource.data.biddingClosesAt > request.time
+            && request.resource.data.biddingClosesAt <= request.resource.data.startsAt - duration.value(30, 'm')
+            && request.resource.data.startsAt >= request.time + duration.value(60, 'm')
             && request.resource.data.auctionState == 'open'))
         && request.resource.data.teacherId == request.auth.uid
         && request.resource.data.teacherName is string
