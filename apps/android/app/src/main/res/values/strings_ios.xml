@@ -196,6 +196,8 @@
     <string name="a_month">A month</string>
     <!-- A new achievement -->
     <string name="a_new_achievement">A new achievement</string>
+    <!-- A one-time download · %@ -->
+    <string name="a_one_time_download_s">A one-time download · %s</string>
     <!-- A payout of %lld credits was sent to you. -->
     <plurals name="a_payout_of_n_credits_was_sent_to_you">
         <item quantity="one">A payout of %d credit was sent to you.</item>
@@ -241,6 +243,8 @@
     <string name="add_to_follow_up">Add to follow-up</string>
     <!-- Add your city and a line about you -->
     <string name="add_your_city_and_a_line_about_you">Add your city and a line about you</string>
+    <!-- After a long pause, the next word is shown -->
+    <string name="after_a_long_pause_the_next_word_is_shown">After a long pause, the next word is shown</string>
     <!-- Also booked -->
     <string name="also_booked">Also booked</string>
     <!-- and rise, ayah by ayah. -->
@@ -249,10 +253,14 @@
     <string name="app">App</string>
     <!-- Approved -->
     <string name="approved">Approved</string>
+    <!-- Aqra can\'t use the microphone. Allow it in Settings. -->
+    <string name="aqra_cant_use_the_microphone_allow_it_in_settings">Aqra can\'t use the microphone. Allow it in Settings.</string>
     <!-- Aqra shows the Quran exactly as published, from these sources, with thanks. -->
     <string name="aqra_shows_the_quran_exactly_as_published_from_these_sources">Aqra shows the Quran exactly as published, from these sources, with thanks.</string>
     <!-- ayah %lld -->
     <string name="ayah_n">ayah %d</string>
+    <!-- Ayah %lld -->
+    <string name="ayah_n_2">Ayah %d</string>
     <!-- ayah %lld of %@ -->
     <string name="ayah_n_of_s">ayah %1$d of %2$s</string>
     <!-- Ayat memorized -->
@@ -402,6 +410,10 @@
     <string name="delete_your_backup_q">Delete your backup?</string>
     <!-- Done -->
     <string name="done">Done</string>
+    <!-- Download and begin -->
+    <string name="download_and_begin">Download and begin</string>
+    <!-- Downloading… %@ -->
+    <string name="downloading_s">Downloading… %s</string>
     <!-- Due to you -->
     <string name="due_to_you">Due to you</string>
     <!-- each day? -->
@@ -424,6 +436,8 @@
     <string name="enter_their_code">Enter their code</string>
     <!-- Every ayah is memorized -->
     <string name="every_ayah_is_memorized">Every ayah is memorized</string>
+    <!-- Every ayah without a stumble -->
+    <string name="every_ayah_without_a_stumble">Every ayah without a stumble</string>
     <!-- Every ayah you memorize is a step up -->
     <string name="every_ayah_you_memorize_is_a_step_up">Every ayah you memorize is a step up</string>
     <!-- Every day at %@ -->
@@ -436,6 +450,8 @@
     <string name="everything_that_helps_your_memorization">Everything that helps your memorization,</string>
     <!-- fact separator -->
     <string name="fact_separator">" · "</string>
+    <!-- Finish -->
+    <string name="finish">Finish</string>
     <!-- First new portion -->
     <string name="first_new_portion">First new portion</string>
     <!-- First revision -->
@@ -480,6 +496,8 @@
     <string name="from_the_beginning_of_the_mushaf_in_its_order">From the beginning of the Mushaf, in its order.</string>
     <!-- Full -->
     <string name="full">Full</string>
+    <!-- Getting ready to listen… -->
+    <string name="getting_ready_to_listen">Getting ready to listen…</string>
     <!-- Give it back -->
     <string name="give_it_back">Give it back</string>
     <!-- Hear a friend -->
@@ -584,6 +602,10 @@
     <string name="leave_this_competition_q">Leave this competition?</string>
     <!-- Leave without recording? -->
     <string name="leave_without_recording_q">Leave without recording?</string>
+    <!-- Listening couldn\'t start. Try again. -->
+    <string name="listening_couldnt_start_try_again">Listening couldn\'t start. Try again.</string>
+    <!-- Listening… -->
+    <string name="listening">Listening…</string>
     <!-- Loading teachers… -->
     <string name="loading_teachers">Loading teachers…</string>
     <!-- Lowest bid -->
@@ -660,6 +682,8 @@
         <item quantity="one">Next bid from %d credit</item>
         <item quantity="other">Next bid from %d credits</item>
     </plurals>
+    <!-- Next page -->
+    <string name="next_page">Next page</string>
     <!-- Next portion %@ -->
     <string name="next_portion_s">Next portion %s</string>
     <!-- No one has booked a seat yet. -->
@@ -678,6 +702,8 @@
     <string name="not_a_test">Not a test</string>
     <!-- Not in the call -->
     <string name="not_in_the_call">Not in the call</string>
+    <!-- Not listening -->
+    <string name="not_listening">Not listening</string>
     <!-- Not now -->
     <string name="not_now">Not now</string>
     <!-- Not passed yet -->
@@ -716,6 +742,8 @@
     <string name="outbid">Outbid</string>
     <!-- Page %lld -->
     <string name="page_n">Page %d</string>
+    <!-- Page %lld · %lld of %lld -->
+    <string name="page_n_n_of_n">Page %1$d · %2$d of %3$d</string>
     <!-- Pages %@: bring them back tomorrow to make them firm? -->
     <string name="pages_s_bring_them_back_tomorrow_to_make_them_firm">Pages %s: bring them back tomorrow to make them firm?</string>
     <!-- Pages heard -->
@@ -740,6 +768,8 @@
     <string name="passed">Passed</string>
     <!-- Pause -->
     <string name="pause">Pause</string>
+    <!-- Paused -->
+    <string name="paused">Paused</string>
     <!-- PDF -->
     <string name="pdf">PDF</string>
     <!-- Peace be upon you -->
@@ -752,6 +782,8 @@
     <string name="place">Place</string>
     <!-- Place my bid -->
     <string name="place_my_bid">Place my bid</string>
+    <!-- Preparing… -->
+    <string name="preparing">Preparing…</string>
     <!-- Press and hold an ayah to mark from it to another -->
     <string name="press_and_hold_an_ayah_to_mark_from_it_to">Press and hold an ayah to mark from it to another</string>
     <!-- Progress -->
@@ -764,6 +796,12 @@
     <string name="ramadans_revision">Ramadan\'s revision</string>
     <!-- Read it and repeat it, then tap an ayah to hide it and recite it from memory -->
     <string name="read_it_and_repeat_it_then_tap_an_ayah_to">Read it and repeat it, then tap an ayah to hide it and recite it from memory</string>
+    <!-- Recite aloud -->
+    <string name="recite_aloud">Recite aloud</string>
+    <!-- Recite from memory, and Aqra follows along -->
+    <string name="recite_from_memory_and_aqra_follows_along">Recite from memory, and Aqra follows along</string>
+    <!-- Recite the page again -->
+    <string name="recite_the_page_again">Recite the page again</string>
     <!-- Recite to a friend -->
     <string name="recite_to_a_friend">Recite to a friend</string>
     <!-- Recited to a friend -->
@@ -830,6 +868,8 @@
     <string name="rewards">Rewards</string>
     <!-- Riwayah -->
     <string name="riwayah">Riwayah</string>
+    <!-- Runs the speech model on the device, under the MIT License. -->
+    <string name="runs_the_speech_model_on_the_device_under_the_mit">Runs the speech model on the device, under the MIT License.</string>
     <!-- Save -->
     <string name="save">Save</string>
     <!-- Save changes -->
@@ -914,6 +954,8 @@
     <string name="stay">Stay</string>
     <!-- Stop -->
     <string name="stop">Stop</string>
+    <!-- Stop listening -->
+    <string name="stop_listening">Stop listening</string>
     <!-- Stop the plan -->
     <string name="stop_the_plan">Stop the plan</string>
     <!-- Stop your plan? -->
@@ -952,6 +994,8 @@
     <string name="tap_a_student_to_hear_them_mark_the_ayat_they">Tap a student to hear them: mark the ayat they stumble on, and the pages you heard.</string>
     <!-- Tap an ayah the student stumbled on, press and hold it to say what kind, and mark each page you heard. -->
     <string name="tap_an_ayah_the_student_stumbled_on_press_and_hold">Tap an ayah the student stumbled on, press and hold it to say what kind, and mark each page you heard.</string>
+    <!-- Tap an ayah to mark a stumble or take it back -->
+    <string name="tap_an_ayah_to_mark_a_stumble_or_take_it">Tap an ayah to mark a stumble or take it back</string>
     <!-- Tap the ayat you stumbled on when you revised this page -->
     <string name="tap_the_ayat_you_stumbled_on_when_you_revised_this">Tap the ayat you stumbled on when you revised this page</string>
     <!-- Tap the ayat you\'ve memorized -->
@@ -982,6 +1026,8 @@
     <string name="that_didnt_work_please_try_again">That didn\'t work. Please try again.</string>
     <!-- The App Store can\'t be reached right now. -->
     <string name="the_app_store_cant_be_reached_right_now">The App Store can\'t be reached right now.</string>
+    <!-- The ayat are revealed as you recite -->
+    <string name="the_ayat_are_revealed_as_you_recite">The ayat are revealed as you recite</string>
     <!-- The call opens 15 minutes before -->
     <string name="the_call_opens_15_minutes_before">The call opens 15 minutes before</string>
     <!-- The call opens a quarter of an hour before the session. -->
@@ -992,6 +1038,8 @@
     <string name="the_copy_of_your_progress_kept_online">The copy of your progress kept online</string>
     <!-- The copy of your progress kept online is deleted for good. The progress on this device stays, and is backed up afresh from now on. -->
     <string name="the_copy_of_your_progress_kept_online_is_deleted_for">The copy of your progress kept online is deleted for good. The progress on this device stays, and is backed up afresh from now on.</string>
+    <!-- The download didn\'t finish. Try again. -->
+    <string name="the_download_didnt_finish_try_again">The download didn\'t finish. Try again.</string>
     <!-- The file couldn\'t be uploaded. Check your connection, or try a smaller file. -->
     <string name="the_file_couldnt_be_uploaded_check_your_connection_or_try">The file couldn\'t be uploaded. Check your connection, or try a smaller file.</string>
     <!-- The fuller a juz\', the more of it you\'ve memorized; the deeper its color, the stronger. -->
@@ -1004,8 +1052,12 @@
     <string name="the_quran_text_and_its_data_in_the_riwayah_of">The Quran text and its data, in the riwayah of Hafs.</string>
     <!-- The Quran text, fonts and data -->
     <string name="the_quran_text_fonts_and_data">The Quran text, fonts and data</string>
+    <!-- The revision is recorded, and listening carries on to the next page -->
+    <string name="the_revision_is_recorded_and_listening_carries_on_to_the">The revision is recorded, and listening carries on to the next page</string>
     <!-- The sheikh who granted it -->
     <string name="the_sheikh_who_granted_it">The sheikh who granted it</string>
+    <!-- The speech model trained on Quran recitation that follows a revision aloud, under the Apache 2.0 License. -->
+    <string name="the_speech_model_trained_on_quran_recitation_that_follows_a">The speech model trained on Quran recitation that follows a revision aloud, under the Apache 2.0 License.</string>
     <!-- The stages -->
     <string name="the_stages">The stages</string>
     <!-- The students who booked will see it cancelled. -->
@@ -1112,6 +1164,8 @@
     <string name="what_you_heard">What you heard</string>
     <!-- What you marked will be lost. -->
     <string name="what_you_marked_will_be_lost">What you marked will be lost.</string>
+    <!-- What you stumble on is marked, and you can correct it -->
+    <string name="what_you_stumble_on_is_marked_and_you_can_correct">What you stumble on is marked, and you can correct it</string>
     <!-- What you\'ve memorized stays, and its revision goes on. You can start a plan again anytime. -->
     <string name="what_youve_memorized_stays_and_its_revision_goes_on_you">What you\'ve memorized stays, and its revision goes on. You can start a plan again anytime.</string>
     <!-- When -->
@@ -1148,6 +1202,8 @@
     <string name="won_a_seat">Won a seat</string>
     <!-- You can take the test again %@ -->
     <string name="you_can_take_the_test_again_s">You can take the test again %s</string>
+    <!-- You finished page %lld -->
+    <string name="you_finished_page_n">You finished page %d</string>
     <!-- You need %lld more credits. -->
     <plurals name="you_need_n_more_credits">
         <item quantity="one">You need %d more credit.</item>
@@ -1264,6 +1320,8 @@
     </plurals>
     <!-- Your teacher profile -->
     <string name="your_teacher_profile">Your teacher profile</string>
+    <!-- Your voice stays on your device and isn\'t kept -->
+    <string name="your_voice_stays_on_your_device_and_isnt_kept">Your voice stays on your device and isn\'t kept</string>
     <!-- ¼ page -->
     <string name="page">¼ page</string>
     <!-- ½ page -->

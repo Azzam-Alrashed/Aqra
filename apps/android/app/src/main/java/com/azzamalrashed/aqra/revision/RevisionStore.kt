@@ -8,6 +8,7 @@ import com.azzamalrashed.aqra.core.ProgressJson
 import com.azzamalrashed.aqra.memorization.MemorizationStore
 import com.azzamalrashed.aqra.memorization.writeAtomically
 import com.azzamalrashed.aqra.quran.MushafStore
+import com.azzamalrashed.aqra.tasmee.MistakeType
 import kotlinx.serialization.SerialName
 import kotlinx.serialization.Serializable
 import java.io.File
@@ -390,27 +391,55 @@ class RevisionSession(
     /** The page's memorized ayat, in order: the ones this revision covers. */
     val ayahs: List<Int>,
 ) {
+    /** A word of the page: its ayah and its place in the ayah, from 1. */
+    data class WordRef(val ayah: Int, val position: Int)
+
     /** How many of them are revealed, from the first. */
     var revealed: Int by mutableStateOf(0)
         private set
+    /** When the recitation is followed word by word: how many words of the next ayah are revealed, by their place in it. */
+    var revealedPosition: Int by mutableStateOf(0)
+        private set
     var stumbles: Set<Int> by mutableStateOf(emptySet())
         private set
+    /** What kind each stumble was, when the listener could tell. */
+    var stumbleKinds: Map<Int, Set<MistakeType>> by mutableStateOf(emptyMap())
+        private set
+    /** Words shown after a long pause (the prompt, تلقين). */
+    var prompts: Set<WordRef> by mutableStateOf(emptySet())
+        private set
+    /** Ayat whose stumble the student took back: the listener doesn't mark them again. */
+    private var cleared: Set<Int> = emptySet()
 
     val isComplete: Boolean get() = revealed >= ayahs.size
 
     /** Whether an ayah is covered by this revision. */
     fun covers(ayah: Int): Boolean = ayah in ayahs
 
-    /** Whether an ayah is still veiled. */
+    /** Whether an ayah is still veiled, all of it or the rest of it. */
     fun isVeiled(ayah: Int): Boolean {
         val index = ayahs.indexOf(ayah)
         return index >= 0 && index >= revealed
     }
 
+    /**
+     * Whether a word of the page is still veiled. The ayah-end marker comes after the ayah's last word, so it's revealed
+     * with the whole ayah.
+     */
+    fun isVeiled(ayah: Int, position: Int): Boolean {
+        val index = ayahs.indexOf(ayah)
+        if (index < 0) return false
+        if (index == revealed) return position > revealedPosition
+        return index > revealed
+    }
+
     /** A tap on a revealed ayah marks or unmarks a stumble on it; any other tap reveals the next ayah. */
     fun tap(ayah: Int?) {
         if (ayah != null && covers(ayah) && !isVeiled(ayah)) {
-            stumbles = if (ayah in stumbles) stumbles - ayah else stumbles + ayah
+            if (ayah in stumbles) clearStumble(ayah) else {
+                stumbles = stumbles + ayah
+                cleared = cleared - ayah
+            }
         } else {
             revealNext()
         }
@@ -418,10 +447,34 @@ class RevisionSession(
 
     fun revealNext() {
         revealed = minOf(revealed + 1, ayahs.size)
+        revealedPosition = 0
     }
 
     fun revealAll() {
         revealed = ayahs.size
+        revealedPosition = 0
+    }
+
+    /**
+     * Reveals the page up to a word heard: the ayat before its ayah in full, and its ayah up to it — all of it when
+     * [endsAyah] (its last word on this page).
+     */
+    fun reveal(through: WordRef, endsAyah: Boolean) {
+        val index = ayahs.indexOf(through.ayah)
+        if (index < 0) return
+        if (endsAyah) {
+            if (index + 1 <= revealed) return
+            revealed = index + 1
+            revealedPosition = 0
+        } else if (index > revealed || (index == revealed && through.position > revealedPosition)) {
+            revealed = index
+            revealedPosition = through.position
+        }
+    }
+
+    /** A word shown after a long pause. */
+    fun prompt(word: WordRef) {
+        if (word !in prompts) prompts = prompts + word
     }
 
     /** Marks an ayah as stumbled on, whatever it was (a listener classifying the stumble). */
@@ -429,7 +482,16 @@ class RevisionSession(
         if (covers(ayah)) stumbles = stumbles + ayah
     }
 
+    /** Marks an ayah as stumbled on in the ways the listener heard. One the student cleared stays cleared. */
+    fun markStumble(ayah: Int, kinds: Set<MistakeType>) {
+        if (!covers(ayah) || ayah in cleared || stumbleKinds[ayah].orEmpty().containsAll(kinds)) return
+        stumbles = stumbles + ayah
+        stumbleKinds = stumbleKinds + (ayah to (stumbleKinds[ayah].orEmpty() + kinds))
+    }
+
     fun clearStumble(ayah: Int) {
         stumbles = stumbles - ayah
+        stumbleKinds = stumbleKinds - ayah
+        cleared = cleared + ayah
     }
 }

@@ -105,7 +105,10 @@ read by the applicant and administrators.
 `models/recitation/whisper-base-ar-quran-1.aar`: the speech model that follows a revision aloud (Tarteel's
 `whisper-base-ar-quran`, Apache-2.0, converted for Core ML with WhisperKit's tools, in an Apple Archive; 134,001,846
 bytes, SHA-256 `fd456db6f635bb49a17e4df535e70505ffd03094e9eccc00c3a6f75f8115c686`). The iOS app downloads it from the
-`AqraRecitationModelURL` in its Info.plist. Anyone reads `models/`; no one writes it through the rules: a new
+`AqraRecitationModelURL` in its Info.plist. `models/recitation/whisper-base-ar-quran-1-onnx.zip` is the same model for
+Android, exported to ONNX and quantized to 8 bits (encoder, merged decoder, the mel filter bank and the token list;
+67,272,417 bytes, SHA-256 `25f67e1ea6369c553db0319a0bdb02ecfed6c6ebe42c1accc20763e9cb33b3f1`), downloaded from
+`RecitationModel.DOWNLOAD_URL`. Anyone reads `models/`; no one writes it through the rules: a new
 version gets a new name and is uploaded with the project owner's own credentials, then the app points to it.
 
 ### Teachers: `teachers/{uid}`

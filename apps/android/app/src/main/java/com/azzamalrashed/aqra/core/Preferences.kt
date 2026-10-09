@@ -23,6 +23,8 @@ class Preferences(context: Context) {
     val setupAfterMarking = string("setup.afterMarking", "")
     val lastPage = int("mushaf.lastPage", 1)
     val tajweed = bool("mushaf.tajweed", true)
+    /** Whether the student revises aloud, Aqra following by ear; kept for the next revision. */
+    val recitationListens = bool("recitation.listens", false)
     val topics = bool("mushaf.topics", true)
     val reminderOn = bool("reminder.on", false)
     /** Minutes after midnight. */

@@ -145,6 +145,8 @@ dependencies {
     implementation(libs.zxing.core)
     implementation(libs.code.scanner)
     implementation(libs.livekit.android)
+    // Listening to a revision: runs the Quran-trained Whisper model on the device (recitation/).
+    implementation(libs.onnxruntime.android)
 
     debugImplementation(libs.compose.ui.tooling)
 

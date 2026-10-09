@@ -70,6 +70,9 @@ class MushafStyle(val dark: Boolean) {
     val veil = pick(0xFFE6DAC2, 0xFF3C3228)
     val stumble = pick(0xFFF4BFAE, 0xFF7C3B2D)
     val stumbleText = pick(0xFF9A3E26, 0xFFF6C9B8)
+    /** A word shown as a prompt after a long pause, in a revision followed by ear. */
+    val prompt = pick(0xFFF3DE98, 0xFF6A5622)
+    val promptText = pick(0xFF7A5A12, 0xFFF3DE98)
     /** While choosing how much of a portion was memorized: the wash behind the ayat chosen. */
     val chosen = pick(0xFFCDEBD8, 0xFF24452F)
     /** The bars floating over the page, in the app's colors: white capsules, purple controls on lavender. */

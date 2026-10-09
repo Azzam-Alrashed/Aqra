@@ -469,6 +469,8 @@ private fun SourcesPage() {
         Source("🧩", Palette.sky, "Quranic Universal Library (QUL)", stringResource(R.string.the_mushaf_page_layout_and_the_surah_headers))
         Source("🏷️", Palette.mint, "Ayah by Ayah", stringResource(R.string.the_topic_sections_for_now))
         Source("✒️", Palette.rose, "Amiri", stringResource(R.string.the_typeface_of_the_hadith_under_the_sil_open_font))
+        Source("🎙️", Palette.peach, "Tarteel", stringResource(R.string.the_speech_model_trained_on_quran_recitation_that_follows_a))
+        Source("⚙️", Palette.lavender, "ONNX Runtime (Microsoft)", stringResource(R.string.runs_the_speech_model_on_the_device_under_the_mit))
     }
 }
 
