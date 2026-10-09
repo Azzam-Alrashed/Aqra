@@ -11,11 +11,24 @@ struct AyahText: View {
     /// The ayah's plain (Imla'i) text, read by VoiceOver.
     var spoken: String
     var size: CGFloat
+    /// Whether the ayah-end marker, with its number, is drawn. A stage test's options leave it out, so the answer
+    /// can't be read from the numbers; the words are drawn exactly as published either way.
+    var showsNumber = true
+
+    /// The text without its ayah-end marker: the Complex's text ends every ayah with one right-to-left mark and one
+    /// glyph, U+E959 plus the ayah's number, that draws the numbered marker; only that last word is left out.
+    static func withoutNumber(_ text: String) -> String {
+        guard let space = text.lastIndex(of: " ") else { return text }
+        let last = text[text.index(after: space)...].unicodeScalars
+        guard last.count == 2, last.first == "\u{200F}", let glyph = last.last,
+              (0xE95A...0xE959 + 286).contains(glyph.value) else { return text }
+        return String(text[..<space])
+    }
 
     var body: some View {
         let font = MushafFonts.hafsSmart(size: size) ?? .title3
         WordFlow(spacing: size * 0.28, lineSpacing: size * 0.35) {
-            ForEach(Array(text.split(separator: " ").enumerated()), id: \.offset) { _, word in
+            ForEach(Array((showsNumber ? text : Self.withoutNumber(text)).split(separator: " ").enumerated()), id: \.offset) { _, word in
                 Text(verbatim: String(word))
                     .font(font)
                     // The Complex's font as it is: a design (rounded) would swap it for a system font.

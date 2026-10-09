@@ -198,6 +198,18 @@ struct JourneyTests {
         #expect(memorization.quranShare(in: store) { memorization.verifiedCount(in: $0) } == memorized)
     }
 
+    @Test func aStageTestsOptionsLeaveOutOnlyTheAyahEndMarker() throws {
+        let store = try store()
+        // Every ayah ends with its numbered marker; leaving it out removes that one word and nothing else.
+        for (index, text) in store.ayahTexts.enumerated() {
+            let without = AyahText.withoutNumber(text)
+            let number = store.reference(ofAyah: index).ayah
+            #expect(without + " \u{200F}" + String(UnicodeScalar(0xE959 + UInt32(number))!) == text)
+        }
+        // Text that doesn't end in a marker is left as it is.
+        #expect(AyahText.withoutNumber("بسم الله") == "بسم الله")
+    }
+
     @Test func aStageTestAsksAboutWhatsMemorized() throws {
         let store = try store()
         let memorization = MemorizationStore(fileURL: nil)

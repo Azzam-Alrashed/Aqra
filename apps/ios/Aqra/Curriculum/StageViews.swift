@@ -416,7 +416,8 @@ struct StageTestView: View {
         } label: {
             Group {
                 if question.kind == .nextAyah {
-                    AyahText(text: store.ayahTexts[option], spoken: store.ayahPlainTexts[option], size: 21)
+                    // Without their numbers: the right option would be the one numbered after the question's.
+                    AyahText(text: store.ayahTexts[option], spoken: store.ayahPlainTexts[option], size: 21, showsNumber: false)
                 } else {
                     Text(verbatim: store.surahNames[option] ?? "")
                         .font(.system(size: 18, weight: .bold))
