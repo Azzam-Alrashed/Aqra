@@ -126,6 +126,14 @@ final class PlanStore {
         return plan.studyDays.contains(calendar.component(.weekday, from: date))
     }
 
+    /// Whether a new portion is still due today: a study day of an active plan, none recorded yet today, and
+    /// something left to memorize.
+    func isPortionDue(memorization: MemorizationStore, now: Date = .now) -> Bool {
+        guard let plan, !plan.paused, isStudyDay(now), memorization.count < MushafStore.ayahCount else { return false }
+        let day = calendar.startOfDay(for: now)
+        return !portions.contains { calendar.startOfDay(for: $0.date) == day }
+    }
+
     // MARK: - Today
 
     /// The next portion in the plan's order: the next ayat not yet memorized, about the daily amount, ending at an

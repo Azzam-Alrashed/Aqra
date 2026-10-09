@@ -8,6 +8,8 @@ import UserNotifications
 struct AccountView: View {
     @Environment(AccountStore.self) private var account
     @Environment(PlanStore.self) private var plan
+    @Environment(RevisionStore.self) private var revision
+    @Environment(MemorizationStore.self) private var memorization
     @Environment(\.openURL) private var openURL
     @AppStorage("sounds.on") private var soundsOn = true
     @AppStorage("mushaf.tajweed") private var tajweed = true
@@ -200,7 +202,7 @@ struct AccountView: View {
         Task {
             if await DailyReminder.authorize() {
                 notificationsDenied = false
-                DailyReminder.schedule(minutes: reminderMinutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays })
+                DailyReminder.refresh(minutes: reminderMinutes, revision: revision, plan: plan, memorization: memorization)
             } else {
                 notificationsDenied = true
                 reminderOn = false
@@ -447,10 +449,12 @@ struct ProblemLine: View {
     }
 }
 
-/// The daily reminder of today's wird: one notification a day at the chosen time.
+/// The daily reminder of today's wird: one notification a day at the chosen time, as dated reminders two weeks
+/// ahead, refreshed as the app is used. Today's is left out once today's work is done.
 @MainActor
 enum DailyReminder {
-    private static let identifier = "daily-wird"
+    nonisolated private static let identifier = "daily-wird"
+    nonisolated static let daysAhead = 14
 
     /// Asks to send notifications the first time; false if they're turned off for the app.
     static func authorize() async -> Bool {
@@ -465,36 +469,74 @@ enum DailyReminder {
         }
     }
 
-    /// One reminder a day at the chosen time. With a plan, the study days' reminder also mentions the new portion.
-    static func schedule(minutes: Int, studyDays: Set<Int>? = nil) {
-        let center = UNUserNotificationCenter.current()
-        cancel()
-        func request(_ identifier: String, weekday: Int?, withPortion: Bool) -> UNNotificationRequest {
-            let content = UNMutableNotificationContent()
-            content.title = String(localized: "Today's revision")
-            content.body = withPortion
-                ? String(localized: "Your new portion and your pages for today are waiting for you.")
-                : String(localized: "Your pages for today are waiting for you.")
-            content.sound = .default
-            var time = DateComponents()
-            time.hour = minutes / 60
-            time.minute = minutes % 60
-            time.weekday = weekday
-            return UNNotificationRequest(identifier: identifier, content: content,
-                                         trigger: UNCalendarNotificationTrigger(dateMatching: time, repeats: true))
-        }
-        guard let studyDays else {
-            center.add(request(identifier, weekday: nil, withPortion: false))
-            return
-        }
-        for weekday in 1...7 {
-            center.add(request("\(identifier)-\(weekday)", weekday: weekday, withPortion: studyDays.contains(weekday)))
+    struct Reminder: Equatable {
+        /// «daily-wird-2026-10-09»: one per day, so a day's can be taken away alone.
+        var id: String
+        var fireAt: Date
+        /// On the plan's study days, it also mentions the new portion.
+        var withPortion: Bool
+    }
+
+    /// The reminders to set: one a day at the chosen time for the next two weeks, starting today unless today's time
+    /// has passed or today's work is done.
+    nonisolated static func reminders(minutes: Int, studyDays: Set<Int>?, todayDone: Bool, now: Date,
+                                      calendar: Calendar = .current) -> [Reminder] {
+        let today = calendar.startOfDay(for: now)
+        return (0..<daysAhead).compactMap { offset in
+            guard let day = calendar.date(byAdding: .day, value: offset, to: today),
+                  let fireAt = calendar.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: day),
+                  offset > 0 || (!todayDone && fireAt > now) else { return nil }
+            let parts = calendar.dateComponents([.year, .month, .day], from: day)
+            let id = String(format: "%@-%04d-%02d-%02d", identifier, parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+            return Reminder(id: id, fireAt: fireAt, withPortion: studyDays?.contains(calendar.component(.weekday, from: day)) ?? false)
         }
     }
 
+    /// Whether today's work is done: today's wird complete and, on a study day of an active plan, the new portion
+    /// recorded (or nothing left to memorize).
+    static func isTodayDone(revision: RevisionStore, plan: PlanStore, memorization: MemorizationStore, now: Date = .now) -> Bool {
+        guard let wird = revision.plan, Calendar.current.isDate(wird.day, inSameDayAs: now), wird.isComplete else { return false }
+        return !plan.isPortionDue(memorization: memorization, now: now)
+    }
+
+    /// Sets the reminders from where the student is today.
+    static func refresh(minutes: Int, revision: RevisionStore, plan: PlanStore, memorization: MemorizationStore) {
+        schedule(minutes: minutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays },
+                 todayDone: isTodayDone(revision: revision, plan: plan, memorization: memorization))
+    }
+
+    /// The last change asked for: each waits for the one before, so they never interleave.
+    private static var pending: Task<Void, Never>?
+
+    static func schedule(minutes: Int, studyDays: Set<Int>?, todayDone: Bool) {
+        let reminders = reminders(minutes: minutes, studyDays: studyDays, todayDone: todayDone, now: .now)
+        replace(with: reminders)
+    }
+
     static func cancel() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(
-            withIdentifiers: [identifier] + (1...7).map { "\(identifier)-\($0)" })
+        replace(with: [])
+    }
+
+    private static func replace(with reminders: [Reminder]) {
+        let previous = pending
+        pending = Task {
+            await previous?.value
+            let center = UNUserNotificationCenter.current()
+            // Every reminder set before: the dated ones, and the repeating ones of earlier versions.
+            let old = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(identifier) }
+            center.removePendingNotificationRequests(withIdentifiers: old)
+            for reminder in reminders {
+                let content = UNMutableNotificationContent()
+                content.title = String(localized: "Today's revision")
+                content.body = reminder.withPortion
+                    ? String(localized: "Your new portion and your pages for today are waiting for you.")
+                    : String(localized: "Your pages for today are waiting for you.")
+                content.sound = .default
+                let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: reminder.fireAt)
+                try? await center.add(UNNotificationRequest(identifier: reminder.id, content: content,
+                                                            trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
+            }
+        }
     }
 }
 

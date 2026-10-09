@@ -419,7 +419,7 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | SET-01 | Tajweed and topic color toggles (Mushaf menu and Account), kept app-wide. | M | ✅ | V |
-| SET-02 | A daily reminder at a chosen time; explains when notifications are off in Settings. | M | ✅ | E |
+| SET-02 | A daily reminder at a chosen time; explains when notifications are off in Settings. Today's is left out once today's work is done: the wird, and on a study day the new portion. | M | ✅ | E |
 | SET-03 | The app's language opens the system's per-app language setting. | M | ✅ | V |
 | SET-04 | Sources credits the Complex, Quran Foundation, QUL, Ayah by Ayah and Amiri. | M | ✅ | V |
 | SET-05 | A reminder one hour before each booked session, and on the plan's study days a reminder for the new portion. | S | ✅ | E |
@@ -563,7 +563,7 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | NTF-01 | Server events (outbid, seat won, refund, session cancelled, application status, peer/teacher record) are written to the user's inbox and shown in-app. | S | ✅ | P |
-| NTF-02 | Local notifications for the daily wird, the new portion on study days and booked sessions; never more than one a day for the wird. | S | ✅ | E |
+| NTF-02 | Local notifications for the daily wird, the new portion on study days and booked sessions; never more than one a day for the wird. The wird's are dated, two weeks ahead, and set again as the app is used. | S | ✅ | E |
 | NTF-03 | Push notifications for inbox events once an APNs key is configured. | C | ⛔ DEP-08 | P |
 
 #### 3.2.24 Administration (ADM)

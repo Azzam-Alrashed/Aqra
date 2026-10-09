@@ -68,15 +68,22 @@ struct AppTabView: View {
             if scenePhase == .active {
                 refreshPlan()
                 rewards.checkChallenges(revision: revision, plan: plan)
+                refreshReminder()
             }
         }
         // A reminder an hour before each booked session.
         .onChange(of: tasmee.upcomingBookings, initial: true) { SessionReminders.schedule(tasmee.upcomingBookings) }
-        // The daily reminder mentions the new portion on the plan's study days.
-        .onChange(of: plan.plan) {
-            guard reminderOn else { return }
-            DailyReminder.schedule(minutes: reminderMinutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays })
-        }
+        // The daily reminder mentions the new portion on the plan's study days, and today's goes once today's work
+        // is done.
+        .task { refreshReminder() }
+        .onChange(of: plan.plan) { refreshReminder() }
+        .onChange(of: revision.plan?.isComplete) { refreshReminder() }
+        .onChange(of: plan.portions.count) { refreshReminder() }
+    }
+
+    private func refreshReminder() {
+        guard reminderOn else { return }
+        DailyReminder.refresh(minutes: reminderMinutes, revision: revision, plan: plan, memorization: memorization)
     }
 
     private func refreshPlan() {

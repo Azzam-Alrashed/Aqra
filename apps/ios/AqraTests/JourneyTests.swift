@@ -156,6 +156,44 @@ struct JourneyTests {
         #expect(abs(pace - lines / 9) < 0.001)
     }
 
+    // MARK: - The daily reminder
+
+    @Test func theDailyReminderLooksTwoWeeksAheadAndLeavesOutADoneDay() throws {
+        // day(0) is Sunday 17 January 2027, at 09:00.
+        let evening = 18 * 60, morning = 5 * 60 + 30
+        let all = DailyReminder.reminders(minutes: evening, studyDays: [1, 3], todayDone: false, now: day(0), calendar: calendar)
+        #expect(all.count == DailyReminder.daysAhead)
+        #expect(all.first?.id == "daily-wird-2027-01-17" && all.last?.id == "daily-wird-2027-01-30")
+        #expect(all.first?.fireAt == day(0).addingTimeInterval(9 * 3_600))
+        // The study days' reminders mention the new portion: Sundays and Tuesdays.
+        #expect(all.prefix(7).map(\.withPortion) == [true, false, true, false, false, false, false])
+
+        // Today's work done, or today's time passed: from tomorrow.
+        let done = DailyReminder.reminders(minutes: evening, studyDays: [1, 3], todayDone: true, now: day(0), calendar: calendar)
+        #expect(done.count == DailyReminder.daysAhead - 1 && done.first?.id == "daily-wird-2027-01-18")
+        let passed = DailyReminder.reminders(minutes: morning, studyDays: nil, todayDone: false, now: day(0), calendar: calendar)
+        #expect(passed.first?.id == "daily-wird-2027-01-18" && passed.allSatisfy { !$0.withPortion })
+    }
+
+    @Test func aPortionIsDueOnAStudyDayUntilItsRecorded() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        let plan = PlanStore(fileURL: nil, calendar: calendar)
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        #expect(!plan.isPortionDue(memorization: memorization, now: day(0)))
+        plan.setPlan(MemorizationPlan(dailyLines: 15, studyDays: [1, 2], order: .fromEnd), now: day(0))
+        #expect(plan.isPortionDue(memorization: memorization, now: day(0)))
+        // Not on a rest day (Tuesday).
+        #expect(!plan.isPortionDue(memorization: memorization, now: day(2)))
+        guard case .due(let portion) = plan.today(memorization: memorization, store: store, now: day(0)) else {
+            Issue.record("A portion should be due")
+            return
+        }
+        plan.record(planned: portion, memorized: portion, store: store, memorization: memorization, revision: revision, now: day(0))
+        #expect(!plan.isPortionDue(memorization: memorization, now: day(0)))
+        #expect(plan.isPortionDue(memorization: memorization, now: day(1)))
+    }
+
     // MARK: - Stages and mastery
 
     @Test func stagesMeasureMemorizedMasteredAndVerified() throws {
