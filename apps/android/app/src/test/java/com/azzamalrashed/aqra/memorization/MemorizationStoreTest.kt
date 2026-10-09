@@ -110,4 +110,48 @@ class MemorizationStoreTest {
         session.toggle(10..14)
         assertEquals(0, memorization.memorizedCount(10..14))
     }
+
+    @Test
+    fun undoingAnUnmarkingRestoresTheRecordsExactly() {
+        val memorization = MemorizationStore(file = null)
+        val session = MarkingSession(memorization)
+        memorization.mark(20..29, memorized = true)
+        memorization.recordRevision(20..29, stumbled = setOf(22), at = Moment.now(), policy = ReviewPolicy.STANDARD)
+        memorization.verify(listOf(23, 24))
+        val before = memorization.ayahs
+
+        // Marking offers nothing to undo.
+        session.tap(30)
+        assertTrue(session.unmarked.isEmpty())
+        session.tap(30)
+
+        // A tap: the ayah comes back with its revisions, stumble and teacher's mark.
+        session.tap(22)
+        assertTrue(session.unmarked.size == 1 && !memorization.isMemorized(22))
+        session.undo()
+        assertTrue(memorization.ayahs == before && session.unmarked.isEmpty())
+
+        // A range that unmarks counts its first ayah, unmarked when the range began.
+        session.beginRange(21)
+        assertEquals(1, session.unmarked.size)
+        session.tap(24)
+        assertTrue(session.unmarked.size == 4 && memorization.memorizedCount(20..29) == 6)
+        session.undo()
+        assertEquals(before, memorization.ayahs)
+
+        // A whole page.
+        session.toggle(20..29)
+        assertTrue(session.unmarked.size == 10 && memorization.count == 0)
+        session.undo()
+        assertEquals(before, memorization.ayahs)
+
+        // The undo expires, but an earlier unmarking's timer doesn't take a later one's.
+        session.tap(25)
+        val first = session.unmarkedVersion
+        session.tap(26)
+        session.expireUndo(first)
+        assertEquals(listOf(26), session.unmarked.keys.sorted())
+        session.expireUndo(session.unmarkedVersion)
+        assertTrue(session.unmarked.isEmpty())
+    }
 }

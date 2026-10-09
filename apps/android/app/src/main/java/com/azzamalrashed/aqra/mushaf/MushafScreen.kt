@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.WindowInsets
 import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.systemBarsIgnoringVisibility
 import androidx.compose.foundation.layout.union
 import androidx.compose.foundation.layout.windowInsetsPadding
@@ -36,6 +37,7 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.List
+import androidx.compose.material.icons.automirrored.rounded.Undo
 import androidx.compose.material.icons.outlined.Verified
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Home
@@ -79,6 +81,7 @@ import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.ui.components.FloatingCapsule
 import com.azzamalrashed.aqra.ui.components.FloatingPanel
 import com.azzamalrashed.aqra.ui.components.MarkingButton
+import com.azzamalrashed.aqra.ui.components.pressable
 import com.azzamalrashed.aqra.ui.components.softShadow
 import androidx.compose.foundation.layout.height
 import com.azzamalrashed.aqra.ui.theme.MushafStyle
@@ -87,6 +90,7 @@ import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.arabicDigits
 import com.azzamalrashed.aqra.ui.util.factSeparator
 import com.azzamalrashed.aqra.ui.util.ARABIC_SEPARATOR
+import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -368,6 +372,15 @@ private fun MarkingBar(
     onDone: () -> Unit,
 ) {
     val ayahs = store.page(pages.first()).ayahs.first..store.page(pages.last()).ayahs.last
+    // The app's own direction, for the bar's lines of text inside its Mushaf-ordered (right-to-left) layout.
+    val direction = LocalLayoutDirection.current
+    val unmarked = marking.unmarked
+    // The undo is offered for a few seconds after each unmarking.
+    LaunchedEffect(marking.unmarkedVersion) {
+        val version = marking.unmarkedVersion
+        delay(6_000)
+        marking.expireUndo(version)
+    }
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         FloatingPanel(style) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
@@ -378,11 +391,29 @@ private fun MarkingBar(
                         style = aqraStyle(17f, Weight.heavy, style.ink),
                     )
                 }
-                Text(
-                    pluralStringResource(R.plurals.n_ayat_memorized, app.memorization.count, app.memorization.count) + factSeparator() +
-                        stringResource(R.string.press_and_hold_an_ayah_to_mark_from_it_to),
-                    style = aqraStyle(12f, Weight.semibold, style.chrome), maxLines = 1,
-                )
+                if (unmarked.isEmpty()) {
+                    Text(
+                        pluralStringResource(R.plurals.n_ayat_memorized, app.memorization.count, app.memorization.count) + factSeparator() +
+                            stringResource(R.string.press_and_hold_an_ayah_to_mark_from_it_to),
+                        style = aqraStyle(12f, Weight.semibold, style.chrome), maxLines = 1,
+                    )
+                } else {
+                    // An unmarked ayah loses its record; for a moment it can be brought back as it was.
+                    CompositionLocalProvider(LocalLayoutDirection provides direction) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Text(pluralStringResource(R.plurals.unmarked_n_ayat, unmarked.size, unmarked.size),
+                                style = aqraStyle(12f, Weight.semibold, style.chrome), maxLines = 1)
+                            Row(
+                                Modifier.heightIn(min = 26.dp).background(style.barAccentFill, CircleShape)
+                                    .pressable { marking.undo() }.padding(horizontal = 10.dp),
+                                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(4.dp),
+                            ) {
+                                Icon(Icons.AutoMirrored.Rounded.Undo, null, tint = style.barAccent, modifier = Modifier.size(14.dp))
+                                Text(stringResource(R.string.undo), style = aqraStyle(12f, Weight.bold, style.barAccent))
+                            }
+                        }
+                    }
+                }
             }
             Spacer(Modifier.size(14.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
