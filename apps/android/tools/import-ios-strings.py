@@ -58,6 +58,13 @@ def escape(value: str) -> str:
     return value
 
 
+def text(value: str) -> str:
+    """A value as resource text. Android trims a value's leading and trailing spaces unless it's quoted, so one that
+    has them (the fact separator « · ») is written in quotes."""
+    escaped = escape(value)
+    return f'"{escaped}"' if value != value.strip() else escaped
+
+
 def count_args(key: str) -> int:
     return len(SPECIFIER.findall(key))
 
@@ -145,13 +152,13 @@ def main():
             lines.append(f"    <!-- {comment(key)} -->")
             if kind == "string":
                 formatted = ' formatted="false"' if "%" in value and count_args(key) == 0 else ""
-                lines.append(f'    <string name="{resource}"{formatted}>{escape(value)}</string>')
+                lines.append(f'    <string name="{resource}"{formatted}>{text(value)}</string>')
             else:
                 lines.append(f'    <plurals name="{resource}">')
                 order = ARABIC_QUANTITIES if language == "ar" else ["zero", "one", "two", "few", "many", "other"]
                 for quantity in order:
                     if quantity in value:
-                        lines.append(f'        <item quantity="{quantity}">{escape(value[quantity])}</item>')
+                        lines.append(f'        <item quantity="{quantity}">{text(value[quantity])}</item>')
                 lines.append("    </plurals>")
         lines.append("</resources>")
         path = RES / folder / "strings_ios.xml"
