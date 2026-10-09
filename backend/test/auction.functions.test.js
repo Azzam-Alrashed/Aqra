@@ -138,6 +138,9 @@ describe("the seat auction", () => {
     assert.equal((await adminDb.doc("sessions/s1").get()).data().auctionState, "refunded");
     const refund = await adminDb.collection(`users/${bob.uid}/inbox`).where("kind", "==", "refund").get();
     assert.equal(refund.size, 1);
+    // The message says which session: its start.
+    const startsAt = (await adminDb.doc("sessions/s1").get()).data().startsAt;
+    assert.equal(refund.docs[0].data().startsAt.toMillis(), startsAt.toMillis());
   });
 
   test("a bidder who took a free seat meanwhile keeps it, and isn't charged for another", async () => {
@@ -168,6 +171,9 @@ describe("the seat auction", () => {
     await eventually(async () => assert.deepEqual([(await wallet(bob.uid)).balance, (await wallet(bob.uid)).held], [10, 0]));
     assert.equal((await adminDb.doc(`sessions/s1/bids/${bob.uid}`).get()).data().status, "released");
     assert.equal((await adminDb.doc("sessions/s1").get()).data().auctionState, "cancelled");
+    const message = (await adminDb.collection(`users/${bob.uid}/inbox`).where("kind", "==", "cancelled").get()).docs[0].data();
+    assert.equal(message.amount, 4);
+    assert.equal(message.startsAt.toMillis(), (await adminDb.doc("sessions/s1").get()).data().startsAt.toMillis());
   });
 
   test("a deleted account's wallet goes with it, and its application in any state", async () => {

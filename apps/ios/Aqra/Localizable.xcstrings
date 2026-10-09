@@ -24,6 +24,28 @@
         }
       }
     },
+    "%@ cancelled their session on %@." : {
+      "comment" : "Inbox message: a teacher cancelled a session the student had a seat in. The second %@ is the session's day and time, e.g. «Wednesday 8 October, 8:00 PM».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغى %1$@ جلسته يوم %2$@."
+          }
+        }
+      }
+    },
+    "%@ cancelled their session on %@: your %lld credits are back." : {
+      "comment" : "Inbox message: a teacher cancelled a session the student paid or bid credits for, which came back. The second %@ is the session's day and time.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغى %1$@ جلسته يوم %2$@، فعاد إليك ما دفعته من عملات (%3$lld)."
+          }
+        }
+      }
+    },
     "%@ credits" : {
       "localizations" : {
         "ar" : {
@@ -1613,6 +1635,17 @@
         }
       }
     },
+    "Also booked" : {
+      "comment" : "Section title in the Tasmee' tab, below the next booking: the student's later bookings.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حجوزات أخرى"
+          }
+        }
+      }
+    },
     "ayah %lld" : {
       "comment" : "An ayah named by its number, inside a VoiceOver action such as «Hide ayah 5».",
       "localizations" : {
@@ -1631,6 +1664,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الآية %1$lld من سورة %2$@"
+          }
+        }
+      }
+    },
+    "Cancelled by the teacher" : {
+      "comment" : "In a row of a later booking, after its struck-through date: the teacher cancelled that session.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغاها المعلّم"
           }
         }
       }

@@ -183,7 +183,8 @@ export const settleAuctionNow = onCall(async (request) => {
 });
 
 /** A session cancelled by its teacher: holds still open are released; credits already spent are refunded and the
- * teacher's share reversed; everyone who had a seat is told. */
+ * teacher's share reversed; everyone who had a seat or a bid is told, with the session's start so the message can say
+ * which one. */
 export const onSessionChanged = onDocumentUpdated("sessions/{sessionId}", async (event) => {
   const before = event.data?.before;
   const after = event.data?.after;
@@ -191,6 +192,7 @@ export const onSessionChanged = onDocumentUpdated("sessions/{sessionId}", async 
   const sessionRef = after.ref;
   const sessionId = event.params.sessionId;
   const teacherName = after.get("teacherName") ?? "";
+  const startsAt = after.get("startsAt") ?? null;
 
   await db.runTransaction(async (tx) => {
     const session = await tx.get(sessionRef);
@@ -209,7 +211,7 @@ export const onSessionChanged = onDocumentUpdated("sessions/{sessionId}", async 
       const amount = bid.get("amount") ?? 0;
       if (wallets[index++].exists && amount > 0) move(tx, bid.id, "release", { balance: amount, held: -amount }, amount, { sessionId });
       tx.update(bid.ref, { status: "released" });
-      notify(tx, bid.id, { kind: "cancelled", sessionId, teacherName, amount });
+      notify(tx, bid.id, { kind: "cancelled", sessionId, teacherName, amount, startsAt });
     }
     let reversed = 0;
     for (const seat of refunds) {
@@ -227,7 +229,9 @@ export const onSessionChanged = onDocumentUpdated("sessions/{sessionId}", async 
       tx.set(db.doc(`teacherBalances/${teacherId}`), { earned: FieldValue.increment(-reversed), updatedAt: Timestamp.now() }, { merge: true });
     }
     for (const seat of seats) {
-      notify(tx, seat.id, { kind: refunds.includes(seat) ? "refund" : "cancelled", sessionId, teacherName, amount: seat.get("paid") ?? 0 });
+      notify(tx, seat.id, {
+        kind: refunds.includes(seat) ? "refund" : "cancelled", sessionId, teacherName, amount: seat.get("paid") ?? 0, startsAt,
+      });
     }
     if (state === "open" || state === "settled") tx.update(sessionRef, { auctionState: state === "open" ? "cancelled" : "refunded" });
   });

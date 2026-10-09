@@ -34,10 +34,7 @@ struct TasmeeView: View {
                         if tasmee.isTeacher {
                             teacherSections
                         }
-                        if let booking = tasmee.nextBooking {
-                            AqraSectionTitle(title: "Your next tasmee'").padding(.top, 10)
-                            bookingCard(booking)
-                        }
+                        bookingsSection
                         AqraSectionTitle(title: "With a friend").padding(.top, 10)
                         friendCard
                         AqraSectionTitle(title: "Teachers").padding(.top, 10)
@@ -201,7 +198,55 @@ struct TasmeeView: View {
         }
     }
 
-    // MARK: - The student's booking
+    // MARK: - The student's bookings
+
+    /// The next booking in full, and any later ones as rows: a teacher may cancel any of them.
+    @ViewBuilder
+    private var bookingsSection: some View {
+        let bookings = tasmee.upcomingBookings
+        if let next = bookings.first {
+            AqraSectionTitle(title: "Your next tasmee'").padding(.top, 10)
+            bookingCard(next)
+        }
+        if bookings.count > 1 {
+            AqraSectionTitle(title: "Also booked").padding(.top, 10)
+            AqraCard(padding: 0, radius: 24) {
+                VStack(spacing: 0) {
+                    ForEach(Array(bookings.dropFirst().enumerated()), id: \.element.id) { index, booking in
+                        if index > 0 { AqraRowDivider() }
+                        bookingRow(booking)
+                    }
+                }
+            }
+        }
+        if !bookings.isEmpty, let problem {
+            ProblemLine(problem: problem).padding(.horizontal, 6)
+        }
+    }
+
+    private func bookingRow(_ booking: Booking) -> some View {
+        let live = tasmee.session(of: booking)
+        let cancelled = live?.status == .cancelled
+        let when = Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt)).strikethrough(cancelled)
+        return AqraRow(icon: booking.kind == .video ? "🎥" : "🎓", tint: cancelled ? Palette.rose : Palette.mint,
+                       title: Text(verbatim: booking.teacherName),
+                       // The place on a line of its own: a name in the other script would reorder the date's line.
+                       detail: when + Text(verbatim: "\n")
+                           + (cancelled ? Text("Cancelled by the teacher") : TasmeeFormat.place(live.map { Booking($0) } ?? booking))) {
+            bookingButton(booking, cancelled: cancelled)
+        }
+    }
+
+    private func bookingButton(_ booking: Booking, cancelled: Bool) -> some View {
+        Button(cancelled ? "Remove" : "Cancel booking") { cancelling = booking }
+            .aqraFont(size: 13, weight: .bold)
+            .foregroundStyle(Palette.brand)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 3)
+            .frame(minHeight: 28)
+            .background(Palette.lavender, in: Capsule())
+            .buttonStyle(.plain)
+    }
 
     private func bookingCard(_ booking: Booking) -> some View {
         let live = tasmee.session(of: booking)
@@ -228,20 +273,10 @@ struct TasmeeView: View {
                         }
                     }
                     Spacer(minLength: 4)
-                    Button(cancelled ? "Remove" : "Cancel booking") { cancelling = booking }
-                        .aqraFont(size: 13, weight: .bold)
-                        .foregroundStyle(Palette.brand)
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 3)
-                        .frame(minHeight: 28)
-                        .background(Palette.lavender, in: Capsule())
-                        .buttonStyle(.plain)
+                    bookingButton(booking, cancelled: cancelled)
                 }
                 if booking.kind == .video, let live, !cancelled {
                     JoinCallButton(session: live)
-                }
-                if let problem {
-                    ProblemLine(problem: problem)
                 }
             }
         }

@@ -40,6 +40,7 @@ struct InboxButton: View {
 /// Messages from the server and the team.
 struct InboxView: View {
     @Environment(InboxStore.self) private var inbox
+    @Environment(TasmeeStore.self) private var tasmee
 
     var body: some View {
         ScrollView {
@@ -117,8 +118,7 @@ struct InboxView: View {
         switch message.kind {
         case .outbid: Text("You were outbid in \(message.teacherName)'s session. Your \(message.amount) credits are back.")
         case .won: Text("You won a seat in \(message.teacherName)'s session.")
-        case .cancelled: Text("\(message.teacherName) cancelled a session you were in.")
-        case .refund: Text("\(message.teacherName) cancelled a session: your \(message.amount) credits are back.")
+        case .cancelled, .refund: cancellation(message)
         case .tasmee: Text("\(message.teacherName) recorded your tasmee' of \(message.pages) pages.")
         case .application:
             switch message.status {
@@ -129,6 +129,20 @@ struct InboxView: View {
             }
         case .payout: Text("A payout of \(message.amount) credits was sent to you.")
         }
+    }
+
+    /// A cancelled session, named by its day and time: the server sends its start, and older messages find it among
+    /// the bookings. Credits held or paid for it are back.
+    private func cancellation(_ message: InboxStore.Message) -> Text {
+        guard let startsAt = message.startsAt ?? tasmee.startOfBooked(message.sessionId) else {
+            return message.amount > 0
+                ? Text("\(message.teacherName) cancelled a session: your \(message.amount) credits are back.")
+                : Text("\(message.teacherName) cancelled a session you were in.")
+        }
+        let when = TasmeeFormat.when(startsAt)
+        return message.amount > 0
+            ? Text("\(message.teacherName) cancelled their session on \(when): your \(message.amount) credits are back.")
+            : Text("\(message.teacherName) cancelled their session on \(when).")
     }
 }
 

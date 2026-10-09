@@ -224,6 +224,11 @@ final class TasmeeStore {
 
     var nextBooking: Booking? { upcomingBookings.first }
 
+    /// When a booked session was to start, if it's still among the bookings.
+    func startOfBooked(_ sessionId: String) -> Date? {
+        bookedSessions[sessionId]?.startsAt ?? bookings.first { $0.id == sessionId }?.startsAt
+    }
+
     // MARK: - Teachers and their sessions
 
     func loadTeachers() async {
