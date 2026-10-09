@@ -18,3 +18,15 @@ enum AqraFont {
         .custom(bold ? "Amiri-Bold" : "Amiri-Regular", size: size, relativeTo: .title3)
     }
 }
+
+/// What separates two facts on one line. English uses a middle dot; Arabic uses its comma, because a middle dot
+/// beside Arabic-Indic digits reads as a zero: «٣ · ٤» looks like «٣٠٤».
+enum Separator {
+    /// Between two facts in the app's language, with its spaces: " · ", or "، " in Arabic.
+    static var facts: String {
+        String(localized: "fact separator", defaultValue: " · ", comment: "Between two facts on one line, with its spaces. Arabic uses its comma: a middle dot beside Arabic-Indic digits reads as a zero.")
+    }
+
+    /// Between two facts in a line that's always Arabic (the Mushaf's own lines, portions, pages heard).
+    static let arabic = "، "
+}

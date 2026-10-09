@@ -30,7 +30,7 @@ enum PlanFormat {
             let name = store.surahNames[group.surah] ?? ""
             let range = group.first == group.last ? arabic(group.first) : "\(arabic(group.first))–\(arabic(group.last))"
             return "\(name) \(range)"
-        }.joined(separator: " · ")
+        }.joined(separator: Separator.arabic)
     }
 
     /// «رجب ١٤٤٩»: a far date, by the Hijri month.

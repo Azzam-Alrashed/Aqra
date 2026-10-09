@@ -107,7 +107,7 @@ struct TasmeeRecordRow: View {
     private var detail: Text {
         let counts = TasmeeFormat.counts(pages: Set(record.pages).count, stumbles: record.stumbles.count)
         guard showsListener || record.test != nil else { return counts }
-        return Text(verbatim: record.at.formatted(.relative(presentation: .named))) + Text(verbatim: " · ") + counts
+        return Text(verbatim: record.at.formatted(.relative(presentation: .named))) + Text(verbatim: Separator.facts) + counts
     }
 }
 
@@ -134,7 +134,7 @@ struct TasmeeRecordDetails: View {
                     .foregroundStyle(Palette.ink)
                     Group {
                         if showsListener && !record.teacherName.isEmpty {
-                            Text(verbatim: record.teacherName + " · " + TasmeeFormat.when(record.at))
+                            Text(verbatim: record.teacherName + Separator.facts + TasmeeFormat.when(record.at))
                         } else {
                             Text(verbatim: TasmeeFormat.when(record.at))
                         }
@@ -212,7 +212,7 @@ struct TasmeeRecordDetails: View {
         return groups.map { group in
             let range = group.pages.count > 1 ? "\(arabic(group.pages.first!))–\(arabic(group.pages.last!))" : arabic(group.pages[0])
             return "\(store.surahNames[group.surah] ?? ""): \(range)"
-        }.joined(separator: " · ")
+        }.joined(separator: Separator.arabic)
     }
 
     private func arabic(_ number: Int) -> String {

@@ -137,7 +137,7 @@ struct TeacherView: View {
         let seats = booked ? Text("Booked") : Text("Seats left: \(session.seatsLeft)")
         return AqraRow(icon: session.kind == .video ? "🎥" : "📅", tint: Palette.sky,
                        title: Text(verbatim: TasmeeFormat.when(session.startsAt)),
-                       detail: seats + Text(verbatim: " · ") + TasmeeFormat.place(session)) {
+                       detail: seats + Text(verbatim: Separator.facts) + TasmeeFormat.place(session)) {
             if working == session.id {
                 ProgressView().tint(Palette.brand)
             } else if booked {
@@ -593,7 +593,7 @@ struct SessionView: View {
         guard let summary = seat.juzSummary else { return pages }
         let numbers = summary.split(separator: ",").compactMap { Int($0.trimmingCharacters(in: .whitespaces)) }
         let juz = numbers.isEmpty ? summary : numbers.map { $0.formatted() }.formatted(.list(type: .and, width: .narrow))
-        return pages + Text(verbatim: " · ") + Text("Juz' \(juz)")
+        return pages + Text(verbatim: Separator.facts) + Text("Juz' \(juz)")
     }
 }
 

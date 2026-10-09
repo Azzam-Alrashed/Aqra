@@ -479,12 +479,7 @@ struct HomeView: View {
                         Text("Continue reading")
                             .font(.system(size: 12, weight: .semibold))
                             .foregroundStyle(Palette.inkSoft)
-                        HStack(spacing: 5) {
-                            Text(verbatim: store.surahNames[page.surah] ?? "")
-                            Text(verbatim: "·")
-                                .accessibilityHidden(true)
-                            Text("Page \(page.number)")
-                        }
+                        (Text(verbatim: (store.surahNames[page.surah] ?? "") + Separator.facts) + Text("Page \(page.number)"))
                         .font(.system(size: 16, weight: .heavy))
                         .foregroundStyle(Palette.ink)
                         .lineLimit(1)
@@ -617,7 +612,7 @@ struct HomeView: View {
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(Palette.ink)
                             .lineLimit(1)
-                        (Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + " · ")
+                        (Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + Separator.facts)
                             + TasmeeFormat.place(live.map { Booking($0) } ?? booking))
                             .font(.system(size: 12, weight: .bold))
                             .foregroundStyle(cancelled ? Palette.inkSoft : Palette.brand)
@@ -817,7 +812,7 @@ struct HomeView: View {
             store.juzAyahs[juz].map { memorization.memorizedCount(in: $0) == $0.count } ?? false
         }.count
         let ayat = Text("\(memorization.count) ayat")
-        return fullJuz > 0 ? ayat + Text(verbatim: " · ") + Text("\(fullJuz) juz'") : ayat
+        return fullJuz > 0 ? ayat + Text(verbatim: Separator.facts) + Text("\(fullJuz) juz'") : ayat
     }
 }
 

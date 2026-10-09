@@ -162,7 +162,7 @@ struct TasmeeView: View {
                         // The count first: a place name in the other script would otherwise reorder the line.
                         AqraRow(icon: session.kind == .video ? "🎥" : "📅", tint: Palette.sky,
                                 title: Text(verbatim: TasmeeFormat.when(session.startsAt)),
-                                detail: Text("\(session.booked) of \(session.seats) seats") + Text(verbatim: " · ") + TasmeeFormat.place(session))
+                                detail: Text("\(session.booked) of \(session.seats) seats") + Text(verbatim: Separator.facts) + TasmeeFormat.place(session))
                     }
                     .buttonStyle(.plain)
                     AqraRowDivider()
@@ -373,7 +373,7 @@ enum TasmeeFormat {
     /// The teacher's city and line, or nil when they wrote neither.
     static func about(_ teacher: Teacher) -> String? {
         let parts = [teacher.city, teacher.line].filter { !$0.isEmpty }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: Separator.facts)
     }
 
     /// Where a session is held: its place, or the video call.
@@ -387,7 +387,7 @@ enum TasmeeFormat {
 
     /// «صفحتان · تعثّر واحد»: each count with its own plural.
     static func counts(pages: Int, stumbles: Int) -> Text {
-        Text("\(pages) pages") + Text(verbatim: " · ") + Text("\(stumbles) stumbles")
+        Text("\(pages) pages") + Text(verbatim: Separator.facts) + Text("\(stumbles) stumbles")
     }
 }
 

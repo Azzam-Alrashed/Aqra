@@ -150,12 +150,8 @@ struct MushafView: View {
                     Text(marking.rangeStart == nil ? "Tap the ayat you've memorized" : "Now tap the last ayah of the range")
                         .font(.system(size: 17, weight: .heavy, design: .rounded))
                         .foregroundStyle(MushafStyle.ink)
-                    HStack(spacing: 6) {
-                        Text("\(memorization.count) ayat memorized")
-                        Text(verbatim: "·")
-                            .accessibilityHidden(true)
-                        Text("Press and hold an ayah to mark from it to another")
-                    }
+                    (Text("\(memorization.count) ayat memorized") + Text(verbatim: Separator.facts)
+                        + Text("Press and hold an ayah to mark from it to another"))
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
                     .foregroundStyle(MushafStyle.chrome)
                     .lineLimit(1)
@@ -419,7 +415,7 @@ struct MushafTopBar<Leading: View, Trailing: View>: View {
                     Text(verbatim: store.surahNames[page.surah] ?? "")
                         .font(.system(size: 15, weight: .heavy, design: .rounded))
                         .foregroundStyle(MushafStyle.ink)
-                    Text(verbatim: "الجزء \(arabic(page.juz)) · الصفحة \(arabic(page.number))")
+                    Text(verbatim: "الجزء \(arabic(page.juz))" + Separator.arabic + "الصفحة \(arabic(page.number))")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(MushafStyle.chrome)
                 }

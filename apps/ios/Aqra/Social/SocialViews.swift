@@ -390,10 +390,8 @@ struct CompetitionView: View {
                     Text(verbatim: live.title)
                         .font(.system(size: 26, weight: .heavy))
                         .foregroundStyle(Palette.ink)
-                    HStack(spacing: 6) {
-                        Text(live.metric.title)
-                        Text(verbatim: "·")
-                            .accessibilityHidden(true)
+                    HStack(spacing: 0) {
+                        Text(live.metric.title) + Text(verbatim: Separator.facts)
                         if live.isRunning() {
                             Text("Until \(live.endsAt.formatted(date: .abbreviated, time: .omitted))")
                         } else {

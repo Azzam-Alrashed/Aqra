@@ -100,7 +100,7 @@ struct MyProgressView: View {
             AqraCard(padding: 0, radius: 24) {
                 if let current = plan.plan {
                     AqraRow(icon: current.paused ? "⏸️" : "✍️", tint: Palette.butter,
-                            title: PlanFormat.amount(current.dailyLines) + Text(verbatim: " · ") + Text("\(current.studyDays.count) days a week"),
+                            title: PlanFormat.amount(current.dailyLines) + Text(verbatim: Separator.facts) + Text("\(current.studyDays.count) days a week"),
                             detail: planDetail)
                 } else {
                     AqraRow(icon: "✍️", tint: Palette.butter, title: Text("Memorize new portions"),
@@ -114,7 +114,7 @@ struct MyProgressView: View {
     private var planDetail: Text {
         let week = Int(plan.lines(inLast: 7).rounded())
         if let date = plan.completionDate(memorization: memorization, store: store) {
-            return Text("\(week) lines this week") + Text(verbatim: " · ") + Text("Completion: \(PlanFormat.month(date))")
+            return Text("\(week) lines this week") + Text(verbatim: Separator.facts) + Text("Completion: \(PlanFormat.month(date))")
         }
         return Text("\(week) lines this week")
     }
@@ -252,7 +252,7 @@ struct MyProgressView: View {
         .overlay(shape.strokeBorder(share > 0 ? .white.opacity(0.8) : Palette.lavender, lineWidth: 1.2))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Juz' \(juz)"))
-        .accessibilityValue(Text(verbatim: "\(share.formatted(.percent.precision(.fractionLength(0)))) · \(strength.formatted(.percent.precision(.fractionLength(0))))"))
+        .accessibilityValue(Text(verbatim: [share, strength].map { $0.formatted(.percent.precision(.fractionLength(0))) }.formatted(.list(type: .and, width: .narrow))))
     }
 }
 

@@ -232,7 +232,7 @@ private struct SessionCard: View {
                     Text(verbatim: "تسميع مع شيخ")
                         .font(.system(size: 15, weight: .heavy))
                         .foregroundStyle(Palette.ink)
-                    Text(verbatim: "غدًا · ٨:٠٠ م")
+                    Text(verbatim: "غدًا" + Separator.arabic + "٨:٠٠ م")
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Palette.inkSoft)
                 }

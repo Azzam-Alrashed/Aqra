@@ -527,7 +527,7 @@ private struct PlanFinishPage<Extra: View>: View {
 
     /// «نصف وجه · ٦ أيام في الأسبوع»
     private var summary: Text {
-        PlanFormat.amount(plan.dailyLines) + Text(verbatim: " · ") + Text("\(plan.studyDays.count) days a week")
+        PlanFormat.amount(plan.dailyLines) + Text(verbatim: Separator.facts) + Text("\(plan.studyDays.count) days a week")
     }
 
     /// Whether a change moves the completion to another month.

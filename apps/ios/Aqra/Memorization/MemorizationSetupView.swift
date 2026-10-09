@@ -117,7 +117,7 @@ struct MemorizationSetupView: View {
             store.juzAyahs[juz].map { memorization.memorizedCount(in: $0) == $0.count } ?? false
         }.count
         let ayat = Text("\(count) ayat")
-        return fullJuz > 0 ? ayat + Text(verbatim: " · ") + Text("\(fullJuz) juz'") : ayat
+        return fullJuz > 0 ? ayat + Text(verbatim: Separator.facts) + Text("\(fullJuz) juz'") : ayat
     }
 
     /// The home's stage, smaller: the stairs in their glowing rings, climbing as juz' and surahs are chosen,

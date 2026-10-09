@@ -855,7 +855,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld من %2$lld · حتى %3$@"
+            "value" : "%1$lld من %2$lld، حتى %3$@"
           }
         }
       }
@@ -1263,7 +1263,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "مقاعد بالمزايدة: %1$lld · العروض: %2$lld"
+            "value" : "مقاعد بالمزايدة: %1$lld، العروض: %2$lld"
           }
         }
       }
@@ -1340,37 +1340,37 @@
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld تعثّرات · أُضيف إلى مراجعتك"
+                  "value" : "%lld تعثّرات، أُضيف إلى مراجعتك"
                 }
               },
               "many" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld تعثّرًا · أُضيف إلى مراجعتك"
+                  "value" : "%lld تعثّرًا، أُضيف إلى مراجعتك"
                 }
               },
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "تعثّر واحد · أُضيف إلى مراجعتك"
+                  "value" : "تعثّر واحد، أُضيف إلى مراجعتك"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld تعثّر · أُضيف إلى مراجعتك"
+                  "value" : "%lld تعثّر، أُضيف إلى مراجعتك"
                 }
               },
               "two" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "تعثّران · أُضيف إلى مراجعتك"
+                  "value" : "تعثّران، أُضيف إلى مراجعتك"
                 }
               },
               "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "لا تعثّر · أُضيف إلى مراجعتك"
+                  "value" : "لا تعثّر، أُضيف إلى مراجعتك"
                 }
               }
             }
@@ -1544,6 +1544,23 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "١٠٠ يوم متتالٍ"
+          }
+        }
+      }
+    },
+    "fact separator" : {
+      "comment" : "Between two facts on one line, with its spaces. Arabic uses its comma: a middle dot beside Arabic-Indic digits reads as a zero.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "، "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · "
           }
         }
       }
@@ -2723,7 +2740,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "عملة · مجانًا ما دامت المقاعد متاحة"
+            "value" : "عملة، مجانًا ما دامت المقاعد متاحة"
           }
         }
       }
