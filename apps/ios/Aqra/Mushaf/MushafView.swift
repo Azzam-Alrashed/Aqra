@@ -197,7 +197,12 @@ struct MushafView: View {
                         .buttonStyle(MarkingButtonStyle())
                     Button("Done") {
                         memorization.saveNow()
-                        withAnimation(.easeInOut(duration: 0.2)) { self.marking = nil }
+                        // Marking as part of setup, Done closes the Mushaf: the daily amount and the plan follow.
+                        if startsMarking {
+                            dismiss()
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.2)) { self.marking = nil }
+                        }
                     }
                     .buttonStyle(MarkingButtonStyle(prominent: true))
                 }
@@ -293,6 +298,19 @@ struct MushafSpreadView: View {
 }
 
 /// Loads the Mushaf once, then shows it — or explains what's missing.
+/// Where a student who chose to mark what they've memorized in the Mushaf is in setup: marking, then the daily
+/// amount (when they've marked anything), then the plan, as the other path goes. Kept across launches.
+enum SetupAfterMarking: String {
+    case none, marking, dailyAmount, plan
+
+    static let key = "setup.afterMarking"
+
+    /// The step after the marking.
+    @MainActor static func next(memorization: MemorizationStore) -> Self {
+        memorization.count > 0 ? .dailyAmount : .plan
+    }
+}
+
 struct MushafRootView: View {
     @State private var store: Result<MushafStore, Error>?
     @State private var memorization: MemorizationStore
@@ -309,6 +327,8 @@ struct MushafRootView: View {
     @State private var startsMarking = false
     /// After choosing what they've memorized, the student chooses how much to revise each day, then their plan.
     @State private var setupStep = SetupStep.memorized
+    /// When they chose to mark it in the Mushaf instead, the same two steps follow the marking.
+    @AppStorage(SetupAfterMarking.key) private var afterMarking = SetupAfterMarking.none
 
     private enum SetupStep { case memorized, dailyAmount, plan }
 
@@ -350,7 +370,14 @@ struct MushafRootView: View {
         .environment(account.inbox)
         .environment(router)
         // After signing out, setup starts from «ماذا تحفظ؟» again.
-        .onChange(of: hasDeclared) { if !hasDeclared { setupStep = .memorized } }
+        .onChange(of: hasDeclared) {
+            if !hasDeclared {
+                setupStep = .memorized
+                afterMarking = .none
+            }
+        }
+        // Once the setup's marking is over, the home that comes back doesn't open the Mushaf on its own again.
+        .onChange(of: afterMarking) { if afterMarking != .marking { startsMarking = false } }
         .onOpenURL { url in
             if !router.open(url) { _ = GIDSignIn.sharedInstance.handle(url) }
         }
@@ -362,6 +389,8 @@ struct MushafRootView: View {
             launch.isReady = true
             guard case .success(let mushaf) = store else { return }
             connect(mushaf)
+            // A setup marking cut short (the app was closed during it) goes on to its next steps.
+            if afterMarking == .marking { afterMarking = .next(memorization: memorization) }
             // A tasmee' waiting in the account can be applied once the Mushaf says which ayat each page holds.
             account.tasmee.mushaf = mushaf
         }
@@ -369,22 +398,31 @@ struct MushafRootView: View {
 
     @ViewBuilder private var screen: some View {
         switch store {
-        case .success(let store) where !hasDeclared && setupStep == .plan:
+        case .success(let store) where !hasDeclared && setupStep == .plan,
+             .success(let store) where afterMarking == .plan:
             PlanEditorView(store: store, isSetup: true) { _ in
-                withAnimation { hasDeclared = true }
+                withAnimation {
+                    hasDeclared = true
+                    afterMarking = .none
+                }
             }
             .transition(.move(edge: .leading).combined(with: .opacity))
-        case .success(let store) where !hasDeclared && setupStep == .dailyAmount:
+        case .success(let store) where !hasDeclared && setupStep == .dailyAmount,
+             .success(let store) where afterMarking == .dailyAmount:
             let pages = RevisionStore.memorizedPages(in: store, memorization: memorization).count
             DailyAmountView(memorizedPages: pages, initial: revision.effectiveDailyPages(memorizedPages: pages)) { amount in
                 revision.setDailyPages(amount)
-                withAnimation { setupStep = .plan }
+                withAnimation {
+                    setupStep = .plan
+                    if afterMarking == .dailyAmount { afterMarking = .plan }
+                }
             }
             .transition(.move(edge: .leading).combined(with: .opacity))
         case .success(let store) where !hasDeclared:
             MemorizationSetupView(store: store) { markInMushaf in
                 startsMarking = markInMushaf
                 if markInMushaf {
+                    afterMarking = .marking
                     withAnimation { hasDeclared = true }
                 } else {
                     // With something memorized, its daily revision first; starting from zero, straight to the plan.

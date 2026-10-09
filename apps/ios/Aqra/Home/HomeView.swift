@@ -128,6 +128,7 @@ struct HomeView: View {
     /// The app's launch: the entrance waits until the splash has stepped back.
     @Environment(LaunchState.self) private var launch: LaunchState?
     @State private var destination: Destination?
+    @AppStorage(SetupAfterMarking.key) private var afterMarking = SetupAfterMarking.none
     /// «لاحقًا» on the invitation to sign in hides it until this date.
     @AppStorage("home.saveProgressSnoozedUntil") private var saveProgressSnoozedUntil = 0.0
     /// The newest tasmee' whose card was closed, so it isn't shown again.
@@ -254,7 +255,10 @@ struct HomeView: View {
         .sheet(item: $openedStage) { route in
             NavigationStack { StageDetailView(store: store, stage: route.stage) }
         }
-        .fullScreenCover(item: $destination) { destination in
+        .fullScreenCover(item: $destination, onDismiss: {
+            // The setup's marking is over once the Mushaf closes: the daily amount and the plan follow.
+            if afterMarking == .marking { afterMarking = .next(memorization: memorization) }
+        }) { destination in
             Group {
                 switch destination {
                 case .mushaf(let marking):

@@ -323,7 +323,7 @@ opens on the setup or the home.
 |---|---|---|---|---|
 | ONB-01 | Onboarding is shown on first launch only and has four pages: the hadith (Ahmad's wording, «اقرَأ وارقَ» emphasized, «رواه أحمد», the Tirmidhi translation in English), the manazil, the features, and «ابدأ رحلتك». | M | ✅ | V |
 | ONB-02 | There is no sign-in in onboarding; every user starts anonymously. | M | ✅ | V |
-| ONB-03 | Right after onboarding the student declares what they've memorized («ماذا تحفظ؟»), then chooses a daily revision amount; "I'm just starting" skips both. | M | ✅ | V |
+| ONB-03 | Right after onboarding the student declares what they've memorized («ماذا تحفظ؟»), then chooses a daily revision amount; "I'm just starting" skips both. Choosing to mark it in the Mushaf instead, the daily amount (when anything is marked) and the plan's offer follow the first Done or the Mushaf's closing, even after the app was closed during the marking. | M | ✅ | V |
 | ONB-04 | After «ماذا تحفظ؟», a student offers to set up a personal memorization plan (or skips it). | S | ✅ | E |
 
 #### 3.2.2 Mushaf (MUS)
