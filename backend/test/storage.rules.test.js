@@ -1,4 +1,5 @@
-// The storage rules: only a teacher applicant's copies of their ijazah. Run with `npm run test:rules`.
+// The storage rules: a teacher applicant's copies of their ijazah, and the app's downloads. Run with
+// `npm run test:rules`.
 import { readFileSync } from "node:fs";
 import { after, before, beforeEach, describe, test } from "node:test";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
@@ -44,5 +45,18 @@ describe("ijazah uploads", () => {
     await assertFails(getBytes(ref(named("bob"), "ijazahs/alice/a.jpg")));
     await assertFails(deleteObject(ref(named("bob"), "ijazahs/alice/a.jpg")));
     await assertSucceeds(deleteObject(ref(named("alice"), "ijazahs/alice/a.jpg")));
+  });
+});
+
+describe("the app's downloads", () => {
+  test("anyone reads a model, signed in or not; no one writes one", async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      await uploadBytes(ref(context.storage(), "models/recitation/model.aar"), jpeg, { contentType: "application/octet-stream" });
+    });
+    await assertSucceeds(getBytes(ref(env.unauthenticatedContext().storage(), "models/recitation/model.aar")));
+    await assertSucceeds(getBytes(ref(anon("bob"), "models/recitation/model.aar")));
+    await assertFails(upload(named("alice"), "models/recitation/model.aar", "application/octet-stream"));
+    await assertFails(upload(admin(), "models/recitation/other.aar", "application/octet-stream"));
+    await assertFails(deleteObject(ref(admin(), "models/recitation/model.aar")));
   });
 });

@@ -1,8 +1,13 @@
 rules_version = '2';
 
-// Uploads: only a teacher applicant's copies of their ijazah, read by them and by administrators.
+// Uploads: only a teacher applicant's copies of their ijazah, read by them and by administrators. The app's
+// downloads (the speech model that follows a revision aloud) are read by anyone and written by no one: they're
+// uploaded with the project owner's own credentials.
 service firebase.storage {
   match /b/{bucket}/o {
+    match /models/{path=**} {
+      allow read: if true;
+    }
     match /ijazahs/{uid}/{file} {
       allow read: if request.auth != null && (request.auth.uid == uid || request.auth.token.get('admin', false) == true);
       allow create, update: if request.auth != null && request.auth.uid == uid
