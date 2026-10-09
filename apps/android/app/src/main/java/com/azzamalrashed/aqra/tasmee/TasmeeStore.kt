@@ -20,6 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import kotlinx.coroutines.channels.awaitClose
@@ -274,6 +275,37 @@ class TasmeeStore(
      * Books a seat: the seat, this student's copy of the session and the seat count, in one transaction, so a session
      * never takes more students than it has seats.
      */
+    /**
+     * Takes a free seat instead of a bid: the server lets this student's active bid go (its credits come back) and
+     * books the seat, in one transaction, so a student never holds both.
+     */
+    suspend fun takeFreeSeat(instead: TasmeeSession, name: String, memorizedPages: Int, juzSummary: String?) {
+        val data = buildMap<String, Any> {
+            put("sessionId", instead.id)
+            put("name", name)
+            put("memorizedPages", memorizedPages)
+            juzSummary?.let { put("juzSummary", it) }
+        }
+        try {
+            AccountStore.functions.getHttpsCallable("takeFreeSeat").call(data).await()
+        } catch (error: FirebaseFunctionsException) {
+            if (error.code == FirebaseFunctionsException.Code.FAILED_PRECONDITION) throw TasmeeError.SeatUnavailable
+            throw error
+        }
+    }
+
+    /** This student's bids in some sessions, by session (those with an auction). */
+    suspend fun myBids(sessions: List<TasmeeSession>): Map<String, Bid> {
+        val uid = uid ?: return emptyMap()
+        val bids = HashMap<String, Bid>()
+        for (session in sessions) {
+            if (session.auction == null) continue
+            val snapshot = runCatching { database.collection("sessions").document(session.id).collection("bids").document(uid).get().await() }.getOrNull()
+            snapshot?.data?.let { Bid.from(uid, dated(it)) }?.let { bids[session.id] = it }
+        }
+        return bids
+    }
+
     suspend fun book(session: TasmeeSession, name: String, memorizedPages: Int, juzSummary: String?) {
         val uid = uid ?: return
         val seat = Seat(uid, name, memorizedPages = memorizedPages, juzSummary = juzSummary)
