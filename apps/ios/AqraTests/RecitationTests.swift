@@ -140,6 +140,19 @@ struct RecitationTests {
         #expect(tracker.stumbles == [5: [.prompting]])
     }
 
+    @Test func aLongPauseNoPromptAnsweredIsAHesitation() throws {
+        var (tracker, ayat) = try fatiha()
+        for ayah in ayat.prefix(6) { tracker.hear(ayah, final: true) }
+        // Between two ayat it's only a breath.
+        tracker.hesitated()
+        #expect(tracker.stumbles.isEmpty)
+        tracker.hear("صِرَاطَ الَّذِينَ أَنْعَمْتَ عَلَيْهِمْ", final: true)
+        tracker.hesitated()
+        tracker.hear("غَيْرِ الْمَغْضُوبِ عَلَيْهِمْ وَلَا الضَّالِّينَ", final: true)
+        #expect(tracker.isComplete)
+        #expect(tracker.stumbles == [6: [.hesitation]])
+    }
+
     @Test func noiseAndFragmentsChangeNothing() throws {
         var (tracker, ayat) = try fatiha()
         tracker.hear(ayat[0], final: true)

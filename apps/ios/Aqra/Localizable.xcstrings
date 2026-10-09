@@ -2025,7 +2025,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "الصفحة %1$lld · %2$lld من %3$lld"
+            "value" : "الصفحة %1$lld، %2$lld من %3$lld"
           }
         }
       }

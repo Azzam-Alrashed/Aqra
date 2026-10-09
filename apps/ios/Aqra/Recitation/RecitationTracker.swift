@@ -91,6 +91,13 @@ struct RecitationTracker {
         tentative = cursor
     }
 
+    /// A long pause inside an ayah that passed without a prompt (the student carried on by themselves before one
+    /// could be shown): a hesitation on that ayah.
+    mutating func hesitated() {
+        guard isMidAyah else { return }
+        stumble(words[cursor].ayah, .hesitation)
+    }
+
     /// The student revealed words by hand: carry on from there, without counting them.
     mutating func skip(to index: Int) {
         cursor = min(max(cursor, index), words.count)

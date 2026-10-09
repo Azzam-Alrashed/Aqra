@@ -45,12 +45,21 @@ final class RecitationListener {
     private var stretch: [Float]?
     private var lastPartial = 0
     // Hearing stretches, one at a time: settled ones in order, a stretch still being recited when there's time.
-    private var settling: [[Float]] = []
+    private var settling: [Stretch] = []
     private var busy = false
     private var generation = 0
-    // Prompting after a pause: when the voice was last heard.
+    /** How long the model took to hear the last stretch. */
+    private var lastHearing: TimeInterval = 0
+    // Prompting after a pause: when the voice was last heard, and how long the pause before this stretch was.
     private var lastVoice = Date.now
     private var promptsInARow = 0
+    private var pauseBefore: TimeInterval = 0
+
+    /// A stretch to settle, with the pause before it, unless a prompt broke that pause.
+    private struct Stretch {
+        var samples: [Float]
+        var pauseBefore: TimeInterval
+    }
 
     /// Seconds of silence inside an ayah before the next word is shown, and between two ayat.
     static let promptInsideAyah: TimeInterval = 4
@@ -168,7 +177,10 @@ final class RecitationListener {
         // The noise floor follows the quietest moments down at once and rises back slowly, about 1 dB a second.
         noiseFloor = decibels < noiseFloor ? max(decibels, -90) : noiseFloor + 0.03
         let voiced = decibels > noiseFloor + 12 && decibels > -52
-        if voiced { lastVoice = .now }
+        if voiced {
+            if voicedRun == 0, stretch == nil { pauseBefore = promptsInARow > 0 ? 0 : Date.now.timeIntervalSince(lastVoice) }
+            lastVoice = .now
+        }
         level = 0.7 * level + 0.3 * Double(min(max((decibels - noiseFloor) / 30, 0), 1))
 
         if var current = stretch {
@@ -178,7 +190,7 @@ final class RecitationListener {
             if silentRun >= 17 || current.count >= Self.rate * 24 {
                 // Half a second of quiet ends a stretch, and the model hears 30 s at most.
                 closeStretch()
-            } else if current.count - lastPartial >= Self.rate * 6 / 5, current.count >= Self.rate * 4 / 5 {
+            } else if hearsWhileReciting, current.count - lastPartial >= Self.rate * 6 / 5, current.count >= Self.rate * 4 / 5 {
                 lastPartial = current.count
                 partial = current
             }
@@ -196,12 +208,20 @@ final class RecitationListener {
         }
     }
 
+    /// Whether a stretch is heard while it's still being recited, to reveal its words as they come. Where the model
+    /// is slow, it isn't: hearing it would hold up settling the stretch, and the prompt after a pause.
+    private var hearsWhileReciting: Bool { lastHearing < Self.slowHearing }
+
+    /// A model that takes longer than this to hear a stretch only hears it once it's settled.
+    private static let slowHearing: TimeInterval = 1.5
+
     private func closeStretch() {
         guard let current = stretch else { return }
         stretch = nil
         partial = nil
         voicedRun = 0
-        settling.append(current)
+        settling.append(Stretch(samples: current, pauseBefore: pauseBefore))
+        pauseBefore = 0
         hearNext()
     }
 
@@ -212,8 +232,11 @@ final class RecitationListener {
         guard !busy else { return }
         let final: Bool
         let samples: [Float]
+        var pause: TimeInterval = 0
         if !settling.isEmpty {
-            samples = settling.removeFirst()
+            let next = settling.removeFirst()
+            samples = next.samples
+            pause = next.pauseBefore
             final = true
         } else if let partial {
             samples = partial
@@ -228,6 +251,7 @@ final class RecitationListener {
             let started = Date.now
             let text = (try? await RecitationTranscriber.shared.transcribe(samples)) ?? ""
             guard let self else { return }
+            self.lastHearing = Date.now.timeIntervalSince(started)
             self.busy = false
             guard generation == self.generation else { return }
             #if DEBUG
@@ -236,6 +260,8 @@ final class RecitationListener {
                 in \(Date.now.timeIntervalSince(started), format: .fixed(precision: 2), privacy: .public) s: \(text, privacy: .public)
                 """)
             #endif
+            // A long pause inside an ayah that no prompt answered (the model was still hearing what came before).
+            if final, pause >= Self.promptInsideAyah { self.tracker.hesitated() }
             self.tracker.hear(text, final: final)
             self.apply()
             self.hearNext()
