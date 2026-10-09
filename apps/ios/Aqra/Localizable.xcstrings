@@ -1734,6 +1734,28 @@
         }
       }
     },
+    "Delete my backup" : {
+      "comment" : "In Account, for a student who hasn't signed in: deletes the anonymous account their progress is backed up to.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف نسختي الاحتياطية"
+          }
+        }
+      }
+    },
+    "Delete your backup?" : {
+      "comment" : "Alert title before deleting an anonymous student's backup.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف نسختك الاحتياطية؟"
+          }
+        }
+      }
+    },
     "fact separator" : {
       "comment" : "Between two facts on one line, with its spaces. Arabic uses its comma: a middle dot beside Arabic-Indic digits reads as a zero.",
       "localizations" : {
@@ -1890,6 +1912,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تعثّرت في %@"
+          }
+        }
+      }
+    },
+    "The copy of your progress kept online" : {
+      "comment" : "Under «Delete my backup» in Account.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسخة تقدّمك المحفوظة على الإنترنت"
+          }
+        }
+      }
+    },
+    "The copy of your progress kept online is deleted for good. The progress on this device stays, and is backed up afresh from now on." : {
+      "comment" : "Alert message before deleting an anonymous student's backup: the device signs in anonymously again and backs up afresh.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُحذف النسخة الاحتياطية من تقدّمك نهائيًا، ويبقى التقدّم المحفوظ على هذا الجهاز، ويُنسخ احتياطيًا من جديد من الآن."
           }
         }
       }

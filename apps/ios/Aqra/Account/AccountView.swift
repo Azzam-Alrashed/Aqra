@@ -20,6 +20,7 @@ struct AccountView: View {
     @State private var notificationsDenied = false
     @State private var confirmingSignOut = false
     @State private var confirmingDeletion = false
+    @State private var confirmingBackupDeletion = false
     @State private var showingWallet = false
     @Environment(WalletStore.self) private var wallet
 
@@ -137,6 +138,20 @@ struct AccountView: View {
                         }
                         .disabled(account.isWorking)
                         .padding(.top, 10)
+                    } else if account.profile?.isAnonymous == true {
+                        // Every install backs up to an anonymous account from the start; that backup can be deleted too.
+                        AqraCard(padding: 0, radius: 24) {
+                            Button {
+                                confirmingBackupDeletion = true
+                            } label: {
+                                AqraRow(icon: "🗑️", tint: Palette.rose,
+                                        title: Text("Delete my backup").foregroundStyle(Color(light: 0xB3261E, dark: 0xB3261E)),
+                                        detail: Text("The copy of your progress kept online")) { EmptyView() }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .disabled(account.isWorking)
+                        .padding(.top, 10)
                     }
 
                     Text("Version \(version)")
@@ -174,6 +189,12 @@ struct AccountView: View {
             Button("Cancel", role: .cancel) {}
         } message: {
             Text("Your account and the progress backed up in it are deleted for good. The progress on this device stays.")
+        }
+        .alert("Delete your backup?", isPresented: $confirmingBackupDeletion) {
+            Button("Delete", role: .destructive) { Task { await account.deleteAccount() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The copy of your progress kept online is deleted for good. The progress on this device stays, and is backed up afresh from now on.")
         }
     }
 

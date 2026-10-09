@@ -409,7 +409,7 @@ opens on the setup or the home.
 | ACC-03 | Backup: memorization in 25 blocks of 256 ayat and the revision record as JSON; only changed blocks are written, two seconds after a change; Firestore queues writes offline. | M | ✅ | V |
 | ACC-04 | Merge: union of memorized ayat (newer revision wins, verified kept from either), revision record per CloudBackup rules. | M | ✅ | V |
 | ACC-05 | Sign-out uploads first (fails safely when offline), then clears the device and returns to «ماذا تحفظ؟». | M | ✅ | V |
-| ACC-06 | Account deletion deletes the backup, bookings (seats given back) and tasmee' records, revokes Apple's token, deletes the user; the device's progress stays. | M | ✅ | A, V |
+| ACC-06 | Account deletion deletes the backup, bookings (seats given back) and tasmee' records, revokes Apple's token, deletes the user; the device's progress stays. A student who hasn't signed in deletes their anonymous backup the same way ("Delete my backup"); the device then backs up afresh to a new anonymous account. | M | ✅ | A, V |
 | ACC-07 | Sign-in is required before booking, bidding, buying credits, joining video, adding friends or applying to teach. | M | ✅ | V |
 | ACC-08 | A display name the student chooses is shown to teachers, peers and friends instead of the sign-in's name or email. | S | ✅ | P |
 | ACC-09 | The backup also covers the personal plan, rewards and test results; deletion removes them and the wallet, applications, friendships and competition entries. | M | ✅ | A, P |
