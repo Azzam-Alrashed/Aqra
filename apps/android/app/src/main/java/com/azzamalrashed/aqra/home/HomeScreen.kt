@@ -83,7 +83,6 @@ import com.azzamalrashed.aqra.curriculum.StageCard
 import com.azzamalrashed.aqra.curriculum.StageSheet
 import com.azzamalrashed.aqra.plan.PlanEditorScreen
 import com.azzamalrashed.aqra.plan.PortionCard
-import com.azzamalrashed.aqra.plan.TodayPortion
 import com.azzamalrashed.aqra.ui.components.ChipButton
 import com.azzamalrashed.aqra.tasmee.Booking
 import com.azzamalrashed.aqra.tasmee.TasmeeRecord
@@ -471,11 +470,8 @@ private fun PageTile(app: AqraApp, store: MushafStore, item: PlanItem, modifier:
 // MARK: - The journey
 
 /** The stage the student is in. */
-private fun currentStage(app: AqraApp, store: MushafStore): Int {
-    val plan = app.plan.plan
-    val next = if (plan != null && !plan.paused) (app.plan.today(app.memorization, store) as? TodayPortion.Due)?.ayahs?.firstOrNull() else null
-    return AssessmentStore.currentStage(next, app.memorization, store, app.assessments.passes)
-}
+private fun currentStage(app: AqraApp, store: MushafStore): Int =
+    AssessmentStore.currentStage(app.plan.nextAyah(app.memorization, store), app.memorization, store, app.assessments.passes)
 
 /** Pages that keep slipping, suggested for extra follow-up. */
 @Composable

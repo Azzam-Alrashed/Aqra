@@ -140,6 +140,15 @@ class PlanStore(
 
     // MARK: - Today
 
+    /**
+     * The first ayah of the plan's next portion, whatever today's state (due, done, a rest day, paused); null without
+     * a plan or when everything is memorized.
+     */
+    fun nextAyah(memorization: MemorizationStore, store: MushafStore): Int? {
+        val plan = plan ?: return null
+        return nextPortion(plan.order, plan.dailyLines, store, memorization::isMemorized).firstOrNull()
+    }
+
     fun today(memorization: MemorizationStore, store: MushafStore, now: Moment = Moment.now()): TodayPortion? {
         val plan = plan
         if (plan == null || plan.paused) return null
