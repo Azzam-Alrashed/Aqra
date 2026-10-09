@@ -119,6 +119,7 @@ import com.azzamalrashed.aqra.ui.util.formatNumberList
 import com.azzamalrashed.aqra.ui.util.formatPercent
 import com.azzamalrashed.aqra.ui.util.formatWhen
 import com.azzamalrashed.aqra.ui.util.hijriToday
+import com.azzamalrashed.aqra.ui.util.factSeparator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.sin
@@ -363,7 +364,7 @@ private fun MushafCard(app: AqraApp, store: MushafStore, onOpen: () -> Unit) {
                 Modifier.size(40.dp, 63.dp).clip(shape).border(1.dp, MushafStyle.LIGHT.chrome.copy(alpha = 0.25f), shape))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(R.string.continue_reading), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
-                Text(store.surahNames[page.surah].orEmpty() + " · " + stringResource(R.string.page_n, page.number),
+                Text(store.surahNames[page.surah].orEmpty() + factSeparator() + stringResource(R.string.page_n, page.number),
                     style = aqraStyle(16f, Weight.heavy, Palette.ink), maxLines = 1)
             }
             IconTile("📖", Palette.sky, size = 40.dp)
@@ -515,7 +516,7 @@ private fun TasmeeCard(app: AqraApp, booking: Booking) {
                 Text(stringResource(if (cancelled) R.string.tasmee_cancelled else R.string.your_next_tasmee), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
                 Text(booking.teacherName, style = aqraStyle(16f, Weight.heavy, Palette.ink), maxLines = 1)
                 Text(
-                    formatWhen((live?.startsAt ?: booking.startsAt).toInstant()) + " · " + placeText(live?.let(::Booking) ?: booking),
+                    formatWhen((live?.startsAt ?: booking.startsAt).toInstant()) + factSeparator() + placeText(live?.let(::Booking) ?: booking),
                     style = aqraStyle(12f, Weight.bold, if (cancelled) Palette.inkSoft else Palette.brand)
                         .copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null),
                     maxLines = 1,

@@ -4,6 +4,9 @@ import android.icu.text.DateFormat
 import android.icu.text.RelativeDateTimeFormatter
 import android.icu.util.IslamicCalendar
 import android.icu.util.ULocale
+import androidx.compose.runtime.Composable
+import androidx.compose.ui.res.stringResource
+import com.azzamalrashed.aqra.R
 import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
@@ -11,6 +14,16 @@ import java.time.format.DateTimeFormatter
 import java.time.format.FormatStyle
 import java.util.Date
 import java.util.Locale
+
+/**
+ * Between two facts on one line, with its spaces: « · », or «، » in Arabic, where a middle dot beside Arabic-Indic
+ * digits reads as a zero («٣ · ٤» looks like «٣٠٤»).
+ */
+@Composable
+fun factSeparator(): String = stringResource(R.string.fact_separator)
+
+/** Between two facts in a line that's always Arabic (the Mushaf's own lines, portions, pages heard). */
+const val ARABIC_SEPARATOR = "، "
 
 /** A number in Arabic-Indic digits, as the Mushaf writes them in every language: ١٢٣. */
 fun arabicDigits(number: Int): String = number.toString().map { if (it in '0'..'9') '٠' + (it - '0') else it }.joinToString("")

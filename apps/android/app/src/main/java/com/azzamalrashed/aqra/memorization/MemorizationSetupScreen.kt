@@ -88,6 +88,7 @@ import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.formatNumber
 import com.azzamalrashed.aqra.ui.util.formatPercent
+import com.azzamalrashed.aqra.ui.util.factSeparator
 import kotlinx.coroutines.delay
 
 /**
@@ -173,7 +174,7 @@ fun memorizedSummary(app: AqraApp, store: MushafStore): String {
     if (count == 0) return stringResource(R.string.choose_what_youve_memorized_to_start_climbing)
     val fullJuz = (1..30).count { juz -> store.juzAyahs[juz]?.let { app.memorization.memorizedCount(it) == it.count() } ?: false }
     val ayat = pluralStringResource(R.plurals.n_ayat, count, count)
-    return if (fullJuz > 0) ayat + " · " + pluralStringResource(R.plurals.n_juz, fullJuz, fullJuz) else ayat
+    return if (fullJuz > 0) ayat + factSeparator() + pluralStringResource(R.plurals.n_juz, fullJuz, fullJuz) else ayat
 }
 
 /** The home's stage, smaller: the stairs in their glowing rings, with the share of the Quran floating beside them. */

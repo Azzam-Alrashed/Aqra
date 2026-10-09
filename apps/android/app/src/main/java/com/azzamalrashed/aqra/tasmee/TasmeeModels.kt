@@ -41,7 +41,7 @@ data class Teacher(
     val document: Document get() = mapOf("name" to name, "city" to city, "line" to line, "vetted" to vetted)
 
     /** The teacher's city and line, or null when they wrote neither. */
-    val about: String? get() = listOf(city, line).filter { it.isNotEmpty() }.takeIf { it.isNotEmpty() }?.joinToString(" · ")
+    fun about(separator: String): String? = listOf(city, line).filter { it.isNotEmpty() }.takeIf { it.isNotEmpty() }?.joinToString(separator)
 }
 
 /** A tasmee' session a teacher holds, in person or by video, with a limited number of seats. */

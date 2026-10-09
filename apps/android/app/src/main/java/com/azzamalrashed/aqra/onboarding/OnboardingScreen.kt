@@ -528,7 +528,7 @@ private fun SessionCard() {
             IconTile("🎙️", Palette.sky)
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text("تسميع مع شيخ", style = aqraStyle(15f, Weight.heavy, Palette.ink))
-                Text("غدًا · ٨:٠٠ م", style = aqraStyle(11f, Weight.semibold, Palette.inkSoft))
+                Text("غدًا، ٨:٠٠ م", style = aqraStyle(11f, Weight.semibold, Palette.inkSoft))
             }
         }
     }

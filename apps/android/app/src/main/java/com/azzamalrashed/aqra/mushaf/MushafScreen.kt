@@ -85,6 +85,8 @@ import com.azzamalrashed.aqra.ui.theme.MushafStyle
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.arabicDigits
+import com.azzamalrashed.aqra.ui.util.factSeparator
+import com.azzamalrashed.aqra.ui.util.ARABIC_SEPARATOR
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
 
@@ -269,7 +271,7 @@ fun MushafTopBar(
             FloatingCapsule(style, Modifier.align(Alignment.Center)) {
                 Column(Modifier.padding(horizontal = 14.dp), horizontalAlignment = Alignment.CenterHorizontally) {
                     Text(store.surahNames[page.surah].orEmpty(), style = aqraStyle(15f, Weight.heavy, style.ink), maxLines = 1)
-                    Text("الجزء ${arabicDigits(page.juz)} · الصفحة ${arabicDigits(page.number)}", style = aqraStyle(11f, Weight.semibold, style.chrome), maxLines = 1)
+                    Text("الجزء ${arabicDigits(page.juz)}${ARABIC_SEPARATOR}الصفحة ${arabicDigits(page.number)}", style = aqraStyle(11f, Weight.semibold, style.chrome), maxLines = 1)
                 }
             }
         }
@@ -377,7 +379,7 @@ private fun MarkingBar(
                     )
                 }
                 Text(
-                    pluralStringResource(R.plurals.n_ayat_memorized, app.memorization.count, app.memorization.count) + " · " +
+                    pluralStringResource(R.plurals.n_ayat_memorized, app.memorization.count, app.memorization.count) + factSeparator() +
                         stringResource(R.string.press_and_hold_an_ayah_to_mark_from_it_to),
                     style = aqraStyle(12f, Weight.semibold, style.chrome), maxLines = 1,
                 )

@@ -83,6 +83,8 @@ import com.azzamalrashed.aqra.ui.util.formatDay
 import com.azzamalrashed.aqra.ui.util.formatNumber
 import com.azzamalrashed.aqra.ui.util.formatRelative
 import com.azzamalrashed.aqra.ui.util.formatWhen
+import com.azzamalrashed.aqra.ui.util.factSeparator
+import com.azzamalrashed.aqra.ui.util.ARABIC_SEPARATOR
 import java.time.Instant
 import java.time.LocalDate
 import java.time.LocalTime
@@ -466,9 +468,9 @@ fun TasmeeRecordRow(record: TasmeeRecord, store: MushafStore, showsListener: Boo
         showsListener -> record.teacherName.ifEmpty { stringResource(R.string.a_friend) }
         else -> formatDay(record.at.toInstant())
     }
-    val counts = pluralStringResource(R.plurals.n_pages, record.pages.toSet().size, record.pages.toSet().size) + " · " +
+    val counts = pluralStringResource(R.plurals.n_pages, record.pages.toSet().size, record.pages.toSet().size) + factSeparator() +
         pluralStringResource(R.plurals.n_stumbles, record.stumbles.size, record.stumbles.size)
-    val detail = if (showsListener || record.test != null) formatRelative(record.at.toInstant()) + " · " + counts else counts
+    val detail = if (showsListener || record.test != null) formatRelative(record.at.toInstant()) + factSeparator() + counts else counts
     AqraRow(if (peer) "🤝" else "🎓", if (peer) Palette.peach else Palette.mint, title, Modifier.pressable(pressed = 1f) { showing = true }, detail = detail) {
         val passed = record.passesTest
         if (passed != null) {
@@ -494,7 +496,7 @@ private fun RecordDetails(record: TasmeeRecord, store: MushafStore, showsListene
                 else -> stringResource(R.string.tasmee_with_a_teacher)
             }, style = aqraStyle(26f, Weight.heavy, Palette.ink))
             val time = formatWhen(record.at.toInstant())
-            Text(if (showsListener && record.teacherName.isNotEmpty()) record.teacherName + " · " + time else time, style = aqraStyle(13f, Weight.semibold, Palette.inkSoft))
+            Text(if (showsListener && record.teacherName.isNotEmpty()) record.teacherName + factSeparator() + time else time, style = aqraStyle(13f, Weight.semibold, Palette.inkSoft))
         }
         val test = record.test
         val passed = record.passesTest
@@ -534,7 +536,7 @@ private fun pagesLine(record: TasmeeRecord, store: MushafStore): String {
         val last = groups.lastOrNull()
         if (last != null && last.first == surah && last.second.last() == page - 1) last.second += page else groups += surah to mutableListOf(page)
     }
-    return groups.joinToString(" · ") { (surah, pages) ->
+    return groups.joinToString(ARABIC_SEPARATOR) { (surah, pages) ->
         val range = if (pages.size > 1) "${arabicDigits(pages.first())}–${arabicDigits(pages.last())}" else arabicDigits(pages.first())
         "${store.surahNames[surah].orEmpty()}: $range"
     }

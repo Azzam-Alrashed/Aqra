@@ -61,6 +61,7 @@ import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.formatNumberList
 import com.azzamalrashed.aqra.ui.util.formatRelative
 import com.azzamalrashed.aqra.ui.util.formatWhen
+import com.azzamalrashed.aqra.ui.util.factSeparator
 import kotlinx.coroutines.launch
 
 /** Places in the tasmee' tab's navigation. */
@@ -199,7 +200,7 @@ private fun TeacherSections(
     tasmee.teacherProfile?.let { profile ->
         AqraCard(Modifier.fillMaxWidth().padding(top = 4.dp), padding = 0.dp, radius = 24.dp) {
             AqraRow("🎓", Palette.mint, profile.name, Modifier.pressable(pressed = 1f, onClick = onEditProfile),
-                detail = profile.about ?: stringResource(R.string.add_your_city_and_a_line_about_you)) { EditBadge() }
+                detail = profile.about(factSeparator()) ?: stringResource(R.string.add_your_city_and_a_line_about_you)) { EditBadge() }
         }
     }
     AqraCard(Modifier.fillMaxWidth().pressable(onClick = onEarnings), padding = 0.dp, radius = 24.dp) {
@@ -212,7 +213,7 @@ private fun TeacherSections(
             // The count first: a place name in the other script would otherwise reorder the line.
             AqraRow(if (session.kind == TasmeeSession.Kind.VIDEO) "🎥" else "📅", Palette.sky, formatWhen(session.startsAt.toInstant()),
                 Modifier.pressable(pressed = 1f) { navigator.push(TasmeeDestination.SessionPage(session)) },
-                detail = stringResource(R.string.n_of_n_seats, session.booked, session.seats) + " · " + placeText(session))
+                detail = stringResource(R.string.n_of_n_seats, session.booked, session.seats) + factSeparator() + placeText(session))
             AqraRowDivider()
         }
         AqraRow("➕", Palette.butter, stringResource(R.string.new_session), Modifier.pressable(pressed = 1f, onClick = onNewSession)) {}
@@ -300,7 +301,7 @@ private fun TeachersCard(app: AqraApp, navigator: Navigator) {
         AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
             tasmee.teachers.forEachIndexed { index, teacher ->
                 if (index > 0) AqraRowDivider()
-                AqraRow("🎓", Palette.mint, teacher.name, Modifier.pressable(pressed = 1f) { navigator.push(TasmeeDestination.TeacherPage(teacher)) }, detail = teacher.about)
+                AqraRow("🎓", Palette.mint, teacher.name, Modifier.pressable(pressed = 1f) { navigator.push(TasmeeDestination.TeacherPage(teacher)) }, detail = teacher.about(factSeparator()))
             }
         }
     }
@@ -366,7 +367,7 @@ private fun TeacherPage(app: AqraApp, store: MushafStore, teacher: Teacher) {
                     val booked = tasmee.hasBooked(session)
                     val seats = if (booked) stringResource(R.string.booked) else stringResource(R.string.seats_left_n, session.seatsLeft)
                     AqraRow(if (session.kind == TasmeeSession.Kind.VIDEO) "🎥" else "📅", Palette.sky, formatWhen(session.startsAt.toInstant()),
-                        detail = seats + " · " + placeText(session)) {
+                        detail = seats + factSeparator() + placeText(session)) {
                         when {
                             working == session.id -> AqraProgress()
                             booked -> ChipButton(stringResource(R.string.cancel), filled = false) { change(session) { tasmee.cancelBooking(Booking(session)) } }
@@ -435,5 +436,5 @@ fun seatDetail(seat: Seat): String {
     // The student's app writes the juz' as plain numbers, «29, 30»; they're shown in the teacher's language.
     val numbers = summary.split(",").mapNotNull { it.trim().toIntOrNull() }
     val juz = if (numbers.isEmpty()) summary else formatNumberList(numbers)
-    return pages + " · " + stringResource(R.string.juz_s, juz)
+    return pages + factSeparator() + stringResource(R.string.juz_s, juz)
 }

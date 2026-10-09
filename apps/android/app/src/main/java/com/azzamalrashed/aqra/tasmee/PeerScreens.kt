@@ -80,6 +80,7 @@ import com.google.zxing.qrcode.QRCodeWriter
 import com.google.zxing.qrcode.decoder.ErrorCorrectionLevel
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
+import com.azzamalrashed.aqra.ui.util.factSeparator
 
 // MARK: - Reciting to a friend
 
@@ -120,7 +121,7 @@ fun PeerRequestSheet(app: AqraApp, onDone: () -> Unit) {
                 when {
                     received != null -> {
                         Text("✅", style = aqraStyle(64f))
-                        Text(pluralStringResource(R.plurals.n_pages, received.pages.toSet().size, received.pages.toSet().size) + " · " +
+                        Text(pluralStringResource(R.plurals.n_pages, received.pages.toSet().size, received.pages.toSet().size) + factSeparator() +
                             pluralStringResource(R.plurals.n_stumbles, received.stumbles.size, received.stumbles.size), style = aqraStyle(17f, Weight.heavy, Palette.ink))
                         Text(stringResource(R.string.its_been_added_to_your_revision), style = aqraStyle(14f, Weight.medium, Palette.inkSoft))
                     }

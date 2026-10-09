@@ -103,6 +103,7 @@ import com.azzamalrashed.aqra.ui.util.firstWeekday
 import com.azzamalrashed.aqra.ui.util.formatNumber
 import com.azzamalrashed.aqra.ui.util.hijriMonth
 import com.azzamalrashed.aqra.ui.util.weekdayName
+import com.azzamalrashed.aqra.ui.util.ARABIC_SEPARATOR
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import java.time.ZoneId
@@ -133,7 +134,7 @@ object PlanFormat {
             val last = groups.lastOrNull()
             if (last != null && last.surah == surah && last.last == number - 1) last.last = number else groups += Group(surah, number, number)
         }
-        return groups.joinToString(" · ") { group ->
+        return groups.joinToString(ARABIC_SEPARATOR) { group ->
             val range = if (group.first == group.last) arabicDigits(group.first) else "${arabicDigits(group.first)}–${arabicDigits(group.last)}"
             "${store.surahNames[group.surah].orEmpty()} $range"
         }

@@ -76,6 +76,7 @@ import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import kotlinx.coroutines.launch
+import com.azzamalrashed.aqra.ui.util.factSeparator
 
 /** What a listener marked: the pages heard, the ayat stumbled on with their types, and for a teacher, a stage test. */
 data class TasmeeResult(val pages: List<Int>, val stumbles: List<Int>, val mistakes: List<Mistake>, val test: TasmeeRecord.StageTest?)
@@ -156,7 +157,7 @@ fun TasmeeMarkingScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(studentName, style = aqraStyle(17f, Weight.heavy, style.ink), maxLines = 1)
-                        Text(pluralStringResource(R.plurals.n_pages, recorded.size, recorded.size) + " · " +
+                        Text(pluralStringResource(R.plurals.n_pages, recorded.size, recorded.size) + factSeparator() +
                             pluralStringResource(R.plurals.n_stumbles, stumbles.size, stumbles.size), style = aqraStyle(12f, Weight.semibold, style.chrome))
                     }
                     AnimatedVisibility(onThisPage > 0, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
