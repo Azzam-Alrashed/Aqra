@@ -1,13 +1,13 @@
 # QA proposals — October 2026
 
-Changes found during the QA pass ([QA-LOG.md](QA-LOG.md)) that weren't built, because they're visual or design
-changes, new features, or change the product's behavior or the SRS algorithm. Each one waits for your review;
-nothing here is in the code. They're ordered by priority. Each has the problem, what I propose, and, where it helps,
-a screenshot or mock (in [docs/qa](qa)).
+Changes found during the QA pass ([QA-LOG.md](QA-LOG.md)) that weren't built then, because they're visual or design
+changes, new features, or change the product's behavior or the SRS algorithm. They're ordered by priority. Each has
+the problem, what I proposed, and, where it helps, a screenshot or mock (in [docs/qa](qa)). All 16 were approved on
+2026-10-09 and are now built, on iOS and Android, on the branch `qa/proposals-2026-10` (see "Built" below).
 
 ## Decisions (2026-10-09)
 
-Reviewed with the product owner, one by one. All 16 are approved, to be built on a go; nothing is built yet.
+Reviewed with the product owner, one by one. All 16 are approved, and built (below).
 
 | # | Decision |
 |---|---|
@@ -27,6 +27,30 @@ Reviewed with the product owner, one by one. All 16 are approved, to be built on
 | 14 | Approved: today's reminder removed once the wird (and on a study day the portion) is done; dated reminders two weeks ahead. |
 | 15 | Approved: "Delete my backup" in Account for anonymous students. |
 | 16 | Approved: the import keeps existing names; strings synced; the plan setup ported. |
+
+## Built (2026-10-09)
+
+| # | iOS | Android | Backend and docs |
+|---|---|---|---|
+| 1 | 849b8df | 7759369 (the import keeps the separator's spaces), 5023c92 | SRS UI-02 |
+| 2 | f4b11f7 | Already scales its text (sp) | SRS ATT-08 |
+| 3 | 9e5670c | d6c2f06 | SRS MAS-02 |
+| 4 | 05fd013 | c586492 | SRS UI-08 |
+| 5 | 2622be6 | 8896592 | SRS UI-05 |
+| 6 | 811dab9 | 9a88356 | SRS ATT-08 |
+| 7 | 5621803 | 46f9fb8 | Cancellation messages carry the session's start (5621803); SRS SES-03 |
+| 8 | 879842e | c04c6c4 | New callable `takeFreeSeat`; the rules refuse a free seat beside an active bid (879842e); SRS AUC-08 |
+| 9 | ee20bfa | bb3f666 | Rules and policy (`lateBiddingClosesBeforeMinutes`, `minAuctionLeadMinutes`) (ee20bfa); SRS AUC-04, A-17 |
+| 10 | 990882c | 986154d | SRS MAS-03 |
+| 11 | b5c9ab2 | e59648a | SRS CUR-02, A-7 |
+| 12 | 3011d93 | 1d4e56a | SRS MEM-01 |
+| 13 | 1177230 | 5e59593 | SRS ONB-03 |
+| 14 | e81dded (dated reminders two weeks ahead) | e13171d (checked when the reminder goes off) | SRS SET-02, NTF-02 |
+| 15 | af4dd31 | 7d5c3e4 | SRS ACC-06 |
+| 16 | — | 189937a (the import keeps names), 39aa72f (strings synced, plan setup ported) | — |
+
+Found on the way: Android builds for the emulators still started Firebase as the real project when
+`google-services.json` was present (571601a).
 
 | # | Pri | Proposal | Area |
 |---|---|---|---|
