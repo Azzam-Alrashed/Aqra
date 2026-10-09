@@ -654,11 +654,8 @@ struct HomeView: View {
 
     /// The stage the student is in.
     private var currentStage: Int {
-        var nextAyah: Int?
-        if let chosen = plan.plan, case .due(let portion) = plan.today(memorization: memorization, store: store) ?? .complete {
-            nextAyah = chosen.paused ? nil : portion.first
-        }
-        return AssessmentStore.currentStage(nextAyah: nextAyah, memorization: memorization, store: store, passes: assessments.passes)
+        AssessmentStore.currentStage(nextAyah: plan.nextAyah(memorization: memorization, store: store),
+                                     memorization: memorization, store: store, passes: assessments.passes)
     }
 
     /// Pages that keep slipping, suggested for extra follow-up.

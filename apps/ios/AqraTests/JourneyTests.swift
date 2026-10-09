@@ -279,6 +279,29 @@ struct JourneyTests {
                                              passes: [1: day(0)]) == 2)
     }
 
+    @Test func theCurrentStageStaysSteadyThroughTheDay() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        let plan = PlanStore(fileURL: nil, calendar: calendar)
+        let ammaStart = try #require(store.juzAyahs[30]).lowerBound
+        // Declaring what's already known doesn't move it, whatever was marked last: al-Fatiha after juz' ʿAmma.
+        memorization.mark(ammaStart...(ammaStart + 20), memorized: true)
+        memorization.mark(0...6, memorized: true)
+        #expect(AssessmentStore.currentStage(nextAyah: nil, memorization: memorization, store: store, passes: [:]) == 1)
+        // An ayah memorized in Aqra leads it.
+        memorization.learn([ammaStart + 30], at: day(1), stability: 2)
+        #expect(AssessmentStore.currentStage(nextAyah: nil, memorization: memorization, store: store, passes: [:]) == 10)
+        // With a plan, the next portion leads it, whether or not today's portion is due.
+        plan.setPlan(MemorizationPlan(dailyLines: 8, studyDays: [1, 2, 3, 4, 5, 6, 7], order: .fromStart), now: day(0))
+        let next = try #require(plan.nextAyah(memorization: memorization, store: store))
+        #expect(store.juz(ofAyah: next) == 1)
+        #expect(AssessmentStore.currentStage(nextAyah: next, memorization: memorization, store: store, passes: [:]) == 1)
+        var paused = try #require(plan.plan)
+        paused.paused = true
+        plan.setPlan(paused, now: day(1))
+        #expect(plan.nextAyah(memorization: memorization, store: store) == next)
+    }
+
     // MARK: - Rewards
 
     @Test func rewardsFollowTheRevisingAndTheMemorizing() throws {

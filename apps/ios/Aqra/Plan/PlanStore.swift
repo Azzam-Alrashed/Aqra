@@ -166,6 +166,14 @@ final class PlanStore {
         return portion
     }
 
+    /// The first ayah of the plan's next portion, whatever today's state (due, done, a rest day, paused); nil
+    /// without a plan or when everything is memorized.
+    func nextAyah(memorization: MemorizationStore, store: MushafStore) -> Int? {
+        guard let plan else { return nil }
+        return Self.nextPortion(order: plan.order, dailyLines: plan.dailyLines, store: store,
+                                isMemorized: memorization.isMemorized).first
+    }
+
     func today(memorization: MemorizationStore, store: MushafStore, now: Date = .now) -> TodayPortion? {
         guard let plan, !plan.paused else { return nil }
         let day = calendar.startOfDay(for: now)
