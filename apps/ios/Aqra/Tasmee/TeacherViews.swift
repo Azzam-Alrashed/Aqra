@@ -16,6 +16,9 @@ struct TeacherView: View {
     @State private var working: String?
     @State private var problem: AccountStore.Problem?
     @State private var bidding: TasmeeSession?
+    /// This student's bids, by session: a student holds a free seat or a bid, not both.
+    @State private var myBids: [String: Bid] = [:]
+    @State private var choosingFreeSeat: TasmeeSession?
 
     private var signedIn: Bool { account.profile?.isAnonymous == false }
 
@@ -56,7 +59,9 @@ struct TeacherView: View {
                                 ForEach(Array(sessions.enumerated()), id: \.element.id) { index, session in
                                     if index > 0 { AqraRowDivider() }
                                     sessionRow(session)
-                                    if let auction = session.auction, auction.isOpen() {
+                                    // Once the student has a seat, the auction is no longer theirs to join.
+                                    if let auction = session.auction, !tasmee.hasBooked(session),
+                                       auction.isOpen() || activeBid(in: session) != nil {
                                         auctionStrip(session, auction)
                                     }
                                 }
@@ -98,27 +103,63 @@ struct TeacherView: View {
         .fontDesign(.rounded)
         .task { await load() }
         .refreshable { await load() }
-        .sheet(item: $bidding) { session in BidSheet(session: session, store: store) }
+        .sheet(item: $bidding, onDismiss: { Task { await load() } }) { session in BidSheet(session: session, store: store) }
+        .alert("Book a free seat instead?", isPresented: Binding(get: { choosingFreeSeat != nil }, set: { if !$0 { choosingFreeSeat = nil } }),
+               presenting: choosingFreeSeat) { session in
+            Button("Book the free seat") {
+                Task {
+                    await change(session) {
+                        try await tasmee.takeFreeSeat(instead: session, name: studentName, memorizedPages: memorizedPages,
+                                                      juzSummary: juzSummary)
+                    }
+                }
+            }
+            Button("Keep my bid", role: .cancel) {}
+        } message: { session in
+            Text("Your bid of \(activeBid(in: session)?.amount ?? 0) credits is let go, and its credits come back to you.")
+        }
     }
 
-    /// A session's seats by auction: what a bid takes now, and «زايد».
+    /// The student's bid in a session, while it holds a seat.
+    private func activeBid(in session: TasmeeSession) -> Bid? {
+        myBids[session.id].flatMap { $0.status == .active ? $0 : nil }
+    }
+
+    /// A session's seats by auction: what a bid takes now, and «زايد»; with the student's bid, where it stands, and
+    /// the free seat to take instead.
     private func auctionStrip(_ session: TasmeeSession, _ auction: TasmeeSession.Auction) -> some View {
-        HStack(spacing: 10) {
-            Text(verbatim: "🔨")
-                .aqraFont(size: 16)
-                .frame(width: 38)
-            VStack(alignment: .leading, spacing: 1) {
-                Text("\(auction.seats) seats by auction")
-                    .aqraFont(size: 13, weight: .heavy)
-                    .foregroundStyle(Palette.ink)
-                (auction.nextAtLeast == 0 ? Text("Free while seats remain") : Text("Next bid from \(auction.nextAtLeast) credits"))
+        let bid = activeBid(in: session)
+        return VStack(spacing: 10) {
+            HStack(spacing: 10) {
+                Text(verbatim: "🔨")
+                    .aqraFont(size: 16)
+                    .frame(width: 38)
+                VStack(alignment: .leading, spacing: 1) {
+                    Text("\(auction.seats) seats by auction")
+                        .aqraFont(size: 13, weight: .heavy)
+                        .foregroundStyle(Palette.ink)
+                    Group {
+                        if let bid {
+                            Text("Your bid of \(bid.amount) holds a seat")
+                        } else if auction.nextAtLeast == 0 {
+                            Text("Free while seats remain")
+                        } else {
+                            Text("Next bid from \(auction.nextAtLeast) credits")
+                        }
+                    }
                     .aqraFont(size: 11, weight: .semibold)
-                    .foregroundStyle(Palette.inkSoft)
+                    .foregroundStyle(bid == nil ? Palette.inkSoft : Palette.brand)
+                }
+                Spacer()
+                if signedIn && auction.isOpen() {
+                    Button(bid == nil ? "Bid" : "Raise") { bidding = session }
+                        .buttonStyle(ChipButtonStyle(filled: false))
+                }
             }
-            Spacer()
-            if signedIn && !tasmee.hasBooked(session) {
-                Button("Bid") { bidding = session }
+            if signedIn, bid != nil, !session.isFull, working != session.id {
+                Button("Book a free seat instead") { choosingFreeSeat = session }
                     .buttonStyle(ChipButtonStyle(filled: false))
+                    .frame(maxWidth: .infinity, alignment: .trailing)
             }
         }
         .padding(.horizontal, 14)
@@ -145,7 +186,8 @@ struct TeacherView: View {
                     Task { await change(session) { try await tasmee.cancelBooking(Booking(session)) } }
                 }
                 .buttonStyle(ChipButtonStyle(filled: false))
-            } else if !signedIn {
+            } else if !signedIn || activeBid(in: session) != nil {
+                // A bidder takes the free seat instead from the auction's strip.
                 EmptyView()
             } else if session.isFull {
                 Text("Full")
@@ -178,7 +220,9 @@ struct TeacherView: View {
 
     private func load() async {
         do {
-            sessions = try await tasmee.upcomingSessions(of: teacher.id)
+            let sessions = try await tasmee.upcomingSessions(of: teacher.id)
+            myBids = await tasmee.myBids(in: sessions)
+            self.sessions = sessions
         } catch {
             sessions = sessions ?? []
             problem = AccountStore.problem(for: error)

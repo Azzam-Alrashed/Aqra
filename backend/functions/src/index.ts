@@ -2,5 +2,5 @@
 export { joinCall } from "./video.js";
 export { onTasmeeRecorded } from "./competitions.js";
 export { redeemPurchase } from "./credits.js";
-export { placeBid, settleAuctions, settleAuctionNow, onSessionChanged } from "./auction.js";
+export { placeBid, takeFreeSeat, settleAuctions, settleAuctionNow, onSessionChanged } from "./auction.js";
 export { onAccountDeleted } from "./accounts.js";

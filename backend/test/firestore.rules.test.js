@@ -242,6 +242,15 @@ describe("seats", () => {
     await assertFails(deleteDoc(doc(named("carol"), "sessions/open/seats/bob")));
   });
 
+  test("a student holding a bid books a free seat only through the functions, which let the bid go", async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "sessions/open/bids/alice"), { name: "Alice", amount: 3, at: Timestamp.now(), status: "active" });
+      await setDoc(doc(context.firestore(), "sessions/open/bids/bob"), { name: "Bob", amount: 3, at: Timestamp.now(), status: "outbid" });
+    });
+    await assertFails(book(named("alice"), "alice", "open"));
+    await assertSucceeds(book(named("bob"), "bob", "open"));
+  });
+
   test("a seat isn't edited once booked", async () => {
     await assertSucceeds(book(named("alice"), "alice", "open"));
     await assertFails(updateDoc(doc(named("alice"), "sessions/open/seats/alice"), { name: "Someone else" }));

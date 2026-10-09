@@ -1690,6 +1690,39 @@
         }
       }
     },
+    "Book a free seat instead" : {
+      "comment" : "Under a session's auction, for a student holding a bid while free seats remain: lets the bid go and books a free seat.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احجز مقعدًا مجانيًا بدلًا منه"
+          }
+        }
+      }
+    },
+    "Book a free seat instead?" : {
+      "comment" : "Alert title before a bidder takes a free seat instead of their bid.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحجز مقعدًا مجانيًا بدلًا من عرضك؟"
+          }
+        }
+      }
+    },
+    "Book the free seat" : {
+      "comment" : "Alert button: lets the bid go and books a free seat.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احجز المقعد المجاني"
+          }
+        }
+      }
+    },
     "Cancelled by the teacher" : {
       "comment" : "In a row of a later booking, after its struck-through date: the teacher cancelled that session.",
       "localizations" : {
@@ -1762,6 +1795,17 @@
         }
       }
     },
+    "Keep my bid" : {
+      "comment" : "Alert button: keeps the bid, books nothing.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أبقِ عرضي"
+          }
+        }
+      }
+    },
     "Leave the test?" : {
       "comment" : "Title of the confirmation shown when closing a stage test after answering a question.",
       "localizations" : {
@@ -1780,6 +1824,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تحديد %@ محفوظةً"
+          }
+        }
+      }
+    },
+    "Raise" : {
+      "comment" : "A small button beside the student's bid in a session's auction: opens the bid sheet to raise it.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ارفع عرضك"
           }
         }
       }
@@ -1919,6 +1974,35 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "Unmarked %lld ayat"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Your bid of %lld credits is let go, and its credits come back to you." : {
+      "comment" : "Alert message before a bidder takes a free seat instead of their bid.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُترك عرضك، ويعود إليك ما حجزته من عملات (%lld)."
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your bid of %lld credit is let go, and the credit comes back to you."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your bid of %lld credits is let go, and its credits come back to you."
                 }
               }
             }

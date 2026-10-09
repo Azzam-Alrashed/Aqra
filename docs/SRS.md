@@ -548,6 +548,7 @@ opens on the setup or the home.
 | AUC-05 | All bids go through a Cloud Function in a Firestore transaction, so a seat is never won twice. | M | ✅ | V |
 | AUC-06 | Cancelling a session releases holds (before settlement) or refunds spent credits and reverses the teacher's earnings (after). | M | ✅ | P |
 | AUC-07 | The student sees the current lowest winning bid, their own standing (winning / outbid), and is told when outbid or when they've won. | M | ✅ | V |
+| AUC-08 | A student holds a free seat or a bid in a session, not both: with a seat, the auction isn't offered; with a bid, "Book a free seat instead" lets the bid go (its credits come back) and books the seat, in one server call. | M | ✅ | V |
 
 #### 3.2.22 Teacher earnings and payouts (ERN)
 

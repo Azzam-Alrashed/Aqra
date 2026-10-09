@@ -1,4 +1,5 @@
 @preconcurrency import FirebaseFirestore
+@preconcurrency import FirebaseFunctions
 import Foundation
 import Observation
 
@@ -261,6 +262,30 @@ final class TasmeeStore {
         guard let uid else { return }
         let seat = Seat(id: uid, name: name, memorizedPages: memorizedPages, juzSummary: juzSummary)
         try await Self.takeSeat(seat, in: session)
+    }
+
+    /// Takes a free seat instead of a bid: the server lets this student's active bid go (its credits come back) and
+    /// books the seat, in one transaction, so a student never holds both.
+    func takeFreeSeat(instead session: TasmeeSession, name: String, memorizedPages: Int, juzSummary: String?) async throws {
+        var data: [String: Any] = ["sessionId": session.id, "name": name, "memorizedPages": memorizedPages]
+        if let juzSummary { data["juzSummary"] = juzSummary }
+        do {
+            _ = try await Functions.functions(region: AccountStore.functionsRegion).httpsCallable("takeFreeSeat").call(data)
+        } catch let error as NSError where error.domain == FunctionsErrorDomain
+                    && FunctionsErrorCode(rawValue: error.code) == .failedPrecondition {
+            throw TasmeeError.seatUnavailable
+        }
+    }
+
+    /// This student's bids in some sessions, by session (those with an auction).
+    func myBids(in sessions: [TasmeeSession]) async -> [String: Bid] {
+        guard let uid else { return [:] }
+        var bids: [String: Bid] = [:]
+        for session in sessions where session.auction != nil {
+            let snapshot = try? await database.collection("sessions").document(session.id).collection("bids").document(uid).getDocument()
+            if let data = snapshot?.data(), let bid = Bid(id: uid, document: Self.dated(data)) { bids[session.id] = bid }
+        }
+        return bids
     }
 
     // The transactions run off the main actor, so their closures only hold values made here.
