@@ -62,6 +62,7 @@ import com.azzamalrashed.aqra.ui.util.formatNumberList
 import com.azzamalrashed.aqra.ui.util.formatRelative
 import com.azzamalrashed.aqra.ui.util.formatWhen
 import com.azzamalrashed.aqra.ui.util.factSeparator
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /** Places in the tasmee' tab's navigation. */
@@ -135,9 +136,20 @@ private fun TasmeeHome(app: AqraApp, store: MushafStore, navigator: Navigator) {
             TeacherSections(app, navigator, onNewSession = { creatingSession = true }, onEditProfile = { editingProfile = true },
                 onEarnings = { showingEarnings = true }, onCompetition = { startingCompetition = true })
         }
-        tasmee.nextBooking?.let { booking ->
+        // The next booking in full, and any later ones as rows: a teacher may cancel any of them.
+        val bookings = tasmee.upcomingBookings
+        bookings.firstOrNull()?.let { booking ->
             AqraSectionTitle(stringResource(R.string.your_next_tasmee), Modifier.padding(top = 10.dp))
             BookingCard(app, booking)
+        }
+        if (bookings.size > 1) {
+            AqraSectionTitle(stringResource(R.string.also_booked), Modifier.padding(top = 10.dp))
+            AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
+                bookings.drop(1).forEachIndexed { index, booking ->
+                    if (index > 0) AqraRowDivider()
+                    BookingRow(app, booking)
+                }
+            }
         }
         AqraSectionTitle(stringResource(R.string.with_a_friend), Modifier.padding(top = 10.dp))
         AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
@@ -240,6 +252,53 @@ fun EditBadge() {
     }
 }
 
+/** A later booking: when (struck through once the teacher cancelled it), where, and giving the seat back. */
+@Composable
+private fun BookingRow(app: AqraApp, booking: Booking) {
+    val live = app.tasmee.session(booking)
+    val cancelled = live?.status == TasmeeSession.Status.CANCELLED
+    var confirming by remember { mutableStateOf(false) }
+    var problem by remember { mutableStateOf<Problem?>(null) }
+    val scope = rememberCoroutineScope()
+    Column(Modifier.padding(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconTile(if (booking.kind == TasmeeSession.Kind.VIDEO) "🎥" else "🎓", if (cancelled) Palette.rose else Palette.mint, size = 38.dp)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(booking.teacherName, style = aqraStyle(16f, Weight.heavy, Palette.ink))
+                Text(formatWhen((live?.startsAt ?: booking.startsAt).toInstant()),
+                    style = aqraStyle(12f, Weight.semibold, Palette.inkSoft).copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null))
+                // The place on a line of its own: a name in the other script would reorder the date's line.
+                Text(if (cancelled) stringResource(R.string.cancelled_by_the_teacher) else placeText(live?.let(::Booking) ?: booking),
+                    style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
+            }
+            ChipButton(stringResource(if (cancelled) R.string.remove else R.string.cancel_booking), filled = false) { confirming = true }
+        }
+        problem?.let { ProblemLine(it, Modifier.padding(top = 10.dp)) }
+    }
+    if (confirming) GiveBackSeat(app, booking, scope, onDismiss = { confirming = false }) { problem = it }
+}
+
+/**
+ * «تلغي حجزك؟», then the seat given back, or the problem that stopped it. The work runs in the [scope] of the row or
+ * card asking, which outlives the dialog.
+ */
+@Composable
+private fun GiveBackSeat(app: AqraApp, booking: Booking, scope: CoroutineScope, onDismiss: () -> Unit, onResult: (Problem?) -> Unit) {
+    Confirm(stringResource(R.string.cancel_your_booking_q), stringResource(R.string.your_seat_goes_back_to_the_session), stringResource(R.string.cancel_booking),
+        onDismiss = onDismiss, cancel = stringResource(R.string.keep_it)) {
+        scope.launch {
+            onResult(
+                try {
+                    app.tasmee.cancelBooking(booking)
+                    null
+                } catch (error: Exception) {
+                    AccountStore.problem(error)
+                },
+            )
+        }
+    }
+}
+
 /** The student's next booking: when and where, or that the teacher cancelled it, and giving the seat back. */
 @Composable
 private fun BookingCard(app: AqraApp, booking: Booking) {
@@ -267,19 +326,7 @@ private fun BookingCard(app: AqraApp, booking: Booking) {
         }
         problem?.let { ProblemLine(it, Modifier.padding(top = 12.dp)) }
     }
-    if (confirming) {
-        Confirm(stringResource(R.string.cancel_your_booking_q), stringResource(R.string.your_seat_goes_back_to_the_session), stringResource(R.string.cancel_booking),
-            onDismiss = { confirming = false }, cancel = stringResource(R.string.keep_it)) {
-            scope.launch {
-                problem = try {
-                    app.tasmee.cancelBooking(booking)
-                    null
-                } catch (error: Exception) {
-                    AccountStore.problem(error)
-                }
-            }
-        }
-    }
+    if (confirming) GiveBackSeat(app, booking, scope, onDismiss = { confirming = false }) { problem = it }
 }
 
 @Composable

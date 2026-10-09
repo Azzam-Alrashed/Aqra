@@ -245,6 +245,9 @@ class TasmeeStore(
 
     val nextBooking: Booking? get() = upcomingBookings.firstOrNull()
 
+    /** When a booked session was to start, if it's still among the bookings. */
+    fun startOfBooked(sessionId: String): Moment? = bookedSessions[sessionId]?.startsAt ?: bookings.firstOrNull { it.id == sessionId }?.startsAt
+
     // MARK: - Teachers and their sessions
 
     suspend fun loadTeachers() {

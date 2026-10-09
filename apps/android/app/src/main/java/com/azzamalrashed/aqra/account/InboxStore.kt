@@ -25,6 +25,9 @@ class InboxStore {
         val pages: Int,
         val status: String,
         val note: String,
+        /** The session a message is about, and when it was to start (sent with a cancellation). */
+        val sessionId: String = "",
+        val startsAt: Moment? = null,
     ) {
         enum class Kind(val raw: String, val icon: String) {
             OUTBID("outbid", "🔔"), WON("won", "🎉"), CANCELLED("cancelled", "📅"), REFUND("refund", "↩️"),
@@ -53,6 +56,7 @@ class InboxStore {
                     id = document.id, kind = kind, at = data["at"] as? Moment ?: Moment.DISTANT_PAST, read = data["readAt"] is Moment,
                     teacherName = data["teacherName"] as? String ?: "", amount = (data["amount"] as? Number)?.toInt() ?: 0,
                     pages = (data["pages"] as? Number)?.toInt() ?: 0, status = data["status"] as? String ?: "", note = data["note"] as? String ?: "",
+                    sessionId = data["sessionId"] as? String ?: "", startsAt = data["startsAt"] as? Moment,
                 )
             }
         }
