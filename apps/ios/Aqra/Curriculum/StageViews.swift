@@ -329,12 +329,17 @@ struct StageTestView: View {
     @State private var chosen: Int?
     @State private var correct = 0
     @State private var finished = false
+    @State private var confirmingLeave = false
+
+    /// Once the first answer is given, the test counts: leaving records it, so it can't be restarted until the
+    /// questions suit.
+    private var hasStarted: Bool { !finished && (index > 0 || chosen != nil) }
 
     var body: some View {
         VStack(spacing: 16) {
             HStack {
                 Button {
-                    dismiss()
+                    if hasStarted { confirmingLeave = true } else { dismiss() }
                 } label: {
                     Image(systemName: "xmark")
                         .font(.system(size: 15, weight: .heavy))
@@ -375,6 +380,17 @@ struct StageTestView: View {
         .sensoryFeedback(trigger: chosen) { _, chosen in
             guard let chosen, questions.indices.contains(index) else { return nil }
             return chosen == questions[index].answer ? .success : .error
+        }
+        .interactiveDismissDisabled(hasStarted)
+        .alert("Leave the test?", isPresented: $confirmingLeave) {
+            Button("Leave", role: .destructive) {
+                // The questions not answered count as wrong.
+                record()
+                dismiss()
+            }
+            Button("Keep going", role: .cancel) {}
+        } message: {
+            Text("It counts as taken: the questions you haven't answered count as wrong.")
         }
         .onAppear {
             guard questions.isEmpty else { return }
@@ -475,10 +491,14 @@ struct StageTestView: View {
             index += 1
             chosen = nil
         } else {
-            assessments.record(AssessmentStore.TestResult(stage: stage, date: .now, questions: questions.count, correct: correct))
-            assessments.checkPasses(store: store, memorization: memorization)
+            record()
             withAnimation(.spring(response: 0.5, dampingFraction: 0.8)) { finished = true }
         }
+    }
+
+    private func record() {
+        assessments.record(AssessmentStore.TestResult(stage: stage, date: .now, questions: questions.count, correct: correct))
+        assessments.checkPasses(store: store, memorization: memorization)
     }
 
     private var result: some View {
