@@ -8,7 +8,9 @@ plugins {
 
 // The Firebase config isn't in git (see README.md). Without it the app still runs, with accounts and backup off.
 val hasFirebaseConfig = file("google-services.json").exists()
-if (hasFirebaseConfig) {
+// A build for the local emulators leaves the config out: the plugin would start Firebase as the real project before
+// the app sets it up as the emulators' demo project, and the emulators would then be asked for the real project.
+if (hasFirebaseConfig && project.findProperty("useFirebaseEmulator") == null) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
 }
 
