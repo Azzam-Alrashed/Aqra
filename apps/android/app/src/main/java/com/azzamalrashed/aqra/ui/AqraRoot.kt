@@ -124,6 +124,23 @@ private fun MushafRoot(app: AqraApp) {
     // marking cut short (the app was closed during it) goes on to its next steps.
     LaunchedEffect(afterMarking) { if (afterMarking != AFTER_MARKING) startsMarking = false }
     LaunchedEffect(Unit) { if (afterMarking == AFTER_MARKING && !startsMarking) afterMarking = nextAfterMarking(app) }
+    /** «رجوع» on «كم تراجع كل يوم؟»: back to «ماذا تحفظ؟», or to the marking in the Mushaf when that came before. */
+    fun backToMemorized() {
+        if (afterMarking.isNotEmpty()) {
+            startsMarking = true
+            afterMarking = AFTER_MARKING
+        } else {
+            setupStep = 0
+        }
+    }
+    /** «رجوع» on the plan's first page: back to the daily revision, or, with nothing memorized, to the step before it. */
+    fun backFromPlan() {
+        when {
+            app.memorization.count == 0 -> backToMemorized()
+            afterMarking == AFTER_MARKING_PLAN -> afterMarking = AFTER_MARKING_AMOUNT
+            else -> setupStep = 1
+        }
+    }
 
     val result = app.mushaf
     when {
@@ -166,13 +183,13 @@ private fun MushafRoot(app: AqraApp) {
                     }
                     1 -> {
                         val pages = RevisionStore.memorizedPages(store, app.memorization).size
-                        DailyAmountScreen(pages, app.revision.effectiveDailyPages(pages), isEditor = false) { amount ->
+                        DailyAmountScreen(pages, app.revision.effectiveDailyPages(pages), isEditor = false, onBack = ::backToMemorized) { amount ->
                             app.revision.setDailyPages(amount)
                             setupStep = 2
                             if (afterMarking == AFTER_MARKING_AMOUNT) afterMarking = AFTER_MARKING_PLAN
                         }
                     }
-                    2 -> PlanEditorScreen(app, store, isSetup = true) {
+                    2 -> PlanEditorScreen(app, store, isSetup = true, onBack = ::backFromPlan) {
                         hasDeclared = true
                         afterMarking = ""
                     }

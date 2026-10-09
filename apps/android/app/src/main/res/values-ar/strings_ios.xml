@@ -234,6 +234,14 @@
     <string name="s_1_pages">وجه وربع</string>
     <!-- 1½ pages -->
     <string name="s_1_pages_2">وجه ونصف</string>
+    <!-- 1¾ pages -->
+    <string name="s_1_pages_3">وجه وثلاثة أرباع</string>
+    <!-- 2 pages -->
+    <string name="s_2_pages">وجهان</string>
+    <!-- 2¼ pages -->
+    <string name="s_2_pages_2">وجهان وربع</string>
+    <!-- 2½ pages -->
+    <string name="s_2_pages_3">وجهان ونصف</string>
     <!-- 30 days in a row -->
     <string name="s_30_days_in_a_row">٣٠ يومًا متتاليًا</string>
     <!-- 7 days in a row -->
@@ -345,6 +353,8 @@
     <string name="ayah_n_of_s">الآية %1$d من سورة %2$s</string>
     <!-- Ayat memorized -->
     <string name="ayat_memorized">الآيات المحفوظة</string>
+    <!-- Back -->
+    <string name="back">رجوع</string>
     <!-- Backed up %@ -->
     <string name="backed_up_s">آخر نسخة احتياطية %s</string>
     <!-- Backing up… -->

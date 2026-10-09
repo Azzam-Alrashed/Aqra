@@ -1,5 +1,6 @@
 package com.azzamalrashed.aqra.revision
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -56,6 +57,7 @@ import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.unit.dp
 import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.ui.art.AqraGlowRings
+import com.azzamalrashed.aqra.ui.components.AqraBackButton
 import com.azzamalrashed.aqra.ui.components.AqraChip
 import com.azzamalrashed.aqra.ui.components.BrandButton
 import com.azzamalrashed.aqra.ui.components.ChipText
@@ -76,55 +78,62 @@ fun cycleDays(memorizedPages: Int, amount: Int): Int = ceil(memorizedPages.toDou
  * Shown right after «ماذا تحفظ؟», and later from the home to change it.
  */
 @Composable
-fun DailyAmountScreen(memorizedPages: Int, initial: Int, isEditor: Boolean, onDone: (Int) -> Unit) {
+fun DailyAmountScreen(memorizedPages: Int, initial: Int, isEditor: Boolean, onBack: (() -> Unit)? = null, onDone: (Int) -> Unit) {
     var amount by rememberSaveable { mutableIntStateOf(initial.coerceIn(1, 40)) }
     val haptics = LocalHapticFeedback.current
     LaunchedEffect(amount) { haptics.performHapticFeedback(HapticFeedbackType.SegmentTick) }
     val suggested = ReviewPolicy.suggestedDailyPages(memorizedPages)
-    Column(
-        Modifier
-            .fillMaxSize()
-            .background(Palette.surface)
-            .then(if (isEditor) Modifier else Modifier.safeDrawingPadding())
-            .padding(horizontal = 24.dp)
-            .padding(bottom = 12.dp),
-        horizontalAlignment = Alignment.CenterHorizontally,
-    ) {
-        Spacer(Modifier.weight(1f))
-        // The amount in the glowing rings, − and + on either side, and chips for the cycle and the suggestion.
-        Box(Modifier.fillMaxWidth().height(340.dp), contentAlignment = Alignment.Center) {
-            AqraGlowRings(Modifier.graphicsLayer { scaleX = 1.02f; scaleY = 1.02f })
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                StepButton(Icons.Rounded.Remove, enabled = amount > 1) { amount = (amount - 1).coerceAtLeast(1) }
-                Column(Modifier.width(170.dp), horizontalAlignment = Alignment.CenterHorizontally) {
-                    AnimatedContent(amount, transitionSpec = {
-                        val up = targetState > initialState
-                        (slideInVertically { if (up) it / 2 else -it / 2 } + fadeIn()) togetherWith (slideOutVertically { if (up) -it / 2 else it / 2 } + fadeOut())
-                    }, label = "amount") { value ->
-                        Text(formatNumber(value), style = aqraStyle(76f, Weight.heavy, Palette.brand))
+    Box(Modifier.fillMaxSize()) {
+        Column(
+            Modifier
+                .fillMaxSize()
+                .background(Palette.surface)
+                .then(if (isEditor) Modifier else Modifier.safeDrawingPadding())
+                .padding(horizontal = 24.dp)
+                .padding(bottom = 12.dp),
+            horizontalAlignment = Alignment.CenterHorizontally,
+        ) {
+            Spacer(Modifier.weight(1f))
+            // The amount in the glowing rings, − and + on either side, and chips for the cycle and the suggestion.
+            Box(Modifier.fillMaxWidth().height(340.dp), contentAlignment = Alignment.Center) {
+                AqraGlowRings(Modifier.graphicsLayer { scaleX = 1.02f; scaleY = 1.02f })
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    StepButton(Icons.Rounded.Remove, enabled = amount > 1) { amount = (amount - 1).coerceAtLeast(1) }
+                    Column(Modifier.width(170.dp), horizontalAlignment = Alignment.CenterHorizontally) {
+                        AnimatedContent(amount, transitionSpec = {
+                            val up = targetState > initialState
+                            (slideInVertically { if (up) it / 2 else -it / 2 } + fadeIn()) togetherWith (slideOutVertically { if (up) -it / 2 else it / 2 } + fadeOut())
+                        }, label = "amount") { value ->
+                            Text(formatNumber(value), style = aqraStyle(76f, Weight.heavy, Palette.brand))
+                        }
+                        // «صفحات يوميًا» under the large number: the app's "%d pages a day", which already agrees with the
+                        // number in each language («صفحتان», «صفحات», «صفحة»), with the number itself taken out (as on iOS).
+                        val unit = pluralStringResource(R.plurals.n_pages_a_day, amount, amount).replace(formatNumber(amount), "").trim()
+                        Text(unit, style = aqraStyle(15f, Weight.bold, Palette.ink))
                     }
-                    // «صفحات يوميًا» under the large number: the app's "%d pages a day", which already agrees with the
-                    // number in each language («صفحتان», «صفحات», «صفحة»), with the number itself taken out (as on iOS).
-                    val unit = pluralStringResource(R.plurals.n_pages_a_day, amount, amount).replace(formatNumber(amount), "").trim()
-                    Text(unit, style = aqraStyle(15f, Weight.bold, Palette.ink))
+                    StepButton(Icons.Rounded.Add, enabled = amount < 40) { amount = (amount + 1).coerceAtMost(40) }
                 }
-                StepButton(Icons.Rounded.Add, enabled = amount < 40) { amount = (amount + 1).coerceAtMost(40) }
-            }
-            AqraChip("🗓️", Palette.peach, Modifier.graphicsLayer { translationY = 132.dp.toPx(); rotationZ = -3f }) {
-                val days = cycleDays(memorizedPages, amount)
-                Text(pluralStringResource(R.plurals.a_full_revision_every_n_days, days, days), style = ChipText)
-            }
-            androidx.compose.animation.AnimatedVisibility(amount != suggested, Modifier.graphicsLayer { translationY = (-128).dp.toPx(); rotationZ = 4f },
-                enter = scaleIn(initialScale = 0.5f) + fadeIn(), exit = scaleOut(targetScale = 0.5f) + fadeOut()) {
-                AqraChip("✨", Palette.butter, Modifier.pressable { amount = suggested }) {
-                    Text(stringResource(R.string.suggested_n, suggested), style = ChipText)
+                AqraChip("🗓️", Palette.peach, Modifier.graphicsLayer { translationY = 132.dp.toPx(); rotationZ = -3f }) {
+                    val days = cycleDays(memorizedPages, amount)
+                    Text(pluralStringResource(R.plurals.a_full_revision_every_n_days, days, days), style = ChipText)
                 }
+                androidx.compose.animation.AnimatedVisibility(amount != suggested, Modifier.graphicsLayer { translationY = (-128).dp.toPx(); rotationZ = 4f },
+                    enter = scaleIn(initialScale = 0.5f) + fadeIn(), exit = scaleOut(targetScale = 0.5f) + fadeOut()) {
+                    AqraChip("✨", Palette.butter, Modifier.pressable { amount = suggested }) {
+                        Text(stringResource(R.string.suggested_n, suggested), style = ChipText)
+                    }
+                }
+            }
+            TwoLineHeadline(stringResource(R.string.how_much_will_you), stringResource(R.string.revise_each_day_q), modifier = Modifier.padding(top = 8.dp))
+            Spacer(Modifier.weight(1f))
+            BrandButton(stringResource(if (isEditor) R.string.save else R.string.begin), Modifier.widthIn(max = 520.dp).padding(top = 24.dp)) {
+                onDone(amount)
             }
         }
-        TwoLineHeadline(stringResource(R.string.how_much_will_you), stringResource(R.string.revise_each_day_q), modifier = Modifier.padding(top = 8.dp))
-        Spacer(Modifier.weight(1f))
-        BrandButton(stringResource(if (isEditor) R.string.save else R.string.begin), Modifier.widthIn(max = 520.dp).padding(top = 24.dp)) {
-            onDone(amount)
+        // In setup, back to the step before, from the button or the system's back.
+        if (onBack != null) {
+            BackHandler(onBack = onBack)
+            AqraBackButton(Modifier.align(Alignment.TopStart).safeDrawingPadding(), onClick = onBack)
         }
     }
 }

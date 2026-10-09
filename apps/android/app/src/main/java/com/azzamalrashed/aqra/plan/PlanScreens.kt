@@ -1,5 +1,6 @@
 package com.azzamalrashed.aqra.plan
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.core.Animatable
 import androidx.compose.animation.core.FastOutSlowInEasing
@@ -53,6 +54,7 @@ import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.TransformOrigin
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
@@ -84,6 +86,7 @@ import com.azzamalrashed.aqra.ui.art.GlossyStairs
 import com.azzamalrashed.aqra.ui.art.LeftToRight
 import com.azzamalrashed.aqra.ui.art.Manazil
 import com.azzamalrashed.aqra.ui.art.juzFace
+import com.azzamalrashed.aqra.ui.components.AqraBackButton
 import com.azzamalrashed.aqra.ui.components.AqraCard
 import com.azzamalrashed.aqra.ui.components.AqraChevron
 import com.azzamalrashed.aqra.ui.components.AqraChip
@@ -122,6 +125,10 @@ object PlanFormat {
         15 -> stringResource(R.string.s_1_page)
         19 -> stringResource(R.string.s_1_pages)
         23 -> stringResource(R.string.s_1_pages_2)
+        26 -> stringResource(R.string.s_1_pages_3)
+        30 -> stringResource(R.string.s_2_pages)
+        34 -> stringResource(R.string.s_2_pages_2)
+        38 -> stringResource(R.string.s_2_pages_3)
         else -> pluralStringResource(R.plurals.n_lines, lines, lines)
     }
 
@@ -154,7 +161,12 @@ private const val PLAN_PAGES = 4
  * step of setup, and later a sheet to change, pause or stop the plan.
  */
 @Composable
-fun PlanEditorScreen(app: AqraApp, store: MushafStore, isSetup: Boolean, onDone: (MemorizationPlan?) -> Unit) {
+fun PlanEditorScreen(
+    app: AqraApp, store: MushafStore, isSetup: Boolean,
+    /** In setup, back to the step before the first page; null when there's none. */
+    onBack: (() -> Unit)? = null,
+    onDone: (MemorizationPlan?) -> Unit,
+) {
     val planStore = app.plan
     val policy = planStore.policy
     // The plan being changed: its completion date is shown beside the new one, and it can be paused or stopped.
@@ -171,6 +183,12 @@ fun PlanEditorScreen(app: AqraApp, store: MushafStore, isSetup: Boolean, onDone:
     fun next() {
         scope.launch { pager.animateScrollToPage((pager.currentPage + 1).coerceAtMost(PLAN_PAGES - 1)) }
     }
+    // In setup, each page back to the one before, and the first to the step before the plan.
+    val canGoBack = isSetup && (pager.currentPage > 0 || onBack != null)
+    fun back() {
+        if (pager.currentPage > 0) scope.launch { pager.animateScrollToPage(pager.currentPage - 1) } else onBack?.invoke()
+    }
+    BackHandler(enabled = canGoBack, onBack = ::back)
 
     fun finish(plan: MemorizationPlan?) {
         // In setup, «ليس الآن» leaves no plan; outside it, only «إيقاف الخطة» removes one.
@@ -194,6 +212,7 @@ fun PlanEditorScreen(app: AqraApp, store: MushafStore, isSetup: Boolean, onDone:
                 )
             }
         }
+        if (canGoBack) AqraBackButton(Modifier.align(Alignment.TopStart).safeDrawingPadding(), onClick = ::back)
         Box(Modifier.align(Alignment.TopEnd).then(if (isSetup) Modifier.safeDrawingPadding() else Modifier)) {
             if (isSetup) {
                 Text(stringResource(R.string.not_now), style = aqraStyle(15f, Weight.semibold, Palette.inkSoft),
@@ -270,21 +289,29 @@ private fun AmountPage(lines: Int, policy: PlanPolicy, inSetup: Boolean, onChang
 
 /**
  * Two facing pages of the fifteen-line Mushaf. [lit] lines glow from the top of the right-hand page, each lighting
- * from right to left as Arabic is read, then on into the left-hand page.
+ * from right to left as Arabic is read, then on into the left-hand page — and past two pages, into the next page,
+ * rising from behind the left one.
  */
 @Composable
 private fun OpenMushaf(lit: Float) {
     LeftToRight {
         // The Mushaf opens right to left: the first page is on the right.
         Row(Modifier.clearAndSetSemantics {}, horizontalArrangement = Arrangement.spacedBy(4.dp)) {
-            MushafSheet(first = 15, lit = lit, outerLeft = true)
+            Box {
+                MushafSheet(first = 30, lit = lit, outerLeft = true, Modifier.graphicsLayer {
+                    alpha = ((lit - 30) / 2).coerceIn(0f, 1f)
+                    rotationZ = -8f
+                    transformOrigin = TransformOrigin(1f, 1f)
+                })
+                MushafSheet(first = 15, lit = lit, outerLeft = true)
+            }
             MushafSheet(first = 0, lit = lit, outerLeft = false)
         }
     }
 }
 
 @Composable
-private fun MushafSheet(first: Int, lit: Float, outerLeft: Boolean) {
+private fun MushafSheet(first: Int, lit: Float, outerLeft: Boolean, modifier: Modifier = Modifier) {
     val outer = 20.dp
     val inner = 5.dp
     val shape = RoundedCornerShape(
@@ -292,7 +319,7 @@ private fun MushafSheet(first: Int, lit: Float, outerLeft: Boolean) {
         topEnd = if (outerLeft) inner else outer, bottomEnd = if (outerLeft) inner else outer,
     )
     Canvas(
-        Modifier.size(150.dp, 214.dp).softShadow(shape, strength = 1.2f, radius = 20.dp, y = 12.dp)
+        modifier.size(150.dp, 214.dp).softShadow(shape, strength = 1.2f, radius = 20.dp, y = 12.dp)
             .background(Color.White, shape).border(1.dp, Palette.lavender, shape).padding(horizontal = 18.dp, vertical = 16.dp),
     ) {
         val slot = size.height / 15

@@ -32,6 +32,7 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicText
 import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowLeft
 import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
@@ -58,6 +59,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.heading
 import androidx.compose.ui.semantics.selected
 import androidx.compose.ui.semantics.semantics
@@ -196,6 +198,20 @@ fun AqraRow(
 fun AqraChevron() {
     Box(Modifier.size(30.dp).background(Palette.lavender, CircleShape), contentAlignment = Alignment.Center) {
         Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, contentDescription = null, tint = Palette.brand, modifier = Modifier.size(20.dp))
+    }
+}
+
+/** «رجوع» at the top of a setup step: the backward chevron in a white circle, pointing the way the screen reads. */
+@Composable
+fun AqraBackButton(modifier: Modifier = Modifier, onClick: () -> Unit) {
+    val label = stringResource(R.string.back)
+    Box(
+        modifier.padding(horizontal = 18.dp, vertical = 12.dp).size(36.dp)
+            .softShadow(CircleShape, radius = 8.dp, y = 4.dp).background(Color.White, CircleShape)
+            .pressable(onClick = onClick).semantics { contentDescription = label },
+        contentAlignment = Alignment.Center,
+    ) {
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowLeft, null, tint = Palette.inkSoft, modifier = Modifier.size(22.dp))
     }
 }
 

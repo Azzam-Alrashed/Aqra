@@ -150,6 +150,14 @@
     <string name="s_1_pages">1¼ pages</string>
     <!-- 1½ pages -->
     <string name="s_1_pages_2">1½ pages</string>
+    <!-- 1¾ pages -->
+    <string name="s_1_pages_3">1¾ pages</string>
+    <!-- 2 pages -->
+    <string name="s_2_pages">2 pages</string>
+    <!-- 2¼ pages -->
+    <string name="s_2_pages_2">2¼ pages</string>
+    <!-- 2½ pages -->
+    <string name="s_2_pages_3">2½ pages</string>
     <!-- 30 days in a row -->
     <string name="s_30_days_in_a_row">30 days in a row</string>
     <!-- 7 days in a row -->
@@ -249,6 +257,8 @@
     <string name="ayah_n_of_s">ayah %1$d of %2$s</string>
     <!-- Ayat memorized -->
     <string name="ayat_memorized">Ayat memorized</string>
+    <!-- Back -->
+    <string name="back">Back</string>
     <!-- Backed up %@ -->
     <string name="backed_up_s">Backed up %s</string>
     <!-- Backing up… -->

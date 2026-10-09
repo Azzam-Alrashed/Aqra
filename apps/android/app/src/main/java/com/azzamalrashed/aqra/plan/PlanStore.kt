@@ -20,8 +20,8 @@ import kotlin.math.max
 
 /** The rules of the personal plan, in one place so they can be tuned after trying them (docs/SRS.md, §3.7). */
 data class PlanPolicy(
-    /** The daily amounts offered, in lines of the 15-line page: ¼, ½, ¾, 1, 1¼ and 1½ pages. */
-    val amountOptions: List<Int> = listOf(4, 8, 11, 15, 19, 23),
+    /** The daily amounts offered, in lines of the 15-line page: from ¼ page up to 2½ pages, a quarter at a time. */
+    val amountOptions: List<Int> = listOf(4, 8, 11, 15, 19, 23, 26, 30, 34, 38),
     val defaultAmount: Int = 8,
     /** Weekdays as the iOS app numbers them (1 is Sunday, 7 Saturday): every day but Friday. */
     val defaultStudyDays: Set<Int> = setOf(1, 2, 3, 4, 5, 7),
