@@ -109,6 +109,7 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
     val scope = rememberCoroutineScope()
     var confirmingSignOut by remember { mutableStateOf(false) }
     var confirmingDeletion by remember { mutableStateOf(false) }
+    var confirmingBackupDeletion by remember { mutableStateOf(false) }
     var pickingTime by remember { mutableStateOf(false) }
     var notificationsDenied by remember { mutableStateOf(false) }
     var showingWallet by remember { mutableStateOf(false) }
@@ -198,6 +199,13 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
                 AqraRow("🗑️", Palette.rose, stringResource(R.string.delete_account), Modifier.pressable(enabled = !account.isWorking, pressed = 1f) { confirmingDeletion = true },
                     titleColor = Palette.danger) {}
             }
+        } else if (account.profile?.isAnonymous == true) {
+            // Every install backs up to an anonymous account from the start; that backup can be deleted too.
+            AqraCard(Modifier.fillMaxWidth().padding(top = 10.dp).fade(if (account.isWorking) 0.6f else 1f), padding = 0.dp, radius = 24.dp) {
+                AqraRow("🗑️", Palette.rose, stringResource(R.string.delete_my_backup),
+                    Modifier.pressable(enabled = !account.isWorking, pressed = 1f) { confirmingBackupDeletion = true },
+                    detail = stringResource(R.string.the_copy_of_your_progress_kept_online), titleColor = Palette.danger) {}
+            }
         }
 
         Text(stringResource(R.string.version_s, "${BuildConfig.VERSION_NAME} (${BuildConfig.VERSION_CODE})"),
@@ -215,6 +223,12 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
         Confirm(
             title = stringResource(R.string.delete_your_account_q), message = stringResource(R.string.your_account_and_the_progress_backed_up_in_it_are),
             action = stringResource(R.string.delete), onDismiss = { confirmingDeletion = false },
+        ) { context.findActivity()?.let { activity -> scope.launch { account.deleteAccount(activity) } } }
+    }
+    if (confirmingBackupDeletion) {
+        Confirm(
+            title = stringResource(R.string.delete_your_backup_q), message = stringResource(R.string.the_copy_of_your_progress_kept_online_is_deleted_for),
+            action = stringResource(R.string.delete), onDismiss = { confirmingBackupDeletion = false },
         ) { context.findActivity()?.let { activity -> scope.launch { account.deleteAccount(activity) } } }
     }
     if (showingWallet) AqraSheet(onDismiss = { showingWallet = false }) { WalletScreen(app) }
