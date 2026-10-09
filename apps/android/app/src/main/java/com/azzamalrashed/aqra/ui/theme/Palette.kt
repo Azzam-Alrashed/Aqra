@@ -18,7 +18,7 @@ import com.azzamalrashed.aqra.R
 object Palette {
     val surface = Color(0xFFF7F4FB)
     val ink = Color(0xFF241A33)
-    val inkSoft = Color(0xFF7B7290)
+    val inkSoft = Color(0xFF6C6383)
     val brand = Color(0xFF5B2D91)
     val brandDeep = Color(0xFF3E1D66)
     val gold = Color(0xFFE8B64C)
