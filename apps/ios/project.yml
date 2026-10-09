@@ -56,7 +56,7 @@ targets:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.azzamalrashed.aqra
         DEVELOPMENT_TEAM: 6QYT6GJB4Z
-        CURRENT_PROJECT_VERSION: "2"
+        CURRENT_PROJECT_VERSION: "4"
         CODE_SIGN_IDENTITY: iPhone Developer
         GENERATE_INFOPLIST_FILE: YES
         # Only what the generated Info.plist can't hold: the URL schemes, and the launch screen.

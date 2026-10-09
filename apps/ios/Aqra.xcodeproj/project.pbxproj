@@ -115,7 +115,7 @@
 		1300102697229A28E90F368F /* StudentFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentFile.swift; sourceTree = "<group>"; };
 		1318AACA208DCE2AD954B8A0 /* PeerTasmee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerTasmee.swift; sourceTree = "<group>"; };
 		140188D5E36E5305D761C689 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		197C7240EA806A2E4643B0F4 /* Aqra.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Aqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		197C7240EA806A2E4643B0F4 /* Aqra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E7A36665EF8F19D147219B7 /* RotationAdvisor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotationAdvisor.swift; sourceTree = "<group>"; };
 		20340BF2BF24258E031B4899 /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
 		245F653F1425B4D48BE20C29 /* WirdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WirdView.swift; sourceTree = "<group>"; };
@@ -685,7 +685,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Aqra/Aqra.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Aqra/Info.plist;
@@ -815,7 +815,7 @@
 				ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME = AccentColor;
 				CODE_SIGN_ENTITLEMENTS = Aqra/Aqra.entitlements;
 				CODE_SIGN_IDENTITY = "iPhone Developer";
-				CURRENT_PROJECT_VERSION = 2;
+				CURRENT_PROJECT_VERSION = 4;
 				DEVELOPMENT_TEAM = 6QYT6GJB4Z;
 				GENERATE_INFOPLIST_FILE = YES;
 				INFOPLIST_FILE = Aqra/Info.plist;
