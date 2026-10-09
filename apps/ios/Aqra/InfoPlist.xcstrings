@@ -50,13 +50,13 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "ليسمعك معلّمك وأنت تُسمِّع في التسميع المرئي."
+            "value" : "ليتابع اقرأ تلاوتك وأنت تراجع، على جهازك، وليسمعك معلّمك في التسميع المرئي."
           }
         },
         "en" : {
           "stringUnit" : {
             "state" : "new",
-            "value" : "Your teacher hears you recite in a video tasmee'."
+            "value" : "Aqra follows along as you recite a revision, on your device, and your teacher hears you in a video tasmee'."
           }
         }
       }

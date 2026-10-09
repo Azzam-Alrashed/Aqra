@@ -17,6 +17,8 @@ enum MushafStyle {
     /// In revision, the soft bars that veil words not yet revealed, and the wash behind an ayah stumbled on.
     static let veil = Color(light: 0xE6DAC2, dark: 0x3C3228)
     static let stumble = Color(light: 0xF4BFAE, dark: 0x7C3B2D)
+    /// A word shown as a prompt after a long pause, in a revision followed by ear.
+    static let prompt = Color(light: 0xF3DE98, dark: 0x6A5622)
     /// While choosing how much of a portion was memorized: the wash behind the ayat chosen.
     static let chosen = Color(light: 0xCDEBD8, dark: 0x24452F)
     /// The bars floating over the page, in the app's colors: white capsules, purple controls on lavender.
@@ -552,7 +554,8 @@ struct MushafPageView: View {
         }
         guard let revision else { return .normal }
         guard revision.covers(word.ayah) else { return .dimmed }
-        if revision.isVeiled(word.ayah) { return .veiled }
+        if revision.isVeiled(word.ayah, position: word.position) { return .veiled }
+        if revision.prompts.contains(RevisionSession.WordRef(ayah: word.ayah, position: word.position)) { return .prompted }
         return revision.stumbles.contains(word.ayah) ? .stumbled : .normal
     }
 
@@ -718,6 +721,8 @@ private struct LineWord {
         case veiled
         /// Revealed and marked as stumbled on.
         case stumbled
+        /// Shown as a prompt after a long pause.
+        case prompted
         /// Chosen as memorized, when only part of a portion was.
         case chosen
         /// Not memorized, so not part of the revision under way.
@@ -758,6 +763,7 @@ private struct AyahLine: View {
                 drawHighlights(in: context, lefts: lefts, top: bleed, height: height)
                 drawWashes(.stumbled, color: MushafStyle.stumble, in: context, lefts: lefts, top: bleed, height: height)
                 drawWashes(.chosen, color: MushafStyle.chosen, in: context, lefts: lefts, top: bleed, height: height)
+                drawWashes(.prompted, color: MushafStyle.prompt, in: context, lefts: lefts, top: bleed, height: height)
 
                 for (word, left) in zip(words, lefts) {
                     var context = context
@@ -780,7 +786,7 @@ private struct AyahLine: View {
                         context.fill(Path(roundedRect: bar, cornerRadius: barHeight / 2), with: .color(MushafStyle.veil))
                     case .dimmed:
                         context.fill(word.glyph.outline, with: .color(MushafStyle.ink.opacity(0.3)))
-                    case .normal, .stumbled, .chosen:
+                    case .normal, .stumbled, .chosen, .prompted:
                         context.fill(word.glyph.outline, with: .color(MushafStyle.ink))
                         if tajweed && !word.glyph.layers.isEmpty {
                             // The colors tint the letters they belong to and nothing outside them.
@@ -799,7 +805,8 @@ private struct AyahLine: View {
         .allowsHitTesting(false)
     }
 
-    /// A wash behind each run of words in a state — coral for stumbles, mint for ayat chosen as memorized —
+    /// A wash behind each run of words in a state — coral for stumbles, mint for ayat chosen as memorized, gold
+    /// for prompts —
     /// joined across the gaps between them.
     private func drawWashes(_ state: LineWord.State, color: Color, in context: GraphicsContext, lefts: [CGFloat], top: CGFloat,
                             height: CGFloat) {

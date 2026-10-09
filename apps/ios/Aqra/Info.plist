@@ -21,6 +21,9 @@
 			</array>
 		</dict>
 	</array>
+	<!-- The speech model that follows a revision aloud (RecitationModel.swift), in the project's storage bucket. -->
+	<key>AqraRecitationModelURL</key>
+	<string>https://firebasestorage.googleapis.com/v0/b/aqra-quran.firebasestorage.app/o/models%2Frecitation%2Fwhisper-base-ar-quran-1.aar?alt=media</string>
 	<!-- Lavender in light and dark alike, with a faint hint of the logo where the splash fades it in (see LaunchSplash.swift). -->
 	<key>UILaunchScreen</key>
 	<dict>
