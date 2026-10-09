@@ -146,6 +146,10 @@ struct HomeView: View {
     @State private var climbAnimation: Animation?
     /// Pauses the stage's ambient motion while the home isn't on screen.
     @State private var isVisible = false
+    /// On a short screen (an iPhone SE, or any iPhone in landscape) the stage is drawn smaller, so today's wird and
+    /// its button are on the first screen.
+    @State private var isShortScreen = false
+    private var stageScale: CGFloat { isShortScreen ? 0.76 : 1 }
     @Namespace private var zoom
 
     var body: some View {
@@ -203,6 +207,13 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)
+        .background {
+            GeometryReader { geometry in
+                Color.clear.onChange(of: geometry.size, initial: true) {
+                    isShortScreen = geometry.size.height + geometry.safeAreaInsets.top + geometry.safeAreaInsets.bottom < 700
+                }
+            }
+        }
         .background(Palette.surface.ignoresSafeArea())
         .fadesUnderStatusBar()
         .fontDesign(.rounded)
@@ -337,6 +348,9 @@ struct HomeView: View {
                     .drawingGroup()
             }
         }
+        // The whole composition, glow and chips included, shrinks together on a short screen.
+        .scaleEffect(stageScale)
+        .frame(height: 360 * stageScale)
     }
 
     /// A chip at its resting place, after flying out from `start`'s distance back toward the stage's middle.
