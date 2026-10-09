@@ -24,6 +24,8 @@ struct AqraApp: App {
             }
             .environment(launch)
             .readsSystemColorScheme()
+            // Text follows the reader's size up to Accessibility 2; past it, the composed screens would come apart.
+            .dynamicTypeSize(...DynamicTypeSize.accessibility2)
         }
     }
 }

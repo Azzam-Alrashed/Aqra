@@ -68,11 +68,11 @@ struct AqraRow<Accessory: View>: View {
             IconTile(icon: icon, tint: tint, size: 38)
             VStack(alignment: .leading, spacing: 1) {
                 title
-                    .font(.system(size: 16, weight: .heavy))
+                    .aqraFont(size: 16, weight: .heavy)
                     .foregroundStyle(OnboardingPalette.ink)
                 if let detail {
                     detail
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(OnboardingPalette.inkSoft)
                 }
             }
@@ -119,7 +119,7 @@ struct AqraSectionTitle: View {
 
     var body: some View {
         Text(title)
-            .font(.system(size: 19, weight: .heavy))
+            .aqraFont(size: 19, weight: .heavy)
             .foregroundStyle(OnboardingPalette.ink)
             .frame(maxWidth: .infinity, alignment: .leading)
             .accessibilityAddTraits(.isHeader)

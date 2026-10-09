@@ -280,10 +280,12 @@ struct HomeView: View {
         return HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Peace be upon you")
-                    .font(.system(size: 20, weight: .heavy))
+                    .aqraFont(size: 20, weight: .heavy)
                     .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Text(Date.now.formatted(hijri))
-                    .font(.system(size: 13, weight: .semibold))
+                    .aqraFont(size: 13, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
             }
             Spacer(minLength: 0)
@@ -440,7 +442,7 @@ struct HomeView: View {
                     Text("May Allah bless you").foregroundStyle(Palette.brand)
                 }
             }
-            .font(.system(size: 31, weight: .heavy))
+            .aqraFont(size: 31, weight: .heavy)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             Group {
@@ -452,7 +454,7 @@ struct HomeView: View {
                     cycleLine
                 }
             }
-            .font(.system(size: 16, weight: .medium))
+            .aqraFont(size: 16, weight: .medium)
             .foregroundStyle(Palette.inkSoft)
         }
         .multilineTextAlignment(.center)
@@ -491,10 +493,10 @@ struct HomeView: View {
                         .zoomTransitionSource(id: Destination.mushaf(marking: false).sourceID, in: zoom)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Continue reading")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                         (Text(verbatim: (store.surahNames[page.surah] ?? "") + Separator.facts) + Text("Page \(page.number)"))
-                        .font(.system(size: 16, weight: .heavy))
+                        .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -514,22 +516,23 @@ struct HomeView: View {
                     IconTile(icon: "📄", tint: Palette.sky, size: 40)
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Today's pages")
-                            .font(.system(size: 19, weight: .heavy))
+                            .aqraFont(size: 19, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         if !plan.isComplete {
                             Text("Revised a page outside the app? Press and hold it.")
-                                .font(.system(size: 11, weight: .semibold))
+                                .aqraFont(size: 11, weight: .semibold)
                                 .foregroundStyle(Palette.inkSoft)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     Spacer(minLength: 4)
                     Text("\(plan.doneCount) of \(plan.items.count)")
-                        .font(.system(size: 13, weight: .bold).monospacedDigit())
+                        .aqraFont(size: 13, weight: .bold, monospacedDigit: true)
                         .foregroundStyle(Palette.brand)
                         .contentTransition(.numericText())
                         .padding(.horizontal, 10)
-                        .frame(height: 28)
+                        .padding(.vertical, 3)
+                        .frame(minHeight: 28)
                         .background(Palette.lavender, in: Capsule())
                 }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
@@ -552,7 +555,7 @@ struct HomeView: View {
         } label: {
             VStack(spacing: 2) {
                 Text(item.page.formatted())
-                    .font(.system(size: 18, weight: .heavy).monospacedDigit())
+                    .aqraFont(size: 18, weight: .heavy, monospacedDigit: true)
                     .foregroundStyle(item.done ? Palette.inkSoft : Palette.ink)
                 Group {
                     if item.kind == .followUp {
@@ -561,13 +564,14 @@ struct HomeView: View {
                         Text(verbatim: store.surahNames[page.surah] ?? "").foregroundStyle(Palette.inkSoft)
                     }
                 }
-                .font(.system(size: 11, weight: .semibold))
+                .aqraFont(size: 11, weight: .semibold)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             }
             .padding(.horizontal, 6)
             .frame(maxWidth: .infinity)
-            .frame(height: 62)
+            .padding(.vertical, 3)
+            .frame(minHeight: 62)
             .background(
                 item.done
                     ? AnyShapeStyle(face.top.opacity(0.14))
@@ -578,7 +582,7 @@ struct HomeView: View {
             .overlay(alignment: .topTrailing) {
                 if item.done {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 16, weight: .bold))
+                        .aqraFont(size: 16, weight: .bold)
                         .foregroundStyle(.white, face.bottom)
                         .padding(6)
                         .transition(.scale.combined(with: .opacity))
@@ -620,15 +624,15 @@ struct HomeView: View {
                     IconTile(icon: "🎓", tint: cancelled ? Palette.rose : Palette.mint, size: 40)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(cancelled ? "Tasmee' cancelled" : "Your next tasmee'")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                         Text(verbatim: booking.teacherName)
-                            .font(.system(size: 16, weight: .heavy))
+                            .aqraFont(size: 16, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                             .lineLimit(1)
                         (Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + Separator.facts)
                             + TasmeeFormat.place(live.map { Booking($0) } ?? booking))
-                            .font(.system(size: 12, weight: .bold))
+                            .aqraFont(size: 12, weight: .bold)
                             .foregroundStyle(cancelled ? Palette.inkSoft : Palette.brand)
                             .strikethrough(cancelled)
                             .lineLimit(1)
@@ -670,10 +674,10 @@ struct HomeView: View {
                     IconTile(icon: "🌿", tint: Palette.mint, size: 40)
                     VStack(alignment: .leading, spacing: 3) {
                         Text("These pages keep slipping")
-                            .font(.system(size: 16, weight: .heavy))
+                            .aqraFont(size: 16, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         Text("Pages \(pages.map { $0.formatted() }.formatted(.list(type: .and, width: .narrow))): bring them back tomorrow to make them firm?")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -719,7 +723,7 @@ struct HomeView: View {
                                 Text("Your teacher heard \(pages) pages")
                             }
                         }
-                        .font(.system(size: 16, weight: .heavy))
+                        .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -730,7 +734,7 @@ struct HomeView: View {
                                 Text("\(record.stumbles.count) stumbles · added to your revision")
                             }
                         }
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.brand)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -769,10 +773,10 @@ struct HomeView: View {
                     IconTile(icon: "🪪", tint: Palette.butter, size: 40)
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Save your progress")
-                            .font(.system(size: 17, weight: .heavy))
+                            .aqraFont(size: 17, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         Text("Your progress is only on this device until you sign in.")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -780,10 +784,11 @@ struct HomeView: View {
                     Button("Later") {
                         withAnimation(.snappy) { saveProgressSnoozedUntil = Date.now.addingTimeInterval(7 * 86_400).timeIntervalSince1970 }
                     }
-                    .font(.system(size: 13, weight: .bold))
+                    .aqraFont(size: 13, weight: .bold)
                     .foregroundStyle(Palette.brand)
                     .padding(.horizontal, 10)
-                    .frame(height: 28)
+                    .padding(.vertical, 3)
+                    .frame(minHeight: 28)
                     .background(Palette.lavender, in: Capsule())
                     .buttonStyle(.plain)
                 }

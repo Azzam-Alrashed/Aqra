@@ -108,10 +108,10 @@ struct CelebrationOverlay: View {
             IconTile(icon: icon, tint: tint, size: 48)
             VStack(alignment: .leading, spacing: 2) {
                 title
-                    .font(.system(size: 17, weight: .heavy))
+                    .aqraFont(size: 17, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                 detail
-                    .font(.system(size: 12, weight: .semibold))
+                    .aqraFont(size: 12, weight: .semibold)
                     .foregroundStyle(Palette.brand)
             }
             Spacer(minLength: 0)
@@ -143,19 +143,20 @@ struct RewardsSection: View {
                     IconTile(icon: "⭐️", tint: Palette.butter, size: 40)
                     VStack(alignment: .leading, spacing: 1) {
                         Text("\(rewards.points) points")
-                            .font(.system(size: 19, weight: .heavy).monospacedDigit())
+                            .aqraFont(size: 19, weight: .heavy, monospacedDigit: true)
                             .foregroundStyle(Palette.ink)
                             .contentTransition(.numericText())
                         Text("\(rewards.points(since: weekStart)) this week")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                     }
                     Spacer()
                     Text("Just for you")
-                        .font(.system(size: 11, weight: .bold))
+                        .aqraFont(size: 11, weight: .bold)
                         .foregroundStyle(Palette.brand)
                         .padding(.horizontal, 10)
-                        .frame(height: 24)
+                        .padding(.vertical, 3)
+                        .frame(minHeight: 24)
                         .background(Palette.lavender, in: Capsule())
                 }
             }
@@ -172,7 +173,7 @@ struct RewardsSection: View {
                                 .grayscale(earned ? 0 : 1)
                                 .opacity(earned ? 1 : 0.45)
                             Text(achievement.title)
-                                .font(.system(size: 10, weight: .bold))
+                                .aqraFont(size: 10, weight: .bold)
                                 .foregroundStyle(earned ? Palette.ink : Palette.inkSoft)
                                 .multilineTextAlignment(.center)
                                 .lineLimit(2, reservesSpace: true)
@@ -234,12 +235,12 @@ struct RewardsSection: View {
             IconTile(icon: done ? "🏆" : challenge.kind.icon, tint: done ? Palette.butter : Palette.peach, size: 38)
             VStack(alignment: .leading, spacing: 6) {
                 challenge.kind.title(challenge.target)
-                    .font(.system(size: 15, weight: .heavy))
+                    .aqraFont(size: 15, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                 ProgressView(value: Double(min(progress, challenge.target)), total: Double(max(challenge.target, 1)))
                     .tint(done ? Color(light: 0x2E9B63, dark: 0x2E9B63) : Palette.brand)
                 (done ? Text("Done") : Text("\(min(progress, challenge.target)) of \(challenge.target) · until \(challenge.end.formatted(.dateTime.weekday(.wide)))"))
-                    .font(.system(size: 11, weight: .semibold))
+                    .aqraFont(size: 11, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
             }
             if !done {
@@ -272,10 +273,10 @@ struct ChallengePicker: View {
                 Text("A challenge").foregroundStyle(Palette.ink)
                 Text("for this week").foregroundStyle(Palette.brand)
             }
-            .font(.system(size: 26, weight: .heavy))
+            .aqraFont(size: 26, weight: .heavy)
             .padding(.top, 20)
             Text("Between you and yourself: nobody else sees it.")
-                .font(.system(size: 14, weight: .medium))
+                .aqraFont(size: 14, weight: .medium)
                 .foregroundStyle(Palette.inkSoft)
             ScrollView {
                 AqraCard(padding: 0, radius: 24) {
@@ -289,7 +290,7 @@ struct ChallengePicker: View {
                             } label: {
                                 AqraRow(icon: option.kind.icon, tint: Palette.peach, title: option.kind.title(option.target)) {
                                     Image(systemName: "plus.circle.fill")
-                                        .font(.system(size: 22))
+                                        .aqraFont(size: 22)
                                         .foregroundStyle(Palette.brand)
                                 }
                             }

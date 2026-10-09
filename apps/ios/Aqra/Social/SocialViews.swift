@@ -48,10 +48,10 @@ struct TogetherSection: View {
                             IconTile(icon: "🤝", tint: Palette.peach, size: 40)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Compete with friends")
-                                    .font(.system(size: 16, weight: .heavy))
+                                    .aqraFont(size: 16, weight: .heavy)
                                     .foregroundStyle(Palette.ink)
                                 Text("Sign in to add friends, race them, and finish a khatmah together.")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .aqraFont(size: 12, weight: .semibold)
                                     .foregroundStyle(Palette.inkSoft)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -138,7 +138,7 @@ struct FriendsView: View {
                     Text("Friends").foregroundStyle(Palette.ink)
                     Text("to compete with").foregroundStyle(Palette.brand)
                 }
-                .font(.system(size: 28, weight: .heavy))
+                .aqraFont(size: 28, weight: .heavy)
                 .padding(.top, 22)
 
                 if account.publicName == nil {
@@ -151,10 +151,10 @@ struct FriendsView: View {
                             IconTile(icon: "💌", tint: Palette.rose, size: 40)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Invite a friend")
-                                    .font(.system(size: 16, weight: .heavy))
+                                    .aqraFont(size: 16, weight: .heavy)
                                     .foregroundStyle(Palette.ink)
                                 Text("Share your code; it's valid for a week.")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .aqraFont(size: 12, weight: .semibold)
                                     .foregroundStyle(Palette.inkSoft)
                             }
                             Spacer(minLength: 0)
@@ -170,7 +170,7 @@ struct FriendsView: View {
                                 }
                                 VStack(alignment: .leading, spacing: 8) {
                                     Text(verbatim: invite.id.map(String.init).joined(separator: " "))
-                                        .font(.system(size: 24, weight: .heavy, design: .monospaced))
+                                        .aqraFont(size: 24, weight: .heavy, design: .monospaced)
                                         .foregroundStyle(Palette.brand)
                                         .environment(\.layoutDirection, .leftToRight)
                                     ShareLink(item: invite.link,
@@ -198,7 +198,7 @@ struct FriendsView: View {
                 AqraCard(padding: 14, radius: 24) {
                     HStack(spacing: 10) {
                         TextField(text: $code, prompt: Text("A friend's code")) { Text("Code") }
-                            .font(.system(size: 17, weight: .bold, design: .monospaced))
+                            .aqraFont(size: 17, weight: .bold, design: .monospaced)
                             .textInputAutocapitalization(.characters)
                             .autocorrectionDisabled()
                             .onChange(of: code) {
@@ -293,18 +293,18 @@ struct AcceptFriendView: View {
                         done ? Text("You're friends with \(invite.ownerName)") : Text("Be friends with \(invite.ownerName)?")
                     }
                 }
-                    .font(.system(size: 22, weight: .heavy))
+                    .aqraFont(size: 22, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                     .multilineTextAlignment(.center)
                 Text("Friends see each other's names in the competitions they share, and nothing else.")
-                    .font(.system(size: 14, weight: .medium))
+                    .aqraFont(size: 14, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .multilineTextAlignment(.center)
                 if let problem { ProblemLine(problem: problem) }
             } else {
                 Text(verbatim: "🔎").font(.system(size: 56))
                 Text("This code isn't valid, or it has expired.")
-                    .font(.system(size: 16, weight: .semibold))
+                    .aqraFont(size: 16, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                     .multilineTextAlignment(.center)
             }
@@ -350,13 +350,14 @@ struct NamePrompt: View {
         AqraCard(padding: 14, radius: 24) {
             VStack(alignment: .leading, spacing: 10) {
                 Text("First, the name your friends will see")
-                    .font(.system(size: 15, weight: .heavy))
+                    .aqraFont(size: 15, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                 HStack(spacing: 10) {
                     TextField("Your name", text: $name)
-                        .font(.system(size: 16, weight: .semibold))
+                        .aqraFont(size: 16, weight: .semibold)
                         .padding(.horizontal, 12)
-                        .frame(height: 40)
+                        .padding(.vertical, 3)
+                        .frame(minHeight: 40)
                         .background(Palette.surface, in: Capsule())
                     Button("Save") { account.setDisplayName(name) }
                         .buttonStyle(ChipButtonStyle(filled: true))
@@ -388,7 +389,7 @@ struct CompetitionView: View {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verbatim: live.title)
-                        .font(.system(size: 26, weight: .heavy))
+                        .aqraFont(size: 26, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     HStack(spacing: 0) {
                         Text(live.metric.title) + Text(verbatim: Separator.facts)
@@ -398,11 +399,11 @@ struct CompetitionView: View {
                             Text("Ended")
                         }
                     }
-                    .font(.system(size: 13, weight: .semibold))
+                    .aqraFont(size: 13, weight: .semibold)
                     .foregroundStyle(Palette.brand)
                     if live.kind == .teacher {
                         Text("Scored from the pages \(live.ownerName) hears clean in tasmee'.")
-                            .font(.system(size: 12, weight: .medium))
+                            .aqraFont(size: 12, weight: .medium)
                             .foregroundStyle(Palette.inkSoft)
                     }
                 }
@@ -423,7 +424,7 @@ struct CompetitionView: View {
                             .foregroundStyle(Color(light: 0xB3261E, dark: 0xB3261E))
                     }
                 }
-                .font(.system(size: 14, weight: .bold))
+                .aqraFont(size: 14, weight: .bold)
                 .foregroundStyle(Palette.brand)
                 .buttonStyle(.plain)
                 .padding(.top, 6)
@@ -460,7 +461,7 @@ struct CompetitionView: View {
                 let ranked = CompetitionMember.ranked(members.filter { live.memberUids.contains($0.id) })
                 if ranked.isEmpty {
                     Text("No scores yet: they appear as members revise.")
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .padding(16)
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -469,14 +470,14 @@ struct CompetitionView: View {
                     if index > 0 { AqraRowDivider() }
                     HStack(spacing: 12) {
                         Text(verbatim: entry.rank <= 3 ? ["🥇", "🥈", "🥉"][entry.rank - 1] : entry.rank.formatted())
-                            .font(.system(size: entry.rank <= 3 ? 22 : 16, weight: .heavy))
+                            .aqraFont(size: entry.rank <= 3 ? 22 : 16, weight: .heavy)
                             .frame(width: 38)
                         Text(verbatim: entry.member.name.isEmpty ? "—" : entry.member.name)
                             .font(.system(size: 16, weight: entry.member.id == uid ? .heavy : .semibold))
                             .foregroundStyle(entry.member.id == uid ? Palette.brand : Palette.ink)
                         Spacer()
                         Text(verbatim: entry.member.score.formatted())
-                            .font(.system(size: 17, weight: .heavy).monospacedDigit())
+                            .aqraFont(size: 17, weight: .heavy, monospacedDigit: true)
                             .foregroundStyle(Palette.ink)
                     }
                     .padding(14)
@@ -492,7 +493,7 @@ struct CompetitionView: View {
             AqraCard(padding: 14, radius: 24) {
                 VStack(alignment: .leading, spacing: 8) {
                     Text("\(done) of 30 parts finished")
-                        .font(.system(size: 16, weight: .heavy))
+                        .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     ProgressView(value: Double(done), total: 30).tint(Palette.brand)
                 }
@@ -503,7 +504,7 @@ struct CompetitionView: View {
                 }
             }
             Text("Tap a free part to take it, and tap yours when you've read it.")
-                .font(.system(size: 12, weight: .medium))
+                .aqraFont(size: 12, weight: .medium)
                 .foregroundStyle(Palette.inkSoft)
         }
     }
@@ -573,7 +574,7 @@ struct NewCompetitionView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("New competition")
-                    .font(.system(size: 26, weight: .heavy))
+                    .aqraFont(size: 26, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                     .padding(.top, 22)
                 if kinds.count > 1 {
@@ -583,18 +584,18 @@ struct NewCompetitionView: View {
                     VStack(spacing: 0) {
                         HStack(spacing: 12) {
                             Text("Name")
-                                .font(.system(size: 15, weight: .bold))
+                                .aqraFont(size: 15, weight: .bold)
                                 .foregroundStyle(Palette.ink)
                             TextField(text: $title, prompt: Text("Ramadan's revision")) { Text("Name") }
                                 .multilineTextAlignment(.trailing)
-                                .font(.system(size: 15, weight: .medium))
+                                .aqraFont(size: 15, weight: .medium)
                         }
                         .padding(14)
                         if kind == .friends {
                             AqraRowDivider().padding(.leading, -50)
                             HStack {
                                 Text("Counting")
-                                    .font(.system(size: 15, weight: .bold))
+                                    .aqraFont(size: 15, weight: .bold)
                                     .foregroundStyle(Palette.ink)
                                 Spacer()
                                 Picker("Counting", selection: $metric) {
@@ -610,7 +611,7 @@ struct NewCompetitionView: View {
                         AqraRowDivider().padding(.leading, -50)
                         HStack {
                             Text("For")
-                                .font(.system(size: 15, weight: .bold))
+                                .aqraFont(size: 15, weight: .bold)
                                 .foregroundStyle(Palette.ink)
                             Spacer()
                             Picker("For", selection: $days) {
@@ -628,7 +629,7 @@ struct NewCompetitionView: View {
                 AqraSectionTitle(title: kind == .teacher ? "Your students" : "Friends to invite").padding(.top, 6)
                 if people.isEmpty {
                     Text(kind == .teacher ? "Students appear here once you've heard them." : "Add friends first, with a code.")
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .padding(.horizontal, 6)
                 } else {
@@ -641,7 +642,7 @@ struct NewCompetitionView: View {
                                 } label: {
                                     AqraRow(icon: kind == .teacher ? "🧑‍🎓" : "🙂", tint: Palette.sky, title: Text(verbatim: person.name)) {
                                         Image(systemName: chosen.contains(person.uid) ? "checkmark.circle.fill" : "circle")
-                                            .font(.system(size: 22))
+                                            .aqraFont(size: 22)
                                             .foregroundStyle(chosen.contains(person.uid) ? Palette.brand : Palette.lavender)
                                     }
                                 }

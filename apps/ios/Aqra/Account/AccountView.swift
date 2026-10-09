@@ -26,7 +26,7 @@ struct AccountView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Account")
-                        .font(.system(size: 30, weight: .heavy))
+                        .aqraFont(size: 30, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .padding(.top, 16)
                         .accessibilityAddTraits(.isHeader)
@@ -66,7 +66,7 @@ struct AccountView: View {
                                 AqraRowDivider()
                                 HStack {
                                     Text("Time")
-                                        .font(.system(size: 15, weight: .bold))
+                                        .aqraFont(size: 15, weight: .bold)
                                         .foregroundStyle(Palette.ink)
                                     Spacer()
                                     DatePicker("Time", selection: reminderTime, displayedComponents: .hourAndMinute)
@@ -82,10 +82,10 @@ struct AccountView: View {
                     if notificationsDenied {
                         HStack(spacing: 8) {
                             Text("Notifications are turned off for Aqra in Settings.")
-                                .font(.system(size: 12, weight: .semibold))
+                                .aqraFont(size: 12, weight: .semibold)
                                 .foregroundStyle(Palette.inkSoft)
                             Button("Open Settings") { openSettings() }
-                                .font(.system(size: 12, weight: .bold))
+                                .aqraFont(size: 12, weight: .bold)
                                 .foregroundStyle(Palette.brand)
                         }
                         .padding(.horizontal, 6)
@@ -138,7 +138,7 @@ struct AccountView: View {
                     }
 
                     Text("Version \(version)")
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 8)
@@ -265,10 +265,10 @@ struct AccountCard: View {
             IconTile(icon: "🪪", tint: Palette.butter, size: 40)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Save your progress")
-                    .font(.system(size: 16, weight: .heavy))
+                    .aqraFont(size: 16, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                 Text("Your progress is only on this device until you sign in.")
-                    .font(.system(size: 12, weight: .semibold))
+                    .aqraFont(size: 12, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -282,12 +282,12 @@ struct AccountCard: View {
             IconTile(icon: profile.provider == .apple ? "🍎" : "🌐", tint: Palette.sky, size: 40)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: profile.name ?? profile.email ?? "")
-                    .font(.system(size: 16, weight: .heavy))
+                    .aqraFont(size: 16, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                     .lineLimit(1)
                 if let email = profile.email, profile.name != nil {
                     Text(verbatim: email)
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                         .lineLimit(1)
                 }
@@ -298,7 +298,7 @@ struct AccountCard: View {
                         Text("Backing up…")
                     }
                 }
-                .font(.system(size: 12, weight: .semibold))
+                .aqraFont(size: 12, weight: .semibold)
                 .foregroundStyle(Palette.brand)
             }
             Spacer(minLength: 0)
@@ -316,10 +316,10 @@ struct AccountCard: View {
                 IconTile(icon: "🏷️", tint: Palette.lavender, size: 30)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Name others see")
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                     Text(verbatim: account.publicName ?? "—")
-                        .font(.system(size: 15, weight: .heavy))
+                        .aqraFont(size: 15, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .lineLimit(1)
                 }
@@ -373,8 +373,10 @@ struct SignInButtons: View {
                             .frame(width: 18, height: 18)
                     }
                     Text("Continue with Google")
-                        .font(.system(size: 17, weight: .semibold, design: .default))
+                        .aqraFont(size: 17, weight: .semibold, design: .default)
                         .foregroundStyle(Color(light: 0x1F1F1F, dark: 0x1F1F1F))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .background(.white, in: Capsule())
@@ -410,14 +412,15 @@ private struct EmulatorSignIn: View {
                         .textInputAutocapitalization(.never)
                         .keyboardType(.emailAddress)
                         .autocorrectionDisabled()
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .padding(.horizontal, 12)
-                        .frame(height: 40)
+                        .padding(.vertical, 3)
+                        .frame(minHeight: 40)
                         .background(Palette.surface, in: Capsule())
                     Button("Sign in to the emulator") {
                         Task { await account.signInToEmulator(email: email.trimmingCharacters(in: .whitespaces)) }
                     }
-                    .font(.system(size: 13, weight: .bold))
+                    .aqraFont(size: 13, weight: .bold)
                     .foregroundStyle(Palette.brand)
                     .disabled(email.isEmpty || account.isWorking)
                 }
@@ -438,7 +441,7 @@ struct ProblemLine: View {
             case .failed: Text("That didn't work. Please try again.")
             }
         }
-        .font(.system(size: 12, weight: .semibold))
+        .aqraFont(size: 12, weight: .semibold)
         .foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
         .transition(.opacity)
     }
@@ -532,10 +535,10 @@ struct SourcesView: View {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Sources")
-                        .font(.system(size: 30, weight: .heavy))
+                        .aqraFont(size: 30, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     Text("Aqra shows the Quran exactly as published, from these sources, with thanks.")
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -568,10 +571,10 @@ struct SourcesView: View {
                 IconTile(icon: icon, tint: tint, size: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     name
-                        .font(.system(size: 16, weight: .heavy))
+                        .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     detail
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                 }

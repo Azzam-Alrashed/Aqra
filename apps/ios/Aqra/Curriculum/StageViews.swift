@@ -64,18 +64,19 @@ struct StageCard: View {
                         IconTile(icon: status.isPassed ? "🏅" : "🪜", tint: Palette.lavender, size: 40)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("Stage \(stage) of \(Curriculum.stageCount)")
-                                .font(.system(size: 16, weight: .heavy))
+                                .aqraFont(size: 16, weight: .heavy)
                                 .foregroundStyle(Palette.ink)
                             StageFormat.juz(of: stage)
-                                .font(.system(size: 12, weight: .semibold))
+                                .aqraFont(size: 12, weight: .semibold)
                                 .foregroundStyle(Palette.inkSoft)
                         }
                         Spacer(minLength: 4)
                         Text(verbatim: status.progress.memorizedShare.formatted(.percent.precision(.fractionLength(0))))
-                            .font(.system(size: 13, weight: .bold).monospacedDigit())
+                            .aqraFont(size: 13, weight: .bold, monospacedDigit: true)
                             .foregroundStyle(Palette.brand)
                             .padding(.horizontal, 10)
-                            .frame(height: 28)
+                            .padding(.vertical, 3)
+                            .frame(minHeight: 28)
                             .background(Palette.lavender, in: Capsule())
                     }
                     ProgressBars(memorized: status.progress.memorizedShare, mastered: status.progress.masteredShare)
@@ -125,15 +126,16 @@ struct StagesSection: View {
                 VStack(alignment: .leading, spacing: 6) {
                     HStack {
                         StageFormat.juz(of: stage)
-                            .font(.system(size: 14, weight: .heavy))
+                            .aqraFont(size: 14, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         Spacer()
                         if status.isPassed {
                             Text("Passed")
-                                .font(.system(size: 11, weight: .bold))
+                                .aqraFont(size: 11, weight: .bold)
                                 .foregroundStyle(Color(light: 0x1F7A4D, dark: 0x1F7A4D))
                                 .padding(.horizontal, 8)
-                                .frame(height: 22)
+                                .padding(.vertical, 3)
+                                .frame(minHeight: 22)
                                 .background(Palette.mint, in: Capsule())
                         }
                     }
@@ -172,7 +174,7 @@ struct StageDetailView: View {
                     Text("Stage \(stage)").foregroundStyle(Palette.ink)
                     StageFormat.juz(of: stage).foregroundStyle(Palette.brand)
                 }
-                .font(.system(size: 28, weight: .heavy))
+                .aqraFont(size: 28, weight: .heavy)
                 .padding(.top, 8)
 
                 if let passedAt = status.passedAt {
@@ -181,10 +183,10 @@ struct StageDetailView: View {
                             IconTile(icon: "🏅", tint: Palette.butter, size: 40)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text("Stage passed")
-                                    .font(.system(size: 16, weight: .heavy))
+                                    .aqraFont(size: 16, weight: .heavy)
                                     .foregroundStyle(Palette.ink)
                                 Text(verbatim: passedAt.formatted(date: .long, time: .omitted))
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .aqraFont(size: 12, weight: .semibold)
                                     .foregroundStyle(Palette.inkSoft)
                             }
                             Spacer(minLength: 0)
@@ -208,7 +210,7 @@ struct StageDetailView: View {
                     }
                 }
                 Text("Mastered: revised clean until it stays with you for two months. A teacher records a stage test from a tasmee' in one of their sessions.")
-                    .font(.system(size: 12, weight: .medium))
+                    .aqraFont(size: 12, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 6)
@@ -239,11 +241,11 @@ struct StageDetailView: View {
         let met = status.isMet(requirement)
         return HStack(spacing: 12) {
             Image(systemName: met ? "checkmark.circle.fill" : "circle")
-                .font(.system(size: 22, weight: .semibold))
+                .aqraFont(size: 22, weight: .semibold)
                 .foregroundStyle(met ? Color(light: 0x2E9B63, dark: 0x2E9B63) : Palette.lavender)
             VStack(alignment: .leading, spacing: 2) {
                 StageFormat.requirement(requirement, policy: status.policy)
-                    .font(.system(size: 15, weight: .bold))
+                    .aqraFont(size: 15, weight: .bold)
                     .foregroundStyle(Palette.ink)
                 Group {
                     switch requirement {
@@ -261,7 +263,7 @@ struct StageDetailView: View {
                         Text(status.sheikhPassed ? "Passed" : "Book a tasmee' and ask for a stage test")
                     }
                 }
-                .font(.system(size: 12, weight: .semibold))
+                .aqraFont(size: 12, weight: .semibold)
                 .foregroundStyle(Palette.inkSoft)
             }
             Spacer(minLength: 0)
@@ -279,12 +281,12 @@ struct StageDetailView: View {
             }
         } else if let retestAt = status.retestAt {
             Text("You can take the test again \(retestAt.formatted(.relative(presentation: .named)))")
-                .font(.system(size: 13, weight: .semibold))
+                .aqraFont(size: 13, weight: .semibold)
                 .foregroundStyle(Palette.inkSoft)
                 .frame(maxWidth: .infinity)
         } else {
             Text("The test opens once every ayah of the stage is memorized.")
-                .font(.system(size: 13, weight: .semibold))
+                .aqraFont(size: 13, weight: .semibold)
                 .foregroundStyle(Palette.inkSoft)
                 .frame(maxWidth: .infinity)
         }
@@ -295,12 +297,15 @@ struct StageDetailView: View {
             VStack(alignment: .leading, spacing: 8) {
                 IconTile(icon: icon, tint: tint, size: 32)
                 Text(verbatim: value.formatted(.percent.precision(.fractionLength(0))))
-                    .font(.system(size: 20, weight: .heavy).monospacedDigit())
+                    .aqraFont(size: 20, weight: .heavy, monospacedDigit: true)
                     .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.6)
                 label
-                    .font(.system(size: 11, weight: .semibold))
+                    .aqraFont(size: 11, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                     .lineLimit(1)
+                    .minimumScaleFactor(0.7)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -341,7 +346,7 @@ struct StageTestView: View {
                 Spacer()
                 if !questions.isEmpty && !finished {
                     Text("\(index + 1) of \(questions.count)")
-                        .font(.system(size: 14, weight: .bold).monospacedDigit())
+                        .aqraFont(size: 14, weight: .bold, monospacedDigit: true)
                         .foregroundStyle(Palette.brand)
                 }
             }
@@ -354,7 +359,7 @@ struct StageTestView: View {
             } else {
                 Spacer()
                 Text("There isn't enough memorized in this stage for a test yet.")
-                    .font(.system(size: 15, weight: .semibold))
+                    .aqraFont(size: 15, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                     .multilineTextAlignment(.center)
                 Spacer()
@@ -382,7 +387,7 @@ struct StageTestView: View {
     private func question(_ question: TestQuestion) -> some View {
         VStack(spacing: 14) {
             Text(question.kind == .nextAyah ? "Which ayah comes next?" : "Which surah is this ayah from?")
-                .font(.system(size: 20, weight: .heavy))
+                .aqraFont(size: 20, weight: .heavy)
                 .foregroundStyle(Palette.ink)
                 .multilineTextAlignment(.center)
             ayahCard(question.ayah, emphasized: true)
@@ -420,7 +425,7 @@ struct StageTestView: View {
                     AyahText(text: store.ayahTexts[option], spoken: store.ayahPlainTexts[option], size: 21, showsNumber: false)
                 } else {
                     Text(verbatim: store.surahNames[option] ?? "")
-                        .font(.system(size: 18, weight: .bold))
+                        .aqraFont(size: 18, weight: .bold)
                 }
             }
             .foregroundStyle(MushafStyle.ink)
@@ -486,10 +491,10 @@ struct StageTestView: View {
                 .font(.system(size: 48, weight: .heavy).monospacedDigit())
                 .foregroundStyle(Palette.brand)
             Text(passed ? "You passed the stage's test" : "Not passed yet")
-                .font(.system(size: 22, weight: .heavy))
+                .aqraFont(size: 22, weight: .heavy)
                 .foregroundStyle(Palette.ink)
             Text(passed ? "\(correct) of \(questions.count) right. May Allah bless you." : "\(correct) of \(questions.count) right. Revise the stage and try again tomorrow.")
-                .font(.system(size: 15, weight: .medium))
+                .aqraFont(size: 15, weight: .medium)
                 .foregroundStyle(Palette.inkSoft)
                 .multilineTextAlignment(.center)
             Spacer()

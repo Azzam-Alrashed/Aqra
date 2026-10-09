@@ -27,16 +27,16 @@ struct TeacherView: View {
                         IconTile(icon: "🎓", tint: Palette.mint, size: 48)
                         VStack(alignment: .leading, spacing: 3) {
                             Text(verbatim: teacher.name)
-                                .font(.system(size: 22, weight: .heavy))
+                                .aqraFont(size: 22, weight: .heavy)
                                 .foregroundStyle(Palette.ink)
                             if !teacher.city.isEmpty {
                                 Text(verbatim: teacher.city)
-                                    .font(.system(size: 13, weight: .bold))
+                                    .aqraFont(size: 13, weight: .bold)
                                     .foregroundStyle(Palette.brand)
                             }
                             if !teacher.line.isEmpty {
                                 Text(verbatim: teacher.line)
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .aqraFont(size: 12, weight: .semibold)
                                     .foregroundStyle(Palette.inkSoft)
                                     .fixedSize(horizontal: false, vertical: true)
                             }
@@ -71,7 +71,7 @@ struct TeacherView: View {
                     AqraCard(padding: 14, radius: 24) {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Sign in to book a seat")
-                                .font(.system(size: 16, weight: .heavy))
+                                .aqraFont(size: 16, weight: .heavy)
                                 .foregroundStyle(Palette.ink)
                             SignInButtons()
                             if let problem = account.problem {
@@ -105,14 +105,14 @@ struct TeacherView: View {
     private func auctionStrip(_ session: TasmeeSession, _ auction: TasmeeSession.Auction) -> some View {
         HStack(spacing: 10) {
             Text(verbatim: "🔨")
-                .font(.system(size: 16))
+                .aqraFont(size: 16)
                 .frame(width: 38)
             VStack(alignment: .leading, spacing: 1) {
                 Text("\(auction.seats) seats by auction")
-                    .font(.system(size: 13, weight: .heavy))
+                    .aqraFont(size: 13, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                 (auction.nextAtLeast == 0 ? Text("Free while seats remain") : Text("Next bid from \(auction.nextAtLeast) credits"))
-                    .font(.system(size: 11, weight: .semibold))
+                    .aqraFont(size: 11, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
             }
             Spacer()
@@ -127,7 +127,7 @@ struct TeacherView: View {
 
     private func note(_ text: Text) -> some View {
         text
-            .font(.system(size: 14, weight: .medium))
+            .aqraFont(size: 14, weight: .medium)
             .foregroundStyle(Palette.inkSoft)
             .padding(.horizontal, 6)
     }
@@ -149,7 +149,7 @@ struct TeacherView: View {
                 EmptyView()
             } else if session.isFull {
                 Text("Full")
-                    .font(.system(size: 13, weight: .bold))
+                    .aqraFont(size: 13, weight: .bold)
                     .foregroundStyle(Palette.inkSoft)
             } else {
                 Button("Book") {
@@ -219,11 +219,12 @@ struct ChipButtonStyle: ButtonStyle {
 
         var body: some View {
             configuration.label
-                .font(.system(size: 13, weight: .bold))
+                .aqraFont(size: 13, weight: .bold)
                 .lineLimit(1)
                 .foregroundStyle(filled ? .white : OnboardingPalette.brand)
                 .padding(.horizontal, 12)
-                .frame(height: 30)
+                .padding(.vertical, 5)
+                .frame(minHeight: 30)
                 .background(filled ? OnboardingPalette.brand : OnboardingPalette.lavender, in: Capsule())
                 .opacity(isEnabled ? 1 : 0.45)
                 .scaleEffect(configuration.isPressed ? 0.96 : 1)
@@ -270,7 +271,7 @@ struct SessionEditor: View {
         ScrollView {
         VStack(alignment: .leading, spacing: 18) {
             Text(session == nil ? "New session" : "Edit session")
-                .font(.system(size: 26, weight: .heavy))
+                .aqraFont(size: 26, weight: .heavy)
                 .foregroundStyle(Palette.ink)
                 .padding(.top, 8)
                 .accessibilityAddTraits(.isHeader)
@@ -288,7 +289,7 @@ struct SessionEditor: View {
                         row(Text("Place")) {
                             TextField("Place", text: $place)
                                 .multilineTextAlignment(.trailing)
-                                .font(.system(size: 15, weight: .medium))
+                                .aqraFont(size: 15, weight: .medium)
                         }
                     }
                     AqraRowDivider().padding(.leading, -50)
@@ -296,7 +297,7 @@ struct SessionEditor: View {
                         HStack(spacing: 10) {
                             stepButton("minus", enabled: seats > minimumSeats) { seats -= 1 }
                             Text(seats.formatted())
-                                .font(.system(size: 17, weight: .heavy).monospacedDigit())
+                                .aqraFont(size: 17, weight: .heavy, monospacedDigit: true)
                                 .foregroundStyle(Palette.ink)
                                 .frame(minWidth: 28)
                                 .contentTransition(.numericText())
@@ -312,7 +313,7 @@ struct SessionEditor: View {
                             HStack(spacing: 10) {
                                 stepButton("minus", enabled: auctionSeats > 0) { auctionSeats -= 1 }
                                 Text(auctionSeats.formatted())
-                                    .font(.system(size: 17, weight: .heavy).monospacedDigit())
+                                    .aqraFont(size: 17, weight: .heavy, monospacedDigit: true)
                                     .foregroundStyle(Palette.ink)
                                     .frame(minWidth: 28)
                                     .contentTransition(.numericText())
@@ -325,7 +326,7 @@ struct SessionEditor: View {
                                 HStack(spacing: 10) {
                                     stepButton("minus", enabled: minBid > 0) { minBid -= 1 }
                                     Text(minBid.formatted())
-                                        .font(.system(size: 17, weight: .heavy).monospacedDigit())
+                                        .aqraFont(size: 17, weight: .heavy, monospacedDigit: true)
                                         .foregroundStyle(Palette.ink)
                                         .frame(minWidth: 28)
                                         .contentTransition(.numericText())
@@ -337,7 +338,7 @@ struct SessionEditor: View {
                 }
                 if auctionSeats > 0 {
                     Text("Beside the free seats, these go to the highest bids, in credits. Bidding closes three hours before the session; you earn most of each winning bid.")
-                        .font(.system(size: 12, weight: .medium))
+                        .aqraFont(size: 12, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 6)
@@ -345,7 +346,7 @@ struct SessionEditor: View {
             }
             if kind == .video {
                 Text("Students who book join the call from the session's page, from 15 minutes before it starts.")
-                    .font(.system(size: 12, weight: .medium))
+                    .aqraFont(size: 12, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
                     .padding(.horizontal, 6)
@@ -390,7 +391,7 @@ struct SessionEditor: View {
     private func row<Control: View>(_ label: Text, @ViewBuilder control: () -> Control) -> some View {
         HStack {
             label
-                .font(.system(size: 15, weight: .bold))
+                .aqraFont(size: 15, weight: .bold)
                 .foregroundStyle(Palette.ink)
             Spacer()
             control()
@@ -441,17 +442,17 @@ struct SessionView: View {
                             IconTile(icon: live.kind == .video ? "🎥" : "📅", tint: Palette.sky, size: 44)
                             VStack(alignment: .leading, spacing: 3) {
                                 Text(verbatim: TasmeeFormat.when(live.startsAt))
-                                    .font(.system(size: 19, weight: .heavy))
+                                    .aqraFont(size: 19, weight: .heavy)
                                     .foregroundStyle(Palette.ink)
                                 TasmeeFormat.place(live)
-                                    .font(.system(size: 13, weight: .semibold))
+                                    .aqraFont(size: 13, weight: .semibold)
                                     .foregroundStyle(Palette.inkSoft)
                                 Text("\(live.booked) of \(live.seats) seats")
-                                    .font(.system(size: 13, weight: .bold))
+                                    .aqraFont(size: 13, weight: .bold)
                                     .foregroundStyle(Palette.brand)
                                 if let auction = live.auction {
                                     Text("\(auction.seats) seats by auction · \(auction.state == .settled ? auction.won : auction.bids) bids")
-                                        .font(.system(size: 12, weight: .semibold))
+                                        .aqraFont(size: 12, weight: .semibold)
                                         .foregroundStyle(Palette.inkSoft)
                                 }
                             }
@@ -464,7 +465,7 @@ struct SessionView: View {
                                     calling = true
                                 } label: {
                                     Label(open ? "Start the call" : "The call opens 15 minutes before", systemImage: "video.fill")
-                                        .font(.system(size: 15, weight: .bold))
+                                        .aqraFont(size: 15, weight: .bold)
                                         .foregroundStyle(open ? .white : Palette.inkSoft)
                                         .frame(maxWidth: .infinity, minHeight: 44)
                                         .background(open ? Palette.brand : Palette.lavender, in: Capsule())
@@ -475,11 +476,11 @@ struct SessionView: View {
                         }
                         HStack(spacing: 16) {
                             Button("Edit") { editing = true }
-                                .font(.system(size: 13, weight: .bold))
+                                .aqraFont(size: 13, weight: .bold)
                                 .foregroundStyle(Palette.brand)
                                 .buttonStyle(.plain)
                             Button("Cancel session") { confirmingCancel = true }
-                                .font(.system(size: 13, weight: .bold))
+                                .aqraFont(size: 13, weight: .bold)
                                 .foregroundStyle(Color(light: 0xB3261E, dark: 0xB3261E))
                                 .buttonStyle(.plain)
                         }
@@ -495,7 +496,7 @@ struct SessionView: View {
                                 AqraRow(icon: bid.status == .won ? "🎉" : bid.status == .active ? "🔨" : "↩️", tint: Palette.butter,
                                         title: Text(verbatim: bid.name), detail: bidStatus(bid)) {
                                     Text("\(bid.amount) credits")
-                                        .font(.system(size: 14, weight: .heavy).monospacedDigit())
+                                        .aqraFont(size: 14, weight: .heavy, monospacedDigit: true)
                                         .foregroundStyle(bid.status == .active || bid.status == .won ? Palette.brand : Palette.inkSoft)
                                 }
                             }
@@ -506,7 +507,7 @@ struct SessionView: View {
                 AqraSectionTitle(title: "Students").padding(.top, 10)
                 if seats.isEmpty {
                     Text("No one has booked a seat yet.")
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .padding(.horizontal, 6)
                 } else {
@@ -524,7 +525,7 @@ struct SessionView: View {
                         }
                     }
                     Text("Tap a student to hear them: mark the ayat they stumble on, and the pages you heard.")
-                        .font(.system(size: 12, weight: .medium))
+                        .aqraFont(size: 12, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                         .padding(.horizontal, 6)
@@ -610,7 +611,7 @@ struct TeacherProfileEditor: View {
     var body: some View {
         VStack(alignment: .leading, spacing: 18) {
             Text("Your teacher profile")
-                .font(.system(size: 26, weight: .heavy))
+                .aqraFont(size: 26, weight: .heavy)
                 .foregroundStyle(Palette.ink)
                 .padding(.top, 8)
                 .accessibilityAddTraits(.isHeader)
@@ -652,11 +653,11 @@ struct TeacherProfileEditor: View {
     private func field(_ label: Text, text: Binding<String>, prompt: Text? = nil) -> some View {
         HStack(spacing: 12) {
             label
-                .font(.system(size: 15, weight: .bold))
+                .aqraFont(size: 15, weight: .bold)
                 .foregroundStyle(Palette.ink)
             TextField(text: text, prompt: prompt) { label }
                 .multilineTextAlignment(.trailing)
-                .font(.system(size: 15, weight: .medium))
+                .aqraFont(size: 15, weight: .medium)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)
@@ -680,10 +681,10 @@ struct StudentFileView: View {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 4) {
                     Text(verbatim: student.name)
-                        .font(.system(size: 28, weight: .heavy))
+                        .aqraFont(size: 28, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     Text("Last heard \(student.lastHeardAt.formatted(.relative(presentation: .named)))")
-                        .font(.system(size: 13, weight: .semibold))
+                        .aqraFont(size: 13, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                 }
                 .padding(.top, 8)
@@ -702,14 +703,14 @@ struct StudentFileView: View {
                 AqraCard(padding: 14, radius: 24) {
                     TextField("What to work on next time", text: $notes, axis: .vertical)
                         .lineLimit(3...8)
-                        .font(.system(size: 15, weight: .medium))
+                        .aqraFont(size: 15, weight: .medium)
                         .focused($editingNotes)
                 }
 
                 AqraSectionTitle(title: "What you heard").padding(.top, 10)
                 if records.isEmpty {
                     Text("Nothing recorded yet.")
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .padding(.horizontal, 6)
                 } else {
@@ -758,10 +759,10 @@ struct StudentFileView: View {
             VStack(alignment: .leading, spacing: 8) {
                 IconTile(icon: icon, tint: tint, size: 32)
                 Text(verbatim: value)
-                    .font(.system(size: 20, weight: .heavy).monospacedDigit())
+                    .aqraFont(size: 20, weight: .heavy, monospacedDigit: true)
                     .foregroundStyle(Palette.ink)
                 label
-                    .font(.system(size: 11, weight: .semibold))
+                    .aqraFont(size: 11, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                     .lineLimit(1)
             }

@@ -27,7 +27,7 @@ struct PeerRequestView: View {
                 Text("Recite to a friend").foregroundStyle(Palette.ink)
                 Text(received == nil ? "Show them this code" : "Your friend recorded it").foregroundStyle(Palette.brand)
             }
-            .font(.system(size: 26, weight: .heavy))
+            .aqraFont(size: 26, weight: .heavy)
             .multilineTextAlignment(.center)
             .padding(.top, 28)
 
@@ -36,10 +36,10 @@ struct PeerRequestView: View {
                 VStack(spacing: 10) {
                     Text(verbatim: "✅").font(.system(size: 64))
                     TasmeeFormat.counts(pages: Set(received.pages).count, stumbles: received.stumbles.count)
-                        .font(.system(size: 17, weight: .heavy))
+                        .aqraFont(size: 17, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     Text("It's been added to your revision.")
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                 }
                 .transition(.scale.combined(with: .opacity))
@@ -65,11 +65,11 @@ struct PeerRequestView: View {
                         // Rounded up, so a fresh code says 30 rather than 29.
                         let minutes = max(Int((request.expiresAt.timeIntervalSince(timeline.date) / 60).rounded(.up)), 0)
                         Text("Valid for \(minutes) minutes")
-                            .font(.system(size: 13, weight: .semibold))
+                            .aqraFont(size: 13, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                     }
                     Text("Your friend opens Aqra, taps «Hear a friend» and scans this, or types the code.")
-                        .font(.system(size: 13, weight: .medium))
+                        .aqraFont(size: 13, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .multilineTextAlignment(.center)
                         .fixedSize(horizontal: false, vertical: true)
@@ -193,7 +193,7 @@ struct HearFriendView: View {
                 Text("Hear a friend").foregroundStyle(Palette.ink)
                 Text("Enter their code").foregroundStyle(Palette.brand)
             }
-            .font(.system(size: 28, weight: .heavy))
+            .aqraFont(size: 28, weight: .heavy)
 
             TextField(text: $code, prompt: Text(verbatim: "ABC234")) { Text("Code") }
                 .font(.system(size: 34, weight: .heavy, design: .monospaced))
@@ -215,7 +215,7 @@ struct HearFriendView: View {
 
             if invalid {
                 Text("This code isn't valid, or it has expired. Ask your friend for a new one.")
-                    .font(.system(size: 13, weight: .semibold))
+                    .aqraFont(size: 13, weight: .semibold)
                     .foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
                     .multilineTextAlignment(.center)
             }

@@ -75,10 +75,10 @@ struct PortionCard: View {
                 IconTile(icon: "✍️", tint: Palette.butter, size: 40)
                 VStack(alignment: .leading, spacing: 2) {
                     Text("Memorize new portions")
-                        .font(.system(size: 16, weight: .heavy))
+                        .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     Text("A daily amount, and the date you'd complete the Quran")
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -95,7 +95,7 @@ struct PortionCard: View {
             HStack(spacing: 12) {
                 IconTile(icon: "⏸️", tint: Palette.lavender, size: 40)
                 Text("Your memorization plan is paused")
-                    .font(.system(size: 15, weight: .heavy))
+                    .aqraFont(size: 15, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                 Spacer(minLength: 4)
                 AqraChevron()
@@ -112,10 +112,10 @@ struct PortionCard: View {
                 IconTile(icon: icon(today), tint: tint(today), size: 40)
                 VStack(alignment: .leading, spacing: 2) {
                     title(today)
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                     detail(today)
-                        .font(.system(size: 16, weight: .heavy))
+                        .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .lineLimit(2)
                         .minimumScaleFactor(0.8)
@@ -136,7 +136,7 @@ struct PortionCard: View {
                     onMemorize(portion)
                 } label: {
                     Label("Memorize", systemImage: "book.pages")
-                        .font(.system(size: 16, weight: .bold))
+                        .aqraFont(size: 16, weight: .bold)
                         .foregroundStyle(.white)
                         .frame(maxWidth: .infinity, minHeight: 46)
                         .background(LinearGradient(colors: [Palette.brand, Palette.brandDeep], startPoint: .top, endPoint: .bottom), in: Capsule())
@@ -145,7 +145,7 @@ struct PortionCard: View {
             }
             if let date = plan.completionDate(memorization: memorization, store: store) {
                 Text("Your expected completion, God willing: \(PlanFormat.month(date))")
-                    .font(.system(size: 12, weight: .bold))
+                    .aqraFont(size: 12, weight: .bold)
                     .foregroundStyle(Palette.brand)
             }
         }

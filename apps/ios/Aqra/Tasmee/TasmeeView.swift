@@ -23,7 +23,7 @@ struct TasmeeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Tasmee'")
-                        .font(.system(size: 30, weight: .heavy))
+                        .aqraFont(size: 30, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .padding(.top, 16)
                         .accessibilityAddTraits(.isHeader)
@@ -114,7 +114,7 @@ struct TasmeeView: View {
             HStack(alignment: .top, spacing: 12) {
                 IconTile(icon: "🎓", tint: Palette.mint, size: 40)
                 Text("Accounts aren't set up in this build, so teachers and tasmee' are off.")
-                    .font(.system(size: 14, weight: .medium))
+                    .aqraFont(size: 14, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -212,27 +212,28 @@ struct TasmeeView: View {
                     IconTile(icon: booking.kind == .video ? "🎥" : "🎓", tint: cancelled ? Palette.rose : Palette.mint, size: 40)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(verbatim: booking.teacherName)
-                            .font(.system(size: 17, weight: .heavy))
+                            .aqraFont(size: 17, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt))
-                            .font(.system(size: 13, weight: .bold))
+                            .aqraFont(size: 13, weight: .bold)
                             .foregroundStyle(cancelled ? Palette.inkSoft : Palette.brand)
                             .strikethrough(cancelled)
                         TasmeeFormat.place(live.map { Booking($0) } ?? booking)
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                         if cancelled {
                             Text("The teacher cancelled this session.")
-                                .font(.system(size: 12, weight: .semibold))
+                                .aqraFont(size: 12, weight: .semibold)
                                 .foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
                         }
                     }
                     Spacer(minLength: 4)
                     Button(cancelled ? "Remove" : "Cancel booking") { cancelling = booking }
-                        .font(.system(size: 13, weight: .bold))
+                        .aqraFont(size: 13, weight: .bold)
                         .foregroundStyle(Palette.brand)
                         .padding(.horizontal, 10)
-                        .frame(height: 28)
+                        .padding(.vertical, 3)
+                        .frame(minHeight: 28)
                         .background(Palette.lavender, in: Capsule())
                         .buttonStyle(.plain)
                 }
@@ -285,7 +286,7 @@ struct TasmeeView: View {
                             Text("No teachers have joined yet.")
                         }
                     }
-                    .font(.system(size: 14, weight: .medium))
+                    .aqraFont(size: 14, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }

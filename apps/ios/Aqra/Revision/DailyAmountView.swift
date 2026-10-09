@@ -33,7 +33,7 @@ struct DailyAmountView: View {
                 Text("How much will you").foregroundStyle(Palette.ink)
                 Text("revise each day?").foregroundStyle(Palette.brand)
             }
-            .font(.system(size: 31, weight: .heavy))
+            .aqraFont(size: 31, weight: .heavy)
             .multilineTextAlignment(.center)
             .lineLimit(1)
             .minimumScaleFactor(0.7)

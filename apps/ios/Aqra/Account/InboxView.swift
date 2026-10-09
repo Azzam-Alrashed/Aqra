@@ -45,12 +45,12 @@ struct InboxView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Messages")
-                    .font(.system(size: 28, weight: .heavy))
+                    .aqraFont(size: 28, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                     .padding(.top, 22)
                 if inbox.messages.isEmpty {
                     Text("Nothing new.")
-                        .font(.system(size: 15, weight: .medium))
+                        .aqraFont(size: 15, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                 } else {
                     AqraCard(padding: 0, radius: 24) {
@@ -89,11 +89,11 @@ struct InboxView: View {
                     .fixedSize(horizontal: false, vertical: true)
                 if !message.note.isEmpty {
                     Text(verbatim: message.note)
-                        .font(.system(size: 12, weight: .medium))
+                        .aqraFont(size: 12, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                 }
                 Text(verbatim: message.at.formatted(.relative(presentation: .named)))
-                    .font(.system(size: 11, weight: .semibold))
+                    .aqraFont(size: 11, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
             }
             Spacer(minLength: 0)

@@ -123,11 +123,11 @@ struct OnboardingHeadline: View {
                 first.foregroundStyle(OnboardingPalette.ink)
                 second.foregroundStyle(OnboardingPalette.brand)
             }
-            .font(.system(size: 31 * scale, weight: .heavy))
+            .aqraFont(size: 31 * scale, weight: .heavy)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             detail
-                .font(.system(size: 16 * scale, weight: .medium))
+                .aqraFont(size: 16 * scale, weight: .medium)
                 .foregroundStyle(OnboardingPalette.inkSoft)
         }
         .multilineTextAlignment(.center)
@@ -161,8 +161,9 @@ struct BrandButtonStyle: ButtonStyle {
 
     func makeBody(configuration: Configuration) -> some View {
         configuration.label
-            .font(.system(size: fontSize, weight: .bold))
+            .aqraFont(size: fontSize, weight: .bold)
             .foregroundStyle(.white)
+            .padding(.vertical, 8)
             .frame(maxWidth: .infinity, minHeight: height)
             .background(
                 LinearGradient(colors: [OnboardingPalette.brand, OnboardingPalette.brandDeep], startPoint: .top, endPoint: .bottom),
