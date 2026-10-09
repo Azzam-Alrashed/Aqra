@@ -10,6 +10,8 @@ struct MushafView: View {
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(\.dismiss) private var dismiss
+    /// The app's own direction, for the bars' lines of text inside their Mushaf-ordered (right-to-left) layout.
+    @Environment(\.layoutDirection) private var layoutDirection
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @AppStorage("mushaf.topics") private var topicColors = true
@@ -150,14 +152,44 @@ struct MushafView: View {
                     Text(marking.rangeStart == nil ? "Tap the ayat you've memorized" : "Now tap the last ayah of the range")
                         .font(.system(size: 17, weight: .heavy, design: .rounded))
                         .foregroundStyle(MushafStyle.ink)
-                    (Text("\(memorization.count) ayat memorized") + Text(verbatim: Separator.facts)
-                        + Text("Press and hold an ayah to mark from it to another"))
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(MushafStyle.chrome)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
+                    if marking.unmarked.isEmpty {
+                        (Text("\(memorization.count) ayat memorized") + Text(verbatim: Separator.facts)
+                            + Text("Press and hold an ayah to mark from it to another"))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(MushafStyle.chrome)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    } else {
+                        // An unmarked ayah loses its record; for a moment it can be brought back as it was.
+                        HStack(spacing: 10) {
+                            Text("Unmarked \(marking.unmarked.count) ayat")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(MushafStyle.chrome)
+                                .lineLimit(1)
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) { marking.undo() }
+                            } label: {
+                                Label("Undo", systemImage: "arrow.uturn.backward")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundStyle(MushafStyle.barAccent)
+                                    .padding(.horizontal, 10)
+                                    .frame(minHeight: 26)
+                                    .background(MushafStyle.barAccentFill, in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .environment(\.layoutDirection, layoutDirection)
+                        .transition(.opacity)
+                        .task(id: marking.unmarkedVersion) {
+                            let version = marking.unmarkedVersion
+                            try? await Task.sleep(for: .seconds(6))
+                            guard !Task.isCancelled else { return }
+                            withAnimation(.easeInOut(duration: 0.2)) { marking.expireUndo(version: version) }
+                        }
+                    }
                 }
                 .animation(.easeInOut(duration: 0.2), value: marking.rangeStart)
+                .animation(.easeInOut(duration: 0.2), value: marking.unmarked.isEmpty)
                 HStack(spacing: 10) {
                     Button(pages.count > 1 ? "Both pages" : "Whole page") { marking.toggle(ayahs) }
                         .buttonStyle(MarkingButtonStyle())

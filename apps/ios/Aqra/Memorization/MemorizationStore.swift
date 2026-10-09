@@ -209,13 +209,27 @@ final class MemorizationStore {
     }
 
     /// Marks ayat as memorized (keeping what's already known about them) or as not memorized.
-    func mark(_ range: some Sequence<Int>, memorized: Bool) {
+    /// - Returns: the records of the ayat it unmarked, so the unmarking can be undone.
+    @discardableResult
+    func mark(_ range: some Sequence<Int>, memorized: Bool) -> [Int: AyahMemory] {
+        var removed: [Int: AyahMemory] = [:]
         var changed = false
         for ayah in range where (0..<MushafStore.ayahCount).contains(ayah) && isMemorized(ayah) != memorized {
+            if !memorized { removed[ayah] = ayahs[ayah] }
             ayahs[ayah] = memorized ? AyahMemory(since: .now) : nil
             changed = true
         }
         if changed { scheduleSave() }
+        return removed
+    }
+
+    /// Puts records back exactly as they were (undoing an unmarking), over whatever the ayat hold now.
+    func restore(_ records: [Int: AyahMemory]) {
+        guard !records.isEmpty else { return }
+        for (ayah, memory) in records where (0..<MushafStore.ayahCount).contains(ayah) {
+            ayahs[ayah] = memory
+        }
+        scheduleSave()
     }
 
     // MARK: - Saving
@@ -263,6 +277,11 @@ final class MarkingSession {
     let memorization: MemorizationStore
     /// Where a range started, while it waits for its last ayah.
     private(set) var rangeStart: Int?
+    /// What the last unmarking removed, kept for a moment so it can be undone: an unmarked ayah loses its strength,
+    /// its revisions and a teacher's mark. Empty when there's nothing to undo.
+    private(set) var unmarked: [Int: AyahMemory] = [:]
+    /// Changes with each unmarking, so its undo expires on time and not a later one's.
+    private(set) var unmarkedVersion = 0
     @ObservationIgnored private var rangeMarks = true
 
     init(memorization: MemorizationStore) {
@@ -271,17 +290,18 @@ final class MarkingSession {
 
     func tap(_ ayah: Int) {
         if let start = rangeStart {
-            memorization.mark(min(start, ayah)...max(start, ayah), memorized: rangeMarks)
+            // A range that unmarks is one unmarking with its first ayah, unmarked when it began.
+            note(memorization.mark(min(start, ayah)...max(start, ayah), memorized: rangeMarks), continuing: !rangeMarks)
             rangeStart = nil
         } else {
-            memorization.toggle(ayah: ayah)
+            note(memorization.mark([ayah], memorized: !memorization.isMemorized(ayah)))
         }
     }
 
     /// Starts a range at an ayah, marking it (or unmarking it, if it was marked) right away.
     func beginRange(at ayah: Int) {
         rangeMarks = !memorization.isMemorized(ayah)
-        memorization.mark([ayah], memorized: rangeMarks)
+        note(memorization.mark([ayah], memorized: rangeMarks))
         rangeStart = ayah
     }
 
@@ -291,6 +311,26 @@ final class MarkingSession {
 
     /// Marks every ayah of the given pages, or unmarks them when they're all already marked.
     func toggle(_ ayahs: ClosedRange<Int>) {
-        memorization.mark(ayahs, memorized: memorization.memorizedCount(in: ayahs) < ayahs.count)
+        note(memorization.mark(ayahs, memorized: memorization.memorizedCount(in: ayahs) < ayahs.count))
+    }
+
+    /// Puts back what the last unmarking removed, exactly as it was.
+    func undo() {
+        memorization.restore(unmarked)
+        unmarked = [:]
+    }
+
+    /// The undo is offered for a moment only; a later unmarking keeps its own.
+    func expireUndo(version: Int) {
+        if version == unmarkedVersion { unmarked = [:] }
+    }
+
+    private func note(_ removed: [Int: AyahMemory], continuing: Bool = false) {
+        if continuing {
+            unmarked.merge(removed) { first, _ in first }
+        } else {
+            unmarked = removed
+        }
+        unmarkedVersion += 1
     }
 }
