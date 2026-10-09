@@ -1675,6 +1675,16 @@
         }
       }
     },
+    "A one-time download · %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنزيل لمرة واحدة · %@"
+          }
+        }
+      }
+    },
     "A session less than an hour away offers free seats only: there's no time to bid." : {
       "comment" : "In a new session's editor, when the start chosen is less than an hour away: auctioned seats are off.",
       "localizations" : {
@@ -1682,6 +1692,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الجلسة التي تبدأ بعد أقل من ساعة مقاعدها مجانية فقط، فلا وقت للمزايدة."
+          }
+        }
+      }
+    },
+    "After a long pause, the next word is shown" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إن توقّفت طويلًا ظهرت الكلمة التالية"
           }
         }
       }
@@ -1697,8 +1717,28 @@
         }
       }
     },
+    "Aqra can't use the microphone. Allow it in Settings." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يصل اقرأ إلى الميكروفون. اسمح له من الإعدادات."
+          }
+        }
+      }
+    },
     "ayah %lld" : {
       "comment" : "An ayah named by its number, inside a VoiceOver action such as «Hide ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآية %lld"
+          }
+        }
+      }
+    },
+    "Ayah %lld" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
@@ -1796,6 +1836,36 @@
         }
       }
     },
+    "Download and begin" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نزّل وابدأ"
+          }
+        }
+      }
+    },
+    "Downloading… %@" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُنزَّل… %@"
+          }
+        }
+      }
+    },
+    "Every ayah without a stumble" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كل الآيات دون تعثّر"
+          }
+        }
+      }
+    },
     "fact separator" : {
       "comment" : "Between two facts on one line, with its spaces. Arabic uses its comma: a middle dot beside Arabic-Indic digits reads as a zero.",
       "localizations" : {
@@ -1809,6 +1879,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : " · "
+          }
+        }
+      }
+    },
+    "Finish" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إنهاء"
+          }
+        }
+      }
+    },
+    "Getting ready to listen…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يستعدّ للاستماع…"
           }
         }
       }
@@ -1879,6 +1969,26 @@
         }
       }
     },
+    "Listening couldn't start. Try again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعذّر بدء الاستماع. حاول مرة أخرى."
+          }
+        }
+      }
+    },
+    "Listening…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أستمع إليك…"
+          }
+        }
+      }
+    },
     "Mark %@ as memorized" : {
       "comment" : "A VoiceOver action on a Mushaf page, in marking mode. %@ is the ayah, e.g. «ayah 5».",
       "localizations" : {
@@ -1890,6 +2000,56 @@
         }
       }
     },
+    "Next page" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصفحة التالية"
+          }
+        }
+      }
+    },
+    "Not listening" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الاستماع متوقّف"
+          }
+        }
+      }
+    },
+    "Page %lld · %lld of %lld" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الصفحة %1$lld، %2$lld من %3$lld"
+          }
+        }
+      }
+    },
+    "Paused" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "متوقّف مؤقتًا"
+          }
+        }
+      }
+    },
+    "Preparing…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يجهّز…"
+          }
+        }
+      }
+    },
     "Raise" : {
       "comment" : "A small button beside the student's bid in a session's auction: opens the bid sheet to raise it.",
       "localizations" : {
@@ -1897,6 +2057,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ارفع عرضك"
+          }
+        }
+      }
+    },
+    "Recite aloud" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سمّع بصوتك"
+          }
+        }
+      }
+    },
+    "Recite from memory, and Aqra follows along" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اقرأ من حفظك، ويتابعك اقرأ"
+          }
+        }
+      }
+    },
+    "Recite the page again" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أعد الصفحة"
           }
         }
       }
@@ -1923,6 +2113,16 @@
         }
       }
     },
+    "Runs the speech model on the device, under the MIT License." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يشغّل نموذج الكلام على الجهاز، برخصة MIT."
+          }
+        }
+      }
+    },
     "Say what kind of stumble on %@" : {
       "comment" : "A VoiceOver action on a Mushaf page, for a teacher hearing a student. %@ is the ayah, e.g. «ayah 5».",
       "localizations" : {
@@ -1945,6 +2145,16 @@
         }
       }
     },
+    "Stop listening" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أوقف الاستماع"
+          }
+        }
+      }
+    },
     "Stumbled on %@" : {
       "comment" : "A VoiceOver action on a Mushaf page, in a revision: marks a stumble on a revealed ayah. %@ is the ayah, e.g. «ayah 5».",
       "localizations" : {
@@ -1952,6 +2162,26 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تعثّرت في %@"
+          }
+        }
+      }
+    },
+    "Tap an ayah to mark a stumble or take it back" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط على آية لتعليم تعثّر أو إلغائه"
+          }
+        }
+      }
+    },
+    "The ayat are revealed as you recite" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنكشف الآيات وأنت تقرأ"
           }
         }
       }
@@ -1974,6 +2204,36 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تُحذف النسخة الاحتياطية من تقدّمك نهائيًا، ويبقى التقدّم المحفوظ على هذا الجهاز، ويُنسخ احتياطيًا من جديد من الآن."
+          }
+        }
+      }
+    },
+    "The download didn't finish. Try again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لم يكتمل التنزيل. حاول مرة أخرى."
+          }
+        }
+      }
+    },
+    "The revision is recorded, and listening carries on to the next page" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُسجَّل المراجعة، ويستمر الاستماع في الصفحة التالية"
+          }
+        }
+      }
+    },
+    "The speech model trained on Quran recitation that follows a revision aloud, under the Apache 2.0 License." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نموذج الكلام المدرَّب على تلاوة القرآن الذي يتابع المراجعة بالصوت، برخصة Apache 2.0."
           }
         }
       }
@@ -2065,6 +2325,26 @@
         }
       }
     },
+    "What you stumble on is marked, and you can correct it" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُعلَّم ما تعثّرت فيه، ولك أن تصحّحه"
+          }
+        }
+      }
+    },
+    "You finished page %lld" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أتممت الصفحة %lld"
+          }
+        }
+      }
+    },
     "Your bid of %lld credits is let go, and its credits come back to you." : {
       "comment" : "Alert message before a bidder takes a free seat instead of their bid.",
       "localizations" : {
@@ -2090,6 +2370,16 @@
                 }
               }
             }
+          }
+        }
+      }
+    },
+    "Your voice stays on your device and isn't kept" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "صوتك يبقى على جهازك ولا يُحفظ"
           }
         }
       }

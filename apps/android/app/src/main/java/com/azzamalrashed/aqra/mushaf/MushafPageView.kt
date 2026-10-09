@@ -340,7 +340,8 @@ private fun state(word: MushafWord, options: MushafPageOptions, revision: Revisi
     }
     revision ?: return WordState.NORMAL
     if (!revision.covers(word.ayah)) return WordState.DIMMED
-    if (revision.isVeiled(word.ayah)) return WordState.VEILED
+    if (revision.isVeiled(word.ayah, word.position)) return WordState.VEILED
+    if (RevisionSession.WordRef(word.ayah, word.position) in revision.prompts) return WordState.PROMPTED
     return if (word.ayah in revision.stumbles) WordState.STUMBLED else WordState.NORMAL
 }
 
@@ -350,6 +351,8 @@ enum class WordState {
     VEILED,
     /** Revealed and marked as stumbled on. */
     STUMBLED,
+    /** Shown as a prompt after a long pause. */
+    PROMPTED,
     /** Chosen as memorized, when only part of a portion was. */
     CHOSEN,
     /** Not memorized, so not part of the revision under way. */
@@ -400,6 +403,7 @@ private fun DrawScope.drawAyahLine(
         drawHighlights(native, words, lefts, top, height, wordSpacing, style, paints)
         drawWashes(WordState.STUMBLED, style.stumble, native, words, lefts, top, height, fontSize, paints)
         drawWashes(WordState.CHOSEN, style.chosen, native, words, lefts, top, height, fontSize, paints)
+        drawWashes(WordState.PROMPTED, style.prompt, native, words, lefts, top, height, fontSize, paints)
         val ink = style.ink.toArgb()
         for ((word, wordLeft) in words.zip(lefts)) {
             native.save()
@@ -434,7 +438,7 @@ private fun DrawScope.drawAyahLine(
                     paints.fill.color = style.ink.copy(alpha = 0.3f).toArgb()
                     native.drawPath(word.glyph.outline, paints.fill)
                 }
-                WordState.NORMAL, WordState.STUMBLED, WordState.CHOSEN -> {
+                WordState.NORMAL, WordState.STUMBLED, WordState.CHOSEN, WordState.PROMPTED -> {
                     paints.fill.color = ink
                     native.drawPath(word.glyph.outline, paints.fill)
                     if (tajweed && word.glyph.layers.isNotEmpty()) {
@@ -453,8 +457,8 @@ private fun DrawScope.drawAyahLine(
 }
 
 /**
- * A wash behind each run of words in a state — coral for stumbles, mint for ayat chosen as memorized — joined across
- * the gaps between them.
+ * A wash behind each run of words in a state — coral for stumbles, mint for ayat chosen as memorized, gold for prompts —
+ * joined across the gaps between them.
  */
 private fun drawWashes(
     state: WordState, color: Color, native: android.graphics.Canvas, words: List<LineWord>, lefts: List<Float>, top: Float,

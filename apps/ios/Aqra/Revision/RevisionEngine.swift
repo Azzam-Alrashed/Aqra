@@ -352,7 +352,20 @@ final class RevisionSession {
     let ayahs: [Int]
     /// How many of them are revealed, from the first.
     private(set) var revealed = 0
+    /// When the recitation is followed word by word: how many words of the next ayah are revealed, by their place
+    /// in the ayah.
+    private(set) var revealedPosition = 0
     private(set) var stumbles: Set<Int> = []
+    /// What kind each stumble was, when the listener could tell.
+    private(set) var stumbleKinds: [Int: Set<MistakeType>] = [:]
+    /// Words shown after a long pause (the prompt, تلقين).
+    private(set) var prompts: Set<WordRef> = []
+
+    /// A word of the page: its ayah and its place in the ayah, from 1.
+    struct WordRef: Hashable {
+        var ayah: Int
+        var position: Int
+    }
 
     init(page: Int, ayahs: [Int]) {
         self.page = page
@@ -364,16 +377,24 @@ final class RevisionSession {
     /// Whether an ayah is covered by this revision.
     func covers(_ ayah: Int) -> Bool { ayahs.contains(ayah) }
 
-    /// Whether an ayah is still veiled.
+    /// Whether an ayah is still veiled, all of it or the rest of it.
     func isVeiled(_ ayah: Int) -> Bool {
         guard let index = ayahs.firstIndex(of: ayah) else { return false }
         return index >= revealed
     }
 
+    /// Whether a word of the page is still veiled. The ayah-end marker comes after the ayah's last word, so it's
+    /// revealed with the whole ayah.
+    func isVeiled(_ ayah: Int, position: Int) -> Bool {
+        guard let index = ayahs.firstIndex(of: ayah) else { return false }
+        if index == revealed { return position > revealedPosition }
+        return index > revealed
+    }
+
     /// A tap on a revealed ayah marks or unmarks a stumble on it; any other tap reveals the next ayah.
     func tap(_ ayah: Int?) {
         if let ayah, covers(ayah), !isVeiled(ayah) {
-            if stumbles.contains(ayah) { stumbles.remove(ayah) } else { stumbles.insert(ayah) }
+            if stumbles.contains(ayah) { clearStumble(ayah) } else { stumbles.insert(ayah); cleared.remove(ayah) }
         } else {
             revealNext()
         }
@@ -381,10 +402,31 @@ final class RevisionSession {
 
     func revealNext() {
         revealed = min(revealed + 1, ayahs.count)
+        revealedPosition = 0
     }
 
     func revealAll() {
         revealed = ayahs.count
+        revealedPosition = 0
+    }
+
+    /// Reveals the page up to a word heard: the ayat before its ayah in full, and its ayah up to it — all of it
+    /// when `endsAyah` (its last word on this page).
+    func reveal(through word: WordRef, endsAyah: Bool) {
+        guard let index = ayahs.firstIndex(of: word.ayah) else { return }
+        if endsAyah {
+            guard index + 1 > revealed else { return }
+            revealed = index + 1
+            revealedPosition = 0
+        } else if index > revealed || (index == revealed && word.position > revealedPosition) {
+            revealed = index
+            revealedPosition = word.position
+        }
+    }
+
+    /// A word shown after a long pause.
+    func prompt(_ word: WordRef) {
+        prompts.insert(word)
     }
 
     /// Marks an ayah as stumbled on, whatever it was (a listener classifying the stumble).
@@ -393,7 +435,19 @@ final class RevisionSession {
         stumbles.insert(ayah)
     }
 
+    /// Marks an ayah as stumbled on in the ways the listener heard. One the student cleared stays cleared.
+    func markStumble(_ ayah: Int, kinds: Set<MistakeType>) {
+        guard covers(ayah), !cleared.contains(ayah), !kinds.isSubset(of: stumbleKinds[ayah] ?? []) else { return }
+        stumbles.insert(ayah)
+        stumbleKinds[ayah, default: []].formUnion(kinds)
+    }
+
     func clearStumble(_ ayah: Int) {
         stumbles.remove(ayah)
+        stumbleKinds[ayah] = nil
+        cleared.insert(ayah)
     }
+
+    /// Ayat whose stumble the student took back: the listener doesn't mark them again.
+    private var cleared: Set<Int> = []
 }

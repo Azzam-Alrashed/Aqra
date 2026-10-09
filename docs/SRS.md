@@ -289,6 +289,7 @@ Developer documentation lives in the repository READMEs.
 | HW-01 | Video tasmee' uses the front camera and the microphone, asking permission with a clear purpose string, and works with audio only when the camera is off or refused. | M | ✅ | V |
 | HW-02 | Peer tasmee' codes can be scanned as QR codes with the camera. | S | ✅ | P |
 | HW-03 | Haptic feedback uses the Taptic Engine where present. | S | ✅ | V |
+| HW-04 | Reciting a revision aloud uses the microphone, asking permission with a purpose string that names it; the audio is split at the reciter's pauses against the room's own noise and heard on the device, never recorded or sent. | S | ✅ | user (2026-10-09) |
 
 #### 3.1.3 Software interfaces
 
@@ -303,6 +304,8 @@ Developer documentation lives in the repository READMEs.
 | SW-07 | LiveKit Swift SDK; `livekit-server-sdk` (Functions) | Live audio/video rooms and their access tokens. | ✅
 | SW-08 | UserNotifications | The daily reminder; session reminders. | ✅
 | SW-09 | App Store Server Library (Functions) | Verifying signed transactions in production. | ✅
+| SW-10 | WhisperKit (Argmax, MIT), Core ML | Runs the speech model that follows a revision aloud (REV-12), on the device (iOS). | ✅
+| SW-11 | ONNX Runtime for Android (Microsoft, MIT) | Runs the same speech model on Android, exported to ONNX and quantized to 8 bits; it adds about 33 MB of native code on arm64. | ✅
 
 #### 3.1.4 Communications interfaces
 
@@ -376,6 +379,8 @@ opens on the setup or the home.
 | REV-09 | A revision outside the app may also record the ayat stumbled on. | C | ✅ | R (open Q2), P |
 | REV-10 | The rotation learns: pages that keep slipping (lapses in recent revisions, or low strength while the rest is strong) are suggested for extra follow-up; the student approves or dismisses each suggestion. | S | ✅ | V (agreed direction), R (open Q3) |
 | REV-11 | Today's plan also shows today's new portion (when a plan is set) before the follow-ups. | M | ✅ | E |
+| REV-12 | «سمّع بصوتك»: an in-app revision can be recited aloud, on iOS and Android. A Quran-trained speech model (Tarteel's `whisper-base-ar-quran`, Apache-2.0) runs on the device (WhisperKit and Core ML on iOS; ONNX Runtime, quantized to 8 bits, on Android); what it hears is matched to the official Imla'i text of the page's words and is never shown — the page shows only the Mushaf's own words. Words are revealed as they're recited; a skipped or wrong word is a memorization stumble, going back more than three words to correct is a hesitation, and a pause of 4 s inside an ayah (7 s between two) shows the next word in gold as a prompt and counts as prompting; where the device hears too slowly for the prompt to come in time and the student carries on alone, the pause counts as a hesitation. A device that takes over 1.5 s to hear a stretch reveals words at each pause rather than while they're recited. The isti'adha and a basmala before a surah aren't counted. The student can tap to take back or add any stumble, pause, or go back to revealing by hand; the choice is remembered. A page heard to its end shows a summary of its stumbles by kind, then the next page of the wird, with listening still on. | S | 🟡 | user (2026-10-09), P |
+| REV-13 | The speech model is downloaded once (an Apple Archive of about 134 MB on iOS, a zip of about 67 MB on Android) after a sheet that explains listening and promises the voice stays on the device and isn't kept; it's kept outside the device's backups. It's hosted in the project's storage bucket at `models/recitation/`, readable by anyone and written by no one (uploaded with the owner's credentials). | S | ✅ | user (2026-10-09) |
 
 #### 3.2.6 Home (HOME)
 

@@ -14,7 +14,12 @@ struct WirdView: View {
     @Environment(\.dismiss) private var dismiss
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @AppStorage("mushaf.topics") private var topicColors = true
+    /// Whether the student revises aloud, Aqra following by ear; kept for the next revision.
+    @AppStorage("recitation.listens") private var listens = false
+    @Environment(\.scenePhase) private var scenePhase
     @State private var session: RevisionSession?
+    @State private var listener: RecitationListener?
+    @State private var settingUpListening = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -53,6 +58,14 @@ struct WirdView: View {
         .onAppear {
             if session == nil { start(startPage) }
         }
+        .onDisappear { listener?.pause() }
+        // The microphone stops in the background; listening waits to be resumed.
+        .onChange(of: scenePhase) { if scenePhase != .active { listener?.pause() } }
+        .sheet(isPresented: $settingUpListening) {
+            ListenSetupSheet {
+                if let session { startListening(session) }
+            }
+        }
     }
 
     private func start(_ page: Int) {
@@ -60,6 +73,40 @@ struct WirdView: View {
         let session = RevisionSession(page: page, ayahs: ayahs)
         if outside { session.revealAll() }
         self.session = session
+        if let listener {
+            listener.follow(session)
+            if listener.phase == .paused { listener.resume() }
+        } else if listens, !outside, RecitationModel.isInstalled {
+            startListening(session)
+        }
+    }
+
+    /// «سمّع بصوتك»: listens right away once the model is on the device; the first time, explains and downloads it.
+    private func beginListening(_ session: RevisionSession) {
+        if RecitationModel.isInstalled {
+            startListening(session)
+        } else {
+            settingUpListening = true
+        }
+    }
+
+    private func startListening(_ session: RevisionSession) {
+        let listener = RecitationListener(session: session, store: store)
+        self.listener = listener
+        listens = true
+        Task { await listener.start() }
+    }
+
+    /// Back to revealing by hand, for this revision and the next.
+    private func stopListening() {
+        listener?.pause()
+        listener = nil
+        listens = false
+    }
+
+    /// Whether a page of today's wird is left after this one.
+    private func hasNextPage(after session: RevisionSession) -> Bool {
+        revision.plan?.items.contains { !$0.done && $0.page != session.page } ?? false
     }
 
     /// Ends a page's revision. Recorded, it moves straight on to the next page of today's wird, and back home
@@ -78,7 +125,34 @@ struct WirdView: View {
         }
     }
 
-    private func revisionBar(_ session: RevisionSession) -> some View {
+    @ViewBuilder private func revisionBar(_ session: RevisionSession) -> some View {
+        if let listener, !outside {
+            FloatingPanel {
+                if session.isComplete {
+                    ListeningSummary(session: session, store: store, hasNextPage: hasNextPage(after: session)) {
+                        withAnimation(.easeInOut(duration: 0.25)) { start(session.page) }
+                    } onNext: {
+                        finish(session, record: true)
+                    }
+                } else {
+                    ListeningPanel(listener: listener, session: session) {
+                        withAnimation(.snappy) { stopListening() }
+                    } onDone: {
+                        finish(session, record: true)
+                    }
+                }
+            }
+            .animation(.snappy, value: session.isComplete)
+            .sensoryFeedback(.selection, trigger: session.revealed)
+            .sensoryFeedback(.impact(weight: .light), trigger: session.stumbles.count)
+            .sensoryFeedback(.success, trigger: session.isComplete) { _, done in done }
+            .environment(\.layoutDirection, .rightToLeft)
+        } else {
+            manualBar(session)
+        }
+    }
+
+    private func manualBar(_ session: RevisionSession) -> some View {
         FloatingPanel {
             VStack(spacing: 12) {
                 HStack(alignment: .center, spacing: 12) {
@@ -124,6 +198,13 @@ struct WirdView: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
+                let canListen = !outside && !session.isComplete && RecitationModel.shared.isAvailable
+                if canListen {
+                    Button { withAnimation(.snappy) { beginListening(session) } } label: {
+                        Label("Recite aloud", systemImage: "mic.fill")
+                    }
+                    .buttonStyle(MarkingButtonStyle(prominent: true))
+                }
                 HStack(spacing: 10) {
                     if !outside {
                         Button("Next ayah") { withAnimation(.easeOut(duration: 0.2)) { session.revealNext() } }
@@ -134,7 +215,7 @@ struct WirdView: View {
                             .disabled(session.isComplete)
                     }
                     Button("Done") { finish(session, record: true) }
-                        .buttonStyle(MarkingButtonStyle(prominent: true))
+                        .buttonStyle(MarkingButtonStyle(prominent: !canListen))
                 }
             }
         }

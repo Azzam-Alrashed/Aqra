@@ -8,6 +8,8 @@ data class MushafWord(
     val isAyahEnd: Boolean,
     /** The ayah it belongs to, numbered 0 until 6236 in Quran order. */
     val ayah: Int = 0,
+    /** Its place in the ayah, from 1 (the ayah-end marker comes last). */
+    val position: Int = 0,
     /** The topic section its ayah belongs to, numbered in Quran order. */
     val topic: Int? = null,
 )
@@ -165,6 +167,9 @@ class MushafStore(files: QuranFiles) {
      */
     val ayahLines: DoubleArray
 
+    /** How many words of the Mushaf each ayah has, its ayah-end marker left out. */
+    val ayahWordCounts: List<Int>
+
     private val pages: List<MushafPage>
 
     init {
@@ -237,12 +242,14 @@ class MushafStore(files: QuranFiles) {
         val words = parsedWords.orEmpty()
         val glyph = arrayOfNulls<String>(words.size + 1)
         val ayahOfWord = arrayOfNulls<String>(words.size + 1)
+        val positionOfWord = IntArray(words.size + 1)
         val lastWordOfAyah = HashMap<String, Pair<Int, Int>>()
         for (word in words) {
             if (word.id !in glyph.indices) continue
             glyph[word.id] = word.text
             val key = "${word.surah}:${word.ayah}"
             ayahOfWord[word.id] = key
+            positionOfWord[word.id] = word.word
             if (word.word > (lastWordOfAyah[key]?.first ?: 0)) lastWordOfAyah[key] = word.word to word.id
         }
         val ayahEnds = lastWordOfAyah.values.mapTo(HashSet()) { it.second }
@@ -281,7 +288,7 @@ class MushafStore(files: QuranFiles) {
                 else -> MushafLine.Kind.Ayah(
                     words = (row.int(4)..row.int(5)).map { id ->
                         val key = ayahOfWord[id]
-                        MushafWord(glyph[id].orEmpty(), id in ayahEnds, indexOfAyah[key] ?: 0, topicOfAyah[key])
+                        MushafWord(glyph[id].orEmpty(), id in ayahEnds, indexOfAyah[key] ?: 0, positionOfWord[id], topicOfAyah[key])
                     },
                     centered = row.int(3) != 0,
                 )
@@ -289,17 +296,23 @@ class MushafStore(files: QuranFiles) {
             if (page in 1..PAGE_COUNT) linesByPage[page] += MushafLine(row.int(1), kind)
         }
 
-        // Each ayah's share of every line it's on, by words.
+        // Each ayah's share of every line it's on, by words, and its number of words.
         val lengths = DoubleArray(AYAH_COUNT)
+        val wordCounts = IntArray(AYAH_COUNT)
         for (lines in linesByPage) {
             for (line in lines) {
                 val words = (line.kind as? MushafLine.Kind.Ayah)?.words ?: continue
                 if (words.isEmpty()) continue
                 val share = 1.0 / words.size
-                for (word in words) if (word.ayah in 0 until AYAH_COUNT) lengths[word.ayah] += share
+                for (word in words) {
+                    if (word.ayah !in 0 until AYAH_COUNT) continue
+                    lengths[word.ayah] += share
+                    if (!word.isAyahEnd) wordCounts[word.ayah] = maxOf(wordCounts[word.ayah], word.position)
+                }
             }
         }
         ayahLines = lengths
+        ayahWordCounts = wordCounts.toList()
 
         val surahStarts = HashMap<Int, Int>()
         for (page in 1..PAGE_COUNT) {

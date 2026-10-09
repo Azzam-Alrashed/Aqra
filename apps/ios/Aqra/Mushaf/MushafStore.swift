@@ -7,6 +7,8 @@ struct MushafWord: Hashable {
     var isAyahEnd: Bool
     /// The ayah it belongs to, numbered 0..<6236 in Quran order.
     var ayah = 0
+    /// Its place in the ayah, from 1 (the ayah-end marker comes last).
+    var position = 0
     /// The topic section its ayah belongs to, numbered in Quran order.
     var topic: Int? = nil
 }
@@ -83,6 +85,8 @@ final class MushafStore: Sendable {
     /// How long each ayah is, in lines of the 15-line page: each line it shares counts by its share of the line's
     /// words. The personal plan measures portions with it.
     let ayahLines: [Double]
+    /// How many words of the Mushaf each ayah has, its ayah-end marker left out.
+    let ayahWordCounts: [Int]
 
     private let pages: [MushafPage]
 
@@ -163,11 +167,13 @@ final class MushafStore: Sendable {
         let words = try JSONDecoder().decode([String: Word].self, from: Data(contentsOf: url("qul/qpc-v4.json")))
         var glyph = [String](repeating: "", count: words.count + 1)
         var ayahOfWord = [String](repeating: "", count: words.count + 1)
+        var positionOfWord = [Int](repeating: 0, count: words.count + 1)
         var lastWordOfAyah: [String: (position: Int, id: Int)] = [:]
         for word in words.values where word.id < glyph.count {
             glyph[word.id] = word.text
             let key = "\(word.surah):\(word.ayah)", position = Int(word.word) ?? 0
             ayahOfWord[word.id] = key
+            positionOfWord[word.id] = position
             if position > (lastWordOfAyah[key]?.position ?? 0) { lastWordOfAyah[key] = (position, word.id) }
         }
         let ayahEnds = Set(lastWordOfAyah.values.map(\.id))
@@ -211,8 +217,8 @@ final class MushafStore: Sendable {
                 let first = Int(sqlite3_column_int(statement, 4)), last = Int(sqlite3_column_int(statement, 5))
                 kind = .ayah(
                     words: (first...last).map {
-                        MushafWord(glyph: glyph[$0], isAyahEnd: ayahEnds.contains($0),
-                                   ayah: indexOfAyah[ayahOfWord[$0]] ?? 0, topic: topicOfAyah[ayahOfWord[$0]])
+                        MushafWord(glyph: glyph[$0], isAyahEnd: ayahEnds.contains($0), ayah: indexOfAyah[ayahOfWord[$0]] ?? 0,
+                                   position: positionOfWord[$0], topic: topicOfAyah[ayahOfWord[$0]])
                     },
                     centered: sqlite3_column_int(statement, 3) != 0
                 )
@@ -221,18 +227,21 @@ final class MushafStore: Sendable {
             linesByPage[page].append(MushafLine(number: number, kind: kind))
         }
 
-        // Each ayah's share of every line it's on, by words.
+        // Each ayah's share of every line it's on, by words, and its number of words.
         var lengths = [Double](repeating: 0, count: Self.ayahCount)
+        var wordCounts = [Int](repeating: 0, count: Self.ayahCount)
         for lines in linesByPage {
             for line in lines {
                 guard case .ayah(let words, _) = line.kind, !words.isEmpty else { continue }
                 let share = 1 / Double(words.count)
                 for word in words where (0..<Self.ayahCount).contains(word.ayah) {
                     lengths[word.ayah] += share
+                    if !word.isAyahEnd { wordCounts[word.ayah] = max(wordCounts[word.ayah], word.position) }
                 }
             }
         }
         ayahLines = lengths
+        ayahWordCounts = wordCounts
 
         var surahStarts: [Int: Int] = [:]
         for page in 1...Self.pageCount {

@@ -25,8 +25,10 @@
 		1FCDC782C27B1AC154389AEC /* LiveKit in Frameworks */ = {isa = PBXBuildFile; productRef = 22A0842F575DA582DF2221F0 /* LiveKit */; };
 		214A4FF9C9FB9EEB9930F6C4 /* GoogleSignIn in Frameworks */ = {isa = PBXBuildFile; productRef = F047391ECE3170AC958AE61A /* GoogleSignIn */; };
 		263DCB34D497E7EBE0794B0F /* Amiri-Regular.ttf in Resources */ = {isa = PBXBuildFile; fileRef = CAEB70929965F788B8F6A545 /* Amiri-Regular.ttf */; };
+		279F4BFA5843B5B2C6104F1C /* RecitationListener.swift in Sources */ = {isa = PBXBuildFile; fileRef = 937E8BBD81DE8A40B5F17C51 /* RecitationListener.swift */; };
 		2A203B4FCA716C993ACC5786 /* MemorizationSetupView.swift in Sources */ = {isa = PBXBuildFile; fileRef = CCBAD12111AE3902F992CCFF /* MemorizationSetupView.swift */; };
 		31E52971F91F85D004B6744E /* SocialTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5F0FEB648DEA1EB151C40C01 /* SocialTests.swift */; };
+		32E1961806FF0D4640422EA8 /* WhisperKit in Frameworks */ = {isa = PBXBuildFile; productRef = 6F5CEC7A359C962EB678756B /* WhisperKit */; };
 		338165B3CB00953B2E5D15D3 /* TeacherApplication.swift in Sources */ = {isa = PBXBuildFile; fileRef = E65E7F1942F97EBB0B2D6507 /* TeacherApplication.swift */; };
 		3CD36316B74C1EBCC705BADF /* MyProgressView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3B6432468BBF0A2EFA7D57F0 /* MyProgressView.swift */; };
 		3D9A9A4B9D21019BFEC96428 /* AccountStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3FE3F2D61EC9BBD984FDA824 /* AccountStore.swift */; };
@@ -37,6 +39,7 @@
 		46321E94CC83A24568ABCFCC /* RevisionEngine.swift in Sources */ = {isa = PBXBuildFile; fileRef = CFCCD71BF466B07DDD06D84E /* RevisionEngine.swift */; };
 		477F1C7A1EBCABFB7CBF2812 /* RewardViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 5D81E6FBDB58FBFAFF3DF0FA /* RewardViews.swift */; };
 		4964D378F5949856F3745F53 /* ManazilStairs.swift in Sources */ = {isa = PBXBuildFile; fileRef = E3B68B0A48A1816211271B2B /* ManazilStairs.swift */; };
+		49722DE07521B45403ECE706 /* ListeningViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2747F2FD70F598A9FB71EB12 /* ListeningViews.swift */; };
 		5383EDE2A7ACFF82329F5E49 /* RewardStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = C79F65CF6B20E4427E9DC8A4 /* RewardStore.swift */; };
 		57DEC10A3EC756442E353877 /* Localizable.xcstrings in Resources */ = {isa = PBXBuildFile; fileRef = 35F03A505062D433A0B82952 /* Localizable.xcstrings */; };
 		596A5B67934BA91E23B6B715 /* PeerTasmee.swift in Sources */ = {isa = PBXBuildFile; fileRef = 1318AACA208DCE2AD954B8A0 /* PeerTasmee.swift */; };
@@ -47,6 +50,7 @@
 		6FFE2E633793A9CA2FEB2E0E /* TasmeeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03ED14CD4BB8B9B8644FD2B0 /* TasmeeTests.swift */; };
 		713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */; };
 		75EE792121870EAEABB89FC6 /* TasmeeMarkingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414A25F3C7AF647D6428B30A /* TasmeeMarkingView.swift */; };
+		79F13CFB3B69CE6A44861EA4 /* RecitationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0F3B401FC9237818D9C98A /* RecitationText.swift */; };
 		8076ABAE11B163C198E3B107 /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C21E66BA2ADEDC31C27EEEC /* CloudSync.swift */; };
 		85D741A46264F87DDAF09E16 /* TasmeeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4288922B6CCEBBA76B78C434 /* TasmeeView.swift */; };
 		888F6411183E9009D8609F12 /* TasmeeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4588AD4BCB9330A3B5F875AC /* TasmeeStore.swift */; };
@@ -67,6 +71,7 @@
 		B67BB8041068CD1E8F6FDF22 /* OnboardingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */; };
 		BCE076FA5FBC093BC6CFBFAC /* SocialViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = 20340BF2BF24258E031B4899 /* SocialViews.swift */; };
 		BDEC10886391E806B355B426 /* MushafStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 836D08619011973FB71AEFC1 /* MushafStore.swift */; };
+		BEF60535CD6663B1A29EEFBC /* RecitationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F0B842CFD39549235FADBD /* RecitationModel.swift */; };
 		BF159EA2BDB21AC60E486049 /* CloudSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE2931FF3F4AD637603D71BD /* CloudSyncTests.swift */; };
 		C07E4DA1A47CB3F5AD4F1A84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99C540650E9663B5B728582A /* Assets.xcassets */; };
 		C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */; };
@@ -81,6 +86,7 @@
 		DCFC682DD063D3DF3A8EB5D1 /* StartPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D4A5BD4368E1C3CCFCDBDB66 /* StartPageView.swift */; };
 		DDA79F6E3E69BAB3DC2025FF /* AyahText.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9C91AADA1D8AFB8D6B84C661 /* AyahText.swift */; };
 		E0B742B5B6301FE52D225754 /* VideoCall.swift in Sources */ = {isa = PBXBuildFile; fileRef = 2890AF77D2F59AA73DF8608F /* VideoCall.swift */; };
+		E4016693ACF5CF59C8AD0C8A /* RecitationTracker.swift in Sources */ = {isa = PBXBuildFile; fileRef = 9EF3E2A0049DBC7C05AAC235 /* RecitationTracker.swift */; };
 		E4D2E9755861CE6A0FBE2A8E /* RevisionTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */; };
 		E4F6BAB42D69166C5BFEE19C /* SocialStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 00E0526DCD17438F7E175473 /* SocialStore.swift */; };
 		E51E3867065754E8438B8590 /* FirebaseStorage in Frameworks */ = {isa = PBXBuildFile; productRef = A857877D3905C9E30C7FB0B6 /* FirebaseStorage */; };
@@ -92,6 +98,7 @@
 		EBC979E0483FB969B99B4D03 /* DailyAmountView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 76EBE0EB6CE652A1ECAD40BB /* DailyAmountView.swift */; };
 		EDCA145DBF67E7211CEEDB6A /* CreditsViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = CE5E5AE5D74434865335B916 /* CreditsViews.swift */; };
 		EF4765262D5AA2C27811E483 /* AqraFont.swift in Sources */ = {isa = PBXBuildFile; fileRef = F4936D1082FB73C3638CB969 /* AqraFont.swift */; };
+		F9ED3406E49A78CB7DCCA5C3 /* RecitationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 503C66BC7439A6C4B288563B /* RecitationTests.swift */; };
 		FF34ECA9B23026A632862A5B /* PlanStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0FB96DBD7F5AD2D753B534CA /* PlanStore.swift */; };
 /* End PBXBuildFile section */
 
@@ -115,12 +122,13 @@
 		1300102697229A28E90F368F /* StudentFile.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StudentFile.swift; sourceTree = "<group>"; };
 		1318AACA208DCE2AD954B8A0 /* PeerTasmee.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerTasmee.swift; sourceTree = "<group>"; };
 		140188D5E36E5305D761C689 /* HomeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = HomeView.swift; sourceTree = "<group>"; };
-		197C7240EA806A2E4643B0F4 /* Aqra.app */ = {isa = PBXFileReference; explicitFileType = wrapper.application; includeInIndex = 0; path = Aqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
+		197C7240EA806A2E4643B0F4 /* Aqra.app */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.application; path = Aqra.app; sourceTree = BUILT_PRODUCTS_DIR; };
 		1E7A36665EF8F19D147219B7 /* RotationAdvisor.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RotationAdvisor.swift; sourceTree = "<group>"; };
 		20340BF2BF24258E031B4899 /* SocialViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialViews.swift; sourceTree = "<group>"; };
 		245F653F1425B4D48BE20C29 /* WirdView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WirdView.swift; sourceTree = "<group>"; };
 		264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafTests.swift; sourceTree = "<group>"; };
 		269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManazilPageView.swift; sourceTree = "<group>"; };
+		2747F2FD70F598A9FB71EB12 /* ListeningViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ListeningViews.swift; sourceTree = "<group>"; };
 		277CB2DEABA8387C27D5C63E /* TeacherApplicationView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeacherApplicationView.swift; sourceTree = "<group>"; };
 		2890AF77D2F59AA73DF8608F /* VideoCall.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = VideoCall.swift; sourceTree = "<group>"; };
 		2CF7CA2416343BC4067921C5 /* PageDots.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PageDots.swift; sourceTree = "<group>"; };
@@ -138,6 +146,7 @@
 		4971E9222377B2D0AE1D25DD /* AqraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraApp.swift; sourceTree = "<group>"; };
 		4A47588193D1079299865C4E /* PlanEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanEditorView.swift; sourceTree = "<group>"; };
 		4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
+		503C66BC7439A6C4B288563B /* RecitationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecitationTests.swift; sourceTree = "<group>"; };
 		535BA1416084DEBC5F4513BD /* LaunchSplash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchSplash.swift; sourceTree = "<group>"; };
 		5374F6DB7F1FFAF810B695C4 /* MushafView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafView.swift; sourceTree = "<group>"; };
 		56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraTests.swift; sourceTree = "<group>"; };
@@ -154,14 +163,17 @@
 		76EBE0EB6CE652A1ECAD40BB /* DailyAmountView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = DailyAmountView.swift; sourceTree = "<group>"; };
 		7AB948E93ABED6504E87449D /* quran */ = {isa = PBXFileReference; lastKnownFileType = folder; name = quran; path = ../../shared/quran; sourceTree = SOURCE_ROOT; };
 		836D08619011973FB71AEFC1 /* MushafStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafStore.swift; sourceTree = "<group>"; };
+		937E8BBD81DE8A40B5F17C51 /* RecitationListener.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecitationListener.swift; sourceTree = "<group>"; };
 		94E4E27C2A024A8688C0B012 /* MushafIndexView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafIndexView.swift; sourceTree = "<group>"; };
 		951585A6E1740996615236BA /* JourneyTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = JourneyTests.swift; sourceTree = "<group>"; };
 		99C540650E9663B5B728582A /* Assets.xcassets */ = {isa = PBXFileReference; lastKnownFileType = folder.assetcatalog; path = Assets.xcassets; sourceTree = "<group>"; };
 		9C91AADA1D8AFB8D6B84C661 /* AyahText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AyahText.swift; sourceTree = "<group>"; };
 		9C96B802FBD5FD542DC59F30 /* TasmeeModels.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasmeeModels.swift; sourceTree = "<group>"; };
+		9EF3E2A0049DBC7C05AAC235 /* RecitationTracker.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecitationTracker.swift; sourceTree = "<group>"; };
 		9FBAA9E53852AC40FE94CFA3 /* PeerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerViews.swift; sourceTree = "<group>"; };
 		A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafPageView.swift; sourceTree = "<group>"; };
 		A9BFF882A84556422BB47BD5 /* StageViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StageViews.swift; sourceTree = "<group>"; };
+		B3F0B842CFD39549235FADBD /* RecitationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecitationModel.swift; sourceTree = "<group>"; };
 		B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSnapshotTests.swift; sourceTree = "<group>"; };
 		BA5A24D8953593FFD67072E8 /* PlanViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanViews.swift; sourceTree = "<group>"; };
 		BB8E4CE05AAE7610FFBF0BC9 /* WalletStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletStore.swift; sourceTree = "<group>"; };
@@ -189,6 +201,7 @@
 		F21BFEDE7189234BAC56C6A6 /* MemorizeView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizeView.swift; sourceTree = "<group>"; };
 		F4936D1082FB73C3638CB969 /* AqraFont.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraFont.swift; sourceTree = "<group>"; };
 		F963062115C6877B1AA1CE65 /* InboxStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = InboxStore.swift; sourceTree = "<group>"; };
+		FC0F3B401FC9237818D9C98A /* RecitationText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecitationText.swift; sourceTree = "<group>"; };
 		FF793C12D16FB36F80C61903 /* SacredText.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SacredText.swift; sourceTree = "<group>"; };
 /* End PBXFileReference section */
 
@@ -203,6 +216,7 @@
 				E51E3867065754E8438B8590 /* FirebaseStorage in Frameworks */,
 				214A4FF9C9FB9EEB9930F6C4 /* GoogleSignIn in Frameworks */,
 				1FCDC782C27B1AC154389AEC /* LiveKit in Frameworks */,
+				32E1961806FF0D4640422EA8 /* WhisperKit in Frameworks */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
@@ -393,6 +407,7 @@
 				1549276E68F0E369A83EEED1 /* Onboarding */,
 				15F4107B6E5A063FA8B1F0FC /* Plan */,
 				81E09644DE32BC5B6438182E /* Progress */,
+				D97B936BBF02EDB917F0E21E /* Recitation */,
 				9C8F178663BAA7E3C4CCCF64 /* Resources */,
 				3AB17583EB887E2AA2431A98 /* Revision */,
 				8FE1830E094D949EE4905E48 /* Rewards */,
@@ -412,6 +427,7 @@
 				951585A6E1740996615236BA /* JourneyTests.swift */,
 				EA10A8241619208EBC8A9E56 /* MemorizationTests.swift */,
 				264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */,
+				503C66BC7439A6C4B288563B /* RecitationTests.swift */,
 				E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */,
 				5F0FEB648DEA1EB151C40C01 /* SocialTests.swift */,
 				03ED14CD4BB8B9B8644FD2B0 /* TasmeeTests.swift */,
@@ -436,6 +452,18 @@
 				69FA526BC35C31760E96760B /* OFL.txt */,
 			);
 			path = Fonts;
+			sourceTree = "<group>";
+		};
+		D97B936BBF02EDB917F0E21E /* Recitation */ = {
+			isa = PBXGroup;
+			children = (
+				2747F2FD70F598A9FB71EB12 /* ListeningViews.swift */,
+				937E8BBD81DE8A40B5F17C51 /* RecitationListener.swift */,
+				B3F0B842CFD39549235FADBD /* RecitationModel.swift */,
+				FC0F3B401FC9237818D9C98A /* RecitationText.swift */,
+				9EF3E2A0049DBC7C05AAC235 /* RecitationTracker.swift */,
+			);
+			path = Recitation;
 			sourceTree = "<group>";
 		};
 		E067C2A5094B3CE9CB4A956E /* Credits */ = {
@@ -499,6 +527,7 @@
 				A857877D3905C9E30C7FB0B6 /* FirebaseStorage */,
 				F047391ECE3170AC958AE61A /* GoogleSignIn */,
 				22A0842F575DA582DF2221F0 /* LiveKit */,
+				6F5CEC7A359C962EB678756B /* WhisperKit */,
 			);
 			productName = Aqra;
 			productReference = 197C7240EA806A2E4643B0F4 /* Aqra.app */;
@@ -550,6 +579,7 @@
 				D43C0063A5472B2366798D29 /* XCRemoteSwiftPackageReference "firebase-ios-sdk" */,
 				B0D5345BB6733675088C3865 /* XCRemoteSwiftPackageReference "GoogleSignIn-iOS" */,
 				5746233B03DB254B784B2C01 /* XCRemoteSwiftPackageReference "client-sdk-swift" */,
+				FC916AEEE473793A2062392E /* XCRemoteSwiftPackageReference "WhisperKit" */,
 			);
 			preferredProjectObjectVersion = 77;
 			productRefGroup = 7CB4E00B6ED4E140218F3DEE /* Products */;
@@ -591,6 +621,7 @@
 				D1532B8C85C494E67336552E /* JourneyTests.swift in Sources */,
 				916DEA5DC95A5438E364AEDB /* MemorizationTests.swift in Sources */,
 				1C5F4BA3851DEFBE3DEFC906 /* MushafTests.swift in Sources */,
+				F9ED3406E49A78CB7DCCA5C3 /* RecitationTests.swift in Sources */,
 				E4D2E9755861CE6A0FBE2A8E /* RevisionTests.swift in Sources */,
 				31E52971F91F85D004B6744E /* SocialTests.swift in Sources */,
 				6FFE2E633793A9CA2FEB2E0E /* TasmeeTests.swift in Sources */,
@@ -624,6 +655,7 @@
 				8CF39089CE8EE76FBDE98BEB /* InboxView.swift in Sources */,
 				B1DF2B5429CB727F3AAC7E65 /* Journey.swift in Sources */,
 				D5989D69BAF347FBBA14A74F /* LaunchSplash.swift in Sources */,
+				49722DE07521B45403ECE706 /* ListeningViews.swift in Sources */,
 				C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */,
 				4964D378F5949856F3745F53 /* ManazilStairs.swift in Sources */,
 				2A203B4FCA716C993ACC5786 /* MemorizationSetupView.swift in Sources */,
@@ -642,6 +674,10 @@
 				AD5EC5EEED623D649F19C302 /* PlanEditorView.swift in Sources */,
 				FF34ECA9B23026A632862A5B /* PlanStore.swift in Sources */,
 				1EE162AB5A10ED7D0D6A5627 /* PlanViews.swift in Sources */,
+				279F4BFA5843B5B2C6104F1C /* RecitationListener.swift in Sources */,
+				BEF60535CD6663B1A29EEFBC /* RecitationModel.swift in Sources */,
+				79F13CFB3B69CE6A44861EA4 /* RecitationText.swift in Sources */,
+				E4016693ACF5CF59C8AD0C8A /* RecitationTracker.swift in Sources */,
 				46321E94CC83A24568ABCFCC /* RevisionEngine.swift in Sources */,
 				5383EDE2A7ACFF82329F5E49 /* RewardStore.swift in Sources */,
 				477F1C7A1EBCABFB7CBF2812 /* RewardViews.swift in Sources */,
@@ -692,7 +728,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "اقْرَأْ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Your teacher sees you while you recite, and you can scan a friend's code.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Your teacher hears you recite in a video tasmee'.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Aqra follows along as you recite a revision, on your device, and your teacher hears you in a video tasmee'.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -822,7 +858,7 @@
 				INFOPLIST_KEY_CFBundleDisplayName = "اقْرَأْ";
 				INFOPLIST_KEY_LSApplicationCategoryType = "public.app-category.education";
 				INFOPLIST_KEY_NSCameraUsageDescription = "Your teacher sees you while you recite, and you can scan a friend's code.";
-				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Your teacher hears you recite in a video tasmee'.";
+				INFOPLIST_KEY_NSMicrophoneUsageDescription = "Aqra follows along as you recite a revision, on your device, and your teacher hears you in a video tasmee'.";
 				INFOPLIST_KEY_UIApplicationSceneManifest_Generation = YES;
 				INFOPLIST_KEY_UISupportedInterfaceOrientations = "UIInterfaceOrientationLandscapeLeft UIInterfaceOrientationLandscapeRight UIInterfaceOrientationPortrait UIInterfaceOrientationPortraitUpsideDown";
 				LD_RUNPATH_SEARCH_PATHS = (
@@ -954,6 +990,14 @@
 				minimumVersion = 12.19.0;
 			};
 		};
+		FC916AEEE473793A2062392E /* XCRemoteSwiftPackageReference "WhisperKit" */ = {
+			isa = XCRemoteSwiftPackageReference;
+			repositoryURL = "https://github.com/argmaxinc/WhisperKit";
+			requirement = {
+				kind = upToNextMinorVersion;
+				minimumVersion = 1.1.0;
+			};
+		};
 /* End XCRemoteSwiftPackageReference section */
 
 /* Begin XCSwiftPackageProductDependency section */
@@ -966,6 +1010,11 @@
 			isa = XCSwiftPackageProductDependency;
 			package = 5746233B03DB254B784B2C01 /* XCRemoteSwiftPackageReference "client-sdk-swift" */;
 			productName = LiveKit;
+		};
+		6F5CEC7A359C962EB678756B /* WhisperKit */ = {
+			isa = XCSwiftPackageProductDependency;
+			package = FC916AEEE473793A2062392E /* XCRemoteSwiftPackageReference "WhisperKit" */;
+			productName = WhisperKit;
 		};
 		A857877D3905C9E30C7FB0B6 /* FirebaseStorage */ = {
 			isa = XCSwiftPackageProductDependency;

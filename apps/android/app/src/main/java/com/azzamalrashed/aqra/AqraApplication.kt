@@ -14,6 +14,7 @@ import com.azzamalrashed.aqra.memorization.MemorizationStore
 import com.azzamalrashed.aqra.mushaf.MushafFonts
 import com.azzamalrashed.aqra.plan.PlanStore
 import com.azzamalrashed.aqra.quran.MushafStore
+import com.azzamalrashed.aqra.recitation.RecitationModel
 import com.azzamalrashed.aqra.revision.RevisionStore
 import com.azzamalrashed.aqra.rewards.RewardStore
 import com.azzamalrashed.aqra.social.SocialStore
@@ -59,6 +60,13 @@ class AqraApp(application: Application) {
     val social = SocialStore(memorization, revision)
     /** The account the progress is backed up to. */
     val account = AccountStore(application, sync, tasmee, social, prefs, scope)
+    /** The speech model a revision is followed with, once downloaded. */
+    val recitationModel = RecitationModel(application, scope)
+
+    init {
+        // A debug build follows a recording placed in the app's files instead of the microphone (RecitationListener).
+        if (BuildConfig.DEBUG) com.azzamalrashed.aqra.recitation.AudioSource.testRecording = File(application.filesDir, "recitation-test.wav")
+    }
 
     /** The Mushaf, once loaded: null while it loads, or why it couldn't be. */
     var mushaf: Result<MushafStore>? by mutableStateOf(null)

@@ -615,6 +615,10 @@ struct SourcesView: View {
                        detail: Text("The topic sections, for now."))
                 source(icon: "✒️", tint: Palette.rose, name: Text(verbatim: "Amiri"),
                        detail: Text("The typeface of the hadith, under the SIL Open Font License."))
+                source(icon: "🎙️", tint: Palette.peach, name: Text(verbatim: "Tarteel"),
+                       detail: Text("The speech model trained on Quran recitation that follows a revision aloud, under the Apache 2.0 License."))
+                source(icon: "⚙️", tint: Palette.lavender, name: Text(verbatim: "WhisperKit (Argmax)"),
+                       detail: Text("Runs the speech model on the device, under the MIT License."))
             }
             .padding(.horizontal, 22)
             .padding(.bottom, 24)
