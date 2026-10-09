@@ -42,6 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -253,7 +255,11 @@ private fun Stage(app: AqraApp, store: MushafStore, climb: Float, chipsOut: Bool
     val strength = app.memorization.averageStrength()
     val openness by animateFloatAsState(if (open) 1f else 0f, iosSpring(0.7f, 0.85f), label = "rings")
     val chips by animateFloatAsState(if (chipsOut) 1f else 0f, iosSpring(0.6f, 0.66f), label = "chips")
-    Box(Modifier.fillMaxWidth().height(360.dp), contentAlignment = Alignment.Center) {
+    // On a short screen (a small phone, or any phone in landscape) the whole composition, glow and chips included, is
+    // drawn smaller, so today's wird and its button are on the first screen.
+    val scale = if (LocalConfiguration.current.screenHeightDp < 700) 0.76f else 1f
+    Box(Modifier.fillMaxWidth().height(360.dp * scale), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxWidth().requiredHeight(360.dp).graphicsLayer { scaleX = scale; scaleY = scale }, contentAlignment = Alignment.Center) {
         // Behind the stage, so the glow spreads past its edges without widening the page.
         AqraGlowRings(Modifier.graphicsLayer { scaleX = 1.05f; scaleY = 1.05f }, breath = sin(time * 0.9).toFloat(), openness = openness)
         GlossyStairs(climb, Modifier.graphicsLayer { translationX = (8 * mirror).dp.toPx(); translationY = 6.dp.toPx() })
@@ -268,6 +274,7 @@ private fun Stage(app: AqraApp, store: MushafStore, climb: Float, chipsOut: Bool
                 }
             }
         }
+    }
     }
 }
 
