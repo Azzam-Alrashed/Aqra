@@ -138,6 +138,17 @@ class PlanStore(
         return date.weekday(zone) in plan.studyDays
     }
 
+    /**
+     * Whether a new portion is still due today: a study day of an active plan, none recorded yet today, and something
+     * left to memorize.
+     */
+    fun isPortionDue(memorization: MemorizationStore, now: Moment = Moment.now()): Boolean {
+        val plan = plan
+        if (plan == null || plan.paused || !isStudyDay(now) || memorization.count >= MushafStore.AYAH_COUNT) return false
+        val day = now.startOfDay(zone)
+        return portions.none { it.date.startOfDay(zone) == day }
+    }
+
     // MARK: - Today
 
     /**

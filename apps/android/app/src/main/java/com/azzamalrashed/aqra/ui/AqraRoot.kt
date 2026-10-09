@@ -46,6 +46,7 @@ import com.azzamalrashed.aqra.AppTab
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.account.AccountScreen
+import com.azzamalrashed.aqra.account.DailyReminder
 import com.azzamalrashed.aqra.account.SessionReminders
 import com.azzamalrashed.aqra.home.HomeScreen
 import com.azzamalrashed.aqra.memorization.MemorizationSetupScreen
@@ -205,6 +206,8 @@ private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
         (live?.let(::Booking) ?: booking) to live?.status
     }
     LaunchedEffect(bookings, app.prefs.reminderOn.value) { SessionReminders.schedule(context, bookings) }
+    // Today's reminder, if it was shown, goes once today's work is done.
+    LaunchedEffect(app.revision.plan?.isComplete, app.plan.portions.size) { DailyReminder.withdrawIfDone(context, app) }
     // After choosing to mark in the Mushaf, the app opens straight on it, with the home underneath.
     LaunchedEffect(Unit) { if (startsMarking) overlays.open(FullScreen.Mushaf(marking = true)) }
 
