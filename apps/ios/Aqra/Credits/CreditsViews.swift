@@ -23,17 +23,17 @@ struct WalletView: View {
                     Text("Credits").foregroundStyle(Palette.ink)
                     Text("for seats in sessions").foregroundStyle(Palette.brand)
                 }
-                .font(.system(size: 28, weight: .heavy))
+                .aqraFont(size: 28, weight: .heavy)
                 .padding(.top, 22)
 
                 if account.profile?.isAnonymous != false {
                     AqraCard(padding: 14, radius: 24) {
                         VStack(alignment: .leading, spacing: 12) {
                             Text("Sign in to buy credits")
-                                .font(.system(size: 16, weight: .heavy))
+                                .aqraFont(size: 16, weight: .heavy)
                                 .foregroundStyle(Palette.ink)
                             Text("Credits stay with your account, so they're never lost with a device.")
-                                .font(.system(size: 13, weight: .medium))
+                                .aqraFont(size: 13, weight: .medium)
                                 .foregroundStyle(Palette.inkSoft)
                                 .fixedSize(horizontal: false, vertical: true)
                             SignInButtons()
@@ -48,7 +48,7 @@ struct WalletView: View {
                         LedgerList(entries: wallet.ledger)
                     }
                     Text("Credits pay for seats won by bidding in teachers' sessions. A bid holds its credits; they come back if someone outbids you or the session is cancelled.")
-                        .font(.system(size: 12, weight: .medium))
+                        .aqraFont(size: 12, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -77,17 +77,17 @@ struct WalletView: View {
                         .foregroundStyle(Palette.ink)
                         .contentTransition(.numericText(value: wallet.balance))
                     Text("credits to bid with")
-                        .font(.system(size: 13, weight: .semibold))
+                        .aqraFont(size: 13, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                 }
                 Spacer(minLength: 0)
                 if wallet.held > 0 {
                     VStack(alignment: .trailing, spacing: 2) {
                         Text(verbatim: CreditsFormat.credits(wallet.held))
-                            .font(.system(size: 18, weight: .heavy).monospacedDigit())
+                            .aqraFont(size: 18, weight: .heavy, monospacedDigit: true)
                             .foregroundStyle(Palette.brand)
                         Text("held for bids")
-                            .font(.system(size: 11, weight: .semibold))
+                            .aqraFont(size: 11, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                     }
                 }
@@ -101,7 +101,7 @@ struct WalletView: View {
             if wallet.products.isEmpty {
                 AqraCard(padding: 14, radius: 24) {
                     Text("The App Store can't be reached right now.")
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -140,15 +140,15 @@ struct LedgerList: View {
                         IconTile(icon: icon(entry.kind), tint: Palette.lavender, size: 34)
                         VStack(alignment: .leading, spacing: 1) {
                             title(entry.kind)
-                                .font(.system(size: 14, weight: .bold))
+                                .aqraFont(size: 14, weight: .bold)
                                 .foregroundStyle(Palette.ink)
                             Text(verbatim: entry.at.formatted(date: .abbreviated, time: .shortened))
-                                .font(.system(size: 11, weight: .semibold))
+                                .aqraFont(size: 11, weight: .semibold)
                                 .foregroundStyle(Palette.inkSoft)
                         }
                         Spacer()
                         Text(verbatim: (sign(entry) + CreditsFormat.credits(abs(entry.amount))))
-                            .font(.system(size: 15, weight: .heavy).monospacedDigit())
+                            .aqraFont(size: 15, weight: .heavy, monospacedDigit: true)
                             .foregroundStyle(sign(entry) == "+" ? Color(light: 0x2E9B63, dark: 0x2E9B63) : Palette.ink)
                             .environment(\.layoutDirection, .leftToRight)
                     }
@@ -229,20 +229,20 @@ struct BidSheet: View {
                     Text("A seat by auction").foregroundStyle(Palette.ink)
                     Text(verbatim: session.teacherName).foregroundStyle(Palette.brand)
                 }
-                .font(.system(size: 26, weight: .heavy))
+                .aqraFont(size: 26, weight: .heavy)
                 .padding(.top, 22)
 
                 if let auction {
                     AqraCard(padding: 14, radius: 24) {
                         VStack(alignment: .leading, spacing: 8) {
                             Text(verbatim: TasmeeFormat.when(session.startsAt))
-                                .font(.system(size: 15, weight: .heavy))
+                                .aqraFont(size: 15, weight: .heavy)
                                 .foregroundStyle(Palette.ink)
                             Text("\(auction.seats) seats by auction · \(auction.bids) bids")
-                                .font(.system(size: 13, weight: .semibold))
+                                .aqraFont(size: 13, weight: .semibold)
                                 .foregroundStyle(Palette.inkSoft)
                             Text("Bidding closes \(auction.closesAt.formatted(.relative(presentation: .named)))")
-                                .font(.system(size: 13, weight: .bold))
+                                .aqraFont(size: 13, weight: .bold)
                                 .foregroundStyle(Palette.brand)
                         }
                         .frame(maxWidth: .infinity, alignment: .leading)
@@ -263,14 +263,14 @@ struct BidSheet: View {
                                     .foregroundStyle(Palette.brand)
                                     .contentTransition(.numericText(value: Double(amount)))
                                 (amount == 0 ? Text("credits · free while seats remain") : Text("credits"))
-                                    .font(.system(size: 12, weight: .bold))
+                                    .aqraFont(size: 12, weight: .bold)
                                     .foregroundStyle(Palette.inkSoft)
                             }
                             .frame(minWidth: 150)
                             stepButton("plus", enabled: true) { amount += 1 }
                         }
                         Text("Your balance: \(CreditsFormat.credits(wallet.balance)) credits")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                     }
                     .frame(maxWidth: .infinity)
@@ -286,11 +286,11 @@ struct BidSheet: View {
                 }
                 .disabled(working || !(auction?.isOpen() ?? false))
                 Button("Buy credits") { buying = true }
-                    .font(.system(size: 15, weight: .semibold))
+                    .aqraFont(size: 15, weight: .semibold)
                     .foregroundStyle(Palette.brand)
                     .frame(maxWidth: .infinity)
                 Text("Your bid holds its credits. If someone outbids you, they come back at once; if you win, they pay for the seat when bidding closes.")
-                    .font(.system(size: 12, weight: .medium))
+                    .aqraFont(size: 12, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -334,7 +334,7 @@ struct BidSheet: View {
             HStack(spacing: 12) {
                 IconTile(icon: icon, tint: tint, size: 40)
                 title
-                    .font(.system(size: 16, weight: .heavy))
+                    .aqraFont(size: 16, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                 Spacer(minLength: 0)
             }
@@ -350,7 +350,7 @@ struct BidSheet: View {
             case .failed: Text("That didn't work. Please try again.")
             }
         }
-        .font(.system(size: 13, weight: .semibold))
+        .aqraFont(size: 13, weight: .semibold)
         .foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
     }
 
@@ -400,7 +400,7 @@ struct EarningsView: View {
                     Text("Your earnings").foregroundStyle(Palette.ink)
                     Text("from seats won").foregroundStyle(Palette.brand)
                 }
-                .font(.system(size: 28, weight: .heavy))
+                .aqraFont(size: 28, weight: .heavy)
                 .padding(.top, 22)
                 HStack(spacing: 10) {
                     stat(icon: "🏦", tint: Palette.butter, value: wallet.due, label: Text("Due to you"))
@@ -408,7 +408,7 @@ struct EarningsView: View {
                     stat(icon: "✅", tint: Palette.sky, value: wallet.paidOut, label: Text("Paid"))
                 }
                 Text("Your share of each seat won by bidding, after the app's commission, in credits. The team pays it by bank transfer.")
-                    .font(.system(size: 12, weight: .medium))
+                    .aqraFont(size: 12, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
                 if !wallet.earnings.isEmpty {
@@ -433,10 +433,10 @@ struct EarningsView: View {
             VStack(alignment: .leading, spacing: 8) {
                 IconTile(icon: icon, tint: tint, size: 32)
                 Text(verbatim: CreditsFormat.credits(value))
-                    .font(.system(size: 20, weight: .heavy).monospacedDigit())
+                    .aqraFont(size: 20, weight: .heavy, monospacedDigit: true)
                     .foregroundStyle(Palette.ink)
                 label
-                    .font(.system(size: 11, weight: .semibold))
+                    .aqraFont(size: 11, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
             }
             .frame(maxWidth: .infinity, alignment: .leading)

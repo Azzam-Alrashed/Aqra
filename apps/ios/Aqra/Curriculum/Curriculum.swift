@@ -222,14 +222,15 @@ final class AssessmentStore {
                            passedAt: passes[stage], retestAt: passedTest ? nil : retestAt, policy: policy)
     }
 
-    /// The stage the student is in: the one holding their next portion, else their most recently memorized ayah,
-    /// else the first stage not yet passed.
+    /// The stage the student is in, steady through the day: the one holding the plan's next portion (whether
+    /// today's is due, done or a rest day), else the one of the latest ayah memorized in Aqra (marking what was
+    /// already known doesn't move it), else the first stage not yet passed.
     static func currentStage(nextAyah: Int?, memorization: MemorizationStore, store: MushafStore,
                              passes: [Int: Date]) -> Int {
         if let nextAyah { return Curriculum.stage(ofJuz: store.juz(ofAyah: nextAyah)) }
-        if let latest = memorization.ayahs.max(by: { ($0.value.learnedAt ?? $0.value.since) < ($1.value.learnedAt ?? $1.value.since) }),
-           memorization.count < MushafStore.ayahCount {
-            return Curriculum.stage(ofJuz: store.juz(ofAyah: latest.key))
+        let learned = memorization.ayahs.compactMap { ayah, memory in memory.learnedAt.map { (ayah, $0) } }
+        if let latest = learned.max(by: { ($0.1, $0.0) < ($1.1, $1.0) }), memorization.count < MushafStore.ayahCount {
+            return Curriculum.stage(ofJuz: store.juz(ofAyah: latest.0))
         }
         return (1...Curriculum.stageCount).first { passes[$0] == nil } ?? Curriculum.stageCount
     }

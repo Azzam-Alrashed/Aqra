@@ -5,8 +5,9 @@
 
 Reads apps/ios/Aqra/Localizable.xcstrings (English keys, Arabic translations) and writes
 apps/android/app/src/main/res/values/strings_ios.xml and values-ar/strings_ios.xml. Run it again whenever the
-catalog changes. Each string's resource name is made from its English key (see `name`); strings only Android needs
-live in strings.xml, which this never touches.
+catalog changes. Each string's resource name is made from its English key (see `name`); a key already imported keeps
+the name it has, so a new key whose name would clash takes a new one rather than renaming the old. Strings only
+Android needs live in strings.xml, which this never touches.
 """
 import json
 import re
@@ -57,6 +58,13 @@ def escape(value: str) -> str:
     return value
 
 
+def text(value: str) -> str:
+    """A value as resource text. Android trims a value's leading and trailing spaces unless it's quoted, so one that
+    has them (the fact separator « · ») is written in quotes."""
+    escaped = escape(value)
+    return f'"{escaped}"' if value != value.strip() else escaped
+
+
 def count_args(key: str) -> int:
     return len(SPECIFIER.findall(key))
 
@@ -92,19 +100,39 @@ def entries(key: str, entry: dict, language: str):
     return None if value is None else ("string", android_format(value, positional))
 
 
+def comment(key: str) -> str:
+    """The comment above each resource: its key, as the file writes it."""
+    return escape(key).replace("--", "- -")
+
+
+def existing_names() -> dict:
+    """The names already given, by their key's comment, from the English file written last time."""
+    path = RES / LANGUAGES["en"] / "strings_ios.xml"
+    if not path.exists():
+        return {}
+    found = re.findall(r'<!-- (.*?) -->\n\s*<(?:string|plurals) name="([^"]+)"', path.read_text())
+    return dict(found)
+
+
 def main():
     catalog = json.loads(CATALOG.read_text())
-    names = {}
-    for key in sorted(catalog["strings"], key=str.lower):
-        if not key.strip():
+    keys = [key for key in sorted(catalog["strings"], key=str.lower) if key.strip()]
+    # Keys imported before keep their names, so the screens using them keep their text; new keys take free names.
+    previous = existing_names()
+    names = {key: previous[comment(key)] for key in keys if comment(key) in previous}
+    used = set(names.values())
+    for key in keys:
+        if key in names:
             continue
         base = name(key)
         resource = base
         suffix = 2
-        while resource in names.values():
+        while resource in used:
             resource = f"{base}_{suffix}"
             suffix += 1
         names[key] = resource
+        used.add(resource)
+    names = {key: names[key] for key in keys}
 
     for language, folder in LANGUAGES.items():
         lines = [
@@ -121,16 +149,16 @@ def main():
             kind, value = found
             if english and english[0] == "plurals" and kind == "string":
                 kind, value = "plurals", {"other": value}
-            lines.append(f"    <!-- {escape(key).replace('--', '- -')} -->")
+            lines.append(f"    <!-- {comment(key)} -->")
             if kind == "string":
                 formatted = ' formatted="false"' if "%" in value and count_args(key) == 0 else ""
-                lines.append(f'    <string name="{resource}"{formatted}>{escape(value)}</string>')
+                lines.append(f'    <string name="{resource}"{formatted}>{text(value)}</string>')
             else:
                 lines.append(f'    <plurals name="{resource}">')
                 order = ARABIC_QUANTITIES if language == "ar" else ["zero", "one", "two", "few", "many", "other"]
                 for quantity in order:
                     if quantity in value:
-                        lines.append(f'        <item quantity="{quantity}">{escape(value[quantity])}</item>')
+                        lines.append(f'        <item quantity="{quantity}">{text(value[quantity])}</item>')
                 lines.append("    </plurals>")
         lines.append("</resources>")
         path = RES / folder / "strings_ios.xml"

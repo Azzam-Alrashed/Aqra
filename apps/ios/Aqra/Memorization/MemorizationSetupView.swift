@@ -92,12 +92,12 @@ struct MemorizationSetupView: View {
                 Text("What have you memorized").foregroundStyle(Palette.ink)
                 Text("of the Quran?").foregroundStyle(Palette.brand)
             }
-            .font(.system(size: 28 * scale, weight: .heavy))
+            .aqraFont(size: 28 * scale, weight: .heavy)
             .lineLimit(1)
             .minimumScaleFactor(0.7)
             .multilineTextAlignment(.center)
             summary
-                .font(.system(size: 15 * scale, weight: .semibold))
+                .aqraFont(size: 15 * scale, weight: .semibold)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
                 .foregroundStyle(Palette.inkSoft)
@@ -117,7 +117,7 @@ struct MemorizationSetupView: View {
             store.juzAyahs[juz].map { memorization.memorizedCount(in: $0) == $0.count } ?? false
         }.count
         let ayat = Text("\(count) ayat")
-        return fullJuz > 0 ? ayat + Text(verbatim: " · ") + Text("\(fullJuz) juz'") : ayat
+        return fullJuz > 0 ? ayat + Text(verbatim: Separator.facts) + Text("\(fullJuz) juz'") : ayat
     }
 
     /// The home's stage, smaller: the stairs in their glowing rings, climbing as juz' and surahs are chosen,
@@ -293,10 +293,10 @@ struct MemorizationSetupView: View {
                     .background(face.top, in: Circle())
                 VStack(alignment: .leading, spacing: 2) {
                     Text(verbatim: store.surahNames[surah] ?? "")
-                        .font(.system(size: 18, weight: .bold))
+                        .aqraFont(size: 18, weight: .bold)
                         .foregroundStyle(Palette.ink)
                     Text("\(range.count) ayat")
-                        .font(.system(size: 13, weight: .medium))
+                        .aqraFont(size: 13, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                 }
                 Spacer()
@@ -328,7 +328,7 @@ struct MemorizationSetupView: View {
             .animation(.snappy, value: memorization.count == 0)
             if !isSheet {
                 Button("Mark pages and ayat in the Mushaf") { onFinish(true) }
-                    .font(.system(size: 15 * min(scale, 1.15), weight: .semibold))
+                    .aqraFont(size: 15 * min(scale, 1.15), weight: .semibold)
                     .foregroundStyle(Palette.brand)
             }
         }

@@ -18,8 +18,9 @@ region, Belgium (`europe-west1`): Google refuses new resources in the Middle Eas
   - `onTasmeeRecorded`: when a teacher records a tasmee', tells the student in their inbox and scores the pages
     heard clean in that teacher's running competitions.
   - `redeemPurchase`: credits an App Store purchase of credits once its signed transaction is verified.
-  - `placeBid`, `settleAuctions` (every 5 minutes), `settleAuctionNow` (administrators), `onSessionChanged`: the
-    seat auction, its settlement, and the releases and refunds when a session is cancelled.
+  - `placeBid`, `takeFreeSeat`, `settleAuctions` (every 5 minutes), `settleAuctionNow` (administrators),
+    `onSessionChanged`: the seat auction, a bidder's free seat taken instead, the settlement, and the releases and
+    refunds when a session is cancelled.
   - `onAccountDeleted`: deletes a deleted account's wallet and ledger.
 
 ### Setting up video (LiveKit Cloud)
@@ -147,7 +148,10 @@ README), with `APPLE_BUNDLE_ID` and `APPLE_APP_ID` (the app's App Store id) set 
 ### The seat auction
 
 A session may offer auctioned seats beside its free ones: `auctionSeats` (1–20), `minBid`, `biddingClosesAt`
-(before `startsAt`; the app sets it three hours before) and `auctionState` (`open`, then `settled`, `cancelled`
+(still ahead and at least 30 minutes before `startsAt`, which is at least an hour away; the app sets it three hours
+before, or 30 minutes before a session sooner than three and a half hours; the policy's
+`lateBiddingClosesBeforeMinutes` and `minAuctionLeadMinutes`, which the rules and the apps mirror, so changing them
+means changing those too) and `auctionState` (`open`, then `settled`, `cancelled`
 or `refunded`). The functions keep `auctionBids` (the active bids), `auctionFloor` (what the next bid must reach)
 and `auctionWon` on the session.
 
@@ -156,6 +160,9 @@ and `auctionWon` on the session.
 - While auctioned seats remain, any bid of at least `minBid` holds one; once all are held, a new bid must beat the
   lowest by `minIncrement` and outbids it (ties go to the earlier bid). A bid holds its credits; an outbid one is
   released at once, and its bidder told in their inbox. A bidder may raise their own bid.
+- A student holds a free seat or a bid, not both: `placeBid` refuses a student with a seat, and the rules refuse a
+  free seat beside an active bid. A bidder takes a free seat with `takeFreeSeat`, which lets the bid go (releasing
+  its credits) and makes the seat, the booking and the count in one transaction.
 - When bidding closes, `settleAuctions` spends the winners' holds, makes their seats (with `paid`) and bookings,
   and records the teacher's share in `teacherBalances`.
 - A session cancelled while bidding releases every hold; once settled, the credits paid are refunded and the

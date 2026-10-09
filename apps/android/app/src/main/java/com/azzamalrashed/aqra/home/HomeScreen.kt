@@ -42,6 +42,8 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.foundation.layout.requiredHeight
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
@@ -81,7 +83,6 @@ import com.azzamalrashed.aqra.curriculum.StageCard
 import com.azzamalrashed.aqra.curriculum.StageSheet
 import com.azzamalrashed.aqra.plan.PlanEditorScreen
 import com.azzamalrashed.aqra.plan.PortionCard
-import com.azzamalrashed.aqra.plan.TodayPortion
 import com.azzamalrashed.aqra.ui.components.ChipButton
 import com.azzamalrashed.aqra.tasmee.Booking
 import com.azzamalrashed.aqra.tasmee.TasmeeRecord
@@ -119,6 +120,7 @@ import com.azzamalrashed.aqra.ui.util.formatNumberList
 import com.azzamalrashed.aqra.ui.util.formatPercent
 import com.azzamalrashed.aqra.ui.util.formatWhen
 import com.azzamalrashed.aqra.ui.util.hijriToday
+import com.azzamalrashed.aqra.ui.util.factSeparator
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.sin
@@ -252,7 +254,11 @@ private fun Stage(app: AqraApp, store: MushafStore, climb: Float, chipsOut: Bool
     val strength = app.memorization.averageStrength()
     val openness by animateFloatAsState(if (open) 1f else 0f, iosSpring(0.7f, 0.85f), label = "rings")
     val chips by animateFloatAsState(if (chipsOut) 1f else 0f, iosSpring(0.6f, 0.66f), label = "chips")
-    Box(Modifier.fillMaxWidth().height(360.dp), contentAlignment = Alignment.Center) {
+    // On a short screen (a small phone, or any phone in landscape) the whole composition, glow and chips included, is
+    // drawn smaller, so today's wird and its button are on the first screen.
+    val scale = if (LocalConfiguration.current.screenHeightDp < 700) 0.76f else 1f
+    Box(Modifier.fillMaxWidth().height(360.dp * scale), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxWidth().requiredHeight(360.dp).graphicsLayer { scaleX = scale; scaleY = scale }, contentAlignment = Alignment.Center) {
         // Behind the stage, so the glow spreads past its edges without widening the page.
         AqraGlowRings(Modifier.graphicsLayer { scaleX = 1.05f; scaleY = 1.05f }, breath = sin(time * 0.9).toFloat(), openness = openness)
         GlossyStairs(climb, Modifier.graphicsLayer { translationX = (8 * mirror).dp.toPx(); translationY = 6.dp.toPx() })
@@ -267,6 +273,7 @@ private fun Stage(app: AqraApp, store: MushafStore, climb: Float, chipsOut: Bool
                 }
             }
         }
+    }
     }
 }
 
@@ -363,7 +370,7 @@ private fun MushafCard(app: AqraApp, store: MushafStore, onOpen: () -> Unit) {
                 Modifier.size(40.dp, 63.dp).clip(shape).border(1.dp, MushafStyle.LIGHT.chrome.copy(alpha = 0.25f), shape))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(R.string.continue_reading), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
-                Text(store.surahNames[page.surah].orEmpty() + " · " + stringResource(R.string.page_n, page.number),
+                Text(store.surahNames[page.surah].orEmpty() + factSeparator() + stringResource(R.string.page_n, page.number),
                     style = aqraStyle(16f, Weight.heavy, Palette.ink), maxLines = 1)
             }
             IconTile("📖", Palette.sky, size = 40.dp)
@@ -463,11 +470,8 @@ private fun PageTile(app: AqraApp, store: MushafStore, item: PlanItem, modifier:
 // MARK: - The journey
 
 /** The stage the student is in. */
-private fun currentStage(app: AqraApp, store: MushafStore): Int {
-    val plan = app.plan.plan
-    val next = if (plan != null && !plan.paused) (app.plan.today(app.memorization, store) as? TodayPortion.Due)?.ayahs?.firstOrNull() else null
-    return AssessmentStore.currentStage(next, app.memorization, store, app.assessments.passes)
-}
+private fun currentStage(app: AqraApp, store: MushafStore): Int =
+    AssessmentStore.currentStage(app.plan.nextAyah(app.memorization, store), app.memorization, store, app.assessments.passes)
 
 /** Pages that keep slipping, suggested for extra follow-up. */
 @Composable
@@ -515,7 +519,7 @@ private fun TasmeeCard(app: AqraApp, booking: Booking) {
                 Text(stringResource(if (cancelled) R.string.tasmee_cancelled else R.string.your_next_tasmee), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
                 Text(booking.teacherName, style = aqraStyle(16f, Weight.heavy, Palette.ink), maxLines = 1)
                 Text(
-                    formatWhen((live?.startsAt ?: booking.startsAt).toInstant()) + " · " + placeText(live?.let(::Booking) ?: booking),
+                    formatWhen((live?.startsAt ?: booking.startsAt).toInstant()) + factSeparator() + placeText(live?.let(::Booking) ?: booking),
                     style = aqraStyle(12f, Weight.bold, if (cancelled) Palette.inkSoft else Palette.brand)
                         .copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null),
                     maxLines = 1,

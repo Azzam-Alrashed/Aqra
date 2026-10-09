@@ -138,6 +138,9 @@ describe("the seat auction", () => {
     assert.equal((await adminDb.doc("sessions/s1").get()).data().auctionState, "refunded");
     const refund = await adminDb.collection(`users/${bob.uid}/inbox`).where("kind", "==", "refund").get();
     assert.equal(refund.size, 1);
+    // The message says which session: its start.
+    const startsAt = (await adminDb.doc("sessions/s1").get()).data().startsAt;
+    assert.equal(refund.docs[0].data().startsAt.toMillis(), startsAt.toMillis());
   });
 
   test("a bidder who took a free seat meanwhile keeps it, and isn't charged for another", async () => {
@@ -158,6 +161,44 @@ describe("the seat auction", () => {
     assert.equal((await adminDb.doc(`teacherBalances/${teacher.uid}`).get()).exists, false);
   });
 
+  test("a bidder takes a free seat instead: the bid is let go and its credits come back, in one call", async () => {
+    const teacher = await client();
+    const bob = await client();
+    const carol = await client();
+    await auctionSession("s1", teacher.uid, { seats: 1, auctionSeats: 1 });
+    await adminDb.doc(`wallets/${bob.uid}`).set({ balance: 10, held: 0 });
+    await adminDb.doc(`wallets/${carol.uid}`).set({ balance: 10, held: 0 });
+    await bob.call("placeBid", { sessionId: "s1", amount: 4, name: "Bob" });
+    assert.equal((await adminDb.doc("sessions/s1").get()).data().auctionFloor, 5);
+
+    assert.deepEqual(await bob.call("takeFreeSeat", { sessionId: "s1", name: "Bob", memorizedPages: 3 }), { released: 4 });
+    assert.deepEqual([(await wallet(bob.uid)).balance, (await wallet(bob.uid)).held], [10, 0]);
+    assert.equal((await adminDb.doc(`sessions/s1/bids/${bob.uid}`).get()).data().status, "released");
+    assert.equal((await adminDb.doc(`sessions/s1/seats/${bob.uid}`).get()).data().memorizedPages, 3);
+    assert.equal((await adminDb.doc(`users/${bob.uid}/bookings/s1`).get()).data().teacherId, teacher.uid);
+    const session = (await adminDb.doc("sessions/s1").get()).data();
+    assert.deepEqual([session.booked, session.auctionBids, session.auctionFloor], [1, 0, 0]);
+    // The seat is his now: no bidding beside it, no second seat, and the last free seat is gone for others.
+    await rejects(bob.call("placeBid", { sessionId: "s1", amount: 1, name: "Bob" }), "functions/failed-precondition");
+    await rejects(bob.call("takeFreeSeat", { sessionId: "s1", name: "Bob" }), "functions/failed-precondition");
+    await rejects(carol.call("takeFreeSeat", { sessionId: "s1", name: "Carol" }), "functions/failed-precondition");
+    // Settling finds no bid to charge him for.
+    const admin = await client({ admin: true });
+    assert.deepEqual(await admin.call("settleAuctionNow", { sessionId: "s1" }), { won: 0 });
+    assert.equal((await wallet(bob.uid)).balance, 10);
+  });
+
+  test("taking a free seat needs a named account and an open session", async () => {
+    const teacher = await client();
+    const anonymous = await client({ anonymous: true });
+    const bob = await client();
+    await auctionSession("s1", teacher.uid, { status: "cancelled" });
+    await rejects(anonymous.call("takeFreeSeat", { sessionId: "s1" }), "functions/permission-denied");
+    await rejects(bob.call("takeFreeSeat", { sessionId: "s1" }), "functions/failed-precondition");
+    await rejects(bob.call("takeFreeSeat", { sessionId: "nope" }), "functions/not-found");
+    await rejects(teacher.call("takeFreeSeat", { sessionId: "s1" }), "functions/failed-precondition");
+  });
+
   test("cancelling while bidding is open releases every hold", async () => {
     const teacher = await client();
     const bob = await client();
@@ -168,6 +209,9 @@ describe("the seat auction", () => {
     await eventually(async () => assert.deepEqual([(await wallet(bob.uid)).balance, (await wallet(bob.uid)).held], [10, 0]));
     assert.equal((await adminDb.doc(`sessions/s1/bids/${bob.uid}`).get()).data().status, "released");
     assert.equal((await adminDb.doc("sessions/s1").get()).data().auctionState, "cancelled");
+    const message = (await adminDb.collection(`users/${bob.uid}/inbox`).where("kind", "==", "cancelled").get()).docs[0].data();
+    assert.equal(message.amount, 4);
+    assert.equal(message.startsAt.toMillis(), (await adminDb.doc("sessions/s1").get()).data().startsAt.toMillis());
   });
 
   test("a deleted account's wallet goes with it, and its application in any state", async () => {

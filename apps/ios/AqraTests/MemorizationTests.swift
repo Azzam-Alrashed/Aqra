@@ -72,4 +72,47 @@ struct MemorizationStoreTests {
         session.toggle(10...14)
         #expect(memorization.memorizedCount(in: 10...14) == 0)
     }
+
+    @Test func undoingAnUnmarkingRestoresTheRecordsExactly() {
+        let memorization = MemorizationStore(fileURL: nil)
+        let session = MarkingSession(memorization: memorization)
+        memorization.mark(20...29, memorized: true)
+        memorization.recordRevision(ayahs: 20...29, stumbled: [22], at: .now, policy: .standard)
+        memorization.verify([23, 24])
+        let before = memorization.ayahs
+
+        // Marking offers nothing to undo.
+        session.tap(30)
+        #expect(session.unmarked.isEmpty)
+        session.tap(30)
+
+        // A tap: the ayah comes back with its revisions, stumble and teacher's mark.
+        session.tap(22)
+        #expect(session.unmarked.count == 1 && !memorization.isMemorized(22))
+        session.undo()
+        #expect(memorization.ayahs == before && session.unmarked.isEmpty)
+
+        // A range that unmarks counts its first ayah, unmarked when the range began.
+        session.beginRange(at: 21)
+        #expect(session.unmarked.count == 1)
+        session.tap(24)
+        #expect(session.unmarked.count == 4 && memorization.memorizedCount(in: 20...29) == 6)
+        session.undo()
+        #expect(memorization.ayahs == before)
+
+        // A whole page.
+        session.toggle(20...29)
+        #expect(session.unmarked.count == 10 && memorization.count == 0)
+        session.undo()
+        #expect(memorization.ayahs == before)
+
+        // The undo expires, but an earlier unmarking's timer doesn't take a later one's.
+        session.tap(25)
+        let first = session.unmarkedVersion
+        session.tap(26)
+        session.expireUndo(version: first)
+        #expect(session.unmarked.keys.sorted() == [26])
+        session.expireUndo(version: session.unmarkedVersion)
+        #expect(session.unmarked.isEmpty)
+    }
 }

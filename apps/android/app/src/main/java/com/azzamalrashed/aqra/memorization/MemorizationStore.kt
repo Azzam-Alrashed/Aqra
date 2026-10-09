@@ -1,6 +1,7 @@
 package com.azzamalrashed.aqra.memorization
 
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.azzamalrashed.aqra.core.Moment
@@ -235,20 +236,32 @@ class MemorizationStore(
         return range.count { ayahs[it]?.verified == true }
     }
 
-    /** Marks ayat as memorized (keeping what's already known about them) or as not memorized. */
-    fun mark(range: Iterable<Int>, memorized: Boolean) {
+    /**
+     * Marks ayat as memorized (keeping what's already known about them) or as not memorized, and returns the records
+     * of the ayat it unmarked, so the unmarking can be undone.
+     */
+    fun mark(range: Iterable<Int>, memorized: Boolean): Map<Int, AyahMemory> {
         val next = ayahs.toMutableMap()
+        val removed = HashMap<Int, AyahMemory>()
         var changed = false
         val now = Moment.now()
         for (ayah in range) {
             if (ayah !in 0 until MushafStore.AYAH_COUNT || (ayah in next) == memorized) continue
-            if (memorized) next[ayah] = AyahMemory(since = now) else next.remove(ayah)
+            if (memorized) next[ayah] = AyahMemory(since = now) else next.remove(ayah)?.let { removed[ayah] = it }
             changed = true
         }
         if (changed) {
             ayahs = next
             scheduleSave()
         }
+        return removed
+    }
+
+    /** Puts records back exactly as they were (undoing an unmarking), over whatever the ayat hold now. */
+    fun restore(records: Map<Int, AyahMemory>) {
+        if (records.isEmpty()) return
+        ayahs = ayahs + records.filterKeys { it in 0 until MushafStore.AYAH_COUNT }
+        scheduleSave()
     }
 
     // MARK: - Saving
@@ -306,22 +319,32 @@ class MarkingSession(val memorization: MemorizationStore) {
     /** Where a range started, while it waits for its last ayah. */
     var rangeStart: Int? by mutableStateOf(null)
         private set
+    /**
+     * What the last unmarking removed, kept for a moment so it can be undone: an unmarked ayah loses its strength,
+     * its revisions and a teacher's mark. Empty when there's nothing to undo.
+     */
+    var unmarked: Map<Int, AyahMemory> by mutableStateOf(emptyMap())
+        private set
+    /** Changes with each unmarking, so its undo expires on time and not a later one's. */
+    var unmarkedVersion by mutableIntStateOf(0)
+        private set
     private var rangeMarks = true
 
     fun tap(ayah: Int) {
         val start = rangeStart
         if (start != null) {
-            memorization.mark(min(start, ayah)..max(start, ayah), memorized = rangeMarks)
+            // A range that unmarks is one unmarking with its first ayah, unmarked when it began.
+            note(memorization.mark(min(start, ayah)..max(start, ayah), memorized = rangeMarks), continuing = !rangeMarks)
             rangeStart = null
         } else {
-            memorization.toggle(ayah)
+            note(memorization.mark(listOf(ayah), memorized = !memorization.isMemorized(ayah)))
         }
     }
 
     /** Starts a range at an ayah, marking it (or unmarking it, if it was marked) right away. */
     fun beginRange(ayah: Int) {
         rangeMarks = !memorization.isMemorized(ayah)
-        memorization.mark(listOf(ayah), memorized = rangeMarks)
+        note(memorization.mark(listOf(ayah), memorized = rangeMarks))
         rangeStart = ayah
     }
 
@@ -331,6 +354,22 @@ class MarkingSession(val memorization: MemorizationStore) {
 
     /** Marks every ayah of the given pages, or unmarks them when they're all already marked. */
     fun toggle(ayahs: IntRange) {
-        memorization.mark(ayahs, memorized = memorization.memorizedCount(ayahs) < ayahs.count())
+        note(memorization.mark(ayahs, memorized = memorization.memorizedCount(ayahs) < ayahs.count()))
+    }
+
+    /** Puts back what the last unmarking removed, exactly as it was. */
+    fun undo() {
+        memorization.restore(unmarked)
+        unmarked = emptyMap()
+    }
+
+    /** The undo is offered for a moment only; a later unmarking keeps its own. */
+    fun expireUndo(version: Int) {
+        if (version == unmarkedVersion) unmarked = emptyMap()
+    }
+
+    private fun note(removed: Map<Int, AyahMemory>, continuing: Boolean = false) {
+        unmarked = if (continuing) removed + unmarked else removed
+        unmarkedVersion += 1
     }
 }

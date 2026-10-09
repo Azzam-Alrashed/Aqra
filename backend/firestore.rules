@@ -16,6 +16,7 @@ service cloud.firestore {
     }
     function session(id) { return get(/databases/$(database)/documents/sessions/$(id)).data; }
     function seat(id, uid) { return /databases/$(database)/documents/sessions/$(id)/seats/$(uid); }
+    function bid(id, uid) { return /databases/$(database)/documents/sessions/$(id)/bids/$(uid); }
     function changesOnly(keys) { return request.resource.data.diff(resource.data).affectedKeys().hasOnly(keys); }
     function hasKeys(required, optional) {
       return request.resource.data.keys().hasAll(required) && request.resource.data.keys().hasOnly(required.concat(optional));
@@ -238,12 +239,16 @@ service cloud.firestore {
       allow create: if isVettedTeacher()
         && hasKeys(['teacherId', 'teacherName', 'startsAt', 'place', 'seats', 'booked', 'kind', 'status', 'createdAt'],
                    ['auctionSeats', 'minBid', 'biddingClosesAt', 'auctionState'])
-        // Auctioned seats, beside the free ones: bidding closes before the session starts.
+        // Auctioned seats, beside the free ones: bidding is still open and closes at least 30 minutes before the
+        // session, which is at least an hour away (the policy's lateBiddingClosesBeforeMinutes and
+        // minAuctionLeadMinutes; docs/SRS.md AUC-04).
         && (request.resource.data.get('auctionSeats', 0) == 0
           || (request.resource.data.auctionSeats is int && request.resource.data.auctionSeats > 0 && request.resource.data.auctionSeats <= 20
             && request.resource.data.minBid is int && request.resource.data.minBid >= 0
             && request.resource.data.biddingClosesAt is timestamp
-            && request.resource.data.biddingClosesAt < request.resource.data.startsAt
+            && request.resource.data.biddingClosesAt > request.time
+            && request.resource.data.biddingClosesAt <= request.resource.data.startsAt - duration.value(30, 'm')
+            && request.resource.data.startsAt >= request.time + duration.value(60, 'm')
             && request.resource.data.auctionState == 'open'))
         && request.resource.data.teacherId == request.auth.uid
         && request.resource.data.teacherName is string
@@ -289,6 +294,8 @@ service cloud.firestore {
           // Only with the count moving up in the same write (which the session's rule holds to its seats), so a
           // full session never takes another student. Seats won at auction are written by the functions.
           && getAfter(/databases/$(database)/documents/sessions/$(id)).data.booked == session(id).booked + 1
+          // A free seat or a bid, not both: a bidder takes a free seat through the functions, which let the bid go.
+          && (!exists(bid(id, studentUid)) || get(bid(id, studentUid)).data.status != 'active')
           && hasKeys(['bookedAt', 'name', 'memorizedPages'], ['juzSummary'])
           && request.resource.data.bookedAt is timestamp
           && request.resource.data.name is string

@@ -27,6 +27,8 @@ data class MushafPage(
     val lines: List<MushafLine>,
     /** The page's ayat in the official Imla'i (plain) text, each followed by its number, for TalkBack. */
     val spokenAyat: List<String>,
+    /** The ayah each of [spokenAyat] reads, by its number in the Quran. */
+    val spokenAyahs: List<Int> = emptyList(),
     /** Every ayah that appears on the page, including one that starts or ends on it. */
     val ayahs: IntRange,
     /** The surah the page starts in, and its juz'. */
@@ -205,8 +207,13 @@ class MushafStore(files: QuranFiles) {
         val firstAyahOnPage = HashMap<Int, OfficialAyah>()
         val juzStarts = HashMap<Int, Int>()
         val spoken = Array(PAGE_COUNT + 1) { ArrayList<String>() }
-        for (ayah in official) {
-            if (ayah.page in 1..PAGE_COUNT) spoken[ayah.page] += "${ayah.aya_text_emlaey} (${ayah.aya_no})"
+        val spokenAyahs = Array(PAGE_COUNT + 1) { ArrayList<Int>() }
+        // The official data lists the ayat in Quran order, so an ayah's position there is its number.
+        for ((index, ayah) in official.withIndex()) {
+            if (ayah.page in 1..PAGE_COUNT) {
+                spoken[ayah.page] += "${ayah.aya_text_emlaey} (${ayah.aya_no})"
+                spokenAyahs[ayah.page] += index
+            }
             names.putIfAbsent(ayah.sura_no, ayah.sura_name_ar)
             firstAyahOnPage.putIfAbsent(ayah.page, ayah)
             juzStarts.putIfAbsent(ayah.jozz, ayah.page)
@@ -306,7 +313,7 @@ class MushafStore(files: QuranFiles) {
             val first = firstAyahOnPage[number]
             val ayahs = linesByPage[number].flatMap { line -> (line.kind as? MushafLine.Kind.Ayah)?.words?.map { it.ayah }.orEmpty() }
             MushafPage(
-                number = number, lines = linesByPage[number], spokenAyat = spoken[number],
+                number = number, lines = linesByPage[number], spokenAyat = spoken[number], spokenAyahs = spokenAyahs[number],
                 ayahs = (ayahs.minOrNull() ?: 0)..(ayahs.maxOrNull() ?: 0),
                 surah = first?.sura_no ?: 1, juz = first?.jozz ?: 1,
             )

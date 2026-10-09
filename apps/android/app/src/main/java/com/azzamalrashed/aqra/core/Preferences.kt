@@ -16,6 +16,11 @@ class Preferences(context: Context) {
     val hasSeenOnboarding = bool("hasSeenOnboarding", false)
     /** Whether the student has said what they've memorized (or that they're just starting). */
     val hasDeclared = bool("memorization.hasDeclared", false)
+    /**
+     * Where a student who chose to mark what they've memorized in the Mushaf is in setup: "marking", then
+     * "dailyAmount" (when they've marked anything), then "plan", as the other path goes; "" when it's done.
+     */
+    val setupAfterMarking = string("setup.afterMarking", "")
     val lastPage = int("mushaf.lastPage", 1)
     val tajweed = bool("mushaf.tajweed", true)
     val topics = bool("mushaf.topics", true)

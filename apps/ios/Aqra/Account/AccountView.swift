@@ -8,6 +8,8 @@ import UserNotifications
 struct AccountView: View {
     @Environment(AccountStore.self) private var account
     @Environment(PlanStore.self) private var plan
+    @Environment(RevisionStore.self) private var revision
+    @Environment(MemorizationStore.self) private var memorization
     @Environment(\.openURL) private var openURL
     @AppStorage("sounds.on") private var soundsOn = true
     @AppStorage("mushaf.tajweed") private var tajweed = true
@@ -18,6 +20,7 @@ struct AccountView: View {
     @State private var notificationsDenied = false
     @State private var confirmingSignOut = false
     @State private var confirmingDeletion = false
+    @State private var confirmingBackupDeletion = false
     @State private var showingWallet = false
     @Environment(WalletStore.self) private var wallet
 
@@ -26,7 +29,7 @@ struct AccountView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Account")
-                        .font(.system(size: 30, weight: .heavy))
+                        .aqraFont(size: 30, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .padding(.top, 16)
                         .accessibilityAddTraits(.isHeader)
@@ -66,7 +69,7 @@ struct AccountView: View {
                                 AqraRowDivider()
                                 HStack {
                                     Text("Time")
-                                        .font(.system(size: 15, weight: .bold))
+                                        .aqraFont(size: 15, weight: .bold)
                                         .foregroundStyle(Palette.ink)
                                     Spacer()
                                     DatePicker("Time", selection: reminderTime, displayedComponents: .hourAndMinute)
@@ -82,10 +85,10 @@ struct AccountView: View {
                     if notificationsDenied {
                         HStack(spacing: 8) {
                             Text("Notifications are turned off for Aqra in Settings.")
-                                .font(.system(size: 12, weight: .semibold))
+                                .aqraFont(size: 12, weight: .semibold)
                                 .foregroundStyle(Palette.inkSoft)
                             Button("Open Settings") { openSettings() }
-                                .font(.system(size: 12, weight: .bold))
+                                .aqraFont(size: 12, weight: .bold)
                                 .foregroundStyle(Palette.brand)
                         }
                         .padding(.horizontal, 6)
@@ -135,10 +138,24 @@ struct AccountView: View {
                         }
                         .disabled(account.isWorking)
                         .padding(.top, 10)
+                    } else if account.profile?.isAnonymous == true {
+                        // Every install backs up to an anonymous account from the start; that backup can be deleted too.
+                        AqraCard(padding: 0, radius: 24) {
+                            Button {
+                                confirmingBackupDeletion = true
+                            } label: {
+                                AqraRow(icon: "🗑️", tint: Palette.rose,
+                                        title: Text("Delete my backup").foregroundStyle(Color(light: 0xB3261E, dark: 0xB3261E)),
+                                        detail: Text("The copy of your progress kept online")) { EmptyView() }
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .disabled(account.isWorking)
+                        .padding(.top, 10)
                     }
 
                     Text("Version \(version)")
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                         .frame(maxWidth: .infinity)
                         .padding(.top, 8)
@@ -173,6 +190,12 @@ struct AccountView: View {
         } message: {
             Text("Your account and the progress backed up in it are deleted for good. The progress on this device stays.")
         }
+        .alert("Delete your backup?", isPresented: $confirmingBackupDeletion) {
+            Button("Delete", role: .destructive) { Task { await account.deleteAccount() } }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("The copy of your progress kept online is deleted for good. The progress on this device stays, and is backed up afresh from now on.")
+        }
     }
 
     private func toggle(_ isOn: Binding<Bool>) -> some View {
@@ -200,7 +223,7 @@ struct AccountView: View {
         Task {
             if await DailyReminder.authorize() {
                 notificationsDenied = false
-                DailyReminder.schedule(minutes: reminderMinutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays })
+                DailyReminder.refresh(minutes: reminderMinutes, revision: revision, plan: plan, memorization: memorization)
             } else {
                 notificationsDenied = true
                 reminderOn = false
@@ -265,10 +288,10 @@ struct AccountCard: View {
             IconTile(icon: "🪪", tint: Palette.butter, size: 40)
             VStack(alignment: .leading, spacing: 3) {
                 Text("Save your progress")
-                    .font(.system(size: 16, weight: .heavy))
+                    .aqraFont(size: 16, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                 Text("Your progress is only on this device until you sign in.")
-                    .font(.system(size: 12, weight: .semibold))
+                    .aqraFont(size: 12, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -282,12 +305,12 @@ struct AccountCard: View {
             IconTile(icon: profile.provider == .apple ? "🍎" : "🌐", tint: Palette.sky, size: 40)
             VStack(alignment: .leading, spacing: 2) {
                 Text(verbatim: profile.name ?? profile.email ?? "")
-                    .font(.system(size: 16, weight: .heavy))
+                    .aqraFont(size: 16, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                     .lineLimit(1)
                 if let email = profile.email, profile.name != nil {
                     Text(verbatim: email)
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                         .lineLimit(1)
                 }
@@ -298,7 +321,7 @@ struct AccountCard: View {
                         Text("Backing up…")
                     }
                 }
-                .font(.system(size: 12, weight: .semibold))
+                .aqraFont(size: 12, weight: .semibold)
                 .foregroundStyle(Palette.brand)
             }
             Spacer(minLength: 0)
@@ -316,10 +339,10 @@ struct AccountCard: View {
                 IconTile(icon: "🏷️", tint: Palette.lavender, size: 30)
                 VStack(alignment: .leading, spacing: 1) {
                     Text("Name others see")
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                     Text(verbatim: account.publicName ?? "—")
-                        .font(.system(size: 15, weight: .heavy))
+                        .aqraFont(size: 15, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .lineLimit(1)
                 }
@@ -373,8 +396,10 @@ struct SignInButtons: View {
                             .frame(width: 18, height: 18)
                     }
                     Text("Continue with Google")
-                        .font(.system(size: 17, weight: .semibold, design: .default))
+                        .aqraFont(size: 17, weight: .semibold, design: .default)
                         .foregroundStyle(Color(light: 0x1F1F1F, dark: 0x1F1F1F))
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.7)
                 }
                 .frame(maxWidth: .infinity, minHeight: 48)
                 .background(.white, in: Capsule())
@@ -410,14 +435,15 @@ private struct EmulatorSignIn: View {
                         .textInputAutocapitalization(.never)
                         .keyboardType(.emailAddress)
                         .autocorrectionDisabled()
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .padding(.horizontal, 12)
-                        .frame(height: 40)
+                        .padding(.vertical, 3)
+                        .frame(minHeight: 40)
                         .background(Palette.surface, in: Capsule())
                     Button("Sign in to the emulator") {
                         Task { await account.signInToEmulator(email: email.trimmingCharacters(in: .whitespaces)) }
                     }
-                    .font(.system(size: 13, weight: .bold))
+                    .aqraFont(size: 13, weight: .bold)
                     .foregroundStyle(Palette.brand)
                     .disabled(email.isEmpty || account.isWorking)
                 }
@@ -438,16 +464,18 @@ struct ProblemLine: View {
             case .failed: Text("That didn't work. Please try again.")
             }
         }
-        .font(.system(size: 12, weight: .semibold))
+        .aqraFont(size: 12, weight: .semibold)
         .foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
         .transition(.opacity)
     }
 }
 
-/// The daily reminder of today's wird: one notification a day at the chosen time.
+/// The daily reminder of today's wird: one notification a day at the chosen time, as dated reminders two weeks
+/// ahead, refreshed as the app is used. Today's is left out once today's work is done.
 @MainActor
 enum DailyReminder {
-    private static let identifier = "daily-wird"
+    nonisolated private static let identifier = "daily-wird"
+    nonisolated static let daysAhead = 14
 
     /// Asks to send notifications the first time; false if they're turned off for the app.
     static func authorize() async -> Bool {
@@ -462,36 +490,74 @@ enum DailyReminder {
         }
     }
 
-    /// One reminder a day at the chosen time. With a plan, the study days' reminder also mentions the new portion.
-    static func schedule(minutes: Int, studyDays: Set<Int>? = nil) {
-        let center = UNUserNotificationCenter.current()
-        cancel()
-        func request(_ identifier: String, weekday: Int?, withPortion: Bool) -> UNNotificationRequest {
-            let content = UNMutableNotificationContent()
-            content.title = String(localized: "Today's revision")
-            content.body = withPortion
-                ? String(localized: "Your new portion and your pages for today are waiting for you.")
-                : String(localized: "Your pages for today are waiting for you.")
-            content.sound = .default
-            var time = DateComponents()
-            time.hour = minutes / 60
-            time.minute = minutes % 60
-            time.weekday = weekday
-            return UNNotificationRequest(identifier: identifier, content: content,
-                                         trigger: UNCalendarNotificationTrigger(dateMatching: time, repeats: true))
-        }
-        guard let studyDays else {
-            center.add(request(identifier, weekday: nil, withPortion: false))
-            return
-        }
-        for weekday in 1...7 {
-            center.add(request("\(identifier)-\(weekday)", weekday: weekday, withPortion: studyDays.contains(weekday)))
+    struct Reminder: Equatable {
+        /// «daily-wird-2026-10-09»: one per day, so a day's can be taken away alone.
+        var id: String
+        var fireAt: Date
+        /// On the plan's study days, it also mentions the new portion.
+        var withPortion: Bool
+    }
+
+    /// The reminders to set: one a day at the chosen time for the next two weeks, starting today unless today's time
+    /// has passed or today's work is done.
+    nonisolated static func reminders(minutes: Int, studyDays: Set<Int>?, todayDone: Bool, now: Date,
+                                      calendar: Calendar = .current) -> [Reminder] {
+        let today = calendar.startOfDay(for: now)
+        return (0..<daysAhead).compactMap { offset in
+            guard let day = calendar.date(byAdding: .day, value: offset, to: today),
+                  let fireAt = calendar.date(bySettingHour: minutes / 60, minute: minutes % 60, second: 0, of: day),
+                  offset > 0 || (!todayDone && fireAt > now) else { return nil }
+            let parts = calendar.dateComponents([.year, .month, .day], from: day)
+            let id = String(format: "%@-%04d-%02d-%02d", identifier, parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+            return Reminder(id: id, fireAt: fireAt, withPortion: studyDays?.contains(calendar.component(.weekday, from: day)) ?? false)
         }
     }
 
+    /// Whether today's work is done: today's wird complete and, on a study day of an active plan, the new portion
+    /// recorded (or nothing left to memorize).
+    static func isTodayDone(revision: RevisionStore, plan: PlanStore, memorization: MemorizationStore, now: Date = .now) -> Bool {
+        guard let wird = revision.plan, Calendar.current.isDate(wird.day, inSameDayAs: now), wird.isComplete else { return false }
+        return !plan.isPortionDue(memorization: memorization, now: now)
+    }
+
+    /// Sets the reminders from where the student is today.
+    static func refresh(minutes: Int, revision: RevisionStore, plan: PlanStore, memorization: MemorizationStore) {
+        schedule(minutes: minutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays },
+                 todayDone: isTodayDone(revision: revision, plan: plan, memorization: memorization))
+    }
+
+    /// The last change asked for: each waits for the one before, so they never interleave.
+    private static var pending: Task<Void, Never>?
+
+    static func schedule(minutes: Int, studyDays: Set<Int>?, todayDone: Bool) {
+        let reminders = reminders(minutes: minutes, studyDays: studyDays, todayDone: todayDone, now: .now)
+        replace(with: reminders)
+    }
+
     static func cancel() {
-        UNUserNotificationCenter.current().removePendingNotificationRequests(
-            withIdentifiers: [identifier] + (1...7).map { "\(identifier)-\($0)" })
+        replace(with: [])
+    }
+
+    private static func replace(with reminders: [Reminder]) {
+        let previous = pending
+        pending = Task {
+            await previous?.value
+            let center = UNUserNotificationCenter.current()
+            // Every reminder set before: the dated ones, and the repeating ones of earlier versions.
+            let old = await center.pendingNotificationRequests().map(\.identifier).filter { $0.hasPrefix(identifier) }
+            center.removePendingNotificationRequests(withIdentifiers: old)
+            for reminder in reminders {
+                let content = UNMutableNotificationContent()
+                content.title = String(localized: "Today's revision")
+                content.body = reminder.withPortion
+                    ? String(localized: "Your new portion and your pages for today are waiting for you.")
+                    : String(localized: "Your pages for today are waiting for you.")
+                content.sound = .default
+                let parts = Calendar.current.dateComponents([.year, .month, .day, .hour, .minute], from: reminder.fireAt)
+                try? await center.add(UNNotificationRequest(identifier: reminder.id, content: content,
+                                                            trigger: UNCalendarNotificationTrigger(dateMatching: parts, repeats: false)))
+            }
+        }
     }
 }
 
@@ -532,10 +598,10 @@ struct SourcesView: View {
             VStack(alignment: .leading, spacing: 14) {
                 VStack(alignment: .leading, spacing: 6) {
                     Text("Sources")
-                        .font(.system(size: 30, weight: .heavy))
+                        .aqraFont(size: 30, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     Text("Aqra shows the Quran exactly as published, from these sources, with thanks.")
-                        .font(.system(size: 14, weight: .medium))
+                        .aqraFont(size: 14, weight: .medium)
                         .foregroundStyle(Palette.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                 }
@@ -568,10 +634,10 @@ struct SourcesView: View {
                 IconTile(icon: icon, tint: tint, size: 40)
                 VStack(alignment: .leading, spacing: 3) {
                     name
-                        .font(.system(size: 16, weight: .heavy))
+                        .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     detail
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                         .fixedSize(horizontal: false, vertical: true)
                 }

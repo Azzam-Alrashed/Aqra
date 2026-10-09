@@ -19,6 +19,9 @@ final class InboxStore {
         var pages: Int
         var status: String
         var note: String
+        /// The session a message is about, and when it was to start (sent with a cancellation).
+        var sessionId = ""
+        var startsAt: Date?
     }
 
     private(set) var messages: [Message] = []
@@ -42,7 +45,8 @@ final class InboxStore {
                                        read: data["readAt"] as? Date != nil, teacherName: data["teacherName"] as? String ?? "",
                                        amount: (data["amount"] as? NSNumber)?.intValue ?? 0,
                                        pages: (data["pages"] as? NSNumber)?.intValue ?? 0,
-                                       status: data["status"] as? String ?? "", note: data["note"] as? String ?? "")
+                                       status: data["status"] as? String ?? "", note: data["note"] as? String ?? "",
+                                       sessionId: data["sessionId"] as? String ?? "", startsAt: data["startsAt"] as? Date)
                     }
                 }
             }

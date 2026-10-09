@@ -13,16 +13,19 @@ import android.os.Build
 import androidx.core.app.NotificationCompat
 import androidx.core.app.NotificationManagerCompat
 import androidx.core.content.ContextCompat
+import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.AqraApplication
 import com.azzamalrashed.aqra.MainActivity
 import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.core.Preferences
+import com.azzamalrashed.aqra.revision.DayPlan
+import java.time.ZoneId
 import java.util.Calendar
 
 /**
  * The daily reminder of today's wird: one notification a day at the chosen time. On the plan's study days it also
- * mentions the new portion.
+ * mentions the new portion. Once today's work is done it isn't sent, and one already shown is taken away.
  */
 object DailyReminder {
     private const val CHANNEL = "daily-wird"
@@ -53,6 +56,20 @@ object DailyReminder {
         context.getSystemService(AlarmManager::class.java).cancel(pendingIntent(context))
     }
 
+    /**
+     * Whether today's work is done: today's [wird] complete and, on a study day of an active plan, the new portion
+     * recorded (or nothing left to memorize: [portionDue] is false).
+     */
+    fun isTodayDone(wird: DayPlan?, portionDue: Boolean, now: Moment = Moment.now(), zone: ZoneId = ZoneId.systemDefault()): Boolean =
+        wird != null && wird.day.startOfDay(zone) == now.startOfDay(zone) && wird.isComplete && !portionDue
+
+    fun isTodayDone(app: AqraApp): Boolean = isTodayDone(app.revision.plan, app.plan.isPortionDue(app.memorization))
+
+    /** Takes away today's reminder once today's work is done, if it was already shown. */
+    fun withdrawIfDone(context: Context, app: AqraApp) {
+        if (isTodayDone(app)) NotificationManagerCompat.from(context).cancel(NOTIFICATION)
+    }
+
     private fun pendingIntent(context: Context): PendingIntent = PendingIntent.getBroadcast(
         context, 0, Intent(context, DailyReminderReceiver::class.java).setAction(ACTION),
         PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
@@ -67,6 +84,9 @@ object DailyReminder {
 
     private fun post(context: Context) {
         if (!isAllowed(context)) return
+        val app = (context.applicationContext as? AqraApplication)?.app
+        // Today's work done already: nothing to remind of today.
+        if (app != null && isTodayDone(app)) return
         val manager = context.getSystemService(NotificationManager::class.java)
         manager.createNotificationChannel(NotificationChannel(CHANNEL, context.getString(R.string.todays_revision), NotificationManager.IMPORTANCE_DEFAULT))
         val open = PendingIntent.getActivity(
@@ -74,7 +94,7 @@ object DailyReminder {
             PendingIntent.FLAG_UPDATE_CURRENT or PendingIntent.FLAG_IMMUTABLE,
         )
         // The plan is read as the reminder goes out, so it follows the plan's days as they change.
-        val plan = (context.applicationContext as? AqraApplication)?.app?.plan
+        val plan = app?.plan
         val withPortion = plan?.plan?.paused == false && plan.isStudyDay(Moment.now())
         val text = context.getString(if (withPortion) R.string.your_new_portion_and_your_pages_for_today_are_waiting else R.string.your_pages_for_today_are_waiting_for_you)
         val notification = NotificationCompat.Builder(context, CHANNEL)

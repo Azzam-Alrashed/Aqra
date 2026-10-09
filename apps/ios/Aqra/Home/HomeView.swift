@@ -68,15 +68,22 @@ struct AppTabView: View {
             if scenePhase == .active {
                 refreshPlan()
                 rewards.checkChallenges(revision: revision, plan: plan)
+                refreshReminder()
             }
         }
         // A reminder an hour before each booked session.
         .onChange(of: tasmee.upcomingBookings, initial: true) { SessionReminders.schedule(tasmee.upcomingBookings) }
-        // The daily reminder mentions the new portion on the plan's study days.
-        .onChange(of: plan.plan) {
-            guard reminderOn else { return }
-            DailyReminder.schedule(minutes: reminderMinutes, studyDays: plan.plan.flatMap { $0.paused ? nil : $0.studyDays })
-        }
+        // The daily reminder mentions the new portion on the plan's study days, and today's goes once today's work
+        // is done.
+        .task { refreshReminder() }
+        .onChange(of: plan.plan) { refreshReminder() }
+        .onChange(of: revision.plan?.isComplete) { refreshReminder() }
+        .onChange(of: plan.portions.count) { refreshReminder() }
+    }
+
+    private func refreshReminder() {
+        guard reminderOn else { return }
+        DailyReminder.refresh(minutes: reminderMinutes, revision: revision, plan: plan, memorization: memorization)
     }
 
     private func refreshPlan() {
@@ -128,6 +135,7 @@ struct HomeView: View {
     /// The app's launch: the entrance waits until the splash has stepped back.
     @Environment(LaunchState.self) private var launch: LaunchState?
     @State private var destination: Destination?
+    @AppStorage(SetupAfterMarking.key) private var afterMarking = SetupAfterMarking.none
     /// «لاحقًا» on the invitation to sign in hides it until this date.
     @AppStorage("home.saveProgressSnoozedUntil") private var saveProgressSnoozedUntil = 0.0
     /// The newest tasmee' whose card was closed, so it isn't shown again.
@@ -146,6 +154,10 @@ struct HomeView: View {
     @State private var climbAnimation: Animation?
     /// Pauses the stage's ambient motion while the home isn't on screen.
     @State private var isVisible = false
+    /// On a short screen (an iPhone SE, or any iPhone in landscape) the stage is drawn smaller, so today's wird and
+    /// its button are on the first screen.
+    @State private var isShortScreen = false
+    private var stageScale: CGFloat { isShortScreen ? 0.76 : 1 }
     @Namespace private var zoom
 
     var body: some View {
@@ -203,6 +215,13 @@ struct HomeView: View {
             .frame(maxWidth: .infinity)
         }
         .scrollIndicators(.hidden)
+        .background {
+            GeometryReader { geometry in
+                Color.clear.onChange(of: geometry.size, initial: true) {
+                    isShortScreen = geometry.size.height + geometry.safeAreaInsets.top + geometry.safeAreaInsets.bottom < 700
+                }
+            }
+        }
         .background(Palette.surface.ignoresSafeArea())
         .fadesUnderStatusBar()
         .fontDesign(.rounded)
@@ -243,7 +262,10 @@ struct HomeView: View {
         .sheet(item: $openedStage) { route in
             NavigationStack { StageDetailView(store: store, stage: route.stage) }
         }
-        .fullScreenCover(item: $destination) { destination in
+        .fullScreenCover(item: $destination, onDismiss: {
+            // The setup's marking is over once the Mushaf closes: the daily amount and the plan follow.
+            if afterMarking == .marking { afterMarking = .next(memorization: memorization) }
+        }) { destination in
             Group {
                 switch destination {
                 case .mushaf(let marking):
@@ -269,10 +291,12 @@ struct HomeView: View {
         return HStack(alignment: .center, spacing: 12) {
             VStack(alignment: .leading, spacing: 2) {
                 Text("Peace be upon you")
-                    .font(.system(size: 20, weight: .heavy))
+                    .aqraFont(size: 20, weight: .heavy)
                     .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.7)
                 Text(Date.now.formatted(hijri))
-                    .font(.system(size: 13, weight: .semibold))
+                    .aqraFont(size: 13, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
             }
             Spacer(minLength: 0)
@@ -337,6 +361,9 @@ struct HomeView: View {
                     .drawingGroup()
             }
         }
+        // The whole composition, glow and chips included, shrinks together on a short screen.
+        .scaleEffect(stageScale)
+        .frame(height: 360 * stageScale)
     }
 
     /// A chip at its resting place, after flying out from `start`'s distance back toward the stage's middle.
@@ -426,7 +453,7 @@ struct HomeView: View {
                     Text("May Allah bless you").foregroundStyle(Palette.brand)
                 }
             }
-            .font(.system(size: 31, weight: .heavy))
+            .aqraFont(size: 31, weight: .heavy)
             .lineLimit(1)
             .minimumScaleFactor(0.6)
             Group {
@@ -438,7 +465,7 @@ struct HomeView: View {
                     cycleLine
                 }
             }
-            .font(.system(size: 16, weight: .medium))
+            .aqraFont(size: 16, weight: .medium)
             .foregroundStyle(Palette.inkSoft)
         }
         .multilineTextAlignment(.center)
@@ -477,15 +504,10 @@ struct HomeView: View {
                         .zoomTransitionSource(id: Destination.mushaf(marking: false).sourceID, in: zoom)
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Continue reading")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
-                        HStack(spacing: 5) {
-                            Text(verbatim: store.surahNames[page.surah] ?? "")
-                            Text(verbatim: "·")
-                                .accessibilityHidden(true)
-                            Text("Page \(page.number)")
-                        }
-                        .font(.system(size: 16, weight: .heavy))
+                        (Text(verbatim: (store.surahNames[page.surah] ?? "") + Separator.facts) + Text("Page \(page.number)"))
+                        .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -505,22 +527,23 @@ struct HomeView: View {
                     IconTile(icon: "📄", tint: Palette.sky, size: 40)
                     VStack(alignment: .leading, spacing: 1) {
                         Text("Today's pages")
-                            .font(.system(size: 19, weight: .heavy))
+                            .aqraFont(size: 19, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         if !plan.isComplete {
                             Text("Revised a page outside the app? Press and hold it.")
-                                .font(.system(size: 11, weight: .semibold))
+                                .aqraFont(size: 11, weight: .semibold)
                                 .foregroundStyle(Palette.inkSoft)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
                     }
                     Spacer(minLength: 4)
                     Text("\(plan.doneCount) of \(plan.items.count)")
-                        .font(.system(size: 13, weight: .bold).monospacedDigit())
+                        .aqraFont(size: 13, weight: .bold, monospacedDigit: true)
                         .foregroundStyle(Palette.brand)
                         .contentTransition(.numericText())
                         .padding(.horizontal, 10)
-                        .frame(height: 28)
+                        .padding(.vertical, 3)
+                        .frame(minHeight: 28)
                         .background(Palette.lavender, in: Capsule())
                 }
                 LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
@@ -543,7 +566,7 @@ struct HomeView: View {
         } label: {
             VStack(spacing: 2) {
                 Text(item.page.formatted())
-                    .font(.system(size: 18, weight: .heavy).monospacedDigit())
+                    .aqraFont(size: 18, weight: .heavy, monospacedDigit: true)
                     .foregroundStyle(item.done ? Palette.inkSoft : Palette.ink)
                 Group {
                     if item.kind == .followUp {
@@ -552,13 +575,14 @@ struct HomeView: View {
                         Text(verbatim: store.surahNames[page.surah] ?? "").foregroundStyle(Palette.inkSoft)
                     }
                 }
-                .font(.system(size: 11, weight: .semibold))
+                .aqraFont(size: 11, weight: .semibold)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
             }
             .padding(.horizontal, 6)
             .frame(maxWidth: .infinity)
-            .frame(height: 62)
+            .padding(.vertical, 3)
+            .frame(minHeight: 62)
             .background(
                 item.done
                     ? AnyShapeStyle(face.top.opacity(0.14))
@@ -569,7 +593,7 @@ struct HomeView: View {
             .overlay(alignment: .topTrailing) {
                 if item.done {
                     Image(systemName: "checkmark.circle.fill")
-                        .font(.system(size: 16, weight: .bold))
+                        .aqraFont(size: 16, weight: .bold)
                         .foregroundStyle(.white, face.bottom)
                         .padding(6)
                         .transition(.scale.combined(with: .opacity))
@@ -611,15 +635,15 @@ struct HomeView: View {
                     IconTile(icon: "🎓", tint: cancelled ? Palette.rose : Palette.mint, size: 40)
                     VStack(alignment: .leading, spacing: 2) {
                         Text(cancelled ? "Tasmee' cancelled" : "Your next tasmee'")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                         Text(verbatim: booking.teacherName)
-                            .font(.system(size: 16, weight: .heavy))
+                            .aqraFont(size: 16, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                             .lineLimit(1)
-                        (Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + " · ")
+                        (Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + Separator.facts)
                             + TasmeeFormat.place(live.map { Booking($0) } ?? booking))
-                            .font(.system(size: 12, weight: .bold))
+                            .aqraFont(size: 12, weight: .bold)
                             .foregroundStyle(cancelled ? Palette.inkSoft : Palette.brand)
                             .strikethrough(cancelled)
                             .lineLimit(1)
@@ -641,11 +665,8 @@ struct HomeView: View {
 
     /// The stage the student is in.
     private var currentStage: Int {
-        var nextAyah: Int?
-        if let chosen = plan.plan, case .due(let portion) = plan.today(memorization: memorization, store: store) ?? .complete {
-            nextAyah = chosen.paused ? nil : portion.first
-        }
-        return AssessmentStore.currentStage(nextAyah: nextAyah, memorization: memorization, store: store, passes: assessments.passes)
+        AssessmentStore.currentStage(nextAyah: plan.nextAyah(memorization: memorization, store: store),
+                                     memorization: memorization, store: store, passes: assessments.passes)
     }
 
     /// Pages that keep slipping, suggested for extra follow-up.
@@ -661,10 +682,10 @@ struct HomeView: View {
                     IconTile(icon: "🌿", tint: Palette.mint, size: 40)
                     VStack(alignment: .leading, spacing: 3) {
                         Text("These pages keep slipping")
-                            .font(.system(size: 16, weight: .heavy))
+                            .aqraFont(size: 16, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         Text("Pages \(pages.map { $0.formatted() }.formatted(.list(type: .and, width: .narrow))): bring them back tomorrow to make them firm?")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -710,7 +731,7 @@ struct HomeView: View {
                                 Text("Your teacher heard \(pages) pages")
                             }
                         }
-                        .font(.system(size: 16, weight: .heavy))
+                        .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -721,7 +742,7 @@ struct HomeView: View {
                                 Text("\(record.stumbles.count) stumbles · added to your revision")
                             }
                         }
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.brand)
                         .lineLimit(1)
                         .minimumScaleFactor(0.8)
@@ -760,10 +781,10 @@ struct HomeView: View {
                     IconTile(icon: "🪪", tint: Palette.butter, size: 40)
                     VStack(alignment: .leading, spacing: 3) {
                         Text("Save your progress")
-                            .font(.system(size: 17, weight: .heavy))
+                            .aqraFont(size: 17, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         Text("Your progress is only on this device until you sign in.")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                             .fixedSize(horizontal: false, vertical: true)
                     }
@@ -771,10 +792,11 @@ struct HomeView: View {
                     Button("Later") {
                         withAnimation(.snappy) { saveProgressSnoozedUntil = Date.now.addingTimeInterval(7 * 86_400).timeIntervalSince1970 }
                     }
-                    .font(.system(size: 13, weight: .bold))
+                    .aqraFont(size: 13, weight: .bold)
                     .foregroundStyle(Palette.brand)
                     .padding(.horizontal, 10)
-                    .frame(height: 28)
+                    .padding(.vertical, 3)
+                    .frame(minHeight: 28)
                     .background(Palette.lavender, in: Capsule())
                     .buttonStyle(.plain)
                 }
@@ -817,7 +839,7 @@ struct HomeView: View {
             store.juzAyahs[juz].map { memorization.memorizedCount(in: $0) == $0.count } ?? false
         }.count
         let ayat = Text("\(memorization.count) ayat")
-        return fullJuz > 0 ? ayat + Text(verbatim: " · ") + Text("\(fullJuz) juz'") : ayat
+        return fullJuz > 0 ? ayat + Text(verbatim: Separator.facts) + Text("\(fullJuz) juz'") : ayat
     }
 }
 

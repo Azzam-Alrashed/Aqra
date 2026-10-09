@@ -1,8 +1,9 @@
 // The seat auction (docs/SRS.md AUC). A session may offer auctioned seats beside its free ones. They start free:
 // while seats remain, any bid of at least the minimum holds one; once all are held, a new bid must beat the lowest
 // by the increment, and outbids it. Bidding holds credits; an outbid hold is released at once; bidding closes
-// before the session and the winners' holds are spent, their seats made, and the teacher's share recorded. Every
-// bid runs in a Firestore transaction, so a seat is never won twice.
+// before the session and the winners' holds are spent, their seats made, and the teacher's share recorded. A bidder
+// may take a free seat instead, letting their bid go. Every bid runs in a Firestore transaction, so a seat is never
+// won twice.
 import { DocumentSnapshot, FieldValue, Timestamp, Transaction } from "firebase-admin/firestore";
 import { onDocumentUpdated } from "firebase-functions/v2/firestore";
 import { HttpsError, onCall } from "firebase-functions/v2/https";
@@ -107,6 +108,67 @@ export const placeBid = onCall(async (request): Promise<BidResult> => {
   });
 });
 
+export interface FreeSeatResult {
+  /** The credits that came back from the bid let go, if any. */
+  released: number;
+}
+
+/** A free seat taken instead of a bid (docs/SRS.md AUC-08): in one transaction, the student's active bid in the
+ * session is let go and its credits released, and their seat, booking and the seat count are made, so they never hold
+ * both. Without an active bid it books the seat all the same. */
+export const takeFreeSeat = onCall(async (request): Promise<FreeSeatResult> => {
+  const uid = request.auth?.uid;
+  if (!uid) throw new HttpsError("unauthenticated", "Sign in first.");
+  if (request.auth?.token.firebase?.sign_in_provider === "anonymous") {
+    throw new HttpsError("permission-denied", "Booking needs a signed-in account.");
+  }
+  const { sessionId, name, memorizedPages, juzSummary } = request.data ?? {};
+  if (typeof sessionId !== "string") throw new HttpsError("invalid-argument", "Which session?");
+  const rules = await policy();
+  const sessionRef = db.doc(`sessions/${sessionId}`);
+  const seatRef = sessionRef.collection("seats").doc(uid);
+  const bidRef = sessionRef.collection("bids").doc(uid);
+
+  return db.runTransaction(async (tx) => {
+    const session = await tx.get(sessionRef);
+    if (!session.exists) throw new HttpsError("not-found", "There's no such session.");
+    const startsAt = (session.get("startsAt") as Timestamp | undefined)?.toMillis() ?? 0;
+    if (session.get("status") !== "open" || Date.now() >= startsAt) throw new HttpsError("failed-precondition", "This session isn't open.");
+    if (session.get("teacherId") === uid) throw new HttpsError("failed-precondition", "A teacher doesn't book their own session.");
+    if ((session.get("booked") ?? 0) >= (session.get("seats") ?? 0)) throw new HttpsError("failed-precondition", "The free seats are taken.");
+    if ((await tx.get(seatRef)).exists) throw new HttpsError("failed-precondition", "You already hold a seat in this session.");
+    const bid = await tx.get(bidRef);
+    const releasing = bid.exists && bid.get("status") === "active" ? (bid.get("amount") as number) ?? 0 : undefined;
+    const active = releasing !== undefined
+      ? (await tx.get(sessionRef.collection("bids").where("status", "==", "active"))).docs.map(toBid)
+      : [];
+    if (releasing) await readWallet(tx, uid);
+
+    // Writes, once everything is read.
+    const counts: Record<string, unknown> = { booked: FieldValue.increment(1) };
+    if (releasing !== undefined) {
+      if (releasing > 0) move(tx, uid, "release", { balance: releasing, held: -releasing }, releasing, { sessionId });
+      tx.update(bidRef, { status: "released" });
+      // The auction's standing without this bid.
+      const after = ranked(active.filter((other) => other.uid !== uid));
+      counts.auctionBids = after.length;
+      counts.auctionFloor = bidRequirement(after, session.get("auctionSeats") ?? 0, session.get("minBid") ?? rules.minBid,
+                                           rules.minIncrement).atLeast;
+    }
+    tx.set(seatRef, {
+      name: typeof name === "string" ? name.slice(0, 40) : "", bookedAt: Timestamp.now(),
+      memorizedPages: Number.isInteger(memorizedPages) ? memorizedPages : 0,
+      ...(typeof juzSummary === "string" ? { juzSummary } : {}),
+    });
+    tx.set(db.doc(`users/${uid}/bookings/${sessionId}`), {
+      teacherId: session.get("teacherId"), teacherName: session.get("teacherName") ?? "", startsAt: session.get("startsAt"),
+      kind: session.get("kind") ?? "inPerson", place: session.get("place") ?? "",
+    });
+    tx.update(sessionRef, counts);
+    return { released: releasing ?? 0 };
+  });
+});
+
 /** Closes a session's auction: the winners' holds are spent, their seats and bookings made, and the teacher's share
  * recorded. Does nothing if it's not open or (unless forced) bidding hasn't closed. */
 export async function settle(sessionId: string, { force = false } = {}): Promise<number> {
@@ -183,7 +245,8 @@ export const settleAuctionNow = onCall(async (request) => {
 });
 
 /** A session cancelled by its teacher: holds still open are released; credits already spent are refunded and the
- * teacher's share reversed; everyone who had a seat is told. */
+ * teacher's share reversed; everyone who had a seat or a bid is told, with the session's start so the message can say
+ * which one. */
 export const onSessionChanged = onDocumentUpdated("sessions/{sessionId}", async (event) => {
   const before = event.data?.before;
   const after = event.data?.after;
@@ -191,6 +254,7 @@ export const onSessionChanged = onDocumentUpdated("sessions/{sessionId}", async 
   const sessionRef = after.ref;
   const sessionId = event.params.sessionId;
   const teacherName = after.get("teacherName") ?? "";
+  const startsAt = after.get("startsAt") ?? null;
 
   await db.runTransaction(async (tx) => {
     const session = await tx.get(sessionRef);
@@ -209,7 +273,7 @@ export const onSessionChanged = onDocumentUpdated("sessions/{sessionId}", async 
       const amount = bid.get("amount") ?? 0;
       if (wallets[index++].exists && amount > 0) move(tx, bid.id, "release", { balance: amount, held: -amount }, amount, { sessionId });
       tx.update(bid.ref, { status: "released" });
-      notify(tx, bid.id, { kind: "cancelled", sessionId, teacherName, amount });
+      notify(tx, bid.id, { kind: "cancelled", sessionId, teacherName, amount, startsAt });
     }
     let reversed = 0;
     for (const seat of refunds) {
@@ -227,7 +291,9 @@ export const onSessionChanged = onDocumentUpdated("sessions/{sessionId}", async 
       tx.set(db.doc(`teacherBalances/${teacherId}`), { earned: FieldValue.increment(-reversed), updatedAt: Timestamp.now() }, { merge: true });
     }
     for (const seat of seats) {
-      notify(tx, seat.id, { kind: refunds.includes(seat) ? "refund" : "cancelled", sessionId, teacherName, amount: seat.get("paid") ?? 0 });
+      notify(tx, seat.id, {
+        kind: refunds.includes(seat) ? "refund" : "cancelled", sessionId, teacherName, amount: seat.get("paid") ?? 0, startsAt,
+      });
     }
     if (state === "open" || state === "settled") tx.update(sessionRef, { auctionState: state === "open" ? "cancelled" : "refunded" });
   });

@@ -51,6 +51,7 @@ import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.formatNumber
 import com.azzamalrashed.aqra.ui.util.formatRelative
+import com.azzamalrashed.aqra.ui.util.formatWhen
 
 /** The bell on the home: messages from the server and the team, newest first. */
 @Composable
@@ -105,7 +106,7 @@ private fun MessageRow(app: AqraApp, message: InboxStore.Message) {
             verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             IconTile(message.kind.icon, if (message.read) Palette.lavender else Palette.butter, size = 38.dp)
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(messageText(message), style = aqraStyle(15f, if (message.read) Weight.semibold else Weight.heavy, Palette.ink))
+                Text(messageText(app, message), style = aqraStyle(15f, if (message.read) Weight.semibold else Weight.heavy, Palette.ink))
                 if (message.note.isNotEmpty()) Text(message.note, style = aqraStyle(12f, Weight.medium, Palette.inkSoft))
                 Text(formatRelative(message.at.toInstant()), style = aqraStyle(11f, Weight.semibold, Palette.inkSoft))
             }
@@ -118,11 +119,10 @@ private fun MessageRow(app: AqraApp, message: InboxStore.Message) {
 }
 
 @Composable
-private fun messageText(message: InboxStore.Message): String = when (message.kind) {
+private fun messageText(app: AqraApp, message: InboxStore.Message): String = when (message.kind) {
     InboxStore.Message.Kind.OUTBID -> stringResource(R.string.you_were_outbid_in_s_s_session_your_n_credits, message.teacherName, message.amount)
     InboxStore.Message.Kind.WON -> stringResource(R.string.you_won_a_seat_in_s_s_session, message.teacherName)
-    InboxStore.Message.Kind.CANCELLED -> stringResource(R.string.s_cancelled_a_session_you_were_in, message.teacherName)
-    InboxStore.Message.Kind.REFUND -> stringResource(R.string.s_cancelled_a_session_your_n_credits_are_back, message.teacherName, message.amount)
+    InboxStore.Message.Kind.CANCELLED, InboxStore.Message.Kind.REFUND -> cancellation(app, message)
     InboxStore.Message.Kind.TASMEE -> stringResource(R.string.s_recorded_your_tasmee_of_n_pages, message.teacherName, message.pages)
     InboxStore.Message.Kind.APPLICATION -> stringResource(
         when (message.status) {
@@ -133,4 +133,18 @@ private fun messageText(message: InboxStore.Message): String = when (message.kin
         },
     )
     InboxStore.Message.Kind.PAYOUT -> pluralStringResource(R.plurals.a_payout_of_n_credits_was_sent_to_you, message.amount, message.amount)
+}
+
+/**
+ * A cancelled session, named by its day and time: the server sends its start, and older messages find it among the
+ * bookings. Credits held or paid for it are back.
+ */
+@Composable
+private fun cancellation(app: AqraApp, message: InboxStore.Message): String {
+    val startsAt = message.startsAt ?: app.tasmee.startOfBooked(message.sessionId)
+        ?: return if (message.amount > 0) stringResource(R.string.s_cancelled_a_session_your_n_credits_are_back, message.teacherName, message.amount)
+        else stringResource(R.string.s_cancelled_a_session_you_were_in, message.teacherName)
+    val time = formatWhen(startsAt.toInstant())
+    return if (message.amount > 0) stringResource(R.string.s_cancelled_their_session_on_s_your_n_credits_are, message.teacherName, time, message.amount)
+    else stringResource(R.string.s_cancelled_their_session_on_s, message.teacherName, time)
 }

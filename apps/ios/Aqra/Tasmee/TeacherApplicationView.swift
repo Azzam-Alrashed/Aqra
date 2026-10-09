@@ -26,7 +26,7 @@ struct TeacherApplicationView: View {
                     Text("Teach on Aqra").foregroundStyle(Palette.ink)
                     Text("Hear students recite").foregroundStyle(Palette.brand)
                 }
-                .font(.system(size: 28, weight: .heavy))
+                .aqraFont(size: 28, weight: .heavy)
                 .padding(.top, 8)
 
                 if !signedIn {
@@ -70,10 +70,10 @@ struct TeacherApplicationView: View {
         AqraCard(padding: 14, radius: 24) {
             VStack(alignment: .leading, spacing: 12) {
                 Text("Sign in to apply")
-                    .font(.system(size: 16, weight: .heavy))
+                    .aqraFont(size: 16, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                 Text("Teachers are vetted: the team reviews your ijazah, then meets you for an interview.")
-                    .font(.system(size: 13, weight: .medium))
+                    .aqraFont(size: 13, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
                 SignInButtons()
@@ -105,14 +105,14 @@ struct TeacherApplicationView: View {
                         case .rejected: Text("Your application wasn't accepted.")
                         }
                     }
-                    .font(.system(size: 14, weight: .semibold))
+                    .aqraFont(size: 14, weight: .semibold)
                     .foregroundStyle(Palette.ink)
                     .fixedSize(horizontal: false, vertical: true)
                     if !application.note.isEmpty {
                         HStack(alignment: .top, spacing: 10) {
                             IconTile(icon: "💬", tint: Palette.lavender, size: 30)
                             Text(verbatim: application.note)
-                                .font(.system(size: 13, weight: .medium))
+                                .aqraFont(size: 13, weight: .medium)
                                 .foregroundStyle(Palette.inkSoft)
                                 .fixedSize(horizontal: false, vertical: true)
                         }
@@ -150,7 +150,7 @@ struct TeacherApplicationView: View {
                 .frame(width: 30, height: 30)
                 .background(reached ? Palette.brand : Palette.lavender, in: Circle())
             title
-                .font(.system(size: 11, weight: .bold))
+                .aqraFont(size: 11, weight: .bold)
                 .foregroundStyle(reached ? Palette.brand : Palette.inkSoft)
                 .lineLimit(1)
                 .minimumScaleFactor(0.8)
@@ -175,7 +175,7 @@ struct TeacherApplicationView: View {
     private var form: some View {
         VStack(alignment: .leading, spacing: 14) {
             Text("Teachers on Aqra hold an ijazah in the Quran. Tell us about yours; the team reviews it and then meets you for a short interview.")
-                .font(.system(size: 14, weight: .medium))
+                .aqraFont(size: 14, weight: .medium)
                 .foregroundStyle(Palette.inkSoft)
                 .fixedSize(horizontal: false, vertical: true)
 
@@ -201,7 +201,7 @@ struct TeacherApplicationView: View {
                     AqraRowDivider().padding(.leading, -50)
                     TextField("Its chain, its date, anything else", text: $draft.ijazahDetails, axis: .vertical)
                         .lineLimit(2...6)
-                        .font(.system(size: 15, weight: .medium))
+                        .aqraFont(size: 15, weight: .medium)
                         .padding(14)
                 }
             }
@@ -212,7 +212,7 @@ struct TeacherApplicationView: View {
                         IconTile(icon: "📎", tint: Palette.sky, size: 40)
                         VStack(alignment: .leading, spacing: 2) {
                             Text("A copy of your ijazah")
-                                .font(.system(size: 16, weight: .heavy))
+                                .aqraFont(size: 16, weight: .heavy)
                                 .foregroundStyle(Palette.ink)
                             Group {
                                 if draft.files.isEmpty {
@@ -221,7 +221,7 @@ struct TeacherApplicationView: View {
                                     Text("\(draft.files.count) files attached")
                                 }
                             }
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(draft.files.isEmpty ? Palette.inkSoft : Palette.brand)
                         }
                         Spacer(minLength: 0)
@@ -240,7 +240,7 @@ struct TeacherApplicationView: View {
                         .buttonStyle(ChipButtonStyle(filled: false))
                         if !draft.files.isEmpty {
                             Button("Remove all") { draft.files = [] }
-                                .font(.system(size: 13, weight: .bold))
+                                .aqraFont(size: 13, weight: .bold)
                                 .foregroundStyle(Color(light: 0xB3261E, dark: 0xB3261E))
                                 .buttonStyle(.plain)
                         }
@@ -248,7 +248,7 @@ struct TeacherApplicationView: View {
                     .disabled(uploading)
                     if uploadFailed {
                         Text("The file couldn't be uploaded. Check your connection, or try a smaller file.")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
                     }
                 }
@@ -268,7 +268,7 @@ struct TeacherApplicationView: View {
             .padding(.top, 6)
             if tasmee.application != nil {
                 Button("Cancel") { editing = false }
-                    .font(.system(size: 15, weight: .semibold))
+                    .aqraFont(size: 15, weight: .semibold)
                     .foregroundStyle(Palette.brand)
                     .frame(maxWidth: .infinity)
             }
@@ -278,11 +278,11 @@ struct TeacherApplicationView: View {
     private func field(_ label: Text, text: Binding<String>, prompt: Text? = nil) -> some View {
         HStack(spacing: 12) {
             label
-                .font(.system(size: 15, weight: .bold))
+                .aqraFont(size: 15, weight: .bold)
                 .foregroundStyle(Palette.ink)
             TextField(text: text, prompt: prompt) { label }
                 .multilineTextAlignment(.trailing)
-                .font(.system(size: 15, weight: .medium))
+                .aqraFont(size: 15, weight: .medium)
         }
         .padding(.horizontal, 14)
         .padding(.vertical, 14)

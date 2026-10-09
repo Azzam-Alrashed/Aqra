@@ -24,6 +24,28 @@
         }
       }
     },
+    "%@ cancelled their session on %@." : {
+      "comment" : "Inbox message: a teacher cancelled a session the student had a seat in. The second %@ is the session's day and time, e.g. «Wednesday 8 October, 8:00 PM».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغى %1$@ جلسته يوم %2$@."
+          }
+        }
+      }
+    },
+    "%@ cancelled their session on %@: your %lld credits are back." : {
+      "comment" : "Inbox message: a teacher cancelled a session the student paid or bid credits for, which came back. The second %@ is the session's day and time.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغى %1$@ جلسته يوم %2$@، فعاد إليك ما دفعته من عملات (%3$lld)."
+          }
+        }
+      }
+    },
     "%@ credits" : {
       "localizations" : {
         "ar" : {
@@ -111,6 +133,71 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld ayat"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld ayat hidden" : {
+      "comment" : "VoiceOver, after a Mushaf page's text: how many of its ayat are veiled in a revision or hidden while memorizing, and so not read.",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آيات مخفية"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية مخفية"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آية واحدة مخفية"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية مخفية"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آيتان مخفيتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا آيات مخفية"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayah hidden"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayat hidden"
                 }
               }
             }
@@ -855,7 +942,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "%1$lld من %2$lld · حتى %3$@"
+            "value" : "%1$lld من %2$lld، حتى %3$@"
           }
         }
       }
@@ -1263,7 +1350,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "مقاعد بالمزايدة: %1$lld · العروض: %2$lld"
+            "value" : "مقاعد بالمزايدة: %1$lld، العروض: %2$lld"
           }
         }
       }
@@ -1340,37 +1427,37 @@
               "few" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld تعثّرات · أُضيف إلى مراجعتك"
+                  "value" : "%lld تعثّرات، أُضيف إلى مراجعتك"
                 }
               },
               "many" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld تعثّرًا · أُضيف إلى مراجعتك"
+                  "value" : "%lld تعثّرًا، أُضيف إلى مراجعتك"
                 }
               },
               "one" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "تعثّر واحد · أُضيف إلى مراجعتك"
+                  "value" : "تعثّر واحد، أُضيف إلى مراجعتك"
                 }
               },
               "other" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "%lld تعثّر · أُضيف إلى مراجعتك"
+                  "value" : "%lld تعثّر، أُضيف إلى مراجعتك"
                 }
               },
               "two" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "تعثّران · أُضيف إلى مراجعتك"
+                  "value" : "تعثّران، أُضيف إلى مراجعتك"
                 }
               },
               "zero" : {
                 "stringUnit" : {
                   "state" : "translated",
-                  "value" : "لا تعثّر · أُضيف إلى مراجعتك"
+                  "value" : "لا تعثّر، أُضيف إلى مراجعتك"
                 }
               }
             }
@@ -1544,6 +1631,425 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "١٠٠ يوم متتالٍ"
+          }
+        }
+      }
+    },
+    "A session less than an hour away offers free seats only: there's no time to bid." : {
+      "comment" : "In a new session's editor, when the start chosen is less than an hour away: auctioned seats are off.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الجلسة التي تبدأ بعد أقل من ساعة مقاعدها مجانية فقط، فلا وقت للمزايدة."
+          }
+        }
+      }
+    },
+    "Also booked" : {
+      "comment" : "Section title in the Tasmee' tab, below the next booking: the student's later bookings.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حجوزات أخرى"
+          }
+        }
+      }
+    },
+    "ayah %lld" : {
+      "comment" : "An ayah named by its number, inside a VoiceOver action such as «Hide ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآية %lld"
+          }
+        }
+      }
+    },
+    "ayah %lld of %@" : {
+      "comment" : "An ayah named by its number and surah (on a page with more than one surah), inside a VoiceOver action such as «Hide ayah 5 of al-Baqarah».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآية %1$lld من سورة %2$@"
+          }
+        }
+      }
+    },
+    "Beside the free seats, these go to the highest bids, in credits. The session is soon, so bidding closes 30 minutes before it; you earn most of each winning bid." : {
+      "comment" : "Under the auctioned seats in a new session's editor, for a session less than three and a half hours away.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلى جانب المقاعد المجانية، تذهب هذه لأعلى العروض بالعملات. الجلسة قريبة، فتُغلق المزايدة قبلها بنصف ساعة، ولك معظم كل عرض فائز."
+          }
+        }
+      }
+    },
+    "Book a free seat instead" : {
+      "comment" : "Under a session's auction, for a student holding a bid while free seats remain: lets the bid go and books a free seat.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احجز مقعدًا مجانيًا بدلًا منه"
+          }
+        }
+      }
+    },
+    "Book a free seat instead?" : {
+      "comment" : "Alert title before a bidder takes a free seat instead of their bid.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحجز مقعدًا مجانيًا بدلًا من عرضك؟"
+          }
+        }
+      }
+    },
+    "Book the free seat" : {
+      "comment" : "Alert button: lets the bid go and books a free seat.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احجز المقعد المجاني"
+          }
+        }
+      }
+    },
+    "Cancelled by the teacher" : {
+      "comment" : "In a row of a later booking, after its struck-through date: the teacher cancelled that session.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغاها المعلّم"
+          }
+        }
+      }
+    },
+    "Delete my backup" : {
+      "comment" : "In Account, for a student who hasn't signed in: deletes the anonymous account their progress is backed up to.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف نسختي الاحتياطية"
+          }
+        }
+      }
+    },
+    "Delete your backup?" : {
+      "comment" : "Alert title before deleting an anonymous student's backup.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حذف نسختك الاحتياطية؟"
+          }
+        }
+      }
+    },
+    "fact separator" : {
+      "comment" : "Between two facts on one line, with its spaces. Arabic uses its comma: a middle dot beside Arabic-Indic digits reads as a zero.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "، "
+          }
+        },
+        "en" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : " · "
+          }
+        }
+      }
+    },
+    "Hide %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, while memorizing: hides an ayah to recite it from memory. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إخفاء %@"
+          }
+        }
+      }
+    },
+    "I memorized up to %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, choosing the last ayah memorized of a portion. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظت إلى %@"
+          }
+        }
+      }
+    },
+    "It counts as taken: the questions you haven't answered count as wrong." : {
+      "comment" : "Message of the confirmation shown when closing a stage test after answering a question.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُحسب الاختبار مأخوذًا، وتُحسب الأسئلة التي لم تُجب عنها خاطئة."
+          }
+        }
+      }
+    },
+    "Keep going" : {
+      "comment" : "Button: stay in the stage test instead of leaving it.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تابع الاختبار"
+          }
+        }
+      }
+    },
+    "Keep my bid" : {
+      "comment" : "Alert button: keeps the bid, books nothing.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أبقِ عرضي"
+          }
+        }
+      }
+    },
+    "Leave the test?" : {
+      "comment" : "Title of the confirmation shown when closing a stage test after answering a question.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أتغادر الاختبار؟"
+          }
+        }
+      }
+    },
+    "Mark %@ as memorized" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in marking mode. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديد %@ محفوظةً"
+          }
+        }
+      }
+    },
+    "Raise" : {
+      "comment" : "A small button beside the student's bid in a session's auction: opens the bid sheet to raise it.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ارفع عرضك"
+          }
+        }
+      }
+    },
+    "Remove the stumble on %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in a revision. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إزالة التعثّر في %@"
+          }
+        }
+      }
+    },
+    "Reveal the next ayah" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in a revision.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كشف الآية التالية"
+          }
+        }
+      }
+    },
+    "Say what kind of stumble on %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, for a teacher hearing a student. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديد نوع الخطأ في %@"
+          }
+        }
+      }
+    },
+    "Show %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, while memorizing: shows an ayah hidden to recite it. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إظهار %@"
+          }
+        }
+      }
+    },
+    "Stumbled on %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in a revision: marks a stumble on a revealed ayah. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعثّرت في %@"
+          }
+        }
+      }
+    },
+    "The copy of your progress kept online" : {
+      "comment" : "Under «Delete my backup» in Account.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسخة تقدّمك المحفوظة على الإنترنت"
+          }
+        }
+      }
+    },
+    "The copy of your progress kept online is deleted for good. The progress on this device stays, and is backed up afresh from now on." : {
+      "comment" : "Alert message before deleting an anonymous student's backup: the device signs in anonymously again and backs up afresh.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُحذف النسخة الاحتياطية من تقدّمك نهائيًا، ويبقى التقدّم المحفوظ على هذا الجهاز، ويُنسخ احتياطيًا من جديد من الآن."
+          }
+        }
+      }
+    },
+    "Undo" : {
+      "comment" : "Brings back the ayat just unmarked in the Mushaf, with their records.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تراجع"
+          }
+        }
+      }
+    },
+    "Unmark %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in marking mode. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء تحديد %@"
+          }
+        }
+      }
+    },
+    "Unmarked %lld ayat" : {
+      "comment" : "In the Mushaf's marking bar, for a few seconds after ayat were unmarked, beside an Undo button.",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُلغي تحديد %lld آيات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُلغي تحديد %lld آية"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُلغي تحديد آية واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُلغي تحديد %lld آية"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "أُلغي تحديد آيتين"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم يُلغَ تحديد أي آية"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Unmarked %lld ayah"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Unmarked %lld ayat"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "Your bid of %lld credits is let go, and its credits come back to you." : {
+      "comment" : "Alert message before a bidder takes a free seat instead of their bid.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُترك عرضك، ويعود إليك ما حجزته من عملات (%lld)."
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your bid of %lld credit is let go, and the credit comes back to you."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "Your bid of %lld credits is let go, and its credits come back to you."
+                }
+              }
+            }
           }
         }
       }
@@ -2723,7 +3229,7 @@
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "عملة · مجانًا ما دامت المقاعد متاحة"
+            "value" : "عملة، مجانًا ما دامت المقاعد متاحة"
           }
         }
       }

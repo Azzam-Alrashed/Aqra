@@ -126,6 +126,14 @@ final class PlanStore {
         return plan.studyDays.contains(calendar.component(.weekday, from: date))
     }
 
+    /// Whether a new portion is still due today: a study day of an active plan, none recorded yet today, and
+    /// something left to memorize.
+    func isPortionDue(memorization: MemorizationStore, now: Date = .now) -> Bool {
+        guard let plan, !plan.paused, isStudyDay(now), memorization.count < MushafStore.ayahCount else { return false }
+        let day = calendar.startOfDay(for: now)
+        return !portions.contains { calendar.startOfDay(for: $0.date) == day }
+    }
+
     // MARK: - Today
 
     /// The next portion in the plan's order: the next ayat not yet memorized, about the daily amount, ending at an
@@ -164,6 +172,14 @@ final class PlanStore {
             if ayah <= range.upperBound, !portion.isEmpty { return portion }
         }
         return portion
+    }
+
+    /// The first ayah of the plan's next portion, whatever today's state (due, done, a rest day, paused); nil
+    /// without a plan or when everything is memorized.
+    func nextAyah(memorization: MemorizationStore, store: MushafStore) -> Int? {
+        guard let plan else { return nil }
+        return Self.nextPortion(order: plan.order, dailyLines: plan.dailyLines, store: store,
+                                isMemorized: memorization.isMemorized).first
     }
 
     func today(memorization: MemorizationStore, store: MushafStore, now: Date = .now) -> TodayPortion? {

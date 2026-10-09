@@ -23,7 +23,7 @@ struct TasmeeView: View {
             ScrollView {
                 VStack(alignment: .leading, spacing: 14) {
                     Text("Tasmee'")
-                        .font(.system(size: 30, weight: .heavy))
+                        .aqraFont(size: 30, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                         .padding(.top, 16)
                         .accessibilityAddTraits(.isHeader)
@@ -34,10 +34,7 @@ struct TasmeeView: View {
                         if tasmee.isTeacher {
                             teacherSections
                         }
-                        if let booking = tasmee.nextBooking {
-                            AqraSectionTitle(title: "Your next tasmee'").padding(.top, 10)
-                            bookingCard(booking)
-                        }
+                        bookingsSection
                         AqraSectionTitle(title: "With a friend").padding(.top, 10)
                         friendCard
                         AqraSectionTitle(title: "Teachers").padding(.top, 10)
@@ -114,7 +111,7 @@ struct TasmeeView: View {
             HStack(alignment: .top, spacing: 12) {
                 IconTile(icon: "🎓", tint: Palette.mint, size: 40)
                 Text("Accounts aren't set up in this build, so teachers and tasmee' are off.")
-                    .font(.system(size: 14, weight: .medium))
+                    .aqraFont(size: 14, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
             }
@@ -162,7 +159,7 @@ struct TasmeeView: View {
                         // The count first: a place name in the other script would otherwise reorder the line.
                         AqraRow(icon: session.kind == .video ? "🎥" : "📅", tint: Palette.sky,
                                 title: Text(verbatim: TasmeeFormat.when(session.startsAt)),
-                                detail: Text("\(session.booked) of \(session.seats) seats") + Text(verbatim: " · ") + TasmeeFormat.place(session))
+                                detail: Text("\(session.booked) of \(session.seats) seats") + Text(verbatim: Separator.facts) + TasmeeFormat.place(session))
                     }
                     .buttonStyle(.plain)
                     AqraRowDivider()
@@ -201,7 +198,55 @@ struct TasmeeView: View {
         }
     }
 
-    // MARK: - The student's booking
+    // MARK: - The student's bookings
+
+    /// The next booking in full, and any later ones as rows: a teacher may cancel any of them.
+    @ViewBuilder
+    private var bookingsSection: some View {
+        let bookings = tasmee.upcomingBookings
+        if let next = bookings.first {
+            AqraSectionTitle(title: "Your next tasmee'").padding(.top, 10)
+            bookingCard(next)
+        }
+        if bookings.count > 1 {
+            AqraSectionTitle(title: "Also booked").padding(.top, 10)
+            AqraCard(padding: 0, radius: 24) {
+                VStack(spacing: 0) {
+                    ForEach(Array(bookings.dropFirst().enumerated()), id: \.element.id) { index, booking in
+                        if index > 0 { AqraRowDivider() }
+                        bookingRow(booking)
+                    }
+                }
+            }
+        }
+        if !bookings.isEmpty, let problem {
+            ProblemLine(problem: problem).padding(.horizontal, 6)
+        }
+    }
+
+    private func bookingRow(_ booking: Booking) -> some View {
+        let live = tasmee.session(of: booking)
+        let cancelled = live?.status == .cancelled
+        let when = Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt)).strikethrough(cancelled)
+        return AqraRow(icon: booking.kind == .video ? "🎥" : "🎓", tint: cancelled ? Palette.rose : Palette.mint,
+                       title: Text(verbatim: booking.teacherName),
+                       // The place on a line of its own: a name in the other script would reorder the date's line.
+                       detail: when + Text(verbatim: "\n")
+                           + (cancelled ? Text("Cancelled by the teacher") : TasmeeFormat.place(live.map { Booking($0) } ?? booking))) {
+            bookingButton(booking, cancelled: cancelled)
+        }
+    }
+
+    private func bookingButton(_ booking: Booking, cancelled: Bool) -> some View {
+        Button(cancelled ? "Remove" : "Cancel booking") { cancelling = booking }
+            .aqraFont(size: 13, weight: .bold)
+            .foregroundStyle(Palette.brand)
+            .padding(.horizontal, 10)
+            .padding(.vertical, 3)
+            .frame(minHeight: 28)
+            .background(Palette.lavender, in: Capsule())
+            .buttonStyle(.plain)
+    }
 
     private func bookingCard(_ booking: Booking) -> some View {
         let live = tasmee.session(of: booking)
@@ -212,35 +257,26 @@ struct TasmeeView: View {
                     IconTile(icon: booking.kind == .video ? "🎥" : "🎓", tint: cancelled ? Palette.rose : Palette.mint, size: 40)
                     VStack(alignment: .leading, spacing: 3) {
                         Text(verbatim: booking.teacherName)
-                            .font(.system(size: 17, weight: .heavy))
+                            .aqraFont(size: 17, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt))
-                            .font(.system(size: 13, weight: .bold))
+                            .aqraFont(size: 13, weight: .bold)
                             .foregroundStyle(cancelled ? Palette.inkSoft : Palette.brand)
                             .strikethrough(cancelled)
                         TasmeeFormat.place(live.map { Booking($0) } ?? booking)
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                         if cancelled {
                             Text("The teacher cancelled this session.")
-                                .font(.system(size: 12, weight: .semibold))
+                                .aqraFont(size: 12, weight: .semibold)
                                 .foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
                         }
                     }
                     Spacer(minLength: 4)
-                    Button(cancelled ? "Remove" : "Cancel booking") { cancelling = booking }
-                        .font(.system(size: 13, weight: .bold))
-                        .foregroundStyle(Palette.brand)
-                        .padding(.horizontal, 10)
-                        .frame(height: 28)
-                        .background(Palette.lavender, in: Capsule())
-                        .buttonStyle(.plain)
+                    bookingButton(booking, cancelled: cancelled)
                 }
                 if booking.kind == .video, let live, !cancelled {
                     JoinCallButton(session: live)
-                }
-                if let problem {
-                    ProblemLine(problem: problem)
                 }
             }
         }
@@ -285,7 +321,7 @@ struct TasmeeView: View {
                             Text("No teachers have joined yet.")
                         }
                     }
-                    .font(.system(size: 14, weight: .medium))
+                    .aqraFont(size: 14, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -373,7 +409,7 @@ enum TasmeeFormat {
     /// The teacher's city and line, or nil when they wrote neither.
     static func about(_ teacher: Teacher) -> String? {
         let parts = [teacher.city, teacher.line].filter { !$0.isEmpty }
-        return parts.isEmpty ? nil : parts.joined(separator: " · ")
+        return parts.isEmpty ? nil : parts.joined(separator: Separator.facts)
     }
 
     /// Where a session is held: its place, or the video call.
@@ -387,7 +423,7 @@ enum TasmeeFormat {
 
     /// «صفحتان · تعثّر واحد»: each count with its own plural.
     static func counts(pages: Int, stumbles: Int) -> Text {
-        Text("\(pages) pages") + Text(verbatim: " · ") + Text("\(stumbles) stumbles")
+        Text("\(pages) pages") + Text(verbatim: Separator.facts) + Text("\(stumbles) stumbles")
     }
 }
 

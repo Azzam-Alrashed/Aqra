@@ -1,9 +1,56 @@
 # QA proposals — October 2026
 
-Changes found during the QA pass ([QA-LOG.md](QA-LOG.md)) that weren't built, because they're visual or design
-changes, new features, or change the product's behavior or the SRS algorithm. Each one waits for your review;
-nothing here is in the code. They're ordered by priority. Each has the problem, what I propose, and, where it helps,
-a screenshot or mock (in [docs/qa](qa)).
+Changes found during the QA pass ([QA-LOG.md](QA-LOG.md)) that weren't built then, because they're visual or design
+changes, new features, or change the product's behavior or the SRS algorithm. They're ordered by priority. Each has
+the problem, what I proposed, and, where it helps, a screenshot or mock (in [docs/qa](qa)). All 16 were approved on
+2026-10-09 and are now built, on iOS and Android, on the branch `qa/proposals-2026-10` (see "Built" below).
+
+## Decisions (2026-10-09)
+
+Reviewed with the product owner, one by one. All 16 are approved, and built (below).
+
+| # | Decision |
+|---|---|
+| 1 | Approved: the Arabic comma «،» in Arabic, «·» kept in English, through one shared helper. |
+| 2 | Approved: Dynamic Type up to Accessibility 2, screen by screen with before/after shots. |
+| 3 | Approved: the options shown without their end-of-ayah markers; the question's ayah stays whole. |
+| 4 | Approved: a smaller stage below about 700 pt of height. |
+| 5 | Approved: only revealed ayat are read, with "Reveal the next ayah" and "Mark a stumble" actions. |
+| 6 | Approved: `inkSoft` becomes #6C6383 everywhere. |
+| 7 | Approved: every upcoming booking listed; the cancellation message names the session's day and time. |
+| 8 | Approved: a free seat or a bid, not both; "Book a free seat instead" releases the bid at once (a new server call). |
+| 9 | **Changed — a policy change (AUC-04):** sessions 1–3 hours away may offer auctioned seats, with bidding closing 30 minutes before; under an hour, free seats only. Both numbers in the server policy; the SRS to follow. |
+| 10 | Approved: after the first answer, closing asks to confirm and counts as taken. |
+| 11 | Approved: with a plan, the next portion's stage whatever today's state; without, the latest ayah memorized in Aqra. |
+| 12 | Approved: an "Undo" chip for a few seconds after unmarking (a tap, a range or a page). |
+| 13 | Approved: after the first Done on the Mushaf path, the daily amount and the plan offer follow. |
+| 14 | Approved: today's reminder removed once the wird (and on a study day the portion) is done; dated reminders two weeks ahead. |
+| 15 | Approved: "Delete my backup" in Account for anonymous students. |
+| 16 | Approved: the import keeps existing names; strings synced; the plan setup ported. |
+
+## Built (2026-10-09)
+
+| # | iOS | Android | Backend and docs |
+|---|---|---|---|
+| 1 | 849b8df | 7759369 (the import keeps the separator's spaces), 5023c92 | SRS UI-02 |
+| 2 | f4b11f7 | Already scales its text (sp) | SRS ATT-08 |
+| 3 | 9e5670c | d6c2f06 | SRS MAS-02 |
+| 4 | 05fd013 | c586492 | SRS UI-08 |
+| 5 | 2622be6 | 8896592 | SRS UI-05 |
+| 6 | 811dab9 | 9a88356 | SRS ATT-08 |
+| 7 | 5621803 | 46f9fb8 | Cancellation messages carry the session's start (5621803); SRS SES-03 |
+| 8 | 879842e | c04c6c4 | New callable `takeFreeSeat`; the rules refuse a free seat beside an active bid (879842e); SRS AUC-08 |
+| 9 | ee20bfa | bb3f666 | Rules and policy (`lateBiddingClosesBeforeMinutes`, `minAuctionLeadMinutes`) (ee20bfa); SRS AUC-04, A-17 |
+| 10 | 990882c | 986154d | SRS MAS-03 |
+| 11 | b5c9ab2 | e59648a | SRS CUR-02, A-7 |
+| 12 | 3011d93 | 1d4e56a | SRS MEM-01 |
+| 13 | 1177230 | 5e59593 | SRS ONB-03 |
+| 14 | e81dded (dated reminders two weeks ahead) | e13171d (checked when the reminder goes off) | SRS SET-02, NTF-02 |
+| 15 | af4dd31 | 7d5c3e4 | SRS ACC-06 |
+| 16 | — | 189937a (the import keeps names), 39aa72f (strings synced, plan setup ported) | — |
+
+Found on the way: Android builds for the emulators still started Firebase as the real project when
+`google-services.json` was present (571601a).
 
 | # | Pri | Proposal | Area |
 |---|---|---|---|
@@ -89,11 +136,12 @@ ayah", and "Mark a stumble" on each revealed ayah.
 
 ## 6. Raise the contrast of the soft grey text (P3)
 
-**Problem.** The secondary text color (`inkSoft`, #7B7290) on white is about 4.3:1; the accessibility audit flags
-most 11–13 pt details as "nearly passed" (WCAG AA asks 4.5:1 for small text).
+**Problem.** The secondary text color (`inkSoft`, #7B7290) is 4.5:1 on white cards, just at the WCAG AA line for
+small text, and 4.2:1 where it sits on the lavender surface (detail lines under headlines, notes under sections),
+which fails. The accessibility audit flags most 11–13 pt details as "nearly passed".
 
-**Proposal.** Darken it slightly, to about #6C6383 (≈5:1), across the app's own screens. It's a palette change, so
-it's yours to approve.
+**Proposal.** Darken it slightly, to #6C6383 (5.6:1 on white, 5.1:1 on the surface), across the app's own screens.
+It's a palette change, so it's yours to approve.
 
 ## 7. List every upcoming booking, and date the cancellation message (P3)
 

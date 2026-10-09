@@ -173,6 +173,10 @@ class MushafStoreTest {
         assertEquals(7, store.page(1).spokenAyat.size)
         assertTrue(store.page(1).spokenAyat.first().startsWith("بسم الله الرحمن الرحيم"))
         assertEquals(6_236, (1..MushafStore.PAGE_COUNT).sumOf { store.page(it).spokenAyat.size })
+        // Each entry knows its ayah, so a revision can leave out the veiled ones.
+        assertEquals((0..6).toList(), store.page(1).spokenAyahs)
+        assertEquals((0 until MushafStore.AYAH_COUNT).toList(), (1..MushafStore.PAGE_COUNT).flatMap { store.page(it).spokenAyahs })
+        assertTrue(store.page(50).spokenAyahs.all { it in store.page(50).ayahs })
     }
 
     /** A build without the page fonts must explain itself instead of drawing missing glyphs. */

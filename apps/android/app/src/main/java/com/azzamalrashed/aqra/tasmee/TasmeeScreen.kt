@@ -61,6 +61,8 @@ import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.formatNumberList
 import com.azzamalrashed.aqra.ui.util.formatRelative
 import com.azzamalrashed.aqra.ui.util.formatWhen
+import com.azzamalrashed.aqra.ui.util.factSeparator
+import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.launch
 
 /** Places in the tasmee' tab's navigation. */
@@ -134,9 +136,20 @@ private fun TasmeeHome(app: AqraApp, store: MushafStore, navigator: Navigator) {
             TeacherSections(app, navigator, onNewSession = { creatingSession = true }, onEditProfile = { editingProfile = true },
                 onEarnings = { showingEarnings = true }, onCompetition = { startingCompetition = true })
         }
-        tasmee.nextBooking?.let { booking ->
+        // The next booking in full, and any later ones as rows: a teacher may cancel any of them.
+        val bookings = tasmee.upcomingBookings
+        bookings.firstOrNull()?.let { booking ->
             AqraSectionTitle(stringResource(R.string.your_next_tasmee), Modifier.padding(top = 10.dp))
             BookingCard(app, booking)
+        }
+        if (bookings.size > 1) {
+            AqraSectionTitle(stringResource(R.string.also_booked), Modifier.padding(top = 10.dp))
+            AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
+                bookings.drop(1).forEachIndexed { index, booking ->
+                    if (index > 0) AqraRowDivider()
+                    BookingRow(app, booking)
+                }
+            }
         }
         AqraSectionTitle(stringResource(R.string.with_a_friend), Modifier.padding(top = 10.dp))
         AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
@@ -199,7 +212,7 @@ private fun TeacherSections(
     tasmee.teacherProfile?.let { profile ->
         AqraCard(Modifier.fillMaxWidth().padding(top = 4.dp), padding = 0.dp, radius = 24.dp) {
             AqraRow("🎓", Palette.mint, profile.name, Modifier.pressable(pressed = 1f, onClick = onEditProfile),
-                detail = profile.about ?: stringResource(R.string.add_your_city_and_a_line_about_you)) { EditBadge() }
+                detail = profile.about(factSeparator()) ?: stringResource(R.string.add_your_city_and_a_line_about_you)) { EditBadge() }
         }
     }
     AqraCard(Modifier.fillMaxWidth().pressable(onClick = onEarnings), padding = 0.dp, radius = 24.dp) {
@@ -212,7 +225,7 @@ private fun TeacherSections(
             // The count first: a place name in the other script would otherwise reorder the line.
             AqraRow(if (session.kind == TasmeeSession.Kind.VIDEO) "🎥" else "📅", Palette.sky, formatWhen(session.startsAt.toInstant()),
                 Modifier.pressable(pressed = 1f) { navigator.push(TasmeeDestination.SessionPage(session)) },
-                detail = stringResource(R.string.n_of_n_seats, session.booked, session.seats) + " · " + placeText(session))
+                detail = stringResource(R.string.n_of_n_seats, session.booked, session.seats) + factSeparator() + placeText(session))
             AqraRowDivider()
         }
         AqraRow("➕", Palette.butter, stringResource(R.string.new_session), Modifier.pressable(pressed = 1f, onClick = onNewSession)) {}
@@ -236,6 +249,53 @@ private fun TeacherSections(
 fun EditBadge() {
     Box(Modifier.size(30.dp).background(Palette.lavender, CircleShape), contentAlignment = Alignment.Center) {
         Icon(Icons.Rounded.Edit, null, tint = Palette.brand, modifier = Modifier.size(16.dp))
+    }
+}
+
+/** A later booking: when (struck through once the teacher cancelled it), where, and giving the seat back. */
+@Composable
+private fun BookingRow(app: AqraApp, booking: Booking) {
+    val live = app.tasmee.session(booking)
+    val cancelled = live?.status == TasmeeSession.Status.CANCELLED
+    var confirming by remember { mutableStateOf(false) }
+    var problem by remember { mutableStateOf<Problem?>(null) }
+    val scope = rememberCoroutineScope()
+    Column(Modifier.padding(14.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+            IconTile(if (booking.kind == TasmeeSession.Kind.VIDEO) "🎥" else "🎓", if (cancelled) Palette.rose else Palette.mint, size = 38.dp)
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(booking.teacherName, style = aqraStyle(16f, Weight.heavy, Palette.ink))
+                Text(formatWhen((live?.startsAt ?: booking.startsAt).toInstant()),
+                    style = aqraStyle(12f, Weight.semibold, Palette.inkSoft).copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null))
+                // The place on a line of its own: a name in the other script would reorder the date's line.
+                Text(if (cancelled) stringResource(R.string.cancelled_by_the_teacher) else placeText(live?.let(::Booking) ?: booking),
+                    style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
+            }
+            ChipButton(stringResource(if (cancelled) R.string.remove else R.string.cancel_booking), filled = false) { confirming = true }
+        }
+        problem?.let { ProblemLine(it, Modifier.padding(top = 10.dp)) }
+    }
+    if (confirming) GiveBackSeat(app, booking, scope, onDismiss = { confirming = false }) { problem = it }
+}
+
+/**
+ * «تلغي حجزك؟», then the seat given back, or the problem that stopped it. The work runs in the [scope] of the row or
+ * card asking, which outlives the dialog.
+ */
+@Composable
+private fun GiveBackSeat(app: AqraApp, booking: Booking, scope: CoroutineScope, onDismiss: () -> Unit, onResult: (Problem?) -> Unit) {
+    Confirm(stringResource(R.string.cancel_your_booking_q), stringResource(R.string.your_seat_goes_back_to_the_session), stringResource(R.string.cancel_booking),
+        onDismiss = onDismiss, cancel = stringResource(R.string.keep_it)) {
+        scope.launch {
+            onResult(
+                try {
+                    app.tasmee.cancelBooking(booking)
+                    null
+                } catch (error: Exception) {
+                    AccountStore.problem(error)
+                },
+            )
+        }
     }
 }
 
@@ -266,19 +326,7 @@ private fun BookingCard(app: AqraApp, booking: Booking) {
         }
         problem?.let { ProblemLine(it, Modifier.padding(top = 12.dp)) }
     }
-    if (confirming) {
-        Confirm(stringResource(R.string.cancel_your_booking_q), stringResource(R.string.your_seat_goes_back_to_the_session), stringResource(R.string.cancel_booking),
-            onDismiss = { confirming = false }, cancel = stringResource(R.string.keep_it)) {
-            scope.launch {
-                problem = try {
-                    app.tasmee.cancelBooking(booking)
-                    null
-                } catch (error: Exception) {
-                    AccountStore.problem(error)
-                }
-            }
-        }
-    }
+    if (confirming) GiveBackSeat(app, booking, scope, onDismiss = { confirming = false }) { problem = it }
 }
 
 @Composable
@@ -300,7 +348,7 @@ private fun TeachersCard(app: AqraApp, navigator: Navigator) {
         AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
             tasmee.teachers.forEachIndexed { index, teacher ->
                 if (index > 0) AqraRowDivider()
-                AqraRow("🎓", Palette.mint, teacher.name, Modifier.pressable(pressed = 1f) { navigator.push(TasmeeDestination.TeacherPage(teacher)) }, detail = teacher.about)
+                AqraRow("🎓", Palette.mint, teacher.name, Modifier.pressable(pressed = 1f) { navigator.push(TasmeeDestination.TeacherPage(teacher)) }, detail = teacher.about(factSeparator()))
             }
         }
     }
@@ -316,17 +364,24 @@ private fun TeacherPage(app: AqraApp, store: MushafStore, teacher: Teacher) {
     val account = app.account
     val signedIn = account.profile?.isAnonymous == false
     var sessions by remember { mutableStateOf<List<TasmeeSession>?>(null) }
+    // This student's bids, by session: a student holds a free seat or a bid, not both.
+    var myBids by remember { mutableStateOf<Map<String, Bid>>(emptyMap()) }
+    var choosingFreeSeat by remember { mutableStateOf<TasmeeSession?>(null) }
     var working by remember { mutableStateOf<String?>(null) }
     var problem by remember { mutableStateOf<Problem?>(null) }
     val scope = rememberCoroutineScope()
     suspend fun load() {
-        sessions = try {
-            tasmee.upcomingSessions(teacher.id)
+        try {
+            val loaded = tasmee.upcomingSessions(teacher.id)
+            myBids = tasmee.myBids(loaded)
+            sessions = loaded
         } catch (error: Exception) {
             problem = AccountStore.problem(error)
-            sessions ?: emptyList()
+            sessions = sessions ?: emptyList()
         }
     }
+    /** The student's bid in a session, while it holds a seat. */
+    fun activeBid(session: TasmeeSession): Bid? = myBids[session.id]?.takeIf { it.status == Bid.Status.ACTIVE }
     LaunchedEffect(teacher.id) { load() }
     fun change(session: TasmeeSession, action: suspend () -> Unit) = scope.launch {
         working = session.id
@@ -342,7 +397,22 @@ private fun TeacherPage(app: AqraApp, store: MushafStore, teacher: Teacher) {
     }
     val studentName = account.publicName ?: stringResource(R.string.a_student)
     var bidding by remember { mutableStateOf<TasmeeSession?>(null) }
-    bidding?.let { session -> BidSheet(app, store, session) { bidding = null } }
+    bidding?.let { session ->
+        BidSheet(app, store, session) {
+            bidding = null
+            scope.launch { load() }
+        }
+    }
+    choosingFreeSeat?.let { session ->
+        val held = activeBid(session)?.amount ?: 0
+        Confirm(
+            stringResource(R.string.book_a_free_seat_instead_q), pluralStringResource(R.plurals.your_bid_of_n_credits_is_let_go_and_its, held, held),
+            stringResource(R.string.book_the_free_seat), onDismiss = { choosingFreeSeat = null }, cancel = stringResource(R.string.keep_my_bid),
+            destructive = false,
+        ) {
+            change(session) { tasmee.takeFreeSeat(session, studentName, memorizedPages(app, store), juzSummary(app, store)) }
+        }
+    }
 
     TabPage(top = 16.dp) {
         AqraCard(Modifier.fillMaxWidth(), padding = 14.dp, radius = 24.dp) {
@@ -366,19 +436,24 @@ private fun TeacherPage(app: AqraApp, store: MushafStore, teacher: Teacher) {
                     val booked = tasmee.hasBooked(session)
                     val seats = if (booked) stringResource(R.string.booked) else stringResource(R.string.seats_left_n, session.seatsLeft)
                     AqraRow(if (session.kind == TasmeeSession.Kind.VIDEO) "🎥" else "📅", Palette.sky, formatWhen(session.startsAt.toInstant()),
-                        detail = seats + " · " + placeText(session)) {
+                        detail = seats + factSeparator() + placeText(session)) {
                         when {
                             working == session.id -> AqraProgress()
                             booked -> ChipButton(stringResource(R.string.cancel), filled = false) { change(session) { tasmee.cancelBooking(Booking(session)) } }
-                            !signedIn -> Unit
+                            // A bidder takes the free seat instead from the auction's strip.
+                            !signedIn || activeBid(session) != null -> Unit
                             session.isFull -> Text(stringResource(R.string.full), style = aqraStyle(13f, Weight.bold, Palette.inkSoft))
                             else -> ChipButton(stringResource(R.string.book), filled = true) {
                                 change(session) { tasmee.book(session, studentName, memorizedPages(app, store), juzSummary(app, store)) }
                             }
                         }
                     }
-                    session.auction?.takeIf { it.isOpen() }?.let { auction ->
-                        AuctionStrip(auction, canBid = signedIn && !booked) { bidding = session }
+                    // Once the student has a seat, the auction is no longer theirs to join.
+                    val bid = activeBid(session)
+                    session.auction?.takeIf { !booked && (it.isOpen() || bid != null) }?.let { auction ->
+                        AuctionStrip(auction, bid, canBid = signedIn && auction.isOpen(),
+                            canTakeFreeSeat = signedIn && bid != null && !session.isFull && working != session.id,
+                            onBid = { bidding = session }, onFreeSeat = { choosingFreeSeat = session })
                     }
                 }
             }
@@ -395,21 +470,35 @@ private fun TeacherPage(app: AqraApp, store: MushafStore, teacher: Teacher) {
     }
 }
 
-/** A session's seats by auction: what a bid takes now, and «زايد». */
+/**
+ * A session's seats by auction: what a bid takes now, and «زايد»; with the student's bid, where it stands, and the
+ * free seat to take instead.
+ */
 @Composable
-private fun AuctionStrip(auction: TasmeeSession.Auction, canBid: Boolean, onBid: () -> Unit) {
-    Row(Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 12.dp), verticalAlignment = Alignment.CenterVertically,
-        horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-        Box(Modifier.width(38.dp), contentAlignment = Alignment.Center) { Text("🔨", style = aqraStyle(16f)) }
-        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-            Text(pluralStringResource(R.plurals.n_seats_by_auction, auction.seats, auction.seats), style = aqraStyle(13f, Weight.heavy, Palette.ink))
-            Text(
-                if (auction.nextAtLeast == 0) stringResource(R.string.free_while_seats_remain)
-                else pluralStringResource(R.plurals.next_bid_from_n_credits, auction.nextAtLeast, auction.nextAtLeast),
-                style = aqraStyle(11f, Weight.semibold, Palette.inkSoft),
-            )
+private fun AuctionStrip(
+    auction: TasmeeSession.Auction, bid: Bid?, canBid: Boolean, canTakeFreeSeat: Boolean, onBid: () -> Unit, onFreeSeat: () -> Unit,
+) {
+    Column(Modifier.fillMaxWidth().padding(start = 14.dp, end = 14.dp, bottom = 12.dp), verticalArrangement = Arrangement.spacedBy(10.dp)) {
+        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            Box(Modifier.width(38.dp), contentAlignment = Alignment.Center) { Text("🔨", style = aqraStyle(16f)) }
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(pluralStringResource(R.plurals.n_seats_by_auction, auction.seats, auction.seats), style = aqraStyle(13f, Weight.heavy, Palette.ink))
+                Text(
+                    when {
+                        bid != null -> stringResource(R.string.your_bid_of_n_holds_a_seat, bid.amount)
+                        auction.nextAtLeast == 0 -> stringResource(R.string.free_while_seats_remain)
+                        else -> pluralStringResource(R.plurals.next_bid_from_n_credits, auction.nextAtLeast, auction.nextAtLeast)
+                    },
+                    style = aqraStyle(11f, Weight.semibold, if (bid != null) Palette.brand else Palette.inkSoft),
+                )
+            }
+            if (canBid) ChipButton(stringResource(if (bid == null) R.string.bid else R.string.raise), filled = false, onClick = onBid)
         }
-        if (canBid) ChipButton(stringResource(R.string.bid), filled = false, onClick = onBid)
+        if (canTakeFreeSeat) {
+            Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.CenterEnd) {
+                ChipButton(stringResource(R.string.book_a_free_seat_instead), filled = false, onClick = onFreeSeat)
+            }
+        }
     }
 }
 
@@ -435,5 +524,5 @@ fun seatDetail(seat: Seat): String {
     // The student's app writes the juz' as plain numbers, «29, 30»; they're shown in the teacher's language.
     val numbers = summary.split(",").mapNotNull { it.trim().toIntOrNull() }
     val juz = if (numbers.isEmpty()) summary else formatNumberList(numbers)
-    return pages + " · " + stringResource(R.string.juz_s, juz)
+    return pages + factSeparator() + stringResource(R.string.juz_s, juz)
 }

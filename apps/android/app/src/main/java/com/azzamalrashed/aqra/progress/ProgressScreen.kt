@@ -67,6 +67,7 @@ import com.azzamalrashed.aqra.ui.util.formatNumber
 import com.azzamalrashed.aqra.ui.util.formatPercent
 import com.azzamalrashed.aqra.ui.util.weekdayNarrow
 import com.azzamalrashed.aqra.ui.util.weekdayWide
+import com.azzamalrashed.aqra.ui.util.factSeparator
 import java.time.ZoneId
 import java.util.Date
 
@@ -158,8 +159,8 @@ private fun PlanCard(app: AqraApp, store: MushafStore, onOpen: () -> Unit) {
             val lines = pluralStringResource(R.plurals.n_lines_this_week, week, week)
             val date = app.plan.completionDate(app.memorization, store)
             AqraRow(if (current.paused) "⏸️" else "✍️", Palette.butter,
-                PlanFormat.amount(current.dailyLines) + " · " + pluralStringResource(R.plurals.n_days_a_week, current.studyDays.size, current.studyDays.size),
-                detail = if (date != null) lines + " · " + stringResource(R.string.completion_s, PlanFormat.month(date)) else lines)
+                PlanFormat.amount(current.dailyLines) + factSeparator() + pluralStringResource(R.plurals.n_days_a_week, current.studyDays.size, current.studyDays.size),
+                detail = if (date != null) lines + factSeparator() + stringResource(R.string.completion_s, PlanFormat.month(date)) else lines)
         } else {
             AqraRow("✍️", Palette.butter, stringResource(R.string.memorize_new_portions), detail = stringResource(R.string.a_daily_amount_and_the_date_youd_complete_the_quran))
         }
@@ -243,7 +244,7 @@ private fun JuzTile(app: AqraApp, store: MushafStore, juz: Int, modifier: Modifi
     val (top, bottom) = StepFaces.forJuz(juz)
     val shape = RoundedCornerShape(14.dp)
     val label = stringResource(R.string.juz_n, juz)
-    val value = formatPercent(share.toDouble(), 0) + " · " + formatPercent(strength, 0)
+    val value = formatPercent(share.toDouble(), 0) + factSeparator() + formatPercent(strength, 0)
     Box(
         modifier
             .height(56.dp)

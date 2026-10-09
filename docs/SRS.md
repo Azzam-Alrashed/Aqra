@@ -7,9 +7,9 @@
 | **Document** | Software Requirements Specification (SRS) |
 | **Product** | Aqra — Quran memorization, revision and mastery |
 | **Standard** | Structured after IEEE Std 830-1998, with the requirement attributes of ISO/IEC/IEEE 29148:2018 |
-| **Version** | 1.2 |
-| **Date** | 2026-10-07 |
-| **Baseline** | Commit `f7ac25b` ("Add the landing page") on `main`. Statuses below are as of the `full-journey` branch, after waves 2 and 3 were built |
+| **Version** | 1.3 |
+| **Date** | 2026-10-09 |
+| **Baseline** | Commit `f7ac25b` ("Add the landing page") on `main`. Statuses below are as of the `full-journey` branch, after waves 2 and 3 were built, updated for the October QA proposals (`qa/proposals-2026-10`) |
 | **Related documents** | [VISION.md](VISION.md) (product decisions), [REVISION.md](REVISION.md) (revision policy), [backend/README.md](../backend/README.md) (data and rules), [shared/quran/README.md](../shared/quran/README.md) (Quran sources) |
 
 ---
@@ -271,13 +271,13 @@ Developer documentation lives in the repository READMEs.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | UI-01 | Every screen outside the Mushaf uses the shared design language (`DesignSystem/AqraComponents.swift`): soft lavender surface, two-line headlines with the second line in brand purple, emoji in tinted rounded squares, white cards with soft shadows, floating chips, spring entrances with light haptics. | M | ✅ | V |
-| UI-02 | The interface is fully localized in Arabic (RTL) and English; numbers, dates and plurals follow the locale; the Mushaf's own numerals are Arabic-Indic. | M | ✅ | V |
+| UI-02 | The interface is fully localized in Arabic (RTL) and English; numbers, dates and plurals follow the locale; the Mushaf's own numerals are Arabic-Indic. Facts on one line are separated by «،» in Arabic (a middle dot beside Arabic-Indic digits reads as a zero) and «·» in English. | M | ✅ | V |
 | UI-03 | Reduce Motion replaces entrance choreography and ambient motion with simple fades. | M | ✅ | V |
 | UI-04 | Haptics: a light tick on choices and page turns, a firmer one on entering a new juz', success on completing the wird. | S | ✅ | V |
-| UI-05 | VoiceOver reads each Mushaf page as the official plain (Imla'i) text with ayah numbers, and every control has a label. | M | ✅ | V |
+| UI-05 | VoiceOver and TalkBack read each Mushaf page as the official plain (Imla'i) text with ayah numbers, leaving out the ayat a revision veils or a student hid while memorizing (and saying how many are hidden); the page's taps are actions (reveal, stumble, hide and show, mark). Every control has a label. | M | ✅ | V |
 | UI-06 | The Mushaf follows the system's dark mode (warm dark paper, cream ink, lighter gold). | M | ✅ | V |
 | UI-07 | The app's own screens follow the system's dark mode with a very dark purple surface (not pure black), muted pastels and more prominent gold. | S | ❓ A-23 | V |
-| UI-08 | Layouts adapt to iPhone and iPad in every orientation; the Mushaf shows two facing pages on a wide iPad in landscape. | M | ✅ | V |
+| UI-08 | Layouts adapt to iPhone and iPad in every orientation; the Mushaf shows two facing pages on a wide iPad in landscape. Below 700 pt (dp) of height, the home's stage is drawn smaller so today's wird comes up on the first screen. | M | ✅ | V |
 | UI-09 | Rewards are celebrated with animation and a short, gentle sound (never on the welcome screen); sounds respect the silent switch. | S | ✅ | V |
 | UI-10 | Navigation: the system tab bar (Liquid Glass on iOS 26, shrinking to the selected tab while a page scrolls down) with Home, Tasmee', Progress and Account; the Mushaf and today's wird open full screen from the home and close back to where they were opened. | M | ✅ | V |
 | UI-11 | Launch: the launch screen is the lavender surface with a faint blurred hint of the arch logo, in light and dark mode (no white or black flash, no spinner). The splash continues from the hint without a seam: the logo fades in and comes into focus, the star turns in and lands with a soft haptic, the sparkles follow, and gold light swells as the logo breathes, while the Mushaf loads and the home is built beneath; then it drifts out of focus for the home's entrance. On first launch the hint fades as the welcome builds the logo. Reduce Motion cross-fades in place. The motion runs in Core Animation, so building the first screen never freezes it. | S | ✅ | V |
@@ -323,7 +323,7 @@ opens on the setup or the home.
 |---|---|---|---|---|
 | ONB-01 | Onboarding is shown on first launch only and has four pages: the hadith (Ahmad's wording, «اقرَأ وارقَ» emphasized, «رواه أحمد», the Tirmidhi translation in English), the manazil, the features, and «ابدأ رحلتك». | M | ✅ | V |
 | ONB-02 | There is no sign-in in onboarding; every user starts anonymously. | M | ✅ | V |
-| ONB-03 | Right after onboarding the student declares what they've memorized («ماذا تحفظ؟»), then chooses a daily revision amount; "I'm just starting" skips both. | M | ✅ | V |
+| ONB-03 | Right after onboarding the student declares what they've memorized («ماذا تحفظ؟»), then chooses a daily revision amount; "I'm just starting" skips both. Choosing to mark it in the Mushaf instead, the daily amount (when anything is marked) and the plan's offer follow the first Done or the Mushaf's closing, even after the app was closed during the marking. | M | ✅ | V |
 | ONB-04 | After «ماذا تحفظ؟», a student offers to set up a personal memorization plan (or skips it). | S | ✅ | E |
 
 #### 3.2.2 Mushaf (MUS)
@@ -344,7 +344,7 @@ opens on the setup or the home.
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| MEM-01 | Declare memorization by juz', surah (setup screen), page and ayah (Mushaf marking), with a whole-Quran shortcut. | M | ✅ | V |
+| MEM-01 | Declare memorization by juz', surah (setup screen), page and ayah (Mushaf marking), with a whole-Quran shortcut. Unmarking (a tap, a range or a page) can be undone for a few seconds, restoring the records exactly. | M | ✅ | V |
 | MEM-02 | Each memorized ayah keeps `since`, stability, last revision, lapses and the verified mark; stored on device and reloaded, including older file versions. | M | ✅ | V |
 | MEM-03 | The share of the Quran memorized counts every juz' equally (a juz' memorized in part counts by its ayat). | M | ✅ | V |
 | MEM-04 | A tasmee' never marks new ayat as memorized; the student owns the map. | M | ✅ | V |
@@ -409,7 +409,7 @@ opens on the setup or the home.
 | ACC-03 | Backup: memorization in 25 blocks of 256 ayat and the revision record as JSON; only changed blocks are written, two seconds after a change; Firestore queues writes offline. | M | ✅ | V |
 | ACC-04 | Merge: union of memorized ayat (newer revision wins, verified kept from either), revision record per CloudBackup rules. | M | ✅ | V |
 | ACC-05 | Sign-out uploads first (fails safely when offline), then clears the device and returns to «ماذا تحفظ؟». | M | ✅ | V |
-| ACC-06 | Account deletion deletes the backup, bookings (seats given back) and tasmee' records, revokes Apple's token, deletes the user; the device's progress stays. | M | ✅ | A, V |
+| ACC-06 | Account deletion deletes the backup, bookings (seats given back) and tasmee' records, revokes Apple's token, deletes the user; the device's progress stays. A student who hasn't signed in deletes their anonymous backup the same way ("Delete my backup"); the device then backs up afresh to a new anonymous account. | M | ✅ | A, V |
 | ACC-07 | Sign-in is required before booking, bidding, buying credits, joining video, adding friends or applying to teach. | M | ✅ | V |
 | ACC-08 | A display name the student chooses is shown to teachers, peers and friends instead of the sign-in's name or email. | S | ✅ | P |
 | ACC-09 | The backup also covers the personal plan, rewards and test results; deletion removes them and the wallet, applications, friendships and competition entries. | M | ✅ | A, P |
@@ -419,7 +419,7 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | SET-01 | Tajweed and topic color toggles (Mushaf menu and Account), kept app-wide. | M | ✅ | V |
-| SET-02 | A daily reminder at a chosen time; explains when notifications are off in Settings. | M | ✅ | E |
+| SET-02 | A daily reminder at a chosen time; explains when notifications are off in Settings. Today's is left out once today's work is done: the wird, and on a study day the new portion. | M | ✅ | E |
 | SET-03 | The app's language opens the system's per-app language setting. | M | ✅ | V |
 | SET-04 | Sources credits the Complex, Quran Foundation, QUL, Ayah by Ayah and Amiri. | M | ✅ | V |
 | SET-05 | A reminder one hour before each booked session, and on the plan's study days a reminder for the new portion. | S | ✅ | E |
@@ -441,7 +441,7 @@ opens on the setup or the home.
 |---|---|---|---|---|
 | SES-01 | A vetted teacher creates a session: when (future), in person (place) or by video, free seats (1–30). | M | ✅ | V |
 | SES-02 | A signed-in student books a free seat first come first served: seat, the student's copy and the count in one transaction; never more students than seats. | M | ✅ | V |
-| SES-03 | A student cancels their booking; a teacher cancels a session (students see it cancelled). | M | ✅ | V |
+| SES-03 | A student cancels their booking; a teacher cancels a session (students see it cancelled, and the inbox message names its day and time). The Tasmee' tab lists every upcoming booking: the next in full, later ones as rows. | M | ✅ | V |
 | SES-04 | A teacher edits a session's time, place and seat count (not below the seats taken). | S | ✅ | V |
 | SES-05 | A session may also offer auctioned seats (see AUC). | M | ✅ | V |
 | SES-06 | The seat carries the student's display name and a summary (pages memorized, whole juz') so the teacher can choose what to hear. | M | ✅ | V |
@@ -493,7 +493,7 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | CUR-01 | Ten stages of three juz' each (stage *k* = juz' 3*k*−2…3*k*), from the official juz' data, matching the ten stairs. | M | ✅ | E, V |
-| CUR-02 | The student's current stage is the one holding their next portion (or their most recently memorized ayah). | M | ✅ | E, P |
+| CUR-02 | The student's current stage, steady through the day: the one holding the plan's next portion (whether today's is due, done or a rest day), else the one of the latest ayah memorized in Aqra (declared ayat don't move it), else the first stage not passed. | M | ✅ | E, P |
 | CUR-03 | Eight stars per juz' (240) from authoritative rub' al-hizb boundaries, with position tracked inside a star (not a completed flag). | S | ⛔ DEP-04 | E |
 | CUR-04 | Stage content (tajweed, meanings, tips) per stage. | C | ⛔ content | E |
 
@@ -502,8 +502,8 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | MAS-01 | Mastered = stability ≥ the stage policy's mastery half-life (60 days) and the last revision clean; computed for every ayah, juz' and stage. | M | ✅ | E, P |
-| MAS-02 | An in-app stage test of 10 questions drawn from the stage's memorized ayat: "what comes next?" and "which surah?", four choices each, ayat shown in the Complex's text and Hafs Smart font, unmodified. Score shown with the right answers. | M | ✅ | E |
-| MAS-03 | The test requires the stage's ayat to be memorized; a failed test can be retaken after the cooldown (24 h). Results are kept. | M | ✅ | E, P |
+| MAS-02 | An in-app stage test of 10 questions drawn from the stage's memorized ayat: "what comes next?" and "which surah?", four choices each, ayat shown in the Complex's text and Hafs Smart font, unmodified (the options without their ayah-end markers, so the answer can't be read from the numbers). Score shown with the right answers. | M | ✅ | E |
+| MAS-03 | The test requires the stage's ayat to be memorized; a failed test can be retaken after the cooldown (24 h). Results are kept. Left after its first answer (with a confirmation), a test counts as taken, the unanswered questions as wrong. | M | ✅ | E, P |
 | MAS-04 | A sheikh's stage test is recorded by a teacher (TSM-04): passed when the mistakes are at most the allowed mistakes per page heard (1) times the pages heard. | M | ✅ | E, P |
 | MAS-05 | A stage is passed when: all its ayat are memorized, mastered share ≥ 80%, in-app test ≥ 80%, and (when the policy requires it) a passed sheikh's test. Each requirement shows its state. | M | ✅ | E, P |
 | MAS-06 | Passing a stage is celebrated and recorded as an achievement. | S | ✅ | V |
@@ -544,10 +544,11 @@ opens on the setup or the home.
 | AUC-01 | A session offers reserved free seats (at least one; first come first served, not biddable) and optionally auctioned seats. | M | ✅ | V |
 | AUC-02 | Auctioned seats start free: while seats remain, any bid ≥ the minimum (0) holds one. When all are held, a new bid must beat the lowest winning bid by the increment (1 credit), which outbids it. | M | ✅ | V |
 | AUC-03 | Bidding holds credits; outbid holds are released at once; a bidder may raise their bid (holding the difference); ties go to the earlier bid. | M | ✅ | V |
-| AUC-04 | Bidding closes before the session (3 h); a scheduled function settles it: winning holds are spent, seats and bookings created, teacher earnings recorded. | M | ✅ | V |
+| AUC-04 | Bidding closes before the session: 3 h before, or 30 min before for a session sooner than that (when 3 h would leave under 30 min to bid); a session less than 1 h away offers free seats only. A scheduled function settles it: winning holds are spent, seats and bookings created, teacher earnings recorded. | M | ✅ | V |
 | AUC-05 | All bids go through a Cloud Function in a Firestore transaction, so a seat is never won twice. | M | ✅ | V |
 | AUC-06 | Cancelling a session releases holds (before settlement) or refunds spent credits and reverses the teacher's earnings (after). | M | ✅ | P |
 | AUC-07 | The student sees the current lowest winning bid, their own standing (winning / outbid), and is told when outbid or when they've won. | M | ✅ | V |
+| AUC-08 | A student holds a free seat or a bid in a session, not both: with a seat, the auction isn't offered; with a bid, "Book a free seat instead" lets the bid go (its credits come back) and books the seat, in one server call. | M | ✅ | V |
 
 #### 3.2.22 Teacher earnings and payouts (ERN)
 
@@ -562,7 +563,7 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | NTF-01 | Server events (outbid, seat won, refund, session cancelled, application status, peer/teacher record) are written to the user's inbox and shown in-app. | S | ✅ | P |
-| NTF-02 | Local notifications for the daily wird, the new portion on study days and booked sessions; never more than one a day for the wird. | S | ✅ | E |
+| NTF-02 | Local notifications for the daily wird, the new portion on study days and booked sessions; never more than one a day for the wird. On iOS the wird's are dated, two weeks ahead, and set again as the app is used; on Android the reminder checks when it goes off. | S | ✅ | E |
 | NTF-03 | Push notifications for inbox events once an APNs key is configured. | C | ⛔ DEP-08 | P |
 
 #### 3.2.24 Administration (ADM)
@@ -656,7 +657,7 @@ opens on the setup or the home.
 | ATT-05 | Privacy | A teacher never reads a student's progress; anonymous users are never shown by name; data deletable in-app; data stays in Saudi Arabia (Firestore). | ✅ |
 | ATT-06 | Maintainability | Policies in one place; features in their own folders; every store has tests. | ✅ |
 | ATT-07 | Portability | Platform-neutral data formats (ayah numbers, JSON snapshots, Firestore schema) documented here. | ✅ |
-| ATT-08 | Accessibility | VoiceOver labels, Dynamic Type where layout allows, Reduce Motion, sufficient contrast. | 🟡 |
+| ATT-08 | Accessibility | VoiceOver and TalkBack labels and actions; Dynamic Type up to Accessibility 2 on iOS (the Mushaf's own chrome and composed pictures keep their sizes), font scaling on Android; Reduce Motion; text contrast at WCAG AA (the soft grey is #6C6383). | ✅ |
 | ATT-09 | Localizability | No user-facing string outside the catalog; architecture ready for Urdu, Indonesian, Turkish, French. | ✅ |
 
 ### 3.7 Policies
@@ -716,6 +717,8 @@ Every number below is a default, kept in one place in code, and open to tuning w
 | minBid | 0 credits |
 | minIncrement | 1 credit |
 | biddingClosesBeforeHours | 3 |
+| lateBiddingClosesBeforeMinutes | 30 (a session sooner than 3 h 30 min) |
+| minAuctionLeadMinutes | 60 (sooner: free seats only) |
 | commissionRate | 0.20 |
 | creditPacks | `aqra.credits.10` → 10, `aqra.credits.30` → 30, `aqra.credits.60` → 60 |
 
@@ -759,7 +762,7 @@ default adopted is given; every one lives in a policy and can be changed without
 | A-4 | The rotation: adapt by itself or suggest? | Suggest; the student approves. | REV-10 |
 | A-5 | Peer weight. | 1.25 (between self 1 and sheikh 1.5). | ReviewPolicy |
 | A-6 | Should a sheikh hearing an undeclared ayah clean mark it memorized? | No. | MEM-04 |
-| A-7 | How Etqan's stages map onto the manazil. | Stage *k* = juz' 3*k*−2…3*k* = the *k*-th stair; the current stage holds the next portion. | CUR-01/02 |
+| A-7 | How Etqan's stages map onto the manazil. | Stage *k* = juz' 3*k*−2…3*k* = the *k*-th stair; the current stage holds the plan's next portion (CUR-02). | CUR-01/02 |
 | A-8 | Star boundaries (240 rub'). | Not built until an authoritative source is chosen. | DEP-04 |
 | A-9 | Mastery definition. | Half-life ≥ 60 d and a clean last revision; "verified" shown separately. | MAS-01 |
 | A-10 | Stage pass weights. | All requirements must hold (no weighting): 100% memorized, 80% mastered, test ≥ 80%, sheikh's test passed. | MAS-05 |
@@ -769,7 +772,7 @@ default adopted is given; every one lives in a policy and can be changed without
 | A-14 | Free seats per session. | At least one; the teacher chooses. | AUC-01 |
 | A-15 | Commission. | 20%. | ERN-01 |
 | A-16 | Credit packs and prices. | 10 / 30 / 60 credits; App Store price tiers set in App Store Connect. | PAY-01 |
-| A-17 | Bidding close. | 3 h before the session. | AUC-04 |
+| A-17 | Bidding close. | 3 h before the session; for a session sooner than 3 h 30 min, 30 min before it; under 1 h away, no auctioned seats (decided 2026-10-09). | AUC-04 |
 | A-18 | Teacher vetting beyond ijazah and interview. | Application → interview → approval by an administrator. | TCH-02/04 |
 | A-19 | Competition scope. | Personal challenges, friends' competitions, group khatmah, teacher-run (verified). No public leaderboard. | SOC |
 | A-20 | Points values. | RewardPolicy table. | RWD-01 |

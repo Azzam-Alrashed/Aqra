@@ -312,13 +312,15 @@ class AssessmentStore(private val file: File?, val policy: StagePolicy = StagePo
 
     companion object {
         /**
-         * The stage the student is in: the one holding their next portion, else their most recently memorized ayah,
-         * else the first stage not yet passed.
+         * The stage the student is in, steady through the day: the one holding the plan's next portion (whether
+         * today's is due, done or a rest day), else the one of the latest ayah memorized in Aqra (marking what was
+         * already known doesn't move it), else the first stage not yet passed.
          */
         fun currentStage(nextAyah: Int?, memorization: MemorizationStore, store: MushafStore, passes: Map<Int, Moment>): Int {
             if (nextAyah != null) return Curriculum.stage(store.juzOfAyah(nextAyah))
-            val latest = memorization.ayahs.maxByOrNull { (it.value.learnedAt ?: it.value.since).sinceReference }
-            if (latest != null && memorization.count < MushafStore.AYAH_COUNT) return Curriculum.stage(store.juzOfAyah(latest.key))
+            val latest = memorization.ayahs.mapNotNull { (ayah, memory) -> memory.learnedAt?.let { ayah to it } }
+                .maxWithOrNull(compareBy({ it.second.sinceReference }, { it.first }))
+            if (latest != null && memorization.count < MushafStore.AYAH_COUNT) return Curriculum.stage(store.juzOfAyah(latest.first))
             return (1..Curriculum.STAGE_COUNT).firstOrNull { passes[it] == null } ?: Curriculum.STAGE_COUNT
         }
     }

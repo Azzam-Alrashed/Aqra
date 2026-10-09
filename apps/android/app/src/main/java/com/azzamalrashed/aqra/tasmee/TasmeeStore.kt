@@ -20,6 +20,7 @@ import com.google.firebase.firestore.FirebaseFirestoreException
 import com.google.firebase.firestore.ListenerRegistration
 import com.google.firebase.firestore.Query
 import com.google.firebase.firestore.SetOptions
+import com.google.firebase.functions.FirebaseFunctionsException
 import com.google.firebase.storage.FirebaseStorage
 import com.google.firebase.storage.StorageMetadata
 import kotlinx.coroutines.channels.awaitClose
@@ -245,6 +246,9 @@ class TasmeeStore(
 
     val nextBooking: Booking? get() = upcomingBookings.firstOrNull()
 
+    /** When a booked session was to start, if it's still among the bookings. */
+    fun startOfBooked(sessionId: String): Moment? = bookedSessions[sessionId]?.startsAt ?: bookings.firstOrNull { it.id == sessionId }?.startsAt
+
     // MARK: - Teachers and their sessions
 
     suspend fun loadTeachers() {
@@ -271,6 +275,37 @@ class TasmeeStore(
      * Books a seat: the seat, this student's copy of the session and the seat count, in one transaction, so a session
      * never takes more students than it has seats.
      */
+    /**
+     * Takes a free seat instead of a bid: the server lets this student's active bid go (its credits come back) and
+     * books the seat, in one transaction, so a student never holds both.
+     */
+    suspend fun takeFreeSeat(instead: TasmeeSession, name: String, memorizedPages: Int, juzSummary: String?) {
+        val data = buildMap<String, Any> {
+            put("sessionId", instead.id)
+            put("name", name)
+            put("memorizedPages", memorizedPages)
+            juzSummary?.let { put("juzSummary", it) }
+        }
+        try {
+            AccountStore.functions.getHttpsCallable("takeFreeSeat").call(data).await()
+        } catch (error: FirebaseFunctionsException) {
+            if (error.code == FirebaseFunctionsException.Code.FAILED_PRECONDITION) throw TasmeeError.SeatUnavailable
+            throw error
+        }
+    }
+
+    /** This student's bids in some sessions, by session (those with an auction). */
+    suspend fun myBids(sessions: List<TasmeeSession>): Map<String, Bid> {
+        val uid = uid ?: return emptyMap()
+        val bids = HashMap<String, Bid>()
+        for (session in sessions) {
+            if (session.auction == null) continue
+            val snapshot = runCatching { database.collection("sessions").document(session.id).collection("bids").document(uid).get().await() }.getOrNull()
+            snapshot?.data?.let { Bid.from(uid, dated(it)) }?.let { bids[session.id] = it }
+        }
+        return bids
+    }
+
     suspend fun book(session: TasmeeSession, name: String, memorizedPages: Int, juzSummary: String?) {
         val uid = uid ?: return
         val seat = Seat(uid, name, memorizedPages = memorizedPages, juzSummary = juzSummary)
@@ -312,11 +347,8 @@ class TasmeeStore(
         val uid = uid ?: return
         val profile = teacherProfile ?: return
         val reference = database.collection("sessions").document()
-        val auction = if (auctionSeats > 0) {
-            TasmeeSession.Auction(auctionSeats, minBid, startsAt + (-TasmeeSession.BIDDING_CLOSES_BEFORE), TasmeeSession.Auction.State.OPEN)
-        } else {
-            null
-        }
+        val closesAt = if (auctionSeats > 0) TasmeeSession.biddingClosesAt(startsAt) else null
+        val auction = closesAt?.let { TasmeeSession.Auction(auctionSeats, minBid, it, TasmeeSession.Auction.State.OPEN) }
         val session = TasmeeSession(reference.id, uid, profile.name, startsAt, kind, if (kind == TasmeeSession.Kind.VIDEO) "" else place, seats,
             auction = auction)
         reference.set(stamped(session.document)).addOnFailureListener(::report)

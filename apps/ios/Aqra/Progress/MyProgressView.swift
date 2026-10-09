@@ -27,7 +27,7 @@ struct MyProgressView: View {
                     .padding(.top, 10)
                 juzGrid
                 Text("The fuller a juz', the more of it you've memorized; the deeper its color, the stronger.")
-                    .font(.system(size: 12, weight: .medium))
+                    .aqraFont(size: 12, weight: .medium)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
 
@@ -84,7 +84,7 @@ struct MyProgressView: View {
             }
             .frame(width: 64, height: 64)
             label
-                .font(.system(size: 12, weight: .bold))
+                .aqraFont(size: 12, weight: .bold)
                 .foregroundStyle(Palette.inkSoft)
         }
         .frame(maxWidth: .infinity)
@@ -100,7 +100,7 @@ struct MyProgressView: View {
             AqraCard(padding: 0, radius: 24) {
                 if let current = plan.plan {
                     AqraRow(icon: current.paused ? "⏸️" : "✍️", tint: Palette.butter,
-                            title: PlanFormat.amount(current.dailyLines) + Text(verbatim: " · ") + Text("\(current.studyDays.count) days a week"),
+                            title: PlanFormat.amount(current.dailyLines) + Text(verbatim: Separator.facts) + Text("\(current.studyDays.count) days a week"),
                             detail: planDetail)
                 } else {
                     AqraRow(icon: "✍️", tint: Palette.butter, title: Text("Memorize new portions"),
@@ -114,7 +114,7 @@ struct MyProgressView: View {
     private var planDetail: Text {
         let week = Int(plan.lines(inLast: 7).rounded())
         if let date = plan.completionDate(memorization: memorization, store: store) {
-            return Text("\(week) lines this week") + Text(verbatim: " · ") + Text("Completion: \(PlanFormat.month(date))")
+            return Text("\(week) lines this week") + Text(verbatim: Separator.facts) + Text("Completion: \(PlanFormat.month(date))")
         }
         return Text("\(week) lines this week")
     }
@@ -130,7 +130,7 @@ struct MyProgressView: View {
             }
             .foregroundStyle(Palette.brand)
         }
-        .font(.system(size: 30, weight: .heavy))
+        .aqraFont(size: 30, weight: .heavy)
         .padding(.top, 8)
         .padding(.bottom, 6)
         .accessibilityElement(children: .combine)
@@ -149,10 +149,10 @@ struct MyProgressView: View {
                     IconTile(icon: "🔥", tint: Palette.peach, size: 40)
                     VStack(alignment: .leading, spacing: 1) {
                         Text("\(streak) days")
-                            .font(.system(size: 19, weight: .heavy))
+                            .aqraFont(size: 19, weight: .heavy)
                             .foregroundStyle(Palette.ink)
                         Text("Revision streak")
-                            .font(.system(size: 12, weight: .semibold))
+                            .aqraFont(size: 12, weight: .semibold)
                             .foregroundStyle(Palette.inkSoft)
                     }
                     Spacer()
@@ -168,7 +168,7 @@ struct MyProgressView: View {
                                 .frame(width: 26, height: 26)
                                 .overlay {
                                     Image(systemName: "checkmark")
-                                        .font(.system(size: 11, weight: .black))
+                                        .aqraFont(size: 11, weight: .black)
                                         .foregroundStyle(.white)
                                         .opacity(revised ? 1 : 0)
                                 }
@@ -178,7 +178,7 @@ struct MyProgressView: View {
                                     }
                                 }
                             Text(day.formatted(.dateTime.weekday(.narrow)))
-                                .font(.system(size: 11, weight: .bold))
+                                .aqraFont(size: 11, weight: .bold)
                                 .foregroundStyle(index == days.count - 1 ? Palette.brand : Palette.inkSoft)
                         }
                         .frame(maxWidth: .infinity)
@@ -201,14 +201,15 @@ struct MyProgressView: View {
             VStack(alignment: .leading, spacing: 8) {
                 IconTile(icon: icon, tint: tint, size: 32)
                 Text(verbatim: value)
-                    .font(.system(size: 20, weight: .heavy).monospacedDigit())
+                    .aqraFont(size: 20, weight: .heavy, monospacedDigit: true)
                     .foregroundStyle(Palette.ink)
                     .lineLimit(1)
                     .minimumScaleFactor(0.7)
                 label
-                    .font(.system(size: 11, weight: .semibold))
+                    .aqraFont(size: 11, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                     .lineLimit(2, reservesSpace: true)
+                    .minimumScaleFactor(0.75)
             }
             .frame(maxWidth: .infinity, alignment: .leading)
         }
@@ -252,7 +253,7 @@ struct MyProgressView: View {
         .overlay(shape.strokeBorder(share > 0 ? .white.opacity(0.8) : Palette.lavender, lineWidth: 1.2))
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text("Juz' \(juz)"))
-        .accessibilityValue(Text(verbatim: "\(share.formatted(.percent.precision(.fractionLength(0)))) · \(strength.formatted(.percent.precision(.fractionLength(0))))"))
+        .accessibilityValue(Text(verbatim: [share, strength].map { $0.formatted(.percent.precision(.fractionLength(0))) }.formatted(.list(type: .and, width: .narrow))))
     }
 }
 

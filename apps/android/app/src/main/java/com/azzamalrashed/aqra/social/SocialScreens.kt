@@ -87,6 +87,7 @@ import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.formatDay
 import com.azzamalrashed.aqra.ui.util.formatNumber
+import com.azzamalrashed.aqra.ui.util.factSeparator
 import kotlinx.coroutines.launch
 
 @Composable
@@ -348,7 +349,7 @@ private fun CompetitionScreen(app: AqraApp, competition: Competition, onClose: (
         Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(live.title, style = aqraStyle(26f, Weight.heavy, Palette.ink))
             val until = if (live.isRunning()) stringResource(R.string.until_s, formatDay(live.endsAt.toInstant())) else stringResource(R.string.ended)
-            Text(live.metric.title() + " · " + until, style = aqraStyle(13f, Weight.semibold, Palette.brand))
+            Text(live.metric.title() + factSeparator() + until, style = aqraStyle(13f, Weight.semibold, Palette.brand))
             if (live.kind == Competition.Kind.TEACHER) {
                 Text(stringResource(R.string.scored_from_the_pages_s_hears_clean_in_tasmee, live.ownerName), style = aqraStyle(12f, Weight.medium, Palette.inkSoft))
             }

@@ -10,7 +10,7 @@ struct TasmeeHistoryView: View {
         ScrollView {
             VStack(alignment: .leading, spacing: 14) {
                 Text("Every tasmee'")
-                    .font(.system(size: 28, weight: .heavy))
+                    .aqraFont(size: 28, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                     .padding(.top, 8)
                     .accessibilityAddTraits(.isHeader)
@@ -48,10 +48,10 @@ struct TasmeeHistoryView: View {
             VStack(alignment: .leading, spacing: 8) {
                 IconTile(icon: icon, tint: tint, size: 32)
                 Text(verbatim: value)
-                    .font(.system(size: 20, weight: .heavy).monospacedDigit())
+                    .aqraFont(size: 20, weight: .heavy, monospacedDigit: true)
                     .foregroundStyle(Palette.ink)
                 label
-                    .font(.system(size: 11, weight: .semibold))
+                    .aqraFont(size: 11, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                     .lineLimit(1)
                     .minimumScaleFactor(0.8)
@@ -78,10 +78,11 @@ struct TasmeeRecordRow: View {
                     title: title, detail: detail) {
                 if let passed = record.passesTest {
                     Text(passed ? "Passed" : "Not yet")
-                        .font(.system(size: 12, weight: .bold))
+                        .aqraFont(size: 12, weight: .bold)
                         .foregroundStyle(passed ? Color(light: 0x1F7A4D, dark: 0x1F7A4D) : Color(light: 0x9A3E26, dark: 0x9A3E26))
                         .padding(.horizontal, 10)
-                        .frame(height: 26)
+                        .padding(.vertical, 3)
+                        .frame(minHeight: 26)
                         .background(passed ? Palette.mint : Palette.rose, in: Capsule())
                 } else {
                     AqraChevron()
@@ -107,7 +108,7 @@ struct TasmeeRecordRow: View {
     private var detail: Text {
         let counts = TasmeeFormat.counts(pages: Set(record.pages).count, stumbles: record.stumbles.count)
         guard showsListener || record.test != nil else { return counts }
-        return Text(verbatim: record.at.formatted(.relative(presentation: .named))) + Text(verbatim: " · ") + counts
+        return Text(verbatim: record.at.formatted(.relative(presentation: .named))) + Text(verbatim: Separator.facts) + counts
     }
 }
 
@@ -130,16 +131,16 @@ struct TasmeeRecordDetails: View {
                             Text("Tasmee' with a teacher")
                         }
                     }
-                    .font(.system(size: 26, weight: .heavy))
+                    .aqraFont(size: 26, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                     Group {
                         if showsListener && !record.teacherName.isEmpty {
-                            Text(verbatim: record.teacherName + " · " + TasmeeFormat.when(record.at))
+                            Text(verbatim: record.teacherName + Separator.facts + TasmeeFormat.when(record.at))
                         } else {
                             Text(verbatim: TasmeeFormat.when(record.at))
                         }
                     }
-                    .font(.system(size: 13, weight: .semibold))
+                    .aqraFont(size: 13, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                 }
                 .padding(.top, 20)
@@ -150,10 +151,10 @@ struct TasmeeRecordDetails: View {
                             IconTile(icon: passed ? "🏅" : "🌱", tint: passed ? Palette.butter : Palette.mint, size: 40)
                             VStack(alignment: .leading, spacing: 2) {
                                 Text(passed ? "The test was passed" : "Not passed yet")
-                                    .font(.system(size: 16, weight: .heavy))
+                                    .aqraFont(size: 16, weight: .heavy)
                                     .foregroundStyle(Palette.ink)
                                 Text("\(record.stumbles.count) mistakes, \(test.allowedMistakesPerPage) allowed per page heard")
-                                    .font(.system(size: 12, weight: .semibold))
+                                    .aqraFont(size: 12, weight: .semibold)
                                     .foregroundStyle(Palette.inkSoft)
                             }
                             Spacer(minLength: 0)
@@ -164,7 +165,7 @@ struct TasmeeRecordDetails: View {
                 AqraSectionTitle(title: "Pages heard")
                 AqraCard(padding: 14, radius: 24) {
                     Text(verbatim: pagesLine)
-                        .font(.system(size: 14, weight: .semibold))
+                        .aqraFont(size: 14, weight: .semibold)
                         .foregroundStyle(Palette.ink)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
@@ -212,7 +213,7 @@ struct TasmeeRecordDetails: View {
         return groups.map { group in
             let range = group.pages.count > 1 ? "\(arabic(group.pages.first!))–\(arabic(group.pages.last!))" : arabic(group.pages[0])
             return "\(store.surahNames[group.surah] ?? ""): \(range)"
-        }.joined(separator: " · ")
+        }.joined(separator: Separator.arabic)
     }
 
     private func arabic(_ number: Int) -> String {

@@ -156,6 +156,44 @@ struct JourneyTests {
         #expect(abs(pace - lines / 9) < 0.001)
     }
 
+    // MARK: - The daily reminder
+
+    @Test func theDailyReminderLooksTwoWeeksAheadAndLeavesOutADoneDay() throws {
+        // day(0) is Sunday 17 January 2027, at 09:00.
+        let evening = 18 * 60, morning = 5 * 60 + 30
+        let all = DailyReminder.reminders(minutes: evening, studyDays: [1, 3], todayDone: false, now: day(0), calendar: calendar)
+        #expect(all.count == DailyReminder.daysAhead)
+        #expect(all.first?.id == "daily-wird-2027-01-17" && all.last?.id == "daily-wird-2027-01-30")
+        #expect(all.first?.fireAt == day(0).addingTimeInterval(9 * 3_600))
+        // The study days' reminders mention the new portion: Sundays and Tuesdays.
+        #expect(all.prefix(7).map(\.withPortion) == [true, false, true, false, false, false, false])
+
+        // Today's work done, or today's time passed: from tomorrow.
+        let done = DailyReminder.reminders(minutes: evening, studyDays: [1, 3], todayDone: true, now: day(0), calendar: calendar)
+        #expect(done.count == DailyReminder.daysAhead - 1 && done.first?.id == "daily-wird-2027-01-18")
+        let passed = DailyReminder.reminders(minutes: morning, studyDays: nil, todayDone: false, now: day(0), calendar: calendar)
+        #expect(passed.first?.id == "daily-wird-2027-01-18" && passed.allSatisfy { !$0.withPortion })
+    }
+
+    @Test func aPortionIsDueOnAStudyDayUntilItsRecorded() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        let plan = PlanStore(fileURL: nil, calendar: calendar)
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        #expect(!plan.isPortionDue(memorization: memorization, now: day(0)))
+        plan.setPlan(MemorizationPlan(dailyLines: 15, studyDays: [1, 2], order: .fromEnd), now: day(0))
+        #expect(plan.isPortionDue(memorization: memorization, now: day(0)))
+        // Not on a rest day (Tuesday).
+        #expect(!plan.isPortionDue(memorization: memorization, now: day(2)))
+        guard case .due(let portion) = plan.today(memorization: memorization, store: store, now: day(0)) else {
+            Issue.record("A portion should be due")
+            return
+        }
+        plan.record(planned: portion, memorized: portion, store: store, memorization: memorization, revision: revision, now: day(0))
+        #expect(!plan.isPortionDue(memorization: memorization, now: day(0)))
+        #expect(plan.isPortionDue(memorization: memorization, now: day(1)))
+    }
+
     // MARK: - Stages and mastery
 
     @Test func stagesMeasureMemorizedMasteredAndVerified() throws {
@@ -196,6 +234,18 @@ struct JourneyTests {
         #expect(abs(memorized - 1.0 / 30) < 0.000_1)
         #expect(memorization.quranShare(in: store) { memorization.masteredCount(in: $0) } == memorized)
         #expect(memorization.quranShare(in: store) { memorization.verifiedCount(in: $0) } == memorized)
+    }
+
+    @Test func aStageTestsOptionsLeaveOutOnlyTheAyahEndMarker() throws {
+        let store = try store()
+        // Every ayah ends with its numbered marker; leaving it out removes that one word and nothing else.
+        for (index, text) in store.ayahTexts.enumerated() {
+            let without = AyahText.withoutNumber(text)
+            let number = store.reference(ofAyah: index).ayah
+            #expect(without + " \u{200F}" + String(UnicodeScalar(0xE959 + UInt32(number))!) == text)
+        }
+        // Text that doesn't end in a marker is left as it is.
+        #expect(AyahText.withoutNumber("بسم الله") == "بسم الله")
     }
 
     @Test func aStageTestAsksAboutWhatsMemorized() throws {
@@ -265,6 +315,29 @@ struct JourneyTests {
         #expect(AssessmentStore.currentStage(nextAyah: 300, memorization: memorization, store: store, passes: [:]) == 1)
         #expect(AssessmentStore.currentStage(nextAyah: nil, memorization: MemorizationStore(fileURL: nil), store: store,
                                              passes: [1: day(0)]) == 2)
+    }
+
+    @Test func theCurrentStageStaysSteadyThroughTheDay() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        let plan = PlanStore(fileURL: nil, calendar: calendar)
+        let ammaStart = try #require(store.juzAyahs[30]).lowerBound
+        // Declaring what's already known doesn't move it, whatever was marked last: al-Fatiha after juz' ʿAmma.
+        memorization.mark(ammaStart...(ammaStart + 20), memorized: true)
+        memorization.mark(0...6, memorized: true)
+        #expect(AssessmentStore.currentStage(nextAyah: nil, memorization: memorization, store: store, passes: [:]) == 1)
+        // An ayah memorized in Aqra leads it.
+        memorization.learn([ammaStart + 30], at: day(1), stability: 2)
+        #expect(AssessmentStore.currentStage(nextAyah: nil, memorization: memorization, store: store, passes: [:]) == 10)
+        // With a plan, the next portion leads it, whether or not today's portion is due.
+        plan.setPlan(MemorizationPlan(dailyLines: 8, studyDays: [1, 2, 3, 4, 5, 6, 7], order: .fromStart), now: day(0))
+        let next = try #require(plan.nextAyah(memorization: memorization, store: store))
+        #expect(store.juz(ofAyah: next) == 1)
+        #expect(AssessmentStore.currentStage(nextAyah: next, memorization: memorization, store: store, passes: [:]) == 1)
+        var paused = try #require(plan.plan)
+        paused.paused = true
+        plan.setPlan(paused, now: day(1))
+        #expect(plan.nextAyah(memorization: memorization, store: store) == next)
     }
 
     // MARK: - Rewards

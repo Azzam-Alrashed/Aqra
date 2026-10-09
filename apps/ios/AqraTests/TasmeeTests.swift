@@ -169,6 +169,23 @@ struct TasmeeTests {
         #expect(StudentFile(id: "bob", document: ["notes": "x"]) == nil)
     }
 
+    @Test func biddingClosesThreeHoursBeforeOrLateForASessionSoon() {
+        let now = start
+        /// How many minutes from now bidding closes, for a session starting in `minutes`.
+        func closes(inMinutes minutes: Int) -> Int? {
+            TasmeeStore.biddingClosesAt(startsAt: now.addingTimeInterval(Double(minutes) * 60), now: now)
+                .map { Int(($0.timeIntervalSince(now) / 60).rounded()) }
+        }
+        // Far enough: three hours before.
+        #expect(closes(inMinutes: 24 * 60) == 21 * 60)
+        #expect(closes(inMinutes: 210) == 30)
+        // Sooner, three hours before would leave under half an hour to bid: 30 minutes before instead.
+        #expect(closes(inMinutes: 200) == 170)
+        #expect(closes(inMinutes: 60) == 30)
+        // Under an hour away: no auction.
+        #expect(closes(inMinutes: 59) == nil)
+    }
+
     @Test func auctionsSeatsAndBidsSurviveTheirDocuments() {
         let auction = TasmeeSession.Auction(seats: 3, minBid: 2, closesAt: day(1), state: .open)
         let session = TasmeeSession(id: "s", teacherId: "t", teacherName: "x", startsAt: day(1).addingTimeInterval(3 * 3_600),

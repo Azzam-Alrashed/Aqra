@@ -5,6 +5,10 @@
     <string name="s_cancelled_a_session_you_were_in">ألغى %s جلسة كنت فيها.</string>
     <!-- %@ cancelled a session: your %lld credits are back. -->
     <string name="s_cancelled_a_session_your_n_credits_are_back">ألغى %1$s جلسة، فعاد إليك ما دفعته من عملات (%2$d).</string>
+    <!-- %@ cancelled their session on %@. -->
+    <string name="s_cancelled_their_session_on_s">ألغى %1$s جلسته يوم %2$s.</string>
+    <!-- %@ cancelled their session on %@: your %lld credits are back. -->
+    <string name="s_cancelled_their_session_on_s_your_n_credits_are">ألغى %1$s جلسته يوم %2$s، فعاد إليك ما دفعته من عملات (%3$d).</string>
     <!-- %@ credits -->
     <string name="s_credits">%s عملة</string>
     <!-- %@ credits due to you -->
@@ -19,6 +23,15 @@
         <item quantity="few">%d آيات</item>
         <item quantity="many">%d آية</item>
         <item quantity="other">%d آية</item>
+    </plurals>
+    <!-- %lld ayat hidden -->
+    <plurals name="n_ayat_hidden">
+        <item quantity="zero">لا آيات مخفية</item>
+        <item quantity="one">آية واحدة مخفية</item>
+        <item quantity="two">آيتان مخفيتان</item>
+        <item quantity="few">%d آيات مخفية</item>
+        <item quantity="many">%d آية مخفية</item>
+        <item quantity="other">%d آية مخفية</item>
     </plurals>
     <!-- %lld ayat memorized -->
     <plurals name="n_ayat_memorized">
@@ -132,7 +145,7 @@
     <!-- %lld of %lld seats -->
     <string name="n_of_n_seats">المقاعد: %1$d من %2$d</string>
     <!-- %lld of %lld · until %@ -->
-    <string name="n_of_n_until_s">%1$d من %2$d · حتى %3$s</string>
+    <string name="n_of_n_until_s">%1$d من %2$d، حتى %3$s</string>
     <!-- %lld of 30 parts finished -->
     <string name="n_of_30_parts_finished">أُتمّ %d من ٣٠ جزءًا</string>
     <!-- %lld pages -->
@@ -181,7 +194,7 @@
         <item quantity="other">%d مقعد بالمزايدة</item>
     </plurals>
     <!-- %lld seats by auction · %lld bids -->
-    <string name="n_seats_by_auction_n_bids">مقاعد بالمزايدة: %1$d · العروض: %2$d</string>
+    <string name="n_seats_by_auction_n_bids">مقاعد بالمزايدة: %1$d، العروض: %2$d</string>
     <!-- %lld stumbles -->
     <plurals name="n_stumbles">
         <item quantity="zero">لا تعثّر</item>
@@ -193,12 +206,12 @@
     </plurals>
     <!-- %lld stumbles · added to your revision -->
     <plurals name="n_stumbles_added_to_your_revision">
-        <item quantity="zero">لا تعثّر · أُضيف إلى مراجعتك</item>
-        <item quantity="one">تعثّر واحد · أُضيف إلى مراجعتك</item>
-        <item quantity="two">تعثّران · أُضيف إلى مراجعتك</item>
-        <item quantity="few">%d تعثّرات · أُضيف إلى مراجعتك</item>
-        <item quantity="many">%d تعثّرًا · أُضيف إلى مراجعتك</item>
-        <item quantity="other">%d تعثّر · أُضيف إلى مراجعتك</item>
+        <item quantity="zero">لا تعثّر، أُضيف إلى مراجعتك</item>
+        <item quantity="one">تعثّر واحد، أُضيف إلى مراجعتك</item>
+        <item quantity="two">تعثّران، أُضيف إلى مراجعتك</item>
+        <item quantity="few">%d تعثّرات، أُضيف إلى مراجعتك</item>
+        <item quantity="many">%d تعثّرًا، أُضيف إلى مراجعتك</item>
+        <item quantity="other">%d تعثّر، أُضيف إلى مراجعتك</item>
     </plurals>
     <!-- %lld this week -->
     <string name="n_this_week">%d هذا الأسبوع</string>
@@ -288,8 +301,12 @@
     <string name="a_seat_won">مقعد فزت به</string>
     <!-- A seat won in your session -->
     <string name="a_seat_won_in_your_session">مقعد فِيز به في جلستك</string>
+    <!-- A session less than an hour away offers free seats only: there\'s no time to bid. -->
+    <string name="a_session_less_than_an_hour_away_offers_free_seats">الجلسة التي تبدأ بعد أقل من ساعة مقاعدها مجانية فقط، فلا وقت للمزايدة.</string>
     <!-- A student -->
     <string name="a_student">طالب</string>
+    <!-- a week -->
+    <string name="a_week_2">في الأسبوع</string>
     <!-- A week -->
     <string name="a_week">أسبوع</string>
     <!-- A whole day\'s wird -->
@@ -312,6 +329,8 @@
     <string name="add_to_follow_up">أضفها للمتابعة</string>
     <!-- Add your city and a line about you -->
     <string name="add_your_city_and_a_line_about_you">أضف مدينتك ونبذة عنك</string>
+    <!-- Also booked -->
+    <string name="also_booked">حجوزات أخرى</string>
     <!-- and rise, ayah by ayah. -->
     <string name="and_rise_ayah_by_ayah">وارتقِ آيةً بعد آية</string>
     <!-- App -->
@@ -320,6 +339,10 @@
     <string name="approved">مقبول</string>
     <!-- Aqra shows the Quran exactly as published, from these sources, with thanks. -->
     <string name="aqra_shows_the_quran_exactly_as_published_from_these_sources">يعرض اقرأ القرآن الكريم كما نُشر تمامًا، من هذه المصادر، مع الشكر والتقدير.</string>
+    <!-- ayah %lld -->
+    <string name="ayah_n">الآية %d</string>
+    <!-- ayah %lld of %@ -->
+    <string name="ayah_n_of_s">الآية %1$d من سورة %2$s</string>
     <!-- Ayat memorized -->
     <string name="ayat_memorized">الآيات المحفوظة</string>
     <!-- Backed up %@ -->
@@ -332,14 +355,20 @@
     <string name="be_my_friend_on_aqra_open_this_link_or_enter">لنكن صديقين على اقرأ: افتح هذا الرابط، أو أدخل الرمز %s.</string>
     <!-- Become friends -->
     <string name="become_friends">أضف إلى أصدقائك</string>
+    <!-- Before: %@ -->
+    <string name="before_s">قبل التعديل: %s</string>
     <!-- Begin -->
     <string name="begin">ابدأ</string>
     <!-- Begin your journey -->
     <string name="begin_your_journey">ابدأ رحلتك</string>
     <!-- begin your journey. -->
     <string name="begin_your_journey_2">ابدأ رحلتك</string>
+    <!-- begin? -->
+    <string name="begin_q">تبدأ؟</string>
     <!-- Beside the free seats, these go to the highest bids, in credits. Bidding closes three hours before the session; you earn most of each winning bid. -->
     <string name="beside_the_free_seats_these_go_to_the_highest_bids">إلى جانب المقاعد المجانية، تذهب هذه لأعلى العروض بالعملات. تُغلق المزايدة قبل الجلسة بثلاث ساعات، ولك معظم كل عرض فائز.</string>
+    <!-- Beside the free seats, these go to the highest bids, in credits. The session is soon, so bidding closes 30 minutes before it; you earn most of each winning bid. -->
+    <string name="beside_the_free_seats_these_go_to_the_highest_bids_2">إلى جانب المقاعد المجانية، تذهب هذه لأعلى العروض بالعملات. الجلسة قريبة، فتُغلق المزايدة قبلها بنصف ساعة، ولك معظم كل عرض فائز.</string>
     <!-- Best score %@ -->
     <string name="best_score_s">أفضل نتيجة %s</string>
     <!-- Between you and yourself: nobody else sees it. -->
@@ -354,8 +383,14 @@
     <string name="bids">العروض</string>
     <!-- Book -->
     <string name="book">احجز</string>
+    <!-- Book a free seat instead -->
+    <string name="book_a_free_seat_instead">احجز مقعدًا مجانيًا بدلًا منه</string>
+    <!-- Book a free seat instead? -->
+    <string name="book_a_free_seat_instead_q">تحجز مقعدًا مجانيًا بدلًا من عرضك؟</string>
     <!-- Book a tasmee\' and ask for a stage test -->
     <string name="book_a_tasmee_and_ask_for_a_stage_test">احجز تسميعًا واطلب اختبار المرحلة</string>
+    <!-- Book the free seat -->
+    <string name="book_the_free_seat">احجز المقعد المجاني</string>
     <!-- Booked -->
     <string name="booked">محجوز</string>
     <!-- Both pages -->
@@ -374,6 +409,8 @@
     <string name="cancel_this_session_q">تلغي هذه الجلسة؟</string>
     <!-- Cancel your booking? -->
     <string name="cancel_your_booking_q">تلغي حجزك؟</string>
+    <!-- Cancelled by the teacher -->
+    <string name="cancelled_by_the_teacher">ألغاها المعلّم</string>
     <!-- Challenge met -->
     <string name="challenge_met">تحقّق التحدي</string>
     <!-- Change it -->
@@ -421,10 +458,10 @@
     <string name="counting">العدّ</string>
     <!-- Create -->
     <string name="create">إنشاء</string>
-    <!-- Credits -->
-    <string name="credits">العملات</string>
     <!-- credits -->
     <string name="credits_2">عملة</string>
+    <!-- Credits -->
+    <string name="credits">العملات</string>
     <!-- Credits bought -->
     <string name="credits_bought">عملات اشتريتها</string>
     <!-- Credits pay for seats won by bidding in teachers\' sessions. A bid holds its credits; they come back if someone outbids you or the session is cancelled. -->
@@ -434,7 +471,7 @@
     <!-- credits to bid with -->
     <string name="credits_to_bid_with">عملة للمزايدة</string>
     <!-- credits · free while seats remain -->
-    <string name="credits_free_while_seats_remain">عملة · مجانًا ما دامت المقاعد متاحة</string>
+    <string name="credits_free_while_seats_remain">عملة، مجانًا ما دامت المقاعد متاحة</string>
     <!-- Daily amount -->
     <string name="daily_amount">المقدار اليومي</string>
     <!-- Daily reminder -->
@@ -447,8 +484,12 @@
     <string name="delete">حذف</string>
     <!-- Delete account -->
     <string name="delete_account">حذف الحساب</string>
+    <!-- Delete my backup -->
+    <string name="delete_my_backup">حذف نسختي الاحتياطية</string>
     <!-- Delete your account? -->
     <string name="delete_your_account_q">حذف حسابك؟</string>
+    <!-- Delete your backup? -->
+    <string name="delete_your_backup_q">حذف نسختك الاحتياطية؟</string>
     <!-- Done -->
     <string name="done">تم</string>
     <!-- Due to you -->
@@ -483,6 +524,8 @@
     <string name="everything_is_ready">كل شيء جاهز،</string>
     <!-- Everything that helps your memorization, -->
     <string name="everything_that_helps_your_memorization">كل ما يُعينك على حفظك</string>
+    <!-- fact separator -->
+    <string name="fact_separator">"، "</string>
     <!-- First new portion -->
     <string name="first_new_portion">أول مقطع جديد</string>
     <!-- First revision -->
@@ -543,6 +586,8 @@
     <string name="held_for_bids">محجوزة للعروض</string>
     <!-- Hesitated -->
     <string name="hesitated">تردّد</string>
+    <!-- Hide %@ -->
+    <string name="hide_s">إخفاء %s</string>
     <!-- Hide all -->
     <string name="hide_all">إخفاء الكل</string>
     <!-- History -->
@@ -559,12 +604,16 @@
     <string name="how_much_will_you_memorize">كم تحفظ</string>
     <!-- I memorized it -->
     <string name="i_memorized_it">حفظته</string>
+    <!-- I memorized up to %@ -->
+    <string name="i_memorized_up_to_s">حفظت إلى %s</string>
     <!-- I\'m just starting -->
     <string name="im_just_starting">أبدأ من الصفر</string>
     <!-- Ijazah from %@ -->
     <string name="ijazah_from_s">إجازة من %s</string>
     <!-- Ijazah, riwayah, halaqah -->
     <string name="ijazah_riwayah_halaqah">الإجازة، الرواية، الحلقة</string>
+    <!-- in %@ -->
+    <string name="in_s">في %s</string>
     <!-- in one place. -->
     <string name="in_one_place">في مكان واحد</string>
     <!-- In person -->
@@ -577,6 +626,8 @@
     <string name="invite_a_friend">ادعُ صديقًا</string>
     <!-- Invite a friend with a code -->
     <string name="invite_a_friend_with_a_code">ادعُ صديقًا برمز</string>
+    <!-- It counts as taken: the questions you haven\'t answered count as wrong. -->
+    <string name="it_counts_as_taken_the_questions_you_havent_answered_count">يُحسب الاختبار مأخوذًا، وتُحسب الأسئلة التي لم تُجب عنها خاطئة.</string>
     <!-- It\'s been added to your revision. -->
     <string name="its_been_added_to_your_revision">أُضيف إلى مراجعتك.</string>
     <!-- Its chain, its date, anything else -->
@@ -597,8 +648,12 @@
     <string name="juz_n_n">الأجزاء %1$d–%2$d</string>
     <!-- Juz\' &amp; surahs -->
     <string name="juz_surahs">الأجزاء والسور</string>
+    <!-- Keep going -->
+    <string name="keep_going">تابع الاختبار</string>
     <!-- Keep it -->
     <string name="keep_it">أبقها</string>
+    <!-- Keep my bid -->
+    <string name="keep_my_bid">أبقِ عرضي</string>
     <!-- King Fahd Glorious Quran Printing Complex -->
     <string name="king_fahd_glorious_quran_printing_complex">مجمع الملك فهد لطباعة المصحف الشريف</string>
     <!-- Language -->
@@ -613,6 +668,8 @@
     <string name="leave_revision">إنهاء المراجعة</string>
     <!-- Leave the call -->
     <string name="leave_the_call">غادر المكالمة</string>
+    <!-- Leave the test? -->
+    <string name="leave_the_test_q">أتغادر الاختبار؟</string>
     <!-- Leave this competition? -->
     <string name="leave_this_competition_q">تغادر هذه المسابقة؟</string>
     <!-- Leave without recording? -->
@@ -623,6 +680,8 @@
     <string name="lowest_bid">أدنى عرض</string>
     <!-- Make my code -->
     <string name="make_my_code">أنشئ رمزي</string>
+    <!-- Mark %@ as memorized -->
+    <string name="mark_s_as_memorized">تحديد %s محفوظةً</string>
     <!-- Mark as heard -->
     <string name="mark_as_heard">علّمها مسموعة</string>
     <!-- Mark pages and ayat in the Mushaf -->
@@ -757,8 +816,6 @@
     <string name="page_n">الصفحة %d</string>
     <!-- Pages %@: bring them back tomorrow to make them firm? -->
     <string name="pages_s_bring_them_back_tomorrow_to_make_them_firm">الصفحات %s: أتعيدها غدًا لتثبّتها؟</string>
-    <!-- pages a day -->
-    <string name="pages_a_day">صفحة في اليوم</string>
     <!-- Pages heard -->
     <string name="pages_heard">الصفحات المسموعة</string>
     <!-- Pages heard clean -->
@@ -797,6 +854,8 @@
     <string name="press_and_hold_an_ayah_to_mark_from_it_to">اضغط مطوّلًا على آية لتحدّد منها إلى غيرها</string>
     <!-- Progress -->
     <string name="progress">تقدّمي</string>
+    <!-- Raise -->
+    <string name="raise">ارفع عرضك</string>
     <!-- Raise my bid -->
     <string name="raise_my_bid">ارفع عرضي</string>
     <!-- Ramadan\'s revision -->
@@ -821,6 +880,8 @@
     <string name="remove_all">إزالة الكل</string>
     <!-- Remove the challenge -->
     <string name="remove_the_challenge">إزالة التحدي</string>
+    <!-- Remove the stumble on %@ -->
+    <string name="remove_the_stumble_on_s">إزالة التعثّر في %s</string>
     <!-- Remove this friend? -->
     <string name="remove_this_friend_q">تزيل هذا الصديق؟</string>
     <!-- Repetitions: %lld -->
@@ -829,6 +890,8 @@
     <string name="reported_by_ahmad">رواه أحمد</string>
     <!-- Resume -->
     <string name="resume">استئناف</string>
+    <!-- Reveal the next ayah -->
+    <string name="reveal_the_next_ayah">كشف الآية التالية</string>
     <!-- Reversed: session cancelled -->
     <string name="reversed_session_cancelled">مسترجعة: أُلغيت الجلسة</string>
     <!-- Revise %lld pages -->
@@ -856,6 +919,8 @@
     <string name="revised_outside_the_app_with_stumbles">راجعتها خارج التطبيق، مع تعثّرات…</string>
     <!-- Revision -->
     <string name="revision">المراجعة</string>
+    <!-- Revision goes on every day. -->
+    <string name="revision_goes_on_every_day">المراجعة مستمرة كل يوم.</string>
     <!-- Revision streak -->
     <string name="revision_streak">سلسلة المراجعة</string>
     <!-- Revision streak: %lld days -->
@@ -879,6 +944,8 @@
     <string name="save_this_part">احفظ هذا الجزء</string>
     <!-- Save your progress -->
     <string name="save_your_progress">احفظ تقدّمك</string>
+    <!-- Say what kind of stumble on %@ -->
+    <string name="say_what_kind_of_stumble_on_s">تحديد نوع الخطأ في %s</string>
     <!-- Scan their QR code -->
     <string name="scan_their_qr_code">امسح رمز QR</string>
     <!-- Scored from the pages %@ hears clean in tasmee\'. -->
@@ -901,6 +968,8 @@
     <string name="share">مشاركة</string>
     <!-- Share your code; it\'s valid for a week. -->
     <string name="share_your_code_its_valid_for_a_week">شارك رمزك؛ صالح لمدة أسبوع.</string>
+    <!-- Show %@ -->
+    <string name="show_s">إظهار %s</string>
     <!-- Show all -->
     <string name="show_all">إظهار الكل</string>
     <!-- Show page -->
@@ -965,8 +1034,8 @@
     <string name="students_appear_here_once_youve_heard_them">يظهر طلابك هنا بعد أن تسمع منهم.</string>
     <!-- Students who book join the call from the session\'s page, from 15 minutes before it starts. -->
     <string name="students_who_book_join_the_call_from_the_sessions_page">ينضم الطلاب الذين حجزوا إلى المكالمة من صفحة الجلسة، قبل بدئها بربع ساعة.</string>
-    <!-- Study days -->
-    <string name="study_days">أيام الحفظ</string>
+    <!-- Stumbled on %@ -->
+    <string name="stumbled_on_s">تعثّرت في %s</string>
     <!-- Stumbles -->
     <string name="stumbles">التعثّرات</string>
     <!-- Submitted -->
@@ -1025,6 +1094,10 @@
     <string name="the_call_opens_a_quarter_of_an_hour_before_the">تُفتح المكالمة قبل الجلسة بربع ساعة.</string>
     <!-- The Complex\'s Mushaf page fonts of the 1441H print, with tajweed colors. -->
     <string name="the_complexs_mushaf_page_fonts_of_the_1441h_print_with">خطوط صفحات المصحف من المجمع، طبعة ١٤٤١هـ، بألوان التجويد.</string>
+    <!-- The copy of your progress kept online -->
+    <string name="the_copy_of_your_progress_kept_online">نسخة تقدّمك المحفوظة على الإنترنت</string>
+    <!-- The copy of your progress kept online is deleted for good. The progress on this device stays, and is backed up afresh from now on. -->
+    <string name="the_copy_of_your_progress_kept_online_is_deleted_for">تُحذف النسخة الاحتياطية من تقدّمك نهائيًا، ويبقى التقدّم المحفوظ على هذا الجهاز، ويُنسخ احتياطيًا من جديد من الآن.</string>
     <!-- The file couldn\'t be uploaded. Check your connection, or try a smaller file. -->
     <string name="the_file_couldnt_be_uploaded_check_your_connection_or_try">تعذّر رفع الملف. تحقّق من اتصالك، أو جرّب ملفًا أصغر.</string>
     <!-- The fuller a juz\', the more of it you\'ve memorized; the deeper its color, the stronger. -->
@@ -1055,6 +1128,8 @@
     <string name="the_topic_sections_for_now">أقسام المواضيع، مؤقتًا.</string>
     <!-- The typeface of the hadith, under the SIL Open Font License. -->
     <string name="the_typeface_of_the_hadith_under_the_sil_open_font">خط الأحاديث، برخصة SIL للخطوط المفتوحة.</string>
+    <!-- the whole Quran -->
+    <string name="the_whole_quran_2">القرآن كاملًا</string>
     <!-- The whole Quran -->
     <string name="the_whole_quran">القرآن كاملًا</string>
     <!-- There isn\'t enough memorized in this stage for a test yet. -->
@@ -1095,6 +1170,19 @@
     <string name="try_again">حاول مرة أخرى</string>
     <!-- Two weeks -->
     <string name="two_weeks">أسبوعان</string>
+    <!-- Undo -->
+    <string name="undo">تراجع</string>
+    <!-- Unmark %@ -->
+    <string name="unmark_s">إلغاء تحديد %s</string>
+    <!-- Unmarked %lld ayat -->
+    <plurals name="unmarked_n_ayat">
+        <item quantity="zero">لم يُلغَ تحديد أي آية</item>
+        <item quantity="one">أُلغي تحديد آية واحدة</item>
+        <item quantity="two">أُلغي تحديد آيتين</item>
+        <item quantity="few">أُلغي تحديد %d آيات</item>
+        <item quantity="many">أُلغي تحديد %d آية</item>
+        <item quantity="other">أُلغي تحديد %d آية</item>
+    </plurals>
     <!-- Until %@ -->
     <string name="until_s">حتى %s</string>
     <!-- Upcoming sessions -->
@@ -1142,14 +1230,18 @@
     <string name="what_youve_memorized_stays_and_its_revision_goes_on_you">يبقى ما حفظته وتستمر مراجعته، ويمكنك بدء خطة جديدة متى شئت.</string>
     <!-- When -->
     <string name="when">متى</string>
-    <!-- Where to go next -->
-    <string name="where_to_go_next">من أين تكمل</string>
+    <!-- Where will you -->
+    <string name="where_will_you">من أين</string>
     <!-- Which ayah comes next? -->
     <string name="which_ayah_comes_next_q">ما الآية التالية؟</string>
+    <!-- Which days -->
+    <string name="which_days">في أي الأيام</string>
     <!-- Which surah is this ayah from? -->
     <string name="which_surah_is_this_ayah_from_q">من أي سورة هذه الآية؟</string>
     <!-- Whole page -->
     <string name="whole_page">الصفحة كاملة</string>
+    <!-- will you memorize? -->
+    <string name="will_you_memorize_q">تحفظ؟</string>
     <!-- With %@, at %@. -->
     <string name="with_s_at_s">مع %1$s، في %2$s.</string>
     <!-- With %@, by video. -->
@@ -1191,10 +1283,14 @@
     <string name="you_won_a_seat">فزت بمقعد</string>
     <!-- You won a seat in %@\'s session. -->
     <string name="you_won_a_seat_in_s_s_session">فزت بمقعد في جلسة %s.</string>
+    <!-- You\'ll finish, God willing, -->
+    <string name="youll_finish_god_willing">ستختم بإذن الله</string>
     <!-- You\'re friends now -->
     <string name="youre_friends_now">أصبحتما صديقين</string>
     <!-- You\'re friends with %@ -->
     <string name="youre_friends_with_s">أنت و%s صديقان</string>
+    <!-- You\'ve memorized -->
+    <string name="youve_memorized">حفظت</string>
     <!-- You\'ve memorized the whole Quran -->
     <string name="youve_memorized_the_whole_quran">حفظت القرآن كاملًا</string>
     <!-- Your account and the progress backed up in it are deleted for good. The progress on this device stays. -->
@@ -1219,6 +1315,10 @@
     <string name="your_balance_s_credits">رصيدك: %s عملة</string>
     <!-- Your bid holds its credits. If someone outbids you, they come back at once; if you win, they pay for the seat when bidding closes. -->
     <string name="your_bid_holds_its_credits_if_someone_outbids_you_they">يحجز عرضك عملاته. إن زايد عليك أحد عادت إليك فورًا، وإن فزت دُفعت ثمنًا للمقعد عند إغلاق المزايدة.</string>
+    <!-- Your bid of %lld credits is let go, and its credits come back to you. -->
+    <plurals name="your_bid_of_n_credits_is_let_go_and_its">
+        <item quantity="other">يُترك عرضك، ويعود إليك ما حجزته من عملات (%d).</item>
+    </plurals>
     <!-- Your bid of %lld holds a seat -->
     <string name="your_bid_of_n_holds_a_seat">عرضك (%d) يحجز مقعدًا</string>
     <!-- Your bid was released -->

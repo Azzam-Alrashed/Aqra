@@ -10,6 +10,8 @@ struct MushafView: View {
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(\.dismiss) private var dismiss
+    /// The app's own direction, for the bars' lines of text inside their Mushaf-ordered (right-to-left) layout.
+    @Environment(\.layoutDirection) private var layoutDirection
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @AppStorage("mushaf.tajweed") private var tajweed = true
     @AppStorage("mushaf.topics") private var topicColors = true
@@ -150,18 +152,44 @@ struct MushafView: View {
                     Text(marking.rangeStart == nil ? "Tap the ayat you've memorized" : "Now tap the last ayah of the range")
                         .font(.system(size: 17, weight: .heavy, design: .rounded))
                         .foregroundStyle(MushafStyle.ink)
-                    HStack(spacing: 6) {
-                        Text("\(memorization.count) ayat memorized")
-                        Text(verbatim: "·")
-                            .accessibilityHidden(true)
-                        Text("Press and hold an ayah to mark from it to another")
+                    if marking.unmarked.isEmpty {
+                        (Text("\(memorization.count) ayat memorized") + Text(verbatim: Separator.facts)
+                            + Text("Press and hold an ayah to mark from it to another"))
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(MushafStyle.chrome)
+                        .lineLimit(1)
+                        .minimumScaleFactor(0.8)
+                    } else {
+                        // An unmarked ayah loses its record; for a moment it can be brought back as it was.
+                        HStack(spacing: 10) {
+                            Text("Unmarked \(marking.unmarked.count) ayat")
+                                .font(.system(size: 12, weight: .semibold, design: .rounded))
+                                .foregroundStyle(MushafStyle.chrome)
+                                .lineLimit(1)
+                            Button {
+                                withAnimation(.easeInOut(duration: 0.2)) { marking.undo() }
+                            } label: {
+                                Label("Undo", systemImage: "arrow.uturn.backward")
+                                    .font(.system(size: 12, weight: .bold, design: .rounded))
+                                    .foregroundStyle(MushafStyle.barAccent)
+                                    .padding(.horizontal, 10)
+                                    .frame(minHeight: 26)
+                                    .background(MushafStyle.barAccentFill, in: Capsule())
+                            }
+                            .buttonStyle(.plain)
+                        }
+                        .environment(\.layoutDirection, layoutDirection)
+                        .transition(.opacity)
+                        .task(id: marking.unmarkedVersion) {
+                            let version = marking.unmarkedVersion
+                            try? await Task.sleep(for: .seconds(6))
+                            guard !Task.isCancelled else { return }
+                            withAnimation(.easeInOut(duration: 0.2)) { marking.expireUndo(version: version) }
+                        }
                     }
-                    .font(.system(size: 12, weight: .semibold, design: .rounded))
-                    .foregroundStyle(MushafStyle.chrome)
-                    .lineLimit(1)
-                    .minimumScaleFactor(0.8)
                 }
                 .animation(.easeInOut(duration: 0.2), value: marking.rangeStart)
+                .animation(.easeInOut(duration: 0.2), value: marking.unmarked.isEmpty)
                 HStack(spacing: 10) {
                     Button(pages.count > 1 ? "Both pages" : "Whole page") { marking.toggle(ayahs) }
                         .buttonStyle(MarkingButtonStyle())
@@ -169,7 +197,12 @@ struct MushafView: View {
                         .buttonStyle(MarkingButtonStyle())
                     Button("Done") {
                         memorization.saveNow()
-                        withAnimation(.easeInOut(duration: 0.2)) { self.marking = nil }
+                        // Marking as part of setup, Done closes the Mushaf: the daily amount and the plan follow.
+                        if startsMarking {
+                            dismiss()
+                        } else {
+                            withAnimation(.easeInOut(duration: 0.2)) { self.marking = nil }
+                        }
                     }
                     .buttonStyle(MarkingButtonStyle(prominent: true))
                 }
@@ -265,6 +298,19 @@ struct MushafSpreadView: View {
 }
 
 /// Loads the Mushaf once, then shows it — or explains what's missing.
+/// Where a student who chose to mark what they've memorized in the Mushaf is in setup: marking, then the daily
+/// amount (when they've marked anything), then the plan, as the other path goes. Kept across launches.
+enum SetupAfterMarking: String {
+    case none, marking, dailyAmount, plan
+
+    static let key = "setup.afterMarking"
+
+    /// The step after the marking.
+    @MainActor static func next(memorization: MemorizationStore) -> Self {
+        memorization.count > 0 ? .dailyAmount : .plan
+    }
+}
+
 struct MushafRootView: View {
     @State private var store: Result<MushafStore, Error>?
     @State private var memorization: MemorizationStore
@@ -281,6 +327,8 @@ struct MushafRootView: View {
     @State private var startsMarking = false
     /// After choosing what they've memorized, the student chooses how much to revise each day, then their plan.
     @State private var setupStep = SetupStep.memorized
+    /// When they chose to mark it in the Mushaf instead, the same two steps follow the marking.
+    @AppStorage(SetupAfterMarking.key) private var afterMarking = SetupAfterMarking.none
 
     private enum SetupStep { case memorized, dailyAmount, plan }
 
@@ -322,7 +370,14 @@ struct MushafRootView: View {
         .environment(account.inbox)
         .environment(router)
         // After signing out, setup starts from «ماذا تحفظ؟» again.
-        .onChange(of: hasDeclared) { if !hasDeclared { setupStep = .memorized } }
+        .onChange(of: hasDeclared) {
+            if !hasDeclared {
+                setupStep = .memorized
+                afterMarking = .none
+            }
+        }
+        // Once the setup's marking is over, the home that comes back doesn't open the Mushaf on its own again.
+        .onChange(of: afterMarking) { if afterMarking != .marking { startsMarking = false } }
         .onOpenURL { url in
             if !router.open(url) { _ = GIDSignIn.sharedInstance.handle(url) }
         }
@@ -334,6 +389,8 @@ struct MushafRootView: View {
             launch.isReady = true
             guard case .success(let mushaf) = store else { return }
             connect(mushaf)
+            // A setup marking cut short (the app was closed during it) goes on to its next steps.
+            if afterMarking == .marking { afterMarking = .next(memorization: memorization) }
             // A tasmee' waiting in the account can be applied once the Mushaf says which ayat each page holds.
             account.tasmee.mushaf = mushaf
         }
@@ -341,22 +398,31 @@ struct MushafRootView: View {
 
     @ViewBuilder private var screen: some View {
         switch store {
-        case .success(let store) where !hasDeclared && setupStep == .plan:
+        case .success(let store) where !hasDeclared && setupStep == .plan,
+             .success(let store) where afterMarking == .plan:
             PlanEditorView(store: store, isSetup: true) { _ in
-                withAnimation { hasDeclared = true }
+                withAnimation {
+                    hasDeclared = true
+                    afterMarking = .none
+                }
             }
             .transition(.move(edge: .leading).combined(with: .opacity))
-        case .success(let store) where !hasDeclared && setupStep == .dailyAmount:
+        case .success(let store) where !hasDeclared && setupStep == .dailyAmount,
+             .success(let store) where afterMarking == .dailyAmount:
             let pages = RevisionStore.memorizedPages(in: store, memorization: memorization).count
             DailyAmountView(memorizedPages: pages, initial: revision.effectiveDailyPages(memorizedPages: pages)) { amount in
                 revision.setDailyPages(amount)
-                withAnimation { setupStep = .plan }
+                withAnimation {
+                    setupStep = .plan
+                    if afterMarking == .dailyAmount { afterMarking = .plan }
+                }
             }
             .transition(.move(edge: .leading).combined(with: .opacity))
         case .success(let store) where !hasDeclared:
             MemorizationSetupView(store: store) { markInMushaf in
                 startsMarking = markInMushaf
                 if markInMushaf {
+                    afterMarking = .marking
                     withAnimation { hasDeclared = true }
                 } else {
                     // With something memorized, its daily revision first; starting from zero, straight to the plan.
@@ -419,7 +485,7 @@ struct MushafTopBar<Leading: View, Trailing: View>: View {
                     Text(verbatim: store.surahNames[page.surah] ?? "")
                         .font(.system(size: 15, weight: .heavy, design: .rounded))
                         .foregroundStyle(MushafStyle.ink)
-                    Text(verbatim: "الجزء \(arabic(page.juz)) · الصفحة \(arabic(page.number))")
+                    Text(verbatim: "الجزء \(arabic(page.juz))" + Separator.arabic + "الصفحة \(arabic(page.number))")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(MushafStyle.chrome)
                 }

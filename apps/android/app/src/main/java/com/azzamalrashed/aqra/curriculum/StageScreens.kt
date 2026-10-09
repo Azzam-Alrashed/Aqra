@@ -1,5 +1,6 @@
 package com.azzamalrashed.aqra.curriculum
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.animation.fadeIn
@@ -64,6 +65,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
+import com.azzamalrashed.aqra.account.Confirm
 import com.azzamalrashed.aqra.mushaf.MushafFonts
 import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.ui.AqraSheet
@@ -268,10 +270,19 @@ fun StageTestScreen(app: AqraApp, store: MushafStore, stage: Int, onClose: () ->
     var chosen by remember { mutableStateOf<Int?>(null) }
     var correct by remember { mutableIntStateOf(0) }
     var finished by remember { mutableStateOf(false) }
+    var confirmingLeave by remember { mutableStateOf(false) }
+    // After the first answer, leaving asks first and counts the test as taken, so it can't be left and taken again
+    // until the questions come out well.
+    val hasStarted = !finished && (index > 0 || chosen != null)
     LaunchedEffect(chosen) {
         val answer = questions.getOrNull(index)?.answer ?: return@LaunchedEffect
         val choice = chosen ?: return@LaunchedEffect
         haptics.performHapticFeedback(if (choice == answer) HapticFeedbackType.Confirm else HapticFeedbackType.Reject)
+    }
+
+    fun record() {
+        assessments.record(AssessmentStore.TestResult(stage = stage, date = com.azzamalrashed.aqra.core.Moment.now(), questions = questions.size, correct = correct))
+        assessments.checkPasses(store, app.memorization)
     }
 
     fun advance() {
@@ -279,9 +290,24 @@ fun StageTestScreen(app: AqraApp, store: MushafStore, stage: Int, onClose: () ->
             index += 1
             chosen = null
         } else {
-            assessments.record(AssessmentStore.TestResult(stage = stage, date = com.azzamalrashed.aqra.core.Moment.now(), questions = questions.size, correct = correct))
-            assessments.checkPasses(store, app.memorization)
+            record()
             finished = true
+        }
+    }
+
+    fun leave() {
+        if (hasStarted) confirmingLeave = true else onClose()
+    }
+
+    BackHandler(enabled = hasStarted) { confirmingLeave = true }
+    if (confirmingLeave) {
+        Confirm(
+            stringResource(R.string.leave_the_test_q), stringResource(R.string.it_counts_as_taken_the_questions_you_havent_answered_count),
+            stringResource(R.string.leave), onDismiss = { confirmingLeave = false }, cancel = stringResource(R.string.keep_going),
+        ) {
+            confirmingLeave = false
+            record()
+            onClose()
         }
     }
 
@@ -289,7 +315,7 @@ fun StageTestScreen(app: AqraApp, store: MushafStore, stage: Int, onClose: () ->
         Column(Modifier.widthIn(max = 600.dp).fillMaxSize().padding(horizontal = 22.dp).padding(bottom = 16.dp), verticalArrangement = Arrangement.spacedBy(16.dp)) {
             Row(Modifier.padding(top = 12.dp), verticalAlignment = Alignment.CenterVertically) {
                 val closeLabel = stringResource(R.string.close)
-                Box(Modifier.size(38.dp).background(Palette.lavender, CircleShape).pressable(onClick = onClose).semantics { contentDescription = closeLabel },
+                Box(Modifier.size(38.dp).background(Palette.lavender, CircleShape).pressable(onClick = ::leave).semantics { contentDescription = closeLabel },
                     contentAlignment = Alignment.Center) {
                     Icon(Icons.Rounded.Close, null, tint = Palette.brand, modifier = Modifier.size(18.dp))
                 }
@@ -344,7 +370,7 @@ private fun Question(app: AqraApp, store: MushafStore, question: TestQuestion, c
                     contentAlignment = Alignment.Center,
                 ) {
                     if (question.kind == TestQuestion.Kind.NEXT_AYAH) {
-                        AyahText(store.ayahTexts[option], store.ayahPlainTexts[option], 21.dp, app.fonts, ink)
+                        AyahText(store.ayahTexts[option], store.ayahPlainTexts[option], 21.dp, app.fonts, ink, showsNumber = false)
                     } else {
                         Text(store.surahNames[option].orEmpty(), style = aqraStyle(18f, Weight.bold, ink))
                     }
@@ -376,16 +402,30 @@ private fun TestResult(correct: Int, questions: Int, policy: StagePolicy, onDone
 // MARK: - An ayah on its own
 
 /**
+ * The text without its ayah-end marker: the Complex's text ends every ayah with one right-to-left mark and one glyph,
+ * U+E959 plus the ayah's number, that draws the numbered marker; only that last word is left out.
+ */
+fun ayahWithoutNumber(text: String): String {
+    val space = text.lastIndexOf(' ')
+    if (space < 0) return text
+    val last = text.substring(space + 1).codePoints().toArray()
+    if (last.size != 2 || last[0] != 0x200F || last[1] !in 0xE95A..0xE959 + 286) return text
+    return text.substring(0, space)
+}
+
+/**
  * One ayah in the Complex's own text and Hafs Smart font, as published, wrapping over as many lines as it needs —
  * where an ayah stands on its own (the stage tests). Each word is drawn from the font by Aqra's own font reader, and
- * the words flow from the right, line after line, each line centered, in any language of the app.
+ * the words flow from the right, line after line, each line centered, in any language of the app. A stage test's
+ * options leave out the ayah-end marker ([showsNumber]), so the answer can't be read from the numbers.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun AyahText(text: String, spoken: String, size: Dp, fonts: MushafFonts, color: Color) {
+fun AyahText(text: String, spoken: String, size: Dp, fonts: MushafFonts, color: Color, showsNumber: Boolean = true) {
     val density = LocalDensity.current
     val pixels = with(density) { size.toPx() }
-    val words = remember(text, pixels) { text.split(' ').filter { it.isNotEmpty() }.map { fonts.text(it, fonts.hafsFont, pixels) } }
+    val shown = if (showsNumber) text else ayahWithoutNumber(text)
+    val words = remember(shown, pixels) { shown.split(' ').filter { it.isNotEmpty() }.map { fonts.text(it, fonts.hafsFont, pixels) } }
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         FlowRow(
             Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },

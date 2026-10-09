@@ -242,6 +242,15 @@ describe("seats", () => {
     await assertFails(deleteDoc(doc(named("carol"), "sessions/open/seats/bob")));
   });
 
+  test("a student holding a bid books a free seat only through the functions, which let the bid go", async () => {
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "sessions/open/bids/alice"), { name: "Alice", amount: 3, at: Timestamp.now(), status: "active" });
+      await setDoc(doc(context.firestore(), "sessions/open/bids/bob"), { name: "Bob", amount: 3, at: Timestamp.now(), status: "outbid" });
+    });
+    await assertFails(book(named("alice"), "alice", "open"));
+    await assertSucceeds(book(named("bob"), "bob", "open"));
+  });
+
   test("a seat isn't edited once booked", async () => {
     await assertSucceeds(book(named("alice"), "alice", "open"));
     await assertFails(updateDoc(doc(named("alice"), "sessions/open/seats/alice"), { name: "Someone else" }));
@@ -589,6 +598,15 @@ describe("credits, bids and earnings", () => {
     await assertFails(setDoc(doc(named("teacher"), "sessions/a2"), { ...auction, biddingClosesAt: inDays(3) }));
     await assertFails(setDoc(doc(named("teacher"), "sessions/a3"), { ...auction, auctionSeats: 30 }));
     await assertFails(setDoc(doc(named("teacher"), "sessions/a4"), { ...auction, auctionState: "settled" }));
+    // A session soon closes its bidding 30 minutes before it; under an hour away it has no auction.
+    const inMinutes = (minutes) => Timestamp.fromDate(new Date(Date.now() + minutes * 60_000));
+    const soon = { ...auction, startsAt: inMinutes(120), biddingClosesAt: inMinutes(90) };
+    await assertSucceeds(setDoc(doc(named("teacher"), "sessions/a5"), soon));
+    await assertFails(setDoc(doc(named("teacher"), "sessions/a6"), { ...soon, biddingClosesAt: inMinutes(100) }));
+    await assertFails(setDoc(doc(named("teacher"), "sessions/a7"), { ...soon, biddingClosesAt: inMinutes(-5) }));
+    await assertFails(setDoc(doc(named("teacher"), "sessions/a8"), { ...auction, startsAt: inMinutes(50), biddingClosesAt: inMinutes(15) }));
+    const { auctionSeats, minBid, biddingClosesAt, auctionState, ...free } = auction;
+    await assertSucceeds(setDoc(doc(named("teacher"), "sessions/a9"), { ...free, startsAt: inMinutes(50) }));
     await assertFails(updateDoc(doc(named("teacher"), "sessions/a1"), { startsAt: inDays(5) }));
     await assertFails(updateDoc(doc(named("teacher"), "sessions/a1"), { auctionSeats: 10 }));
     await assertSucceeds(updateDoc(doc(named("teacher"), "sessions/a1"), { place: "x", status: "cancelled" }));

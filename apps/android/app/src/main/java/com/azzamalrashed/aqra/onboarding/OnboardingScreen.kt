@@ -118,17 +118,24 @@ fun OnboardingScreen(onFinish: () -> Unit) {
     }
 }
 
-/** Shared layout for onboarding pages: an animated stage, the page's copy, page dots and a button. */
+/**
+ * Shared layout for onboarding pages, and pages in their style (the plan's setup): an animated stage, the page's
+ * copy, page dots and a button, with [extra] beneath it. [safeDrawing] is off inside a sheet, which keeps clear of
+ * the system bars itself.
+ */
 @Composable
-private fun OnboardingPageLayout(
+internal fun OnboardingPageLayout(
     currentPage: Int,
     actionsVisible: Boolean,
     button: String,
     onButton: () -> Unit,
     stage: @Composable () -> Unit,
+    pageCount: Int = PAGE_COUNT,
+    safeDrawing: Boolean = true,
+    extra: (@Composable () -> Unit)? = null,
     copy: @Composable ColumnScope.(scale: Float) -> Unit,
 ) {
-    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.surface).safeDrawingPadding()) {
+    BoxWithConstraints(Modifier.fillMaxSize().background(Palette.surface).then(if (safeDrawing) Modifier.safeDrawingPadding() else Modifier)) {
         val width = maxWidth
         val landscape = maxWidth > maxHeight * 1.1f
         // Tablet-sized space in either orientation.
@@ -144,9 +151,10 @@ private fun OnboardingPageLayout(
                 horizontalAlignment = Alignment.CenterHorizontally,
                 verticalArrangement = Arrangement.spacedBy(if (compact) 12.dp else 20.dp),
             ) {
-                PageDots(PAGE_COUNT, currentPage)
+                PageDots(pageCount, currentPage)
                 BrandButton(button, height = if (large) 64.dp else if (compact) 48.dp else 56.dp, fontSize = if (large) 21f else 18f,
                     enabled = actionsVisible, onClick = onButton)
+                extra?.invoke()
             }
         }
         if (landscape) {
@@ -193,7 +201,7 @@ private fun PageDots(count: Int, current: Int) {
 
 /** A two-line headline, the second line in the brand color, with a detail line beneath. */
 @Composable
-private fun OnboardingHeadline(first: String, second: String, detail: String, scale: Float, visible: Boolean) {
+internal fun OnboardingHeadline(first: String, second: String, detail: String, scale: Float, visible: Boolean) {
     val shown by animateFloatAsState(if (visible) 1f else 0f, iosSpring(0.6f, 0.85f), label = "headline")
     Column(
         Modifier.fillMaxWidth().graphicsLayer { alpha = shown; translationY = (1 - shown) * 14.dp.toPx() },
@@ -520,7 +528,7 @@ private fun SessionCard() {
             IconTile("🎙️", Palette.sky)
             Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
                 Text("تسميع مع شيخ", style = aqraStyle(15f, Weight.heavy, Palette.ink))
-                Text("غدًا · ٨:٠٠ م", style = aqraStyle(11f, Weight.semibold, Palette.inkSoft))
+                Text("غدًا، ٨:٠٠ م", style = aqraStyle(11f, Weight.semibold, Palette.inkSoft))
             }
         }
     }

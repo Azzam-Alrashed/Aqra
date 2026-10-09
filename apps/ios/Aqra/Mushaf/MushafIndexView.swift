@@ -18,7 +18,7 @@ struct MushafIndexView: View {
         VStack(spacing: 14) {
             HStack(spacing: 12) {
                 Text("Index")
-                    .font(.system(size: 26, weight: .heavy))
+                    .aqraFont(size: 26, weight: .heavy)
                     .foregroundStyle(Palette.ink)
                     .accessibilityAddTraits(.isHeader)
                 Spacer(minLength: 0)
@@ -81,18 +81,19 @@ struct MushafIndexView: View {
                     .background(face.top, in: RoundedRectangle(cornerRadius: 13, style: .continuous))
                 VStack(alignment: .leading, spacing: 1) {
                     Text(verbatim: title)
-                        .font(.system(size: 17, weight: .heavy))
+                        .aqraFont(size: 17, weight: .heavy)
                         .foregroundStyle(Palette.ink)
                     subtitle?
-                        .font(.system(size: 12, weight: .semibold))
+                        .aqraFont(size: 12, weight: .semibold)
                         .foregroundStyle(Palette.inkSoft)
                 }
                 Spacer(minLength: 8)
                 Text(verbatim: arabic(page))
-                    .font(.system(size: 13, weight: .bold).monospacedDigit())
+                    .aqraFont(size: 13, weight: .bold, monospacedDigit: true)
                     .foregroundStyle(Palette.brand)
                     .padding(.horizontal, 10)
-                    .frame(height: 28)
+                    .padding(.vertical, 3)
+                    .frame(minHeight: 28)
                     .background(isCurrent ? .white : Palette.lavender, in: Capsule())
             }
             .padding(10)
