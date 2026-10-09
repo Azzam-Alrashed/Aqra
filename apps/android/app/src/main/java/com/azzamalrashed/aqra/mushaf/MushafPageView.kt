@@ -40,10 +40,17 @@ import androidx.compose.ui.graphics.toArgb
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.platform.LocalLayoutDirection
+import androidx.compose.ui.res.pluralStringResource
+import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.semantics.CustomAccessibilityAction
 import androidx.compose.ui.semantics.clearAndSetSemantics
 import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.customActions
+import androidx.compose.ui.semantics.onClick
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
+import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.memorization.MarkingSession
 import com.azzamalrashed.aqra.memorization.MemorizationStore
 import com.azzamalrashed.aqra.quran.MushafLine
@@ -100,12 +107,34 @@ fun MushafPageView(
 ) {
     val density = LocalDensity.current
     val currentOptions by rememberUpdatedState(options)
+    // The words are font outlines TalkBack can't read; it gets the page in plain text instead, without the ayat a
+    // revision veils or a student hid while memorizing, and the page's taps as actions.
+    val spokenRevision = options.revisionOf(page.number)
+    val hidden: (Int) -> Boolean = { ayah ->
+        spokenRevision?.isVeiled(ayah) ?: (options.focus?.let { ayah in it.hidden } ?: false)
+    }
+    val spoken = spokenText(page, store, hidden)
+    val hiddenCount = page.spokenAyahs.count(hidden)
+    val hiddenText = if (hiddenCount > 0) pluralStringResource(R.plurals.n_ayat_hidden, hiddenCount, hiddenCount) else ""
+    val actions = pageActions(page, store, options, spokenRevision)
+    // What a double tap does: in a revision it reveals the next ayah; where a tap means an ayah, nothing (the ayat are
+    // actions), rather than landing on whichever ayah is mid-page; reading, it shows and hides the bars.
+    val activation: (() -> Unit)? = when {
+        spokenRevision != null -> { { if (!spokenRevision.isComplete) spokenRevision.revealNext() } }
+        options.focus != null || options.marking != null -> { {} }
+        else -> options.onTap
+    }
     // The Mushaf reads right to left in every language.
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         BoxWithConstraints(
             modifier
                 .background(style.paper)
-                .clearAndSetSemantics { contentDescription = spokenText(page, store) },
+                .clearAndSetSemantics {
+                    contentDescription = spoken
+                    if (hiddenText.isNotEmpty()) stateDescription = hiddenText
+                    if (actions.isNotEmpty()) customActions = actions
+                    activation?.let { activate -> onClick { activate(); true } }
+                },
         ) {
             val metrics = remember(maxWidth, maxHeight) { PageMetrics(maxWidth.value, maxHeight.value) }
             val fontSize = with(density) { metrics.fontSize.dp.toPx() }
@@ -215,11 +244,62 @@ fun MushafPageView(
     }
 }
 
-/** The page for TalkBack: the official plain (Imla'i) text, with the surah, juz' and page first. */
-private fun spokenText(page: MushafPage, store: MushafStore): String {
+/** The page for TalkBack: the official plain (Imla'i) text, with the surah, juz' and page first, without hidden ayat. */
+private fun spokenText(page: MushafPage, store: MushafStore, hidden: (Int) -> Boolean): String {
     val surah = store.surahNames[page.surah].orEmpty()
     val heading = "سورة $surah، الجزء ${arabicDigits(page.juz)}، الصفحة ${arabicDigits(page.number)}."
-    return (listOf(heading) + page.spokenAyat).joinToString(" ")
+    val read = page.spokenAyat.filterIndexed { index, _ -> page.spokenAyahs.getOrNull(index)?.let(hidden) != true }
+    return (listOf(heading) + read).joinToString(" ")
+}
+
+/**
+ * The page's taps, for TalkBack: revealing and marking stumbles in a revision, hiding and showing ayat while
+ * memorizing, and marking ayat in marking mode.
+ */
+@Composable
+private fun pageActions(page: MushafPage, store: MushafStore, options: MushafPageOptions, revision: RevisionSession?): List<CustomAccessibilityAction> {
+    val ayat = page.spokenAyahs
+    val surahs = remember(page.number) { ayat.map { store.reference(it).first }.toSet() }
+    @Composable
+    fun name(ayah: Int): String {
+        val (surah, number) = store.reference(ayah)
+        // By its number, and its surah too when the page has more than one.
+        return if (surahs.size > 1) stringResource(R.string.ayah_n_of_s, number, store.surahNames[surah].orEmpty())
+        else stringResource(R.string.ayah_n, number)
+    }
+    fun action(label: String, perform: () -> Unit) = CustomAccessibilityAction(label) { perform(); true }
+    val actions = ArrayList<CustomAccessibilityAction>()
+    val focus = options.focus
+    val marking = options.marking
+    when {
+        revision != null -> {
+            if (!revision.isComplete) actions += action(stringResource(R.string.reveal_the_next_ayah)) { revision.revealNext() }
+            for (ayah in ayat.filter { revision.covers(it) && !revision.isVeiled(it) }) {
+                val ayahName = name(ayah)
+                actions += if (ayah in revision.stumbles) action(stringResource(R.string.remove_the_stumble_on_s, ayahName)) { revision.clearStumble(ayah) }
+                else action(stringResource(R.string.stumbled_on_s, ayahName)) { revision.markStumble(ayah) }
+                options.onAyahLongPress?.let { classify ->
+                    actions += action(stringResource(R.string.say_what_kind_of_stumble_on_s, ayahName)) { classify(ayah) }
+                }
+            }
+        }
+        focus != null -> for (ayah in ayat.filter { it in focus.ayahs }) {
+            val ayahName = name(ayah)
+            val label = when {
+                focus.choosingEnd -> stringResource(R.string.i_memorized_up_to_s, ayahName)
+                ayah in focus.hidden -> stringResource(R.string.show_s, ayahName)
+                else -> stringResource(R.string.hide_s, ayahName)
+            }
+            actions += action(label) { focus.tap(ayah) }
+        }
+        marking != null -> for (ayah in ayat) {
+            val ayahName = name(ayah)
+            val label = if (marking.memorization.isMemorized(ayah)) stringResource(R.string.unmark_s, ayahName)
+                else stringResource(R.string.mark_s_as_memorized, ayahName)
+            actions += action(label) { marking.tap(ayah) }
+        }
+    }
+    return actions
 }
 
 /** The soft highlight behind a memorized word: its section's color, faint when new and fuller as it grows strong. */
