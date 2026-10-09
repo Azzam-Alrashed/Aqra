@@ -110,8 +110,19 @@ private fun MushafRoot(app: AqraApp) {
     var startsMarking by rememberSaveable { mutableStateOf(false) }
     /** After choosing what they've memorized, the student chooses how much to revise each day (1), then their plan (2). */
     var setupStep by rememberSaveable { mutableIntStateOf(0) }
+    /** When they chose to mark it in the Mushaf instead, the same two steps follow the marking. */
+    var afterMarking by app.prefs.setupAfterMarking
     // After signing out, setup starts from «ماذا تحفظ؟» again.
-    LaunchedEffect(hasDeclared) { if (!hasDeclared) setupStep = 0 }
+    LaunchedEffect(hasDeclared) {
+        if (!hasDeclared) {
+            setupStep = 0
+            afterMarking = ""
+        }
+    }
+    // Once the setup's marking is over, the home that comes back doesn't open the Mushaf on its own again; and a
+    // marking cut short (the app was closed during it) goes on to its next steps.
+    LaunchedEffect(afterMarking) { if (afterMarking != AFTER_MARKING) startsMarking = false }
+    LaunchedEffect(Unit) { if (afterMarking == AFTER_MARKING && !startsMarking) afterMarking = nextAfterMarking(app) }
 
     val result = app.mushaf
     when {
@@ -130,7 +141,12 @@ private fun MushafRoot(app: AqraApp) {
         else -> {
             val store = result.getOrThrow()
             AnimatedContent(
-                targetState = if (hasDeclared) 3 else setupStep,
+                targetState = when {
+                    afterMarking == AFTER_MARKING_AMOUNT -> 1
+                    afterMarking == AFTER_MARKING_PLAN -> 2
+                    hasDeclared -> 3
+                    else -> setupStep
+                },
                 transitionSpec = { slideInHorizontally { -it } + fadeIn() togetherWith slideOutHorizontally { it } + fadeOut() },
                 label = "setup",
             ) { step ->
@@ -138,7 +154,10 @@ private fun MushafRoot(app: AqraApp) {
                     0 -> MemorizationSetupScreen(app, store, isSheet = false) { markInMushaf ->
                         startsMarking = markInMushaf
                         when {
-                            markInMushaf -> hasDeclared = true
+                            markInMushaf -> {
+                                afterMarking = AFTER_MARKING
+                                hasDeclared = true
+                            }
                             // With something memorized, its daily revision first; starting from zero, straight to the plan.
                             app.memorization.count > 0 -> setupStep = 1
                             else -> setupStep = 2
@@ -149,9 +168,13 @@ private fun MushafRoot(app: AqraApp) {
                         DailyAmountScreen(pages, app.revision.effectiveDailyPages(pages), isEditor = false) { amount ->
                             app.revision.setDailyPages(amount)
                             setupStep = 2
+                            if (afterMarking == AFTER_MARKING_AMOUNT) afterMarking = AFTER_MARKING_PLAN
                         }
                     }
-                    2 -> PlanEditorScreen(app, store, isSetup = true) { hasDeclared = true }
+                    2 -> PlanEditorScreen(app, store, isSetup = true) {
+                        hasDeclared = true
+                        afterMarking = ""
+                    }
                     else -> AppTabs(app, store, startsMarking)
                 }
             }
@@ -223,11 +246,23 @@ private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
     }
 }
 
+private const val AFTER_MARKING = "marking"
+private const val AFTER_MARKING_AMOUNT = "dailyAmount"
+private const val AFTER_MARKING_PLAN = "plan"
+
+/** The step after the setup's marking: the daily amount when anything is marked, else the plan. */
+private fun nextAfterMarking(app: AqraApp) = if (app.memorization.count > 0) AFTER_MARKING_AMOUNT else AFTER_MARKING_PLAN
+
 /** The Mushaf, with the juz' and surahs sheet its marking bar opens. */
 @Composable
 private fun MushafWithSetup(app: AqraApp, store: MushafStore, marking: Boolean, overlays: Overlays) {
     var choosing by remember { mutableStateOf(false) }
-    MushafScreen(app, store, startsMarking = marking, onClose = { overlays.close() }, onChooseJuzAndSurahs = { choosing = true })
+    var afterMarking by app.prefs.setupAfterMarking
+    MushafScreen(app, store, startsMarking = marking, onClose = {
+        overlays.close()
+        // The setup's marking is over once the Mushaf closes: the daily amount and the plan follow.
+        if (afterMarking == AFTER_MARKING) afterMarking = nextAfterMarking(app)
+    }, onChooseJuzAndSurahs = { choosing = true })
     if (choosing) {
         AqraSheet(onDismiss = { choosing = false }) {
             MemorizationSetupScreen(app, store, isSheet = true) { choosing = false }

@@ -186,7 +186,8 @@ fun MushafScreen(
                         val pages = if (facing) ((lastPage + 1) / 2).let { listOf(it * 2 - 1, it * 2) } else listOf(lastPage)
                         MarkingBar(app, store, session, pages, style, onChooseJuzAndSurahs) {
                             app.memorization.saveNow()
-                            marking = null
+                            // Marking as part of setup, Done closes the Mushaf: the daily amount and the plan follow.
+                            if (startsMarking) onClose() else marking = null
                         }
                     } else {
                         PageSlider(lastPage, style, ::go)
