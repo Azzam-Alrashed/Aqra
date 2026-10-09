@@ -29,6 +29,8 @@ struct MushafPage: Hashable {
     var lines: [MushafLine]
     /// The page's ayat in the official Imla'i (plain) text, each followed by its number — for VoiceOver.
     var spokenAyat: [String] = []
+    /// The ayah each of `spokenAyat` reads, by its number in the Quran.
+    var spokenAyahs: [Int] = []
     /// Every ayah that appears on the page, including one that starts or ends on it.
     var ayahs: ClosedRange<Int> = 0...0
     /// The surah the page starts in, and its juz'.
@@ -119,6 +121,7 @@ final class MushafStore: Sendable {
         var firstAyahOnPage: [Int: OfficialAyah] = [:]
         var juzStarts: [Int: Int] = [:]
         var spoken = [[String]](repeating: [], count: Self.pageCount + 1)
+        var spokenAyahs = [[Int]](repeating: [], count: Self.pageCount + 1)
         // The official data lists the ayat in Quran order, so an ayah's position there is its number.
         var indexOfAyah: [String: Int] = [:]
         var surahRanges: [Int: ClosedRange<Int>] = [:], juzRanges: [Int: ClosedRange<Int>] = [:]
@@ -129,9 +132,10 @@ final class MushafStore: Sendable {
         }
         surahAyahs = surahRanges
         juzAyahs = juzRanges
-        for ayah in official {
+        for (index, ayah) in official.enumerated() {
             if (1...Self.pageCount).contains(ayah.page) {
                 spoken[ayah.page].append("\(ayah.aya_text_emlaey) (\(ayah.aya_no))")
+                spokenAyahs[ayah.page].append(index)
             }
             names[ayah.sura_no] = names[ayah.sura_no] ?? ayah.sura_name_ar
             firstAyahOnPage[ayah.page] = firstAyahOnPage[ayah.page] ?? ayah
@@ -244,7 +248,7 @@ final class MushafStore: Sendable {
                 if case .ayah(let words, _) = line.kind { return words.map(\.ayah) } else { return [] }
             }
             return MushafPage(
-                number: number, lines: linesByPage[number], spokenAyat: spoken[number],
+                number: number, lines: linesByPage[number], spokenAyat: spoken[number], spokenAyahs: spokenAyahs[number],
                 ayahs: (ayahs.min() ?? 0)...(ayahs.max() ?? 0),
                 surah: first?.sura_no ?? 1, juz: first?.jozz ?? 1
             )

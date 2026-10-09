@@ -259,6 +259,13 @@ private struct SystemColorScheme: ViewModifier {
     }
 }
 
+private extension View {
+    @ViewBuilder
+    func accessibilityActivation(_ action: (() -> Void)?) -> some View {
+        if let action { accessibilityAction(.default, action) } else { self }
+    }
+}
+
 /// A new portion being memorized: its ayat stand out on the page and the rest fade back; a tap hides an ayah to
 /// recite it from memory, or, when choosing where the student stopped, picks the last ayah memorized.
 @MainActor @Observable
@@ -341,9 +348,22 @@ struct MushafPageView: View {
         // The Complex's fonts as they are, wherever the page is shown: a design (rounded) would swap them for a
         // system font.
         .fontDesign(nil)
-        // The words are font glyphs that VoiceOver can't read; give it the page in plain text instead.
+        // The words are font glyphs that VoiceOver can't read; give it the page in plain text instead, without the
+        // ayat a revision veils or a student hid to recite, and the page's taps as actions.
         .accessibilityElement(children: .ignore)
         .accessibilityLabel(Text(verbatim: accessibilityText))
+        .accessibilityValue(hiddenCount > 0 ? Text("\(hiddenCount) ayat hidden") : Text(verbatim: ""))
+        .accessibilityActivation(activation)
+        .accessibilityActions { accessibilityActions }
+    }
+
+    /// What a VoiceOver double tap does in a mode where a tap means an ayah: it would otherwise land on whichever
+    /// ayah is in the middle of the page. In a revision it reveals the next ayah; the ayat themselves are actions.
+    /// Nil when reading, where a tap shows and hides the toolbar.
+    private var activation: (() -> Void)? {
+        if let revision { return { if !revision.isComplete { revision.revealNext() } } }
+        if focus != nil || marking != nil { return {} }
+        return nil
     }
 
     /// Marking mode: a tap marks or unmarks an ayah; pressing and holding one starts a range that the next tap ends.
@@ -424,7 +444,63 @@ struct MushafPageView: View {
     private var accessibilityText: String {
         let surah = store.surahNames[page.surah] ?? ""
         let heading = "سورة \(surah)، الجزء \(arabic(page.juz))، الصفحة \(arabic(page.number))."
-        return ([heading] + page.spokenAyat).joined(separator: " ")
+        let read = zip(page.spokenAyat, page.spokenAyahs).filter { !isHidden($0.1) }.map(\.0)
+        return ([heading] + read).joined(separator: " ")
+    }
+
+    /// Whether an ayah is out of sight: veiled in a revision, or hidden to be recited while memorizing.
+    private func isHidden(_ ayah: Int) -> Bool {
+        if let revision { return revision.isVeiled(ayah) }
+        if let focus { return focus.hidden.contains(ayah) }
+        return false
+    }
+
+    private var hiddenCount: Int {
+        page.spokenAyahs.filter(isHidden).count
+    }
+
+    /// The page's taps, for VoiceOver: revealing and marking stumbles in a revision, hiding and showing ayat while
+    /// memorizing, and marking ayat in marking mode.
+    @ViewBuilder
+    private var accessibilityActions: some View {
+        let ayat = page.spokenAyahs
+        if let revision {
+            if !revision.isComplete {
+                Button("Reveal the next ayah") { revision.revealNext() }
+            }
+            ForEach(ayat.filter { revision.covers($0) && !revision.isVeiled($0) }, id: \.self) { ayah in
+                if revision.stumbles.contains(ayah) {
+                    Button("Remove the stumble on \(ayahName(ayah))") { revision.clearStumble(ayah) }
+                } else {
+                    Button("Stumbled on \(ayahName(ayah))") { revision.markStumble(ayah) }
+                }
+                if let ayahLongPress {
+                    Button("Say what kind of stumble on \(ayahName(ayah))") { ayahLongPress(ayah) }
+                }
+            }
+        } else if let focus {
+            ForEach(ayat.filter { focus.ayahs.contains($0) }, id: \.self) { ayah in
+                if focus.choosingEnd {
+                    Button("I memorized up to \(ayahName(ayah))") { focus.tap(ayah) }
+                } else {
+                    Button(focus.hidden.contains(ayah) ? "Show \(ayahName(ayah))" : "Hide \(ayahName(ayah))") { focus.tap(ayah) }
+                }
+            }
+        } else if let marking, let memorization {
+            ForEach(ayat, id: \.self) { ayah in
+                Button(memorization.isMemorized(ayah) ? "Unmark \(ayahName(ayah))" : "Mark \(ayahName(ayah)) as memorized") {
+                    marking.tap(ayah)
+                }
+            }
+        }
+    }
+
+    /// An ayah as VoiceOver names it: by its number, and its surah too when the page has more than one.
+    private func ayahName(_ ayah: Int) -> String {
+        let reference = store.reference(ofAyah: ayah)
+        let surahs = Set(page.spokenAyahs.map { store.surah(ofAyah: $0) })
+        guard surahs.count > 1 else { return String(localized: "ayah \(reference.ayah)") }
+        return String(localized: "ayah \(reference.ayah) of \(store.surahNames[reference.surah] ?? "")")
     }
 
     private func arabic(_ number: Int) -> String {

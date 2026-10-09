@@ -118,6 +118,71 @@
         }
       }
     },
+    "%lld ayat hidden" : {
+      "comment" : "VoiceOver, after a Mushaf page's text: how many of its ayat are veiled in a revision or hidden while memorizing, and so not read.",
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آيات مخفية"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية مخفية"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آية واحدة مخفية"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية مخفية"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آيتان مخفيتان"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لا آيات مخفية"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayah hidden"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayat hidden"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "%lld ayat memorized" : {
       "localizations" : {
         "ar" : {
@@ -1548,6 +1613,28 @@
         }
       }
     },
+    "ayah %lld" : {
+      "comment" : "An ayah named by its number, inside a VoiceOver action such as «Hide ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآية %lld"
+          }
+        }
+      }
+    },
+    "ayah %lld of %@" : {
+      "comment" : "An ayah named by its number and surah (on a page with more than one surah), inside a VoiceOver action such as «Hide ayah 5 of al-Baqarah».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الآية %1$lld من سورة %2$@"
+          }
+        }
+      }
+    },
     "fact separator" : {
       "comment" : "Between two facts on one line, with its spaces. Arabic uses its comma: a middle dot beside Arabic-Indic digits reads as a zero.",
       "localizations" : {
@@ -1561,6 +1648,28 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : " · "
+          }
+        }
+      }
+    },
+    "Hide %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, while memorizing: hides an ayah to recite it from memory. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إخفاء %@"
+          }
+        }
+      }
+    },
+    "I memorized up to %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, choosing the last ayah memorized of a portion. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظت إلى %@"
           }
         }
       }
@@ -1598,6 +1707,72 @@
         }
       }
     },
+    "Mark %@ as memorized" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in marking mode. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديد %@ محفوظةً"
+          }
+        }
+      }
+    },
+    "Remove the stumble on %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in a revision. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إزالة التعثّر في %@"
+          }
+        }
+      }
+    },
+    "Reveal the next ayah" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in a revision.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "كشف الآية التالية"
+          }
+        }
+      }
+    },
+    "Say what kind of stumble on %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, for a teacher hearing a student. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديد نوع الخطأ في %@"
+          }
+        }
+      }
+    },
+    "Show %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, while memorizing: shows an ayah hidden to recite it. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إظهار %@"
+          }
+        }
+      }
+    },
+    "Stumbled on %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in a revision: marks a stumble on a revealed ayah. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعثّرت في %@"
+          }
+        }
+      }
+    },
     "Undo" : {
       "comment" : "Brings back the ayat just unmarked in the Mushaf, with their records.",
       "localizations" : {
@@ -1605,6 +1780,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تراجع"
+          }
+        }
+      }
+    },
+    "Unmark %@" : {
+      "comment" : "A VoiceOver action on a Mushaf page, in marking mode. %@ is the ayah, e.g. «ayah 5».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إلغاء تحديد %@"
           }
         }
       }

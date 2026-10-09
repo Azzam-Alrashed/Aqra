@@ -294,6 +294,11 @@ struct MushafStoreTests {
         #expect(store.page(1).spokenAyat.first?.hasPrefix("بسم الله الرحمن الرحيم") == true)
         let total = (1...MushafStore.pageCount).reduce(0) { $0 + store.page($1).spokenAyat.count }
         #expect(total == 6_236)
+        // Each entry knows its ayah, so a revision can leave out the veiled ones.
+        #expect(store.page(1).spokenAyahs == Array(0...6))
+        let ayahs = (1...MushafStore.pageCount).flatMap { store.page($0).spokenAyahs }
+        #expect(ayahs == Array(0..<MushafStore.ayahCount))
+        #expect(store.page(50).spokenAyahs.allSatisfy { store.page(50).ayahs.contains($0) })
     }
 }
 
