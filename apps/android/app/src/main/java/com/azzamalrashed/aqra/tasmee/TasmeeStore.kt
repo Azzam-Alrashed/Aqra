@@ -315,11 +315,8 @@ class TasmeeStore(
         val uid = uid ?: return
         val profile = teacherProfile ?: return
         val reference = database.collection("sessions").document()
-        val auction = if (auctionSeats > 0) {
-            TasmeeSession.Auction(auctionSeats, minBid, startsAt + (-TasmeeSession.BIDDING_CLOSES_BEFORE), TasmeeSession.Auction.State.OPEN)
-        } else {
-            null
-        }
+        val closesAt = if (auctionSeats > 0) TasmeeSession.biddingClosesAt(startsAt) else null
+        val auction = closesAt?.let { TasmeeSession.Auction(auctionSeats, minBid, it, TasmeeSession.Auction.State.OPEN) }
         val session = TasmeeSession(reference.id, uid, profile.name, startsAt, kind, if (kind == TasmeeSession.Kind.VIDEO) "" else place, seats,
             auction = auction)
         reference.set(stamped(session.document)).addOnFailureListener(::report)

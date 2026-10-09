@@ -16,6 +16,21 @@ import org.junit.Test
 /** The tasmee' values and how a tasmee' is applied to the student's progress: the same checks as the iOS app's. */
 class TasmeeTest {
     @Test
+    fun biddingClosesThreeHoursBeforeOrLateForASessionSoon() {
+        val now = day(0)
+        // How many minutes from now bidding closes, for a session starting in [minutes].
+        fun closes(minutes: Int): Long? = TasmeeSession.biddingClosesAt(now + minutes * 60.0, now)?.let { Math.round((it - now) / 60) }
+        // Far enough: three hours before.
+        assertEquals(21 * 60L, closes(24 * 60))
+        assertEquals(30L, closes(210))
+        // Sooner, three hours before would leave under half an hour to bid: 30 minutes before instead.
+        assertEquals(170L, closes(200))
+        assertEquals(30L, closes(60))
+        // Under an hour away: no auction.
+        assertNull(closes(59))
+    }
+
+    @Test
     fun valuesSurviveTheirDocuments() {
         val teacher = Teacher("t", "الشيخ أحمد", "الدمام", "إجازة", vetted = true)
         assertEquals(teacher, Teacher.from("t", teacher.document))

@@ -107,8 +107,25 @@ data class TasmeeSession(
             )
         }
 
-        /** How long before a session its auction closes (the server's policy, mirrored). */
+        /**
+         * How long before a session its auction closes, and for a session sooner than that, how long before it closes
+         * instead; a session less than an hour away offers free seats only (the server's policy, mirrored; AUC-04).
+         */
         const val BIDDING_CLOSES_BEFORE = 3 * 3_600.0
+        const val LATE_BIDDING_CLOSES_BEFORE = 30 * 60.0
+        const val MIN_AUCTION_LEAD = 3_600.0
+
+        /**
+         * When bidding closes for a session starting at [startsAt] and created [now]: three hours before it, unless
+         * that would leave less than half an hour to bid, then 30 minutes before it. Null when it's less than an hour
+         * away.
+         */
+        fun biddingClosesAt(startsAt: Moment, now: Moment = Moment.now()): Moment? {
+            val lead = startsAt - now
+            if (lead < MIN_AUCTION_LEAD) return null
+            val closesBefore = if (lead - BIDDING_CLOSES_BEFORE >= LATE_BIDDING_CLOSES_BEFORE) BIDDING_CLOSES_BEFORE else LATE_BIDDING_CLOSES_BEFORE
+            return startsAt + -closesBefore
+        }
     }
 
     /** The fields the teacher writes; the server keeps the auction's own counts. */

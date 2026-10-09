@@ -114,6 +114,10 @@ fun SessionEditor(app: AqraApp, session: TasmeeSession?, onDone: () -> Unit) {
     // A session's seats can't go below the students who already booked.
     val minimumSeats = maxOf(session?.booked ?: 0, 1)
     val isValid = kind == TasmeeSession.Kind.VIDEO || place.isNotBlank()
+    // When bidding would close for the start chosen; null when it's too soon for auctioned seats, which a start moved
+    // too close takes away.
+    val biddingClosesAt = TasmeeSession.biddingClosesAt(Moment.of(startsAt.toInstant()))
+    LaunchedEffect(biddingClosesAt == null) { if (biddingClosesAt == null) auctionSeats = 0 }
 
     Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).padding(horizontal = 24.dp).padding(bottom = 24.dp).navigationBarsPadding(),
         verticalArrangement = Arrangement.spacedBy(18.dp)) {
@@ -142,7 +146,9 @@ fun SessionEditor(app: AqraApp, session: TasmeeSession?, onDone: () -> Unit) {
         if (session == null) {
             AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 0.dp, radius = 24.dp) {
                 FieldRow(stringResource(R.string.seats_by_auction)) {
-                    Stepper(auctionSeats, canLower = auctionSeats > 0, canRaise = auctionSeats < 20) { auctionSeats = (auctionSeats + it).coerceIn(0, 20) }
+                    Stepper(auctionSeats, canLower = auctionSeats > 0, canRaise = auctionSeats < 20 && biddingClosesAt != null) {
+                        auctionSeats = (auctionSeats + it).coerceIn(0, 20)
+                    }
                 }
                 if (auctionSeats > 0) {
                     AqraRowDivider(start = 14.dp)
@@ -151,9 +157,14 @@ fun SessionEditor(app: AqraApp, session: TasmeeSession?, onDone: () -> Unit) {
                     }
                 }
             }
-            if (auctionSeats > 0) {
-                Text(stringResource(R.string.beside_the_free_seats_these_go_to_the_highest_bids), style = aqraStyle(12f, Weight.medium, Palette.inkSoft),
-                    modifier = Modifier.padding(horizontal = 6.dp))
+            val note = when {
+                biddingClosesAt == null -> R.string.a_session_less_than_an_hour_away_offers_free_seats
+                auctionSeats == 0 -> null
+                Moment.of(startsAt.toInstant()) - biddingClosesAt >= TasmeeSession.BIDDING_CLOSES_BEFORE -> R.string.beside_the_free_seats_these_go_to_the_highest_bids
+                else -> R.string.beside_the_free_seats_these_go_to_the_highest_bids_2
+            }
+            note?.let {
+                Text(stringResource(it), style = aqraStyle(12f, Weight.medium, Palette.inkSoft), modifier = Modifier.padding(horizontal = 6.dp))
             }
         }
         if (kind == TasmeeSession.Kind.VIDEO) {
