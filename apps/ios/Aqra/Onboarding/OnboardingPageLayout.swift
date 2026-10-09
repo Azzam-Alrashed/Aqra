@@ -4,7 +4,7 @@ import SwiftUI
 enum OnboardingPalette {
     static let surface = Color(light: 0xF7F4FB, dark: 0xF7F4FB)
     static let ink = Color(light: 0x241A33, dark: 0x241A33)
-    static let inkSoft = Color(light: 0x7B7290, dark: 0x7B7290)
+    static let inkSoft = Color(light: 0x6C6383, dark: 0x6C6383)
     static let brand = Color(light: 0x5B2D91, dark: 0x5B2D91)
     static let brandDeep = Color(light: 0x3E1D66, dark: 0x3E1D66)
     static let gold = Color(light: 0xE8B64C, dark: 0xE8B64C)
