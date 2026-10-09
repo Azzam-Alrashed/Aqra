@@ -344,7 +344,7 @@ private fun Question(app: AqraApp, store: MushafStore, question: TestQuestion, c
                     contentAlignment = Alignment.Center,
                 ) {
                     if (question.kind == TestQuestion.Kind.NEXT_AYAH) {
-                        AyahText(store.ayahTexts[option], store.ayahPlainTexts[option], 21.dp, app.fonts, ink)
+                        AyahText(store.ayahTexts[option], store.ayahPlainTexts[option], 21.dp, app.fonts, ink, showsNumber = false)
                     } else {
                         Text(store.surahNames[option].orEmpty(), style = aqraStyle(18f, Weight.bold, ink))
                     }
@@ -376,16 +376,30 @@ private fun TestResult(correct: Int, questions: Int, policy: StagePolicy, onDone
 // MARK: - An ayah on its own
 
 /**
+ * The text without its ayah-end marker: the Complex's text ends every ayah with one right-to-left mark and one glyph,
+ * U+E959 plus the ayah's number, that draws the numbered marker; only that last word is left out.
+ */
+fun ayahWithoutNumber(text: String): String {
+    val space = text.lastIndexOf(' ')
+    if (space < 0) return text
+    val last = text.substring(space + 1).codePoints().toArray()
+    if (last.size != 2 || last[0] != 0x200F || last[1] !in 0xE95A..0xE959 + 286) return text
+    return text.substring(0, space)
+}
+
+/**
  * One ayah in the Complex's own text and Hafs Smart font, as published, wrapping over as many lines as it needs —
  * where an ayah stands on its own (the stage tests). Each word is drawn from the font by Aqra's own font reader, and
- * the words flow from the right, line after line, each line centered, in any language of the app.
+ * the words flow from the right, line after line, each line centered, in any language of the app. A stage test's
+ * options leave out the ayah-end marker ([showsNumber]), so the answer can't be read from the numbers.
  */
 @OptIn(ExperimentalLayoutApi::class)
 @Composable
-fun AyahText(text: String, spoken: String, size: Dp, fonts: MushafFonts, color: Color) {
+fun AyahText(text: String, spoken: String, size: Dp, fonts: MushafFonts, color: Color, showsNumber: Boolean = true) {
     val density = LocalDensity.current
     val pixels = with(density) { size.toPx() }
-    val words = remember(text, pixels) { text.split(' ').filter { it.isNotEmpty() }.map { fonts.text(it, fonts.hafsFont, pixels) } }
+    val shown = if (showsNumber) text else ayahWithoutNumber(text)
+    val words = remember(shown, pixels) { shown.split(' ').filter { it.isNotEmpty() }.map { fonts.text(it, fonts.hafsFont, pixels) } }
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         FlowRow(
             Modifier.fillMaxWidth().clearAndSetSemantics { contentDescription = spoken },
