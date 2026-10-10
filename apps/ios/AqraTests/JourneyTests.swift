@@ -467,4 +467,35 @@ struct JourneyTests {
         #expect(CloudBackup.decodeJourney(json) == snapshot)
         #expect(Journey.Snapshot.merge(snapshot, .init(assessments: .init(passes: [3: day(2), 4: day(5)]))).assessments.passes == [3: day(2), 4: day(5)])
     }
+
+    /// The reader's ribbon: placed and moved on the device, kept in its file, carried in the journey's backup, and
+    /// merged so the later choice wins, a removal included.
+    @Test func theBookmarkSurvivesTheBackupAndMerges() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("reading-\(UUID().uuidString).json")
+        let reading = ReadingStore(fileURL: url)
+        var changes = 0
+        reading.onChange = { changes += 1 }
+        reading.place(on: 4, at: day(1))
+        reading.place(on: 4, at: day(2))          // the same page: nothing changes
+        reading.place(on: 605, at: day(2))        // past the Mushaf: ignored
+        #expect(reading.bookmark == .init(page: 4, placedAt: day(1)) && changes == 1)
+        #expect(ReadingStore(fileURL: url).bookmark?.page == 4)
+
+        let journey = Journey(plan: PlanStore(fileURL: nil), rewards: RewardStore(fileURL: nil), assessments: AssessmentStore(fileURL: nil), reading: reading)
+        let json = try CloudBackup.encode(journey.snapshot)
+        #expect(CloudBackup.decodeJourney(json)?.reading?.bookmark?.page == 4)
+        // A backup from before the ribbon existed reads with none.
+        let old = CloudBackup.decodeJourney(#"{"plan":{"portions":[],"history":[],"updatedAt":0},"rewards":{"points":0,"events":[],"achievements":[],"challenges":[],"updatedAt":0},"assessments":{"results":[],"sheikhTests":[],"passes":{},"updatedAt":0}}"#)
+        #expect(old != nil && old?.reading == nil)
+
+        // The later choice wins: a ribbon moved on another device, then a removal here.
+        let here = ReadingStore.Snapshot(bookmark: .init(page: 4, placedAt: day(1)), updatedAt: day(1))
+        let there = ReadingStore.Snapshot(bookmark: .init(page: 50, placedAt: day(3)), updatedAt: day(3))
+        #expect(ReadingStore.Snapshot.merge(here, there).bookmark?.page == 50)
+        let removed = ReadingStore.Snapshot(bookmark: nil, updatedAt: day(5))
+        #expect(ReadingStore.Snapshot.merge(there, removed).bookmark == nil)
+        #expect(Journey.Snapshot.merge(.init(reading: there), .init(reading: removed)).reading?.bookmark == nil)
+        reading.apply(there)
+        #expect(reading.bookmark?.page == 50)
+    }
 }

@@ -170,27 +170,28 @@ struct WirdView: View {
                         Text("Page \(session.page)")
                             .font(.system(size: 17, weight: .heavy, design: .rounded))
                             .foregroundStyle(MushafStyle.ink)
-                        Text("\(min(session.revealed, session.ayahs.count)) of \(session.ayahs.count)")
-                            .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
-                            .foregroundStyle(MushafStyle.chrome)
-                            .contentTransition(.numericText())
+                        Group {
+                            if session.stumbles.isEmpty {
+                                Text("\(min(session.revealed, session.ayahs.count)) of \(session.ayahs.count)")
+                            } else {
+                                Text("\(min(session.revealed, session.ayahs.count)) of \(session.ayahs.count)") + Text(verbatim: Separator.facts)
+                                    + Text("\(session.stumbles.count) stumbles").foregroundStyle(Color(light: 0x9A3E26, dark: 0xF6C9B8))
+                            }
+                        }
+                        .font(.system(size: 12, weight: .semibold, design: .rounded).monospacedDigit())
+                        .foregroundStyle(MushafStyle.chrome)
+                        .contentTransition(.numericText())
                     }
                     Spacer()
-                    if !session.stumbles.isEmpty {
-                        Text("\(session.stumbles.count) stumbles")
-                            .font(.system(size: 13, weight: .bold, design: .rounded))
-                            .foregroundStyle(Color(light: 0x9A3E26, dark: 0xF6C9B8))
-                            .padding(.horizontal, 12)
-                            .frame(height: 30)
-                            .background(MushafStyle.stumble.opacity(0.6), in: Capsule())
-                            .transition(.scale.combined(with: .opacity))
-                    }
+                    MushafModeChip(mode: .revising)
                 }
                 Group {
                     if outside {
                         Text("Tap the ayat you stumbled on when you revised this page")
+                    } else if session.isComplete {
+                        Text("Tap an ayah to mark or clear a stumble, then Done")
                     } else {
-                        Text("Tap to reveal the next ayah, and tap a revealed ayah if you stumbled on it")
+                        Text("Recite the next ayah from memory, then reveal it")
                     }
                 }
                     .font(.system(size: 12, weight: .semibold, design: .rounded))
@@ -198,30 +199,51 @@ struct WirdView: View {
                     .lineLimit(2)
                     .multilineTextAlignment(.center)
                     .frame(maxWidth: .infinity)
+                if !outside && !session.isComplete {
+                    Button("Next ayah") { withAnimation(.easeOut(duration: 0.2)) { session.revealNext() } }
+                        .buttonStyle(MarkingButtonStyle(prominent: true))
+                }
+                HStack(spacing: 10) {
+                    if !outside && !session.isComplete {
+                        Button("I stumbled here") { withAnimation(.easeOut(duration: 0.2)) { session.stumbleOnNext() } }
+                            .buttonStyle(StumbleButtonStyle())
+                        Button("Show page") { withAnimation(.easeOut(duration: 0.2)) { session.revealAll() } }
+                            .buttonStyle(MarkingButtonStyle())
+                    }
+                    Button("Done") { finish(session, record: true) }
+                        .buttonStyle(MarkingButtonStyle(prominent: outside || session.isComplete))
+                }
                 let canListen = !outside && !session.isComplete && RecitationModel.shared.isAvailable
                 if canListen {
                     Button { withAnimation(.snappy) { beginListening(session) } } label: {
-                        Label("Recite aloud", systemImage: "mic.fill")
+                        Label("Recite aloud instead", systemImage: "mic.fill")
+                            .font(.system(size: 14, weight: .bold, design: .rounded))
+                            .foregroundStyle(MushafStyle.barAccent)
+                            .frame(maxWidth: .infinity, minHeight: 44)
                     }
-                    .buttonStyle(MarkingButtonStyle(prominent: true))
-                }
-                HStack(spacing: 10) {
-                    if !outside {
-                        Button("Next ayah") { withAnimation(.easeOut(duration: 0.2)) { session.revealNext() } }
-                            .buttonStyle(MarkingButtonStyle())
-                            .disabled(session.isComplete)
-                        Button("Show page") { withAnimation(.easeOut(duration: 0.2)) { session.revealAll() } }
-                            .buttonStyle(MarkingButtonStyle())
-                            .disabled(session.isComplete)
-                    }
-                    Button("Done") { finish(session, record: true) }
-                        .buttonStyle(MarkingButtonStyle(prominent: !canListen))
+                    .buttonStyle(.plain)
                 }
             }
         }
         .animation(.snappy, value: session.stumbles.count)
+        .animation(.snappy, value: session.isComplete)
         .sensoryFeedback(.selection, trigger: session.revealed)
         .sensoryFeedback(.impact(weight: .light), trigger: session.stumbles.count)
         .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+/// «تعثّرتُ هنا»: the stumble color, a soft red that says what it does.
+private struct StumbleButtonStyle: ButtonStyle {
+    func makeBody(configuration: Configuration) -> some View {
+        configuration.label
+            .font(.system(size: 15, weight: .bold, design: .rounded))
+            .lineLimit(1)
+            .minimumScaleFactor(0.65)
+            .foregroundStyle(Color(light: 0x9A3E26, dark: 0xF6C9B8))
+            .padding(.horizontal, 8)
+            .frame(maxWidth: .infinity, minHeight: 46)
+            .background(MushafStyle.stumble.opacity(configuration.isPressed ? 0.8 : 0.55), in: Capsule())
+            .scaleEffect(configuration.isPressed ? 0.97 : 1)
     }
 }

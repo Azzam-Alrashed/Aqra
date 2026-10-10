@@ -76,6 +76,17 @@
         }
       }
     },
+    "%@ removed" : {
+      "comment" : "The undo chip after unmarking a surah, by its name.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُزيلت سورة %@"
+          }
+        }
+      }
+    },
     "%lld ayat" : {
       "localizations" : {
         "ar" : {
@@ -262,6 +273,70 @@
                 "stringUnit" : {
                   "state" : "translated",
                   "value" : "%lld ayat memorized"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "%lld ayat, with their revision history and strength." : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آيات، معها تاريخ مراجعتها وقوّتها."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية، معها تاريخ مراجعتها وقوّتها."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آية واحدة، معها تاريخ مراجعتها وقوّتها."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية، معها تاريخ مراجعتها وقوّتها."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "آيتان، معهما تاريخ مراجعتهما وقوّتهما."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld آية، معها تاريخ مراجعتها وقوّتها."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayah, with its revision history and strength."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "%lld ayat, with their revision history and strength."
                 }
               }
             }
@@ -2804,6 +2879,70 @@
         }
       }
     },
+    "A sheikh verified %lld of them." : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "منها %lld آيات وثّقها شيخ."
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "منها %lld آية وثّقها شيخ."
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "منها آية واحدة وثّقها شيخ."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "منها %lld آية وثّقها شيخ."
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "منها آيتان وثّقهما شيخ."
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "لم يوثّق شيخ منها شيئًا."
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A sheikh verified %lld of them."
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "A sheikh verified %lld of them."
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "A student" : {
       "localizations" : {
         "ar" : {
@@ -3186,6 +3325,16 @@
         }
       }
     },
+    "Book a session, or recite to a friend with a code" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احجز موعدًا، أو سمّع لصديق برمز"
+          }
+        }
+      }
+    },
     "Book a tasmee' and ask for a stage test" : {
       "comment" : "A description of a test that can be taken by a user who has not yet passed a stage.",
       "isCommentAutoGenerated" : true,
@@ -3208,12 +3357,54 @@
         }
       }
     },
+    "Bookmark here" : {
+      "comment" : "The Mushaf's ribbon button: places the reader's bookmark (فاصل) on the page shown.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفاصل هنا"
+          }
+        }
+      }
+    },
+    "Bookmark placed at %@, page %lld" : {
+      "comment" : "Shown for a moment after placing the ribbon: the surah's name and the page.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وُضع الفاصل عند %@، الصفحة %lld"
+          }
+        }
+      }
+    },
+    "Bookmark removed" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُزيل الفاصل"
+          }
+        }
+      }
+    },
     "Both pages" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "الصفحتان"
+          }
+        }
+      }
+    },
+    "Bringing back what you memorized…" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نُعيد حفظك…"
           }
         }
       }
@@ -3268,6 +3459,16 @@
         }
       }
     },
+    "Cancel the range" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ألغِ النطاق"
+          }
+        }
+      }
+    },
     "Cancel this session?" : {
       "localizations" : {
         "ar" : {
@@ -3284,6 +3485,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تلغي حجزك؟"
+          }
+        }
+      }
+    },
+    "Carry on" : {
+      "comment" : "Today's wird, already begun: carries on from the next page.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أكمل"
           }
         }
       }
@@ -3310,6 +3522,16 @@
         }
       }
     },
+    "Choose" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر"
+          }
+        }
+      }
+    },
     "Choose what you've memorized" : {
       "localizations" : {
         "ar" : {
@@ -3326,6 +3548,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "اختر ما تحفظه لتبدأ الصعود"
+          }
+        }
+      }
+    },
+    "Choose what you've memorized, and it will be kept in it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اختر ما تحفظه، ويُحفظ فيه."
           }
         }
       }
@@ -4233,6 +4465,16 @@
         }
       }
     },
+    "Home opens on it, and browsing or marking never moves it." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تفتح الرئيسية عليه، ولا يحرّكه التصفّح أو التحديد."
+          }
+        }
+      }
+    },
     "How much will you" : {
       "localizations" : {
         "ar" : {
@@ -4253,6 +4495,27 @@
         }
       }
     },
+    "I don't have an account, start afresh" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ليس لديّ حساب، أبدأ من جديد"
+          }
+        }
+      }
+    },
+    "I have an Aqra account" : {
+      "comment" : "In «What have you memorized?»: a hafiz who used Aqra before restores instead of declaring.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لديّ حساب في اقرأ"
+          }
+        }
+      }
+    },
     "I memorized it" : {
       "comment" : "A button that records the portion as memorized.",
       "isCommentAutoGenerated" : true,
@@ -4261,6 +4524,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "حفظته"
+          }
+        }
+      }
+    },
+    "I stumbled here" : {
+      "comment" : "In revision: reveals the next ayah, marked as a stumble.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تعثّرتُ هنا"
           }
         }
       }
@@ -4321,6 +4595,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "حضوريًا"
+          }
+        }
+      }
+    },
+    "In prayer, or to a friend: it counts in today's wird." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "في الصلاة أو مع صديق: تُحسب في وِرد اليوم."
           }
         }
       }
@@ -4457,6 +4741,17 @@
         }
       }
     },
+    "Juz' %lld removed" : {
+      "comment" : "The undo chip after unmarking a juz' in «What have you memorized?».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُزيل الجزء %lld"
+          }
+        }
+      }
+    },
     "Juz' %lld–%lld" : {
       "comment" : "A localized title for a stage that represents a range of juzs. The first argument is the lower bound of the juz range. The second argument is the upper bound of the juz range.",
       "isCommentAutoGenerated" : true,
@@ -4465,6 +4760,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "الأجزاء %1$lld–%2$lld"
+          }
+        }
+      }
+    },
+    "Keep" : {
+      "comment" : "Keeps the ayat the student was about to unmark in «What have you memorized?».",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "إبقاء"
           }
         }
       }
@@ -4569,12 +4875,43 @@
         }
       }
     },
+    "Let's bring back what you memorized" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نسترجع حفظك"
+          }
+        }
+      }
+    },
     "Loading teachers…" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "جارٍ تحميل المعلّمين…"
+          }
+        }
+      }
+    },
+    "Log it" : {
+      "comment" : "On the home: logs a page of today's wird revised outside the app.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّلها"
+          }
+        }
+      }
+    },
+    "Log the page" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل الصفحة"
           }
         }
       }
@@ -4615,6 +4952,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "حدّد الصفحات والآيات في المصحف"
+          }
+        }
+      }
+    },
+    "Marking what you've memorized" : {
+      "comment" : "The mode chip in the Mushaf's marking panel.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تحديد ما تحفظ"
           }
         }
       }
@@ -4787,6 +5135,16 @@
         }
       }
     },
+    "Memorize today's portion" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احفظ مقطع اليوم"
+          }
+        }
+      }
+    },
     "Memorized" : {
       "comment" : "A label displayed in a stage test requirement.",
       "isCommentAutoGenerated" : true,
@@ -4819,6 +5177,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "حفظت اليوم"
+          }
+        }
+      }
+    },
+    "Memorizing" : {
+      "comment" : "The mode chip in the memorize screen's panel.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حفظ"
           }
         }
       }
@@ -4869,6 +5238,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "حفظي"
+          }
+        }
+      }
+    },
+    "My plan" : {
+      "comment" : "The section of تقدّمي holding what's memorized, the daily amount and the plan.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خطتي"
           }
         }
       }
@@ -5083,6 +5463,17 @@
         }
       }
     },
+    "No stumbles" : {
+      "comment" : "Logs a page revised outside the app as clean.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "دون تعثّر"
+          }
+        }
+      }
+    },
     "No stumbles: the ayat heard are verified" : {
       "localizations" : {
         "ar" : {
@@ -5217,6 +5608,16 @@
         }
       }
     },
+    "Nothing to revise today" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا مراجعة اليوم"
+          }
+        }
+      }
+    },
     "Notifications are turned off for Aqra in Settings." : {
       "localizations" : {
         "ar" : {
@@ -5299,12 +5700,33 @@
         }
       }
     },
+    "Open" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "افتح"
+          }
+        }
+      }
+    },
     "Open Settings" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "افتح الإعدادات"
+          }
+        }
+      }
+    },
+    "or mark from one ayah to another with «Select a range»" : {
+      "comment" : "After the count of ayat memorized, in marking mode.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أو حدّد من آية إلى أخرى بـ«حدّد نطاقًا»"
           }
         }
       }
@@ -5569,12 +5991,43 @@
         }
       }
     },
+    "Recite aloud instead" : {
+      "comment" : "In the wird's panel: switches from revealing by hand to following the recitation by ear.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سمّع بصوتك بدلًا من ذلك"
+          }
+        }
+      }
+    },
+    "Recite the next ayah from memory, then reveal it" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اقرأ الآية التالية غيبًا، ثم أظهرها"
+          }
+        }
+      }
+    },
     "Recite to a friend" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "سمِّع لصديقك"
+          }
+        }
+      }
+    },
+    "Recite to a sheikh or a friend" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سمّع لشيخ أو لصديق"
           }
         }
       }
@@ -5641,12 +6094,44 @@
         }
       }
     },
+    "Remove %@ from what you've memorized?" : {
+      "comment" : "Asked before unmarking a surah with revision history, by its name.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُزيل سورة %@ من حفظك؟"
+          }
+        }
+      }
+    },
     "Remove all" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "إزالة الكل"
+          }
+        }
+      }
+    },
+    "Remove juz' %lld from what you've memorized?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُزيل الجزء %lld من حفظك؟"
+          }
+        }
+      }
+    },
+    "Remove the bookmark" : {
+      "comment" : "The Mushaf's ribbon button on the page that holds the ribbon.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أزل الفاصل"
           }
         }
       }
@@ -5659,6 +6144,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "إزالة التحدي"
+          }
+        }
+      }
+    },
+    "Remove the whole Quran from what you've memorized?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تُزيل القرآن كاملًا من حفظك؟"
           }
         }
       }
@@ -5695,6 +6190,16 @@
         }
       }
     },
+    "Restore what you memorized and carry on" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استرجع حفظك وتابع من حيث توقّفت"
+          }
+        }
+      }
+    },
     "Resume" : {
       "comment" : "A button that resumes a paused plan.",
       "isCommentAutoGenerated" : true,
@@ -5703,6 +6208,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "استئناف"
+          }
+        }
+      }
+    },
+    "Resume it from your plan" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "استأنفها من خطتك"
           }
         }
       }
@@ -5813,12 +6328,32 @@
         }
       }
     },
+    "Revise today's wird" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجع وِرد اليوم"
+          }
+        }
+      }
+    },
     "Revised" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "تمّت مراجعتها"
+          }
+        }
+      }
+    },
+    "Revised a page outside the app?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجعتَ صفحة خارج التطبيق؟"
           }
         }
       }
@@ -5849,6 +6384,27 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "راجعتها خارج التطبيق، مع تعثّرات…"
+          }
+        }
+      }
+    },
+    "Revised outside the app?" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "راجعتَ خارج التطبيق؟"
+          }
+        }
+      }
+    },
+    "Revising" : {
+      "comment" : "The mode chip in the wird's panel: what a tap on the page does now.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مراجعة"
           }
         }
       }
@@ -6083,6 +6639,17 @@
         }
       }
     },
+    "Select a range" : {
+      "comment" : "Marking mode: the next two ayat tapped mark everything between them.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "حدّد نطاقًا"
+          }
+        }
+      }
+    },
     "Send application" : {
       "localizations" : {
         "ar" : {
@@ -6204,6 +6771,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تسجيل الدخول إلى المحاكي"
+          }
+        }
+      }
+    },
+    "Sign in with the account you used before: what you memorized, its strength and your streak come back as you left them." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سجّل الدخول بالحساب الذي استعملته من قبل، فيعود حفظك وقوّته وسلسلة مراجعتك كما تركتها."
           }
         }
       }
@@ -6578,6 +7155,16 @@
         }
       }
     },
+    "Tap an ayah to mark or clear a stumble, then Done" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط آيةً لتسجّل تعثّرًا أو تمحوه، ثم «تم»"
+          }
+        }
+      }
+    },
     "Tap the ayat you stumbled on when you revised this page" : {
       "comment" : "A description of the purpose of the stumble button.",
       "isCommentAutoGenerated" : true,
@@ -6596,6 +7183,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "اضغط على الآيات التي تحفظها"
+          }
+        }
+      }
+    },
+    "Tap the first ayah of the range" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اضغط أول آية في النطاق"
           }
         }
       }
@@ -6936,6 +7533,17 @@
         }
       }
     },
+    "The whole Quran removed" : {
+      "comment" : "The undo chip after unmarking the whole Quran.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أُزيل القرآن كاملًا"
+          }
+        }
+      }
+    },
     "There isn't enough memorized in this stage for a test yet." : {
       "comment" : "A message displayed when a stage's test is unavailable.",
       "isCommentAutoGenerated" : true,
@@ -6966,6 +7574,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يعلّم تعثّراتك على جواله"
+          }
+        }
+      }
+    },
+    "This account has no memorization yet." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا حفظ في هذا الحساب بعد."
           }
         }
       }
@@ -7044,6 +7662,17 @@
         }
       }
     },
+    "Today" : {
+      "comment" : "The home's card of the day's steps: revise, memorize, recite.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "اليوم"
+          }
+        }
+      }
+    },
     "Today's new portion" : {
       "comment" : "A title for a card that shows the user's new portion for today.",
       "isCommentAutoGenerated" : true,
@@ -7082,6 +7711,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "أتممت وِرد اليوم"
+          }
+        }
+      }
+    },
+    "Today's wird is done, may Allah bless you" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وِرد اليوم تمّ، بارك الله فيك"
           }
         }
       }
@@ -7288,6 +7927,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "سنتواصل معك لترتيب المقابلة"
+          }
+        }
+      }
+    },
+    "Welcome back" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أهلًا بعودتك"
           }
         }
       }
@@ -7502,6 +8151,17 @@
         }
       }
     },
+    "With stumbles" : {
+      "comment" : "Logs a page revised outside the app with stumbles: the page opens to tap them.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "بتعثّر"
+          }
+        }
+      }
+    },
     "With the code your friend shows you" : {
       "localizations" : {
         "ar" : {
@@ -7560,6 +8220,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يمكنك إعادة الاختبار %@"
+          }
+        }
+      }
+    },
+    "You can undo it for a few seconds." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يمكنك التراجع خلال لحظات."
           }
         }
       }
@@ -7648,6 +8318,70 @@
         }
       }
     },
+    "You revised %lld pages" : {
+      "localizations" : {
+        "ar" : {
+          "variations" : {
+            "plural" : {
+              "few" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "راجعتَ %lld صفحات"
+                }
+              },
+              "many" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "راجعتَ %lld صفحة"
+                }
+              },
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "راجعتَ صفحة واحدة"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "راجعتَ %lld صفحة"
+                }
+              },
+              "two" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "راجعتَ صفحتين"
+                }
+              },
+              "zero" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "راجعتَ %lld صفحة"
+                }
+              }
+            }
+          }
+        },
+        "en" : {
+          "variations" : {
+            "plural" : {
+              "one" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "You revised %lld page"
+                }
+              },
+              "other" : {
+                "stringUnit" : {
+                  "state" : "translated",
+                  "value" : "You revised %lld pages"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "You were outbid" : {
       "localizations" : {
         "ar" : {
@@ -7684,6 +8418,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "فزت بمقعد في جلسة %@."
+          }
+        }
+      }
+    },
+    "You won't declare it again, and nothing you recorded is erased." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لن تُعيد تحديد ما تحفظ، ولا يُمحى شيء مما سجّلته."
           }
         }
       }
@@ -7865,6 +8609,37 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "أُعيد عرضك"
+          }
+        }
+      }
+    },
+    "Your bookmark" : {
+      "comment" : "Above the page the reader's ribbon is on, on the home's Mushaf card; also the ribbon's VoiceOver label.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "الفاصل"
+          }
+        }
+      }
+    },
+    "Your daily revision starts from it" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "منه تبدأ مراجعتك اليومية"
+          }
+        }
+      }
+    },
+    "Your day's steps, in order" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خطوات يومك، بالترتيب"
           }
         }
       }
@@ -8079,6 +8854,17 @@
         }
       }
     },
+    "Your plan, stages and rewards are in Progress" : {
+      "comment" : "The link at the bottom of the home to the تقدّمي tab.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "خطتك ومراحلك ومكافآتك في «تقدّمي»"
+          }
+        }
+      }
+    },
     "Your progress" : {
       "localizations" : {
         "ar" : {
@@ -8167,6 +8953,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "تسميعك بعد ساعة"
+          }
+        }
+      }
+    },
+    "Your tasmee' with %@" : {
+      "comment" : "The home's recite step: the next booked tasmee', by the teacher's name.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تسميعك مع %@"
           }
         }
       }

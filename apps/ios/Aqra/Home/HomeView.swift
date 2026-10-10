@@ -132,18 +132,18 @@ struct HomeView: View {
     @AppStorage("mushaf.lastPage") private var lastPage = 1
     @Environment(AccountStore.self) private var account
     @Environment(TasmeeStore.self) private var tasmee
+    @Environment(ReadingStore.self) private var reading
     /// The app's launch: the entrance waits until the splash has stepped back.
     @Environment(LaunchState.self) private var launch: LaunchState?
     @State private var destination: Destination?
     @AppStorage(SetupAfterMarking.key) private var afterMarking = SetupAfterMarking.none
     /// «لاحقًا» on the invitation to sign in hides it until this date.
-    @AppStorage("home.saveProgressSnoozedUntil") private var saveProgressSnoozedUntil = 0.0
     /// The newest tasmee' whose card was closed, so it isn't shown again.
     @AppStorage("home.seenTasmee") private var seenTasmee = ""
     @State private var editingMemorization = false
-    @State private var editingAmount = false
     @State private var editingPlan = false
-    @State private var openedStage: StageRoute?
+    /// «سجّلها»: a page of today's wird revised outside the app.
+    @State private var loggingOutside = false
     /// Bumped when a suggestion is taken or dismissed, so the list is worked out again.
     @State private var suggestionsVersion = 0
     @State private var openedMarking = false
@@ -166,22 +166,9 @@ struct HomeView: View {
                 header
                 stage
                 Group {
-                    headline
+                    todayCard
                         .padding(.top, 4)
-                    action
-                        .padding(.top, 24)
                     VStack(spacing: 14) {
-                        if showsPortion {
-                            PortionCard(store: store) { portion in
-                                destination = .memorize(portion: portion)
-                            } onEditPlan: {
-                                editingPlan = true
-                            }
-                            .zoomTransitionSource(id: "portion", in: zoom)
-                        }
-                        if memorization.count > 0 || plan.plan != nil {
-                            StageCard(store: store, stage: currentStage) { openedStage = StageRoute(stage: currentStage) }
-                        }
                         if !suggestions.isEmpty {
                             suggestionCard(suggestions)
                                 .transition(.scale(scale: 0.95).combined(with: .opacity))
@@ -190,21 +177,10 @@ struct HomeView: View {
                             heardCard(record)
                                 .transition(.scale(scale: 0.95).combined(with: .opacity))
                         }
-                        if let booking = tasmee.nextBooking {
-                            tasmeeCard(booking)
-                                .transition(.scale(scale: 0.95).combined(with: .opacity))
-                        }
                         mushafCard
-                        if let plan = revision.plan, !plan.items.isEmpty {
-                            pagesCard(plan)
-                        }
-                        if showsSaveProgress {
-                            saveProgressCard
-                                .transition(.scale(scale: 0.95).combined(with: .opacity))
-                        }
-                        memorizationCard
+                        progressLink
                     }
-                    .padding(.top, 22)
+                    .padding(.top, 14)
                 }
                 .opacity(entered ? 1 : 0)
                 .offset(y: entered ? 0 : 16)
@@ -253,14 +229,14 @@ struct HomeView: View {
         .sheet(isPresented: $editingMemorization) {
             MemorizationSetupView(store: store, isSheet: true) { _ in editingMemorization = false }
         }
-        .sheet(isPresented: $editingAmount) {
-            DailyAmountView(memorizedPages: memorizedPageCount, initial: dailyPages, isEditor: true) { revision.setDailyPages($0) }
-        }
         .sheet(isPresented: $editingPlan) {
             PlanEditorView(store: store) { _ in }
         }
-        .sheet(item: $openedStage) { route in
-            NavigationStack { StageDetailView(store: store, stage: route.stage) }
+        .sheet(isPresented: $loggingOutside) {
+            OutsideRevisionSheet(store: store) { page in
+                loggingOutside = false
+                destination = .outside(page: page)
+            }
         }
         .fullScreenCover(item: $destination, onDismiss: {
             // The setup's marking is over once the Mushaf closes: the daily amount and the plan follow.
@@ -415,7 +391,67 @@ struct HomeView: View {
         light.impactOccurred(intensity: 0.5)
     }
 
-    // MARK: - Today's wird
+    // MARK: - Today
+
+    /// «اليوم»: the day's steps in order, each its own button: revise, memorize, recite.
+    private var todayCard: some View {
+        let portion = plan.plan == nil ? nil : plan.today(memorization: memorization, store: store)
+        let portionToday: Bool = { switch portion { case .due, .done: true; default: false } }()
+        let portionDone: Bool = { if case .done = portion { true } else { false } }()
+        let steps = (revisesToday ? 1 : 0) + (portionToday ? 1 : 0)
+        let done = (revisesToday && revision.plan?.isComplete == true ? 1 : 0) + (portionDone ? 1 : 0)
+        return AqraCard(padding: 0, radius: 26) {
+            VStack(spacing: 0) {
+                HStack(spacing: 10) {
+                    IconTile(icon: "☀️", tint: Palette.butter, size: 40)
+                    VStack(alignment: .leading, spacing: 1) {
+                        Text("Today")
+                            .aqraFont(size: 19, weight: .heavy)
+                            .foregroundStyle(Palette.ink)
+                        Text("Your day's steps, in order")
+                            .aqraFont(size: 12, weight: .semibold)
+                            .foregroundStyle(Palette.inkSoft)
+                    }
+                    Spacer(minLength: 4)
+                    if steps > 0 {
+                        Text("\(done) of \(steps)")
+                            .aqraFont(size: 13, weight: .bold, monospacedDigit: true)
+                            .foregroundStyle(Palette.brand)
+                            .contentTransition(.numericText())
+                            .padding(.horizontal, 10)
+                            .frame(minHeight: 28)
+                            .background(Palette.lavender, in: Capsule())
+                    }
+                }
+                .padding(14)
+                reviseStep
+                AqraRowDivider()
+                memorizeStep(portion)
+                AqraRowDivider()
+                reciteStep
+                if revisesToday, !remaining.isEmpty {
+                    AqraRowDivider()
+                    HStack(spacing: 10) {
+                        Text("Revised a page outside the app?")
+                            .aqraFont(size: 12, weight: .semibold)
+                            .foregroundStyle(Palette.inkSoft)
+                            .fixedSize(horizontal: false, vertical: true)
+                        Spacer(minLength: 4)
+                        Button("Log it") { loggingOutside = true }
+                            .buttonStyle(ChipButtonStyle(filled: false))
+                    }
+                    .padding(.horizontal, 14)
+                    .padding(.vertical, 8)
+                }
+            }
+            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: revision.plan?.doneCount)
+        }
+    }
+
+    /// Whether there's a wird today: something memorized, and pages in today's plan.
+    private var revisesToday: Bool {
+        memorization.count > 0 && revision.plan?.items.isEmpty == false
+    }
 
     /// What's left of today's wird: the pages not yet revised, the first of them leading.
     private var remaining: [PlanItem] {
@@ -434,65 +470,102 @@ struct HomeView: View {
         Text("A full revision every \(DailyAmountView.cycleDays(memorizedPages: memorizedPageCount, amount: dailyPages)) days")
     }
 
-    private var headline: some View {
-        let plan = revision.plan
-        return VStack(spacing: 10) {
-            VStack(spacing: 2) {
-                if memorization.count == 0, self.plan.plan != nil {
-                    Text("Begin your journey").foregroundStyle(Palette.ink)
-                    Text("with today's portion").foregroundStyle(Palette.brand)
-                } else if memorization.count == 0 || plan == nil || plan?.items.isEmpty == true {
-                    Text("What have you memorized").foregroundStyle(Palette.ink)
-                    Text("of the Quran?").foregroundStyle(Palette.brand)
-                } else if let next = remaining.first {
-                    Text("Your revision today").foregroundStyle(Palette.ink)
-                    Text("\(remaining.count) pages from \(store.surahNames[store.page(next.page).surah] ?? "")")
-                        .foregroundStyle(Palette.brand)
-                } else {
-                    Text("Today's revision is done").foregroundStyle(Palette.ink)
-                    Text("May Allah bless you").foregroundStyle(Palette.brand)
-                }
-            }
-            .aqraFont(size: 31, weight: .heavy)
-            .lineLimit(1)
-            .minimumScaleFactor(0.6)
-            Group {
-                if memorization.count == 0, self.plan.plan != nil {
-                    Text("Every ayah you memorize is a step up")
-                } else if memorization.count == 0 {
-                    Text("Choose what you've memorized to start climbing")
-                } else {
-                    cycleLine
-                }
-            }
-            .aqraFont(size: 16, weight: .medium)
-            .foregroundStyle(Palette.inkSoft)
-        }
-        .multilineTextAlignment(.center)
-        .frame(maxWidth: .infinity)
-    }
-
-    @ViewBuilder
-    private var action: some View {
-        let metrics = OnboardingButtonMetrics(height: 56, fontSize: 18, compact: false)
-        if memorization.count == 0, plan.plan != nil {
-            EmptyView()
-        } else if memorization.count == 0 {
-            BrandButton("Choose what you've memorized", metrics: metrics) { editingMemorization = true }
+    /// ١ Revise: today's wird, started or carried on; a tick once it's done.
+    @ViewBuilder private var reviseStep: some View {
+        if memorization.count == 0 {
+            TodayStep(number: 1, icon: "📖", tint: Palette.sky, title: Text("Choose what you've memorized"),
+                      detail: Text("Your daily revision starts from it"), action: "Choose") { editingMemorization = true }
         } else if let next = remaining.first, let plan = revision.plan {
-            BrandButton(plan.doneCount == 0 ? "Start today's revision" : "Continue today's revision", metrics: metrics) {
+            TodayStep(number: 1, icon: "🔁", tint: Palette.sky, title: Text("Revise today's wird"),
+                      detail: Text("\(remaining.count) pages from \(store.surahNames[store.page(next.page).surah] ?? "")")
+                        + Text(verbatim: Separator.facts) + cycleLine,
+                      action: plan.doneCount == 0 ? "Start" : "Carry on") {
                 destination = .wird(page: next.page, fromButton: true)
             }
             .zoomTransitionSource(id: Destination.wird(page: next.page, fromButton: true).sourceID, in: zoom)
+        } else if let plan = revision.plan, plan.isComplete {
+            TodayStep(number: 1, icon: "✅", tint: Palette.mint, title: Text("You revised \(plan.items.count) pages"),
+                      detail: Text("Today's wird is done, may Allah bless you"), done: true)
+        } else {
+            TodayStep(number: 1, icon: "🔁", tint: Palette.sky, title: Text("Nothing to revise today"), detail: cycleLine)
         }
+    }
+
+    /// ٢ Memorize: today's portion of the plan, a rest day, or the invitation to a plan.
+    @ViewBuilder private func memorizeStep(_ today: TodayPortion?) -> some View {
+        switch today {
+        case nil:
+            if let current = plan.plan, current.paused {
+                TodayStep(number: 2, icon: "⏸️", tint: Palette.lavender, title: Text("Your memorization plan is paused"),
+                          detail: Text("Resume it from your plan"), action: "Your plan") { editingPlan = true }
+            } else {
+                TodayStep(number: 2, icon: "✍️", tint: Palette.butter, title: Text("Memorize new portions"),
+                          detail: Text("A daily amount, and the date you'd complete the Quran"), action: "Start") { editingPlan = true }
+            }
+        case .due(let portion):
+            TodayStep(number: 2, icon: "✍️", tint: Palette.butter, title: Text("Memorize today's portion"),
+                      detail: Text(verbatim: PlanFormat.portion(portion, store: store)), action: "Memorize") {
+                destination = .memorize(portion: portion)
+            }
+            .zoomTransitionSource(id: "portion", in: zoom)
+        case .done(let portion):
+            TodayStep(number: 2, icon: "✅", tint: Palette.mint, title: Text("Memorized today"),
+                      detail: Text(verbatim: PlanFormat.portion(portion.memorized, store: store)), done: true)
+        case .restDay(let next):
+            TodayStep(number: 2, icon: "🌙", tint: Palette.lavender, title: Text("A rest day from new memorization"),
+                      detail: Text("Next portion \(next.formatted(.dateTime.weekday(.wide)))"))
+        case .complete:
+            TodayStep(number: 2, icon: "⭐️", tint: Palette.butter, title: Text("Every ayah is memorized"),
+                      detail: Text("May Allah bless you"), done: true)
+        }
+    }
+
+    /// ٣ Recite: the next tasmee' booked, or where to book one.
+    @ViewBuilder private var reciteStep: some View {
+        if let booking = tasmee.nextBooking {
+            let live = tasmee.session(of: booking)
+            let cancelled = live?.status == .cancelled
+            TodayStep(number: 3, icon: "🎓", tint: cancelled ? Palette.rose : Palette.mint,
+                      title: cancelled ? Text("Tasmee' cancelled") : Text("Your tasmee' with \(booking.teacherName)"),
+                      detail: Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + Separator.facts)
+                        + TasmeeFormat.place(live.map { Booking($0) } ?? booking),
+                      action: "Open") {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { tab = .tasmee }
+            }
+        } else {
+            TodayStep(number: 3, icon: "🎤", tint: Palette.peach, title: Text("Recite to a sheikh or a friend"),
+                      detail: Text("Book a session, or recite to a friend with a code"), action: "Book") {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { tab = .tasmee }
+            }
+        }
+    }
+
+    /// Where the plan, the stages and the rewards are now.
+    private var progressLink: some View {
+        Button {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { tab = .progress }
+        } label: {
+            HStack(spacing: 6) {
+                Text("Your plan, stages and rewards are in Progress")
+                    .aqraFont(size: 13, weight: .semibold)
+                    .foregroundStyle(Palette.inkSoft)
+                Image(systemName: "chevron.forward")
+                    .font(.system(size: 11, weight: .heavy))
+                    .foregroundStyle(Palette.brand)
+            }
+            .frame(maxWidth: .infinity, minHeight: 44)
+        }
+        .buttonStyle(.plain)
     }
 
     // MARK: - Cards
 
-    /// The Mushaf, open on the page last read: its miniature grows into the full page.
+    /// The Mushaf, open on the reader's ribbon (or the page last read): its miniature grows into the full page.
     private var mushafCard: some View {
-        let page = store.page(lastPage)
+        let bookmark = reading.bookmark?.page
+        let page = store.page(bookmark ?? lastPage)
         return Button {
+            if let bookmark { lastPage = bookmark }
             destination = .mushaf(marking: false)
         } label: {
             AqraCard(padding: 12, radius: 24) {
@@ -503,9 +576,11 @@ struct HomeView: View {
                         .overlay(RoundedRectangle(cornerRadius: 8, style: .continuous).strokeBorder(MushafStyle.chrome.opacity(0.25), lineWidth: 1))
                         .zoomTransitionSource(id: Destination.mushaf(marking: false).sourceID, in: zoom)
                     VStack(alignment: .leading, spacing: 2) {
-                        Text("Continue reading")
-                            .aqraFont(size: 12, weight: .semibold)
-                            .foregroundStyle(Palette.inkSoft)
+                        Group {
+                            if bookmark != nil { Text("Your bookmark") } else { Text("Continue reading") }
+                        }
+                        .aqraFont(size: 12, weight: .semibold)
+                        .foregroundStyle(Palette.inkSoft)
                         (Text(verbatim: (store.surahNames[page.surah] ?? "") + Separator.facts) + Text("Page \(page.number)"))
                         .aqraFont(size: 16, weight: .heavy)
                         .foregroundStyle(Palette.ink)
@@ -513,160 +588,11 @@ struct HomeView: View {
                         .minimumScaleFactor(0.8)
                     }
                     Spacer(minLength: 8)
-                    IconTile(icon: "📖", tint: Palette.sky, size: 40)
+                    IconTile(icon: bookmark != nil ? "🔖" : "📖", tint: bookmark != nil ? Palette.rose : Palette.sky, size: 40)
                 }
             }
         }
         .buttonStyle(AqraPressStyle())
-    }
-
-    private func pagesCard(_ plan: DayPlan) -> some View {
-        AqraCard(padding: 14, radius: 24) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(spacing: 10) {
-                    IconTile(icon: "📄", tint: Palette.sky, size: 40)
-                    VStack(alignment: .leading, spacing: 1) {
-                        Text("Today's pages")
-                            .aqraFont(size: 19, weight: .heavy)
-                            .foregroundStyle(Palette.ink)
-                        if !plan.isComplete {
-                            Text("Revised a page outside the app? Press and hold it.")
-                                .aqraFont(size: 11, weight: .semibold)
-                                .foregroundStyle(Palette.inkSoft)
-                                .fixedSize(horizontal: false, vertical: true)
-                        }
-                    }
-                    Spacer(minLength: 4)
-                    Text("\(plan.doneCount) of \(plan.items.count)")
-                        .aqraFont(size: 13, weight: .bold, monospacedDigit: true)
-                        .foregroundStyle(Palette.brand)
-                        .contentTransition(.numericText())
-                        .padding(.horizontal, 10)
-                        .padding(.vertical, 3)
-                        .frame(minHeight: 28)
-                        .background(Palette.lavender, in: Capsule())
-                }
-                LazyVGrid(columns: Array(repeating: GridItem(.flexible(), spacing: 8), count: 3), spacing: 8) {
-                    ForEach(plan.items) { item in
-                        pageTile(item)
-                    }
-                }
-            }
-            .animation(.spring(response: 0.4, dampingFraction: 0.8), value: plan.doneCount)
-        }
-    }
-
-    /// A page of today's wird, in its juz's band color: tap to revise it, press and hold if it was revised elsewhere.
-    private func pageTile(_ item: PlanItem) -> some View {
-        let page = store.page(item.page)
-        let face = ManazilStairs.face(forJuz: page.juz)
-        let shape = RoundedRectangle(cornerRadius: 16, style: .continuous)
-        return Button {
-            destination = .wird(page: item.page, fromButton: false)
-        } label: {
-            VStack(spacing: 2) {
-                Text(item.page.formatted())
-                    .aqraFont(size: 18, weight: .heavy, monospacedDigit: true)
-                    .foregroundStyle(item.done ? Palette.inkSoft : Palette.ink)
-                Group {
-                    if item.kind == .followUp {
-                        Text("Follow-up").foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
-                    } else {
-                        Text(verbatim: store.surahNames[page.surah] ?? "").foregroundStyle(Palette.inkSoft)
-                    }
-                }
-                .aqraFont(size: 11, weight: .semibold)
-                .lineLimit(1)
-                .minimumScaleFactor(0.8)
-            }
-            .padding(.horizontal, 6)
-            .frame(maxWidth: .infinity)
-            .padding(.vertical, 3)
-            .frame(minHeight: 62)
-            .background(
-                item.done
-                    ? AnyShapeStyle(face.top.opacity(0.14))
-                    : AnyShapeStyle(LinearGradient(colors: [face.top.opacity(0.6), face.top.opacity(0.28)], startPoint: .top, endPoint: .bottom)),
-                in: shape
-            )
-            .overlay(shape.strokeBorder(.white.opacity(0.8), lineWidth: 1))
-            .overlay(alignment: .topTrailing) {
-                if item.done {
-                    Image(systemName: "checkmark.circle.fill")
-                        .aqraFont(size: 16, weight: .bold)
-                        .foregroundStyle(.white, face.bottom)
-                        .padding(6)
-                        .transition(.scale.combined(with: .opacity))
-                }
-            }
-            .contentShape(shape)
-        }
-        .buttonStyle(AqraPressStyle())
-        .zoomTransitionSource(id: Destination.wird(page: item.page, fromButton: false).sourceID, in: zoom)
-        .contextMenu {
-            if !item.done {
-                Button {
-                    let ayahs = page.ayahs.filter { memorization.isMemorized($0) }
-                    revision.record(page: item.page, ayahs: ayahs, stumbles: [], source: .outside, memorization: memorization)
-                } label: {
-                    Label("Revised outside the app", systemImage: "checkmark.circle")
-                }
-                Button {
-                    destination = .outside(page: item.page)
-                } label: {
-                    Label("Revised outside the app, with stumbles…", systemImage: "exclamationmark.circle")
-                }
-            }
-        }
-        .accessibilityValue(item.done ? Text("Revised") : Text(verbatim: ""))
-    }
-
-    // MARK: - Tasmee'
-
-    /// The next tasmee' booked, with a teacher: when and where, or that the teacher cancelled it.
-    private func tasmeeCard(_ booking: Booking) -> some View {
-        let live = tasmee.session(of: booking)
-        let cancelled = live?.status == .cancelled
-        return Button {
-            withAnimation(.spring(response: 0.35, dampingFraction: 0.82)) { tab = .tasmee }
-        } label: {
-            AqraCard(padding: 12, radius: 24) {
-                HStack(spacing: 12) {
-                    IconTile(icon: "🎓", tint: cancelled ? Palette.rose : Palette.mint, size: 40)
-                    VStack(alignment: .leading, spacing: 2) {
-                        Text(cancelled ? "Tasmee' cancelled" : "Your next tasmee'")
-                            .aqraFont(size: 12, weight: .semibold)
-                            .foregroundStyle(Palette.inkSoft)
-                        Text(verbatim: booking.teacherName)
-                            .aqraFont(size: 16, weight: .heavy)
-                            .foregroundStyle(Palette.ink)
-                            .lineLimit(1)
-                        (Text(verbatim: TasmeeFormat.when(live?.startsAt ?? booking.startsAt) + Separator.facts)
-                            + TasmeeFormat.place(live.map { Booking($0) } ?? booking))
-                            .aqraFont(size: 12, weight: .bold)
-                            .foregroundStyle(cancelled ? Palette.inkSoft : Palette.brand)
-                            .strikethrough(cancelled)
-                            .lineLimit(1)
-                            .minimumScaleFactor(0.8)
-                    }
-                    Spacer(minLength: 8)
-                    AqraChevron()
-                }
-            }
-        }
-        .buttonStyle(AqraPressStyle())
-        .accessibilityElement(children: .combine)
-    }
-
-    /// Today's portion, or the invitation to a plan — not for a student who has memorized the whole Quran.
-    private var showsPortion: Bool {
-        plan.plan != nil || memorization.count < MushafStore.ayahCount
-    }
-
-    /// The stage the student is in.
-    private var currentStage: Int {
-        AssessmentStore.currentStage(nextAyah: plan.nextAyah(memorization: memorization, store: store),
-                                     memorization: memorization, store: store, passes: assessments.passes)
     }
 
     /// Pages that keep slipping, suggested for extra follow-up.
@@ -765,81 +691,156 @@ struct HomeView: View {
         .buttonStyle(AqraPressStyle())
     }
 
-    // MARK: - Saving progress
+}
 
-    /// The invitation to sign in: only for an anonymous student, and only once they've revised at least once, so
-    /// it comes after something worth keeping.
-    private var showsSaveProgress: Bool {
-        AccountStore.isAvailable && account.profile?.isAnonymous == true && !revision.revisedDays.isEmpty
-            && Date.now.timeIntervalSince1970 > saveProgressSnoozedUntil
+/// A step of «اليوم»: its number on its icon, what it is, and one button for it, or a tick once it's done.
+private struct TodayStep: View {
+    var number: Int
+    var icon: String
+    var tint: Color
+    var title: Text
+    var detail: Text
+    var action: LocalizedStringKey?
+    var done: Bool
+    var perform: (() -> Void)?
+
+    init(number: Int, icon: String, tint: Color, title: Text, detail: Text, action: LocalizedStringKey? = nil,
+         done: Bool = false, perform: (() -> Void)? = nil) {
+        self.number = number
+        self.icon = icon
+        self.tint = tint
+        self.title = title
+        self.detail = detail
+        self.action = action
+        self.done = done
+        self.perform = perform
     }
 
-    private var saveProgressCard: some View {
-        AqraCard(padding: 14, radius: 24) {
-            VStack(alignment: .leading, spacing: 14) {
-                HStack(alignment: .top, spacing: 12) {
-                    IconTile(icon: "🪪", tint: Palette.butter, size: 40)
-                    VStack(alignment: .leading, spacing: 3) {
-                        Text("Save your progress")
-                            .aqraFont(size: 17, weight: .heavy)
-                            .foregroundStyle(Palette.ink)
-                        Text("Your progress is only on this device until you sign in.")
-                            .aqraFont(size: 12, weight: .semibold)
-                            .foregroundStyle(Palette.inkSoft)
-                            .fixedSize(horizontal: false, vertical: true)
-                    }
-                    Spacer(minLength: 4)
-                    Button("Later") {
-                        withAnimation(.snappy) { saveProgressSnoozedUntil = Date.now.addingTimeInterval(7 * 86_400).timeIntervalSince1970 }
-                    }
-                    .aqraFont(size: 13, weight: .bold)
-                    .foregroundStyle(Palette.brand)
-                    .padding(.horizontal, 10)
-                    .padding(.vertical, 3)
-                    .frame(minHeight: 28)
-                    .background(Palette.lavender, in: Capsule())
-                    .buttonStyle(.plain)
-                }
-                SignInButtons()
-                if let problem = account.problem {
-                    ProblemLine(problem: problem)
-                }
-            }
-        }
-    }
-
-    /// What's memorized and how much is revised each day, each opening its editor.
-    private var memorizationCard: some View {
-        AqraCard(padding: 0, radius: 24) {
-            VStack(spacing: 0) {
-                Button {
-                    editingMemorization = true
-                } label: {
-                    AqraRow(icon: "✏️", tint: Palette.butter,
-                            title: memorization.count == 0 ? Text("Choose what you've memorized") : Text("Edit what you've memorized"),
-                            detail: memorization.count == 0 ? nil : memorizedSummary)
-                }
+    var body: some View {
+        if let perform {
+            Button(action: perform) { row }
                 .buttonStyle(.plain)
-                if memorization.count > 0 {
-                    AqraRowDivider()
-                    Button {
-                        editingAmount = true
-                    } label: {
-                        AqraRow(icon: "🗓️", tint: Palette.peach, title: Text("\(dailyPages) pages a day"), detail: cycleLine)
-                    }
-                    .buttonStyle(.plain)
-                }
-            }
+        } else {
+            row
         }
     }
 
-    /// «٥٦٤ آية · جزء واحد»: the ayat memorized, and the whole juz' among them.
-    private var memorizedSummary: Text {
-        let fullJuz = (1...30).filter { juz in
-            store.juzAyahs[juz].map { memorization.memorizedCount(in: $0) == $0.count } ?? false
-        }.count
-        let ayat = Text("\(memorization.count) ayat")
-        return fullJuz > 0 ? ayat + Text(verbatim: Separator.facts) + Text("\(fullJuz) juz'") : ayat
+    private var row: some View {
+        HStack(spacing: 12) {
+            IconTile(icon: icon, tint: tint, size: 38)
+                .overlay(alignment: .topTrailing) {
+                    Text(verbatim: number.formatted())
+                        .font(.system(size: 10, weight: .heavy, design: .rounded))
+                        .foregroundStyle(.white)
+                        .frame(width: 18, height: 18)
+                        .background(OnboardingPalette.brand, in: Circle())
+                        .offset(x: 6, y: -6)
+                        .accessibilityHidden(true)
+                }
+            VStack(alignment: .leading, spacing: 1) {
+                title
+                    .aqraFont(size: 16, weight: .heavy)
+                    .foregroundStyle(done ? OnboardingPalette.inkSoft : OnboardingPalette.ink)
+                    .lineLimit(2)
+                    .minimumScaleFactor(0.9)
+                    .fixedSize(horizontal: false, vertical: true)
+                detail
+                    .aqraFont(size: 12, weight: .semibold)
+                    .foregroundStyle(OnboardingPalette.inkSoft)
+                    .lineLimit(3)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            Spacer(minLength: 8)
+            if done {
+                Image(systemName: "checkmark")
+                    .font(.system(size: 13, weight: .heavy))
+                    .foregroundStyle(OnboardingPalette.brand)
+                    .frame(width: 30, height: 30)
+                    .background(OnboardingPalette.mint, in: Circle())
+                    .accessibilityLabel(Text("Done"))
+            } else if let action {
+                Text(action)
+                    .aqraFont(size: 14, weight: .bold)
+                    .foregroundStyle(.white)
+                    .lineLimit(1)
+                    .padding(.horizontal, 16)
+                    .frame(minHeight: 36)
+                    .background(LinearGradient(colors: [OnboardingPalette.brand, OnboardingPalette.brandDeep], startPoint: .top, endPoint: .bottom),
+                                in: Capsule())
+            }
+        }
+        .padding(14)
+        .contentShape(Rectangle())
+        .accessibilityElement(children: .combine)
+    }
+}
+
+/// «سجّلها»: a page of today's wird revised outside the app (in prayer, to a friend), clean or with stumbles.
+struct OutsideRevisionSheet: View {
+    var store: MushafStore
+    /// Revised with stumbles: the page opens whole to tap them.
+    var onStumbles: (Int) -> Void
+
+    @Environment(RevisionStore.self) private var revision
+    @Environment(MemorizationStore.self) private var memorization
+    @Environment(\.dismiss) private var dismiss
+
+    var body: some View {
+        let pages = revision.plan?.items.filter { !$0.done } ?? []
+        VStack(spacing: 16) {
+            VStack(spacing: 4) {
+                VStack(spacing: 0) {
+                    Text("Revised outside the app?").foregroundStyle(OnboardingPalette.ink)
+                    Text("Log the page").foregroundStyle(OnboardingPalette.brand)
+                }
+                .aqraFont(size: 24, weight: .heavy)
+                .multilineTextAlignment(.center)
+                Text("In prayer, or to a friend: it counts in today's wird.")
+                    .aqraFont(size: 13, weight: .semibold)
+                    .foregroundStyle(OnboardingPalette.inkSoft)
+                    .multilineTextAlignment(.center)
+            }
+            .padding(.top, 24)
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(pages) { item in
+                        let page = store.page(item.page)
+                        AqraCard(padding: 12, radius: 20) {
+                            HStack(spacing: 12) {
+                                Text(verbatim: item.page.formatted())
+                                    .aqraFont(size: 17, weight: .heavy, monospacedDigit: true)
+                                    .foregroundStyle(OnboardingPalette.ink)
+                                    .frame(width: 44, height: 44)
+                                    .background(ManazilStairs.face(forJuz: page.juz).top.opacity(0.6), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+                                Text(verbatim: store.surahNames[page.surah] ?? "")
+                                    .aqraFont(size: 15, weight: .bold)
+                                    .foregroundStyle(OnboardingPalette.ink)
+                                    .lineLimit(1)
+                                Spacer(minLength: 4)
+                                Button("No stumbles") {
+                                    let ayahs = page.ayahs.filter { memorization.isMemorized($0) }
+                                    withAnimation(.snappy) {
+                                        revision.record(page: item.page, ayahs: ayahs, stumbles: [], source: .outside, memorization: memorization)
+                                    }
+                                    if revision.plan?.items.allSatisfy(\.done) == true { dismiss() }
+                                }
+                                .buttonStyle(ChipButtonStyle(filled: true))
+                                Button("With stumbles") { onStumbles(item.page) }
+                                    .buttonStyle(ChipButtonStyle(filled: false))
+                            }
+                        }
+                        .accessibilityElement(children: .contain)
+                    }
+                }
+                .padding(.horizontal, 22)
+                .padding(.vertical, 6)
+            }
+            .scrollIndicators(.hidden)
+        }
+        .fontDesign(.rounded)
+        .background(OnboardingPalette.surface.ignoresSafeArea())
+        .environment(\.colorScheme, .light)
+        .presentationDetents([.medium, .large])
     }
 }
 

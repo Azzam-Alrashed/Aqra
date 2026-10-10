@@ -277,6 +277,8 @@ final class MarkingSession {
     let memorization: MemorizationStore
     /// Where a range started, while it waits for its last ayah.
     private(set) var rangeStart: Int?
+    /// «حدّد نطاقًا» was pressed: the next tap starts a range rather than toggling an ayah.
+    private(set) var choosingRangeStart = false
     /// What the last unmarking removed, kept for a moment so it can be undone: an unmarked ayah loses its strength,
     /// its revisions and a teacher's mark. Empty when there's nothing to undo.
     private(set) var unmarked: [Int: AyahMemory] = [:]
@@ -289,7 +291,10 @@ final class MarkingSession {
     }
 
     func tap(_ ayah: Int) {
-        if let start = rangeStart {
+        if choosingRangeStart {
+            choosingRangeStart = false
+            beginRange(at: ayah)
+        } else if let start = rangeStart {
             // A range that unmarks is one unmarking with its first ayah, unmarked when it began.
             note(memorization.mark(min(start, ayah)...max(start, ayah), memorized: rangeMarks), continuing: !rangeMarks)
             rangeStart = nil
@@ -305,8 +310,15 @@ final class MarkingSession {
         rangeStart = ayah
     }
 
+    /// «حدّد نطاقًا»: the next ayah tapped starts a range, and the one after ends it.
+    func chooseRange() {
+        choosingRangeStart = true
+        rangeStart = nil
+    }
+
     func cancelRange() {
         rangeStart = nil
+        choosingRangeStart = false
     }
 
     /// Marks every ayah of the given pages, or unmarks them when they're all already marked.

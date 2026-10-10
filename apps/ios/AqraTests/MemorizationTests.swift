@@ -73,6 +73,22 @@ struct MemorizationStoreTests {
         #expect(memorization.memorizedCount(in: 10...14) == 0)
     }
 
+    /// «حدّد نطاقًا»: the next tap starts a range, the one after ends it; cancelling goes back to single taps.
+    @Test func aRangeCanBeChosenWithAButton() {
+        let memorization = MemorizationStore(fileURL: nil)
+        let session = MarkingSession(memorization: memorization)
+        session.chooseRange()
+        #expect(session.choosingRangeStart && session.rangeStart == nil)
+        session.tap(40)
+        #expect(!session.choosingRangeStart && session.rangeStart == 40 && memorization.isMemorized(40))
+        session.tap(44)
+        #expect(session.rangeStart == nil && memorization.memorizedCount(in: 40...44) == 5)
+        session.chooseRange()
+        session.cancelRange()
+        session.tap(50)
+        #expect(memorization.isMemorized(50) && session.rangeStart == nil && memorization.count == 6)
+    }
+
     @Test func undoingAnUnmarkingRestoresTheRecordsExactly() {
         let memorization = MemorizationStore(fileURL: nil)
         let session = MarkingSession(memorization: memorization)

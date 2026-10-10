@@ -73,6 +73,8 @@ struct MemorizeView: View {
         FloatingPanel {
             VStack(spacing: 12) {
                 VStack(spacing: 2) {
+                    MushafModeChip(mode: .memorizing)
+                        .padding(.bottom, 4)
                     Text(verbatim: PlanFormat.portion(portion, store: store))
                         .font(.system(size: 17, weight: .heavy, design: .rounded))
                         .foregroundStyle(MushafStyle.ink)

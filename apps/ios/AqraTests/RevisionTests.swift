@@ -215,4 +215,19 @@ struct RevisionTests {
         #expect(ReviewPolicy.suggestedDailyPages(memorizedPages: 604) == 20)
         #expect(DailyAmountView.cycleDays(memorizedPages: 300, amount: 10) == 30)
     }
+
+    /// «تعثّرتُ هنا» reveals the next ayah already marked as a stumble; past the last ayah it does nothing.
+    @Test func stumblingOnTheNextAyahRevealsItMarked() {
+        let session = RevisionSession(page: 2, ayahs: [7, 8, 9])
+        session.revealNext()
+        session.stumbleOnNext()
+        #expect(session.revealed == 2 && session.stumbles == [8])
+        session.stumbleOnNext()
+        #expect(session.isComplete && session.stumbles == [8, 9])
+        session.stumbleOnNext()
+        #expect(session.revealed == 3 && session.stumbles == [8, 9])
+        // A tap on a revealed ayah still clears its stumble.
+        session.tap(9)
+        #expect(session.stumbles == [8])
+    }
 }

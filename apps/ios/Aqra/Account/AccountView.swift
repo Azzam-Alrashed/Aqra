@@ -453,6 +453,131 @@ private struct EmulatorSignIn: View {
 }
 #endif
 
+/// «أهلًا بعودتك»: a hafiz who used Aqra before signs in first, and what they memorized comes back without declaring
+/// it again. When the account holds no memorization, it says so and leaves them to declare it.
+struct RestoreAccountSheet: View {
+    /// Called once the account's memorization is on the device.
+    var onRestored: () -> Void
+
+    @Environment(AccountStore.self) private var account
+    @Environment(CloudSync.self) private var sync
+    @Environment(MemorizationStore.self) private var memorization
+    @Environment(\.dismiss) private var dismiss
+    @State private var stage = Stage.signIn
+    /// When the sign-in went through: only a backup confirmed after it is the signed-in account's.
+    @State private var signedInAt = Date.distantFuture
+
+    private enum Stage { case signIn, restoring, empty, unreachable }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            Spacer(minLength: 24)
+            VStack(spacing: 10) {
+                VStack(spacing: 0) {
+                    Text("Welcome back").foregroundStyle(Palette.ink)
+                    Text("Let's bring back what you memorized").foregroundStyle(Palette.brand)
+                }
+                .aqraFont(size: 28, weight: .heavy)
+                .multilineTextAlignment(.center)
+                .fixedSize(horizontal: false, vertical: true)
+                Text("Sign in with the account you used before: what you memorized, its strength and your streak come back as you left them.")
+                    .aqraFont(size: 15, weight: .semibold)
+                    .foregroundStyle(Palette.inkSoft)
+                    .multilineTextAlignment(.center)
+                    .fixedSize(horizontal: false, vertical: true)
+            }
+            .padding(.horizontal, 28)
+            AqraCard(padding: 16, radius: 26) {
+                VStack(spacing: 12) {
+                    switch stage {
+                    case .signIn, .unreachable:
+                        SignInButtons()
+                        #if DEBUG
+                        if AccountStore.usesEmulator, let profile = account.profile {
+                            EmulatorSignIn(profile: profile)
+                        }
+                        #endif
+                        if stage == .unreachable {
+                            ProblemLine(problem: .offline)
+                        } else if let problem = account.problem {
+                            ProblemLine(problem: problem)
+                        }
+                        HStack(spacing: 10) {
+                            IconTile(icon: "🛡️", tint: Palette.mint, size: 32)
+                            Text("You won't declare it again, and nothing you recorded is erased.")
+                                .aqraFont(size: 12, weight: .semibold)
+                                .foregroundStyle(Palette.inkSoft)
+                                .fixedSize(horizontal: false, vertical: true)
+                            Spacer(minLength: 0)
+                        }
+                        .padding(.top, 4)
+                    case .restoring:
+                        HStack(spacing: 12) {
+                            ProgressView().tint(Palette.brand)
+                            Text("Bringing back what you memorized…")
+                                .aqraFont(size: 15, weight: .bold)
+                                .foregroundStyle(Palette.ink)
+                        }
+                        .frame(maxWidth: .infinity, minHeight: 60)
+                    case .empty:
+                        VStack(spacing: 6) {
+                            Text("This account has no memorization yet.")
+                                .aqraFont(size: 16, weight: .heavy)
+                                .foregroundStyle(Palette.ink)
+                            Text("Choose what you've memorized, and it will be kept in it.")
+                                .aqraFont(size: 13, weight: .semibold)
+                                .foregroundStyle(Palette.inkSoft)
+                                .multilineTextAlignment(.center)
+                        }
+                        .frame(maxWidth: .infinity)
+                        BrandButton("Continue", metrics: OnboardingButtonMetrics(height: 50, fontSize: 17, compact: true)) { dismiss() }
+                    }
+                }
+            }
+            .frame(maxWidth: 460)
+            .padding(.horizontal, 22)
+            .padding(.top, 22)
+            .animation(.snappy, value: stage)
+            Spacer(minLength: 24)
+            if stage == .signIn || stage == .unreachable {
+                Button("I don't have an account, start afresh") { dismiss() }
+                    .aqraFont(size: 15, weight: .bold)
+                    .foregroundStyle(Palette.brand)
+                    .frame(minHeight: 44)
+                    .padding(.bottom, 12)
+            }
+        }
+        .fontDesign(.rounded)
+        .background(Palette.surface.ignoresSafeArea())
+        .environment(\.colorScheme, .light)
+        .interactiveDismissDisabled(stage == .restoring)
+        // Signed in: the account's copy is merged in, then the backup confirms it (its first backup time).
+        .onChange(of: account.profile?.isAnonymous) {
+            if account.profile?.isAnonymous == false, stage != .restoring {
+                signedInAt = .now
+                stage = .restoring
+            }
+        }
+        .task(id: stage) {
+            guard stage == .restoring else { return }
+            @MainActor func confirmed() -> Bool { (sync.lastBackup ?? .distantPast) >= signedInAt }
+            for _ in 0..<60 {
+                if confirmed() { break }
+                try? await Task.sleep(for: .milliseconds(500))
+            }
+            guard confirmed() else {
+                stage = .unreachable
+                return
+            }
+            if memorization.count > 0 {
+                onRestored()
+            } else {
+                stage = .empty
+            }
+        }
+    }
+}
+
 /// What went wrong, in one calm line.
 struct ProblemLine: View {
     var problem: AccountStore.Problem
