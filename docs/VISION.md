@@ -71,7 +71,7 @@ The app opens on that lavender, in light and dark mode alike, with a faint, out-
 
 ### Tabs
 
-A floating tab bar holds الرئيسية, التسميع, تقدّمي and حسابي. The Mushaf is not a tab: it's a button on the home. The Mushaf and today's wird open full screen over everything and close back where they were opened, so revising never moves the student's place in the Mushaf.
+The system tab bar (Liquid Glass, minimizing as the content scrolls) holds الرئيسية, التسميع, تقدّمي and حسابي. The Mushaf is not a tab: it's a button on the home. The Mushaf and today's wird open full screen over everything and close back where they were opened, so revising never moves the student's place in the Mushaf.
 
 ### Home
 
@@ -115,11 +115,11 @@ The Mushaf is where the student reads and marks what they have memorized. It ope
 
 ### Today's wird
 
-The wird goes through its pages one after another, each held still with its memorized ayat veiled and revealed one at a time, then returns home when it's done.
+The wird goes through its pages one after another, each held still with its memorized ayat veiled and revealed one at a time, or, with «سمّع بصوتك», revealed word by word as the student recites them aloud, then returns home when it's done.
 
 ## The personal plan
 
-The student chooses how much new memorization a day (a quarter page to a page and a half, in lines of the page), on which days, and in which order (from juz' ʿAmma back toward al-Baqarah, or from the beginning; by default the order continues what's already memorized). Each study day proposes today's portion: the next ayat not yet memorized, whole ayat, finishing a surah before the next. On the memorize screen the portion stands out on its pages; the student repeats it, hides ayat to recite them, and «حفظته» (or just the part memorized) starts them faint in the revision engine, back for follow-up the next day. Planned and actual portions and every change of the plan are kept. The expected completion date follows the plan's pace, then the student's recent one.
+The student chooses how much new memorization a day (a quarter page to two and a half pages, in lines of the page), on which days, and in which order (from juz' ʿAmma back toward al-Baqarah, or from the beginning; by default the order continues what's already memorized). Each study day proposes today's portion: the next ayat not yet memorized, whole ayat, finishing a surah before the next. On the memorize screen the portion stands out on its pages; the student repeats it, hides ayat to recite them, and «حفظته» (or just the part memorized) starts them faint in the revision engine, back for follow-up the next day. Planned and actual portions and every change of the plan are kept. The expected completion date follows the plan's pace, then the student's recent one.
 
 ## Stages, mastery and tests
 
@@ -143,10 +143,11 @@ Every memorized ayah has a half-life that fades with time, grows with each clean
 
 Each day's wird takes, in order, pages stumbled on recently (follow-up), then the next pages of a rotation through everything memorized, in Mushaf order, up to the daily amount the student chose. Missed days don't pile up.
 
-A revision is recorded in one of three ways:
+A revision is recorded in one of four ways:
 1. **In the app:** the page's ayat are veiled; the student recites, reveals them one at a time, and taps the ayat they stumbled on.
-2. **Outside the app** (in prayer, or to a friend): the page is checked off from the wird.
-3. **With a sheikh** during tasmee': the teacher marks the pages heard and the stumbles on their own phone, and the student's app records them as a sheikh's revision.
+2. **Aloud, in the app** («سمّع بصوتك»): a Quran-trained speech model runs on the device and follows the recitation, revealing each word as it's heard; a skipped or wrong word is a stumble, and a long pause brings a prompt. The voice stays in the device's memory and is never kept or sent. Built on both platforms; not yet tried with real huffaz.
+3. **Outside the app** (in prayer, or to a friend): the page is checked off from the wird.
+4. **With a sheikh** during tasmee': the teacher marks the pages heard and the stumbles on their own phone, and the student's app records them as a sheikh's revision.
 
 A sheikh's tasmee' counts more than self-revision (1.5 times, provisionally); a peer's sits between the two (1.25). The rotation learns: pages that keep slipping are suggested for extra follow-up, and the student decides.
 

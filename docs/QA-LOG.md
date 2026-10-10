@@ -1,6 +1,7 @@
 # QA log — October 2026
 
-A full QA and code-review pass on Aqra: iOS first, then Android. Branch `qa/2026-10`.
+A full QA and code-review pass on Aqra: iOS first, then Android. Branch `qa/2026-10`, merged into `main` on 2026-10-08
+(`9dd3ee7`); the proposals followed in `4a55880` on 2026-10-09.
 
 - Fixes go in as one focused commit each, with a regression test where practical.
 - Anything visual, new, or that changes the product's behavior or the SRS algorithm is written up in
@@ -38,17 +39,18 @@ quality.
 | 22 | P3 | Android: copy | Same as #9 (29 minutes), #13 (number lists) and #16 (zero days). | Fixed. | 47920f4, 8781cef, 84df9a8 |
 | 23 | P2 | Android: daily amount | The iOS fix 1e47d22 was never ported: the unit under the number always read «صفحة في اليوم» («٢ صفحة», «٣ صفحة»). | Fixed; verified 2, 3, 4 and 13 on the emulator. | a5951f2 |
 
-## Proposed, waiting for review
+## Proposed, then built
 
-Visual, design or behavior changes, written up in [QA-PROPOSALS.md](QA-PROPOSALS.md) and not built:
+Visual, design or behavior changes, written up in [QA-PROPOSALS.md](QA-PROPOSALS.md) rather than built during the
+pass. All 16 were approved on 2026-10-09, built on iOS and Android, and merged into `main` in `4a55880`:
 
 | # | Sev | Area | Description | Status |
 |---|---|---|---|---|
-| P1 | P2 | Typography (Arabic) | «·» next to Arabic-Indic digits reads as a zero: «١٬١٣٢ آية · ٣ أجزاء» reads "30 juz'" (27 places). | Proposed: the Arabic comma in Arabic. |
-| P2 | P2 | Accessibility | The iOS app ignores the system text size (342 fixed sizes); Android already scales. | Proposed: type tokens on text styles, capped. |
-| P3 | P2 | Stage test | "Which ayah comes next?" shows each option's ayah number, so the answer is the next number. | Proposed: hide the options' end markers (your call, CON-01). |
-| P4 | P2 | Layout (iPhone SE) | The home's main button sits under the tab bar on first sight. | Proposed: a smaller stage on short screens. |
-| P5–P16 | P3 | Various | VoiceOver in revision, soft-grey contrast, all bookings listed, auction/free-seat UI, auction cut-off, stage test closed midway, stage card steadiness, undo unmarking, daily amount after Mushaf marking, reminder after the wird, anonymous backup deletion, Android string import. | Proposed. |
+| P1 | P2 | Typography (Arabic) | «·» next to Arabic-Indic digits reads as a zero: «١٬١٣٢ آية · ٣ أجزاء» reads "30 juz'" (27 places). | Built: the Arabic comma in Arabic. |
+| P2 | P2 | Accessibility | The iOS app ignores the system text size (342 fixed sizes); Android already scales. | Built: type tokens on text styles, capped at Accessibility 2. |
+| P3 | P2 | Stage test | "Which ayah comes next?" shows each option's ayah number, so the answer is the next number. | Built, as decided in QA-PROPOSALS.md. |
+| P4 | P2 | Layout (iPhone SE) | The home's main button sits under the tab bar on first sight. | Built: a smaller stage on short screens. |
+| P5–P16 | P3 | Various | VoiceOver in revision, soft-grey contrast, all bookings listed, auction/free-seat UI, auction cut-off, stage test closed midway, stage card steadiness, undo unmarking, daily amount after Mushaf marking, reminder after the wird, anonymous backup deletion, Android string import. | Built. |
 
 ## Won't fix
 
@@ -114,6 +116,9 @@ so the app was driven by a small XCUITest runner kept in the session's scratchpa
 | Firestore and Storage rules | 51 passed (+1) |
 | Cloud Functions (auction, competitions, video) | 12 passed (+1, one extended) |
 | Android unit tests | 64 passed, 5 skipped by design (63 before; +1) |
+
+On 2026-10-10, after the proposals and listening («سمّع بصوتك») were merged: iOS 93, Android 85 (the five CoreText
+cross-checks run, not skipped), rules 53, functions 14.
 
 The iOS app builds with no warnings in its own code (2 before).
 

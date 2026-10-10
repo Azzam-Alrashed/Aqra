@@ -1,8 +1,9 @@
 # Revision in Aqra
 
 How Aqra plans each day's revision and how it measures the strength of what's memorized. Every number below lives
-in one place in the code, `ReviewPolicy` (`apps/ios/Aqra/Revision/RevisionEngine.swift`), so it can be tuned after
-trying it with real huffaz and sheikhs, without rewriting anything.
+in one place in the code, `ReviewPolicy` (`apps/ios/Aqra/Revision/RevisionEngine.swift`, with the same constants in
+the Android app's `revision/RevisionStore.kt`), so it can be tuned after trying it with real huffaz and sheikhs,
+without rewriting anything.
 
 **Status:** first version, adopted provisionally. It is open to review.
 
@@ -65,6 +66,13 @@ memorized in about a month, between 2 and 20 pages.
 3. They tap an ayah they stumbled on.
 4. «تم» records the page.
 
+**Aloud, in the app** («سمّع بصوتك»): a Quran-trained speech model (Tarteel's `whisper-base-ar-quran`) runs on the
+device and follows the recitation; nothing it hears is shown or kept, only the Mushaf's own words. Words are revealed
+as they're recited. A skipped or wrong word is a memorization stumble; going back more than three words to correct is a
+hesitation; a pause of **4 s** inside an ayah (**7 s** between two) shows the next word as a prompt and counts as
+prompting. The student can take back or add any stumble. A heard stumble weighs the same as a tapped one. The model is
+downloaded once (134 MB on iOS, 67 MB on Android). Built on both platforms; it hasn't yet been tried with real voices.
+
 **Outside the app** (in prayer, or to a friend): the page is checked off from the plan, as a clean revision — or,
 if the student stumbled, the page opens whole and they tap the ayat they stumbled on.
 
@@ -104,3 +112,5 @@ revision. It's shown apart from what's memorized and what's verified, for each s
 4. **Evidence weights:** a sheikh's tasmee' counts 1.5 times self-revision, a peer's 1.25, provisionally. And
    should a sheikh hearing an ayah clean that the student never declared mark it memorized? For now it doesn't.
 5. **Mastery:** is 60 days with a clean last revision the right bar?
+6. **Heard stumbles:** until listening has been tried with real huffaz, should a stumble the device hears count in full,
+   or be a suggestion the student confirms? And should a pause at a waqf mark ever count?
