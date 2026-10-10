@@ -76,6 +76,8 @@ import com.azzamalrashed.aqra.ui.util.weekdayWide
 import com.azzamalrashed.aqra.ui.util.factSeparator
 import java.time.ZoneId
 import java.util.Date
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 
 /**
  * تقدّمي: the share of the Quran memorized, the revision streak, a few numbers, and every juz' at a glance — how much
@@ -197,6 +199,8 @@ private fun PlanCard(app: AqraApp, store: MushafStore, onEditMemorization: () ->
             AqraRow("🗓️", Palette.peach, pluralStringResource(R.plurals.n_pages_a_day, daily, daily),
                 Modifier.pressable(pressed = 1f, onClick = onEditAmount),
                 detail = pluralStringResource(R.plurals.a_full_revision_every_n_days, days, days))
+            AqraRowDivider()
+            RotationStart(app, store)
         }
         AqraRowDivider()
         val plan = Modifier.pressable(pressed = 1f, onClick = onEditPlan)
@@ -307,5 +311,26 @@ private fun JuzTile(app: AqraApp, store: MushafStore, juz: Int, modifier: Modifi
         contentAlignment = Alignment.Center,
     ) {
         Text(formatNumber(juz), style = aqraStyle(17f, Weight.heavy, if (share > 0) Palette.ink else Palette.inkSoft.copy(alpha = 0.7f)))
+    }
+}
+
+/** «أين وصلت في مراجعتك؟»: the juz' the rotation continues from, to set it where the student's own revision stands. */
+@Composable
+private fun RotationStart(app: AqraApp, store: MushafStore) {
+    val pages = RevisionStore.memorizedPages(store, app.memorization)
+    val juzList = pages.map { store.page(it).juz }.distinct().sorted()
+    val current = store.page(app.revision.rotationCursor).juz
+    var choosing by remember { mutableStateOf(false) }
+    Box {
+        AqraRow("🧭", Palette.sky, stringResource(R.string.your_revision_continues_from_juz_n, current),
+            Modifier.pressable(pressed = 1f) { choosing = true }, detail = stringResource(R.string.where_are_you_in_your_revision_q))
+        DropdownMenu(choosing, onDismissRequest = { choosing = false }) {
+            for (juz in juzList) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.juz_n, juz), style = aqraStyle(15f, Weight.semibold)) }, onClick = {
+                    pages.firstOrNull { store.page(it).juz == juz }?.let { app.revision.setRotationStart(it) }
+                    choosing = false
+                })
+            }
+        }
     }
 }

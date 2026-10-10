@@ -104,6 +104,12 @@ import com.azzamalrashed.aqra.ui.util.ARABIC_SEPARATOR
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
 import kotlinx.coroutines.launch
+import androidx.compose.material.icons.rounded.CheckCircle
+import androidx.compose.material.icons.outlined.CheckCircle
+import androidx.compose.material.icons.rounded.Close
+import com.azzamalrashed.aqra.revision.RevisionRecord
+import com.azzamalrashed.aqra.ui.FullScreen
+import com.azzamalrashed.aqra.ui.LocalOverlays
 
 /**
  * The Mushaf, opened full screen from the home on the last page read, and turned like a book (right to left). On a
@@ -125,6 +131,11 @@ fun MushafScreen(
     var marking by remember { mutableStateOf(if (startsMarking) MarkingSession(app.memorization) else null) }
     /** What the ribbon button just did, shown for a moment above the slider. */
     var ribbonNotice by remember { mutableStateOf<RibbonNotice?>(null) }
+    /** «سجّل مراجعة»: the page whose revision outside today's wird is being logged. */
+    var loggingPage by remember { mutableStateOf<Int?>(null) }
+    LaunchedEffect(lastPage) { loggingPage = null }
+    val overlays = LocalOverlays.current
+    fun memorizedAyahs(page: Int) = store.page(page).ayahs.filter(app.memorization::isMemorized)
     LaunchedEffect(ribbonNotice) {
         val notice = ribbonNotice ?: return@LaunchedEffect
         delay(3_000)
@@ -209,10 +220,31 @@ fun MushafScreen(
                         }
                     } else {
                         Column {
-                            AnimatedVisibility(ribbonNotice != null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
+                            val logging = loggingPage
+                            AnimatedVisibility(logging != null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
+                                if (logging != null) LogPanel(store, logging, style, onClose = { loggingPage = null }, onClean = {
+                                    app.revision.record(logging, memorizedAyahs(logging), emptySet(), RevisionRecord.Source.OUTSIDE, app.memorization)
+                                    loggingPage = null
+                                    ribbonNotice = RibbonNotice(null, logged = 1)
+                                    haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                                }, onStumbles = {
+                                    loggingPage = null
+                                    overlays.open(FullScreen.Wird(logging, outside = true, returnsToMushaf = true))
+                                }, onJuz = {
+                                    val juz = store.page(logging).juz
+                                    val pages = (1..MushafStore.PAGE_COUNT).filter { store.page(it).juz == juz && memorizedAyahs(it).isNotEmpty() }
+                                    for (each in pages) app.revision.record(each, memorizedAyahs(each), emptySet(), RevisionRecord.Source.OUTSIDE, app.memorization)
+                                    loggingPage = null
+                                    ribbonNotice = RibbonNotice(null, logged = pages.size)
+                                    haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                                })
+                            }
+                            AnimatedVisibility(logging == null && ribbonNotice != null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
                                 ribbonNotice?.let { notice -> RibbonPanel(store, notice, style) }
                             }
-                            PageSlider(lastPage, style, ::go, bookmarked = app.reading.bookmark?.page == lastPage) {
+                            PageSlider(lastPage, style, ::go, bookmarked = app.reading.bookmark?.page == lastPage,
+                                canLog = memorizedAyahs(lastPage).isNotEmpty(), logging = logging != null,
+                                onLog = { loggingPage = if (loggingPage == null) lastPage else null; ribbonNotice = null }) {
                                 if (app.reading.bookmark?.page == lastPage) {
                                     app.reading.remove()
                                     ribbonNotice = RibbonNotice(null)
@@ -364,7 +396,10 @@ private fun ColorToggle(title: String, on: Boolean, onChange: (Boolean) -> Unit)
 /** Dragging only moves the number; the Mushaf turns once, to the page let go on. Page 1 sits at the right end. */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun PageSlider(lastPage: Int, style: MushafStyle, onGo: (Int) -> Unit, bookmarked: Boolean, onRibbon: () -> Unit) {
+private fun PageSlider(
+    lastPage: Int, style: MushafStyle, onGo: (Int) -> Unit, bookmarked: Boolean,
+    canLog: Boolean, logging: Boolean, onLog: () -> Unit, onRibbon: () -> Unit,
+) {
     var dragging by remember { mutableStateOf<Float?>(null) }
     val shown = (dragging ?: lastPage.toFloat()).let { Math.round(it) }
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -399,6 +434,8 @@ private fun PageSlider(lastPage: Int, style: MushafStyle, onGo: (Int) -> Unit, b
                     },
                     modifier = Modifier.weight(1f).padding(start = 12.dp, end = 4.dp),
                 )
+                // «سجّل مراجعة»: a revision of this page (or its juz') outside today's wird.
+                if (canLog) MushafBarIcon(if (logging) Icons.Rounded.CheckCircle else Icons.Outlined.CheckCircle, stringResource(R.string.log_a_revision), style, onLog)
                 // «الفاصل هنا»: places the ribbon on the page shown, or takes it away from it.
                 MushafBarIcon(if (bookmarked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
                     stringResource(if (bookmarked) R.string.remove_the_bookmark else R.string.bookmark_here), style, onRibbon)
@@ -489,18 +526,51 @@ private fun MarkingBar(
 
 // MARK: - The ribbon
 
-/** What the ribbon button just did: placed on a page, or taken away (null). */
-private class RibbonNotice(val page: Int?)
+/** What the ribbon button just did: placed on a page, or taken away (null); or how many pages a revision logged. */
+private class RibbonNotice(val page: Int?, val logged: Int? = null)
+
+/** «راجعتَ هذه الصفحة خارج الوِرد؟»: clean, with stumbles (the page opens whole to tap them), or the whole juz'. */
+@Composable
+private fun LogPanel(store: MushafStore, page: Int, style: MushafStyle, onClose: () -> Unit, onClean: () -> Unit, onStumbles: () -> Unit, onJuz: () -> Unit) {
+    val juz = store.page(page).juz
+    Box(Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 6.dp), contentAlignment = Alignment.Center) {
+        FloatingPanel(style, Modifier.widthIn(max = 620.dp)) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconTile("✅", Palette.mint, size = 38.dp)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    Text(stringResource(R.string.revised_this_page_outside_the_wird_q), style = aqraStyle(15f, Weight.heavy, style.ink))
+                    Text(stringResource(R.string.s_page_n, store.surahNames[store.page(page).surah].orEmpty(), page), style = aqraStyle(12f, Weight.semibold, style.chrome))
+                }
+                val close = stringResource(R.string.close)
+                Box(Modifier.size(32.dp).background(style.barAccentFill, CircleShape).pressable(onClick = onClose).semantics { contentDescription = close },
+                    contentAlignment = Alignment.Center) {
+                    Icon(Icons.Rounded.Close, null, tint = style.barAccent, modifier = Modifier.size(16.dp))
+                }
+            }
+            Spacer(Modifier.height(12.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MarkingButton(stringResource(R.string.no_stumbles), style, Modifier.weight(1f), prominent = true, onClick = onClean)
+                MarkingButton(stringResource(R.string.with_stumbles), style, Modifier.weight(1f), onClick = onStumbles)
+            }
+            Spacer(Modifier.height(10.dp))
+            MarkingButton(stringResource(R.string.the_whole_of_juz_n_no_stumbles, juz), style, Modifier.fillMaxWidth(), onClick = onJuz)
+        }
+    }
+}
 
 @Composable
 private fun RibbonPanel(store: MushafStore, notice: RibbonNotice, style: MushafStyle) {
     Box(Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 6.dp), contentAlignment = Alignment.Center) {
         FloatingPanel(style, Modifier.widthIn(max = 620.dp).semantics(mergeDescendants = true) {}) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconTile("🔖", Palette.rose, size = 38.dp)
+                val logged = notice.logged
+                if (logged != null) IconTile("✅", Palette.mint, size = 38.dp) else IconTile("🔖", Palette.rose, size = 38.dp)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     val page = notice.page
-                    if (page != null) {
+                    if (logged != null) {
+                        Text(pluralStringResource(R.plurals.recorded_n_pages_revised, logged, logged), style = aqraStyle(15f, Weight.heavy, style.ink))
+                        Text(stringResource(R.string.they_count_in_your_streak_and_your_strength), style = aqraStyle(12f, Weight.semibold, style.chrome))
+                    } else if (page != null) {
                         Text(stringResource(R.string.bookmark_placed_at_s_page_n, store.surahNames[store.page(page).surah].orEmpty(), page),
                             style = aqraStyle(15f, Weight.heavy, style.ink))
                         Text(stringResource(R.string.home_opens_on_it_and_browsing_or_marking_never_moves),

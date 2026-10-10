@@ -246,6 +246,60 @@ class RevisionTest {
         assertEquals(listOf(7, 8, 9, 10), session.revisedAyahs(countingRest = false))
     }
 
+    /** «أين وصلت في مراجعتك؟»: the rotation continues from the page chosen; today's plan is remade unless part is revised. */
+    @Test
+    fun rotationStartsWhereChosen() {
+        val revision = RevisionStore(file = null, zone = utc)
+        val pages = (1..40).toList()
+        revision.setDailyPages(3)
+        revision.refreshPlan(pages, day(0))
+        assertEquals(listOf(1, 2, 3), revision.plan?.items?.map { it.page })
+        revision.setRotationStart(30)
+        revision.refreshPlan(pages, day(0))
+        assertEquals(listOf(30, 31, 32), revision.plan?.items?.map { it.page })
+        record(revision, 30, day(0))
+        revision.setRotationStart(10)
+        revision.refreshPlan(pages, day(0))
+        assertTrue(revision.plan?.items?.map { it.page } == listOf(30, 31, 32) && revision.rotationCursor == 10)
+        revision.refreshPlan(pages, day(1))
+        assertEquals(10, revision.plan?.items?.first()?.page)
+    }
+
+    /** A page revised outside today's wird counts; today's plan and the rotation stay as they were. */
+    @Test
+    fun outsideRevisionOfAnyPageIsRecorded() {
+        val revision = RevisionStore(file = null, zone = utc)
+        val memorization = MemorizationStore(file = null)
+        memorization.mark(500..510, memorized = true)
+        revision.setDailyPages(2)
+        revision.refreshPlan(listOf(1, 2, 3, 80), day(0))
+        val before = revision.plan
+        revision.record(80, (500..505).toList(), setOf(502), Source.OUTSIDE, memorization, day(0))
+        assertEquals(RevisionRecord(day(0), 80, Source.OUTSIDE, listOf(502)), revision.history.last())
+        assertTrue(calendarDay(0) in revision.revisedDays)
+        assertTrue(memorization.memory(500)?.lastReviewed == day(0) && memorization.memory(502)?.lapses == 1)
+        assertEquals(calendarDay(1), revision.followUps[80]?.due)
+        assertTrue(revision.plan == before && revision.rotationCursor == 1)
+    }
+
+    /** متين / متوسط / يحتاج مراجعة: declared ayat start at the policy's half-life; revised or learned ones keep theirs. */
+    @Test
+    fun firmnessSetsStartingStability() {
+        val policy = ReviewPolicy.STANDARD
+        val memorization = MemorizationStore(file = null)
+        memorization.mark(0..9, memorized = true)
+        memorization.recordRevision(listOf(9), emptySet(), day(0), policy)
+        memorization.learn(listOf(20), day(0), stability = 2.0)
+        memorization.setFirmness(ReviewPolicy.Firmness.FIRM, 0..4, policy)
+        memorization.setFirmness(ReviewPolicy.Firmness.WEAK, 5..9, policy)
+        memorization.setFirmness(ReviewPolicy.Firmness.FIRM, listOf(20), policy)
+        assertTrue((0..4).all { memorization.memory(it)?.stability == policy.firmStability })
+        assertTrue((5..8).all { memorization.memory(it)?.stability == policy.weakStability })
+        assertEquals(policy.declaredStability * policy.growth, memorization.memory(9)!!.stability, 1e-12)
+        assertEquals(2.0, memorization.memory(20)!!.stability, 0.0)
+        assertEquals(policy.declaredStability, policy.stability(ReviewPolicy.Firmness.MIDDLING), 0.0)
+    }
+
     // MARK: - Days, time zones and the clock (the same checks as the iOS app's RevisionTests)
 
     /** A moment given as the time on the clock in a time zone. */

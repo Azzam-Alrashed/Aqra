@@ -101,6 +101,9 @@ data class StageStatus(
 
     val requirements: List<Requirement> get() = Requirement.entries.filter { it != Requirement.SHEIKH || policy.sheikhTestRequired }
     val meetsAll: Boolean get() = Requirement.entries.all(::isMet)
+    /** Everything is met but the sheikh's test: the stage waits for one («ينتظر اختبار شيخ»). */
+    val awaitsSheikh: Boolean
+        get() = policy.sheikhTestRequired && !sheikhPassed && listOf(Requirement.MEMORIZED, Requirement.MASTERED, Requirement.TEST).all(::isMet)
     val isPassed: Boolean get() = passedAt != null
 
     /** The in-app test can be taken once the stage is memorized, and not again too soon after failing. */
@@ -173,7 +176,15 @@ data class TestQuestion(
  * The record of the stages: in-app test results, the sheikh's stage tests heard, and the stages passed. Kept on the
  * device and backed up with the rest of the journey.
  */
-class AssessmentStore(private val file: File?, val policy: StagePolicy = StagePolicy.STANDARD) {
+class AssessmentStore(private val file: File?, policy: StagePolicy = StagePolicy.STANDARD) {
+    var policy: StagePolicy by mutableStateOf(policy)
+        private set
+
+    /** The server's word on the sheikh's test (see [com.azzamalrashed.aqra.tasmee.TasmeeStore.sheikhTestRequired]). */
+    fun setSheikhTestRequired(required: Boolean) {
+        if (policy.sheikhTestRequired != required) policy = policy.copy(sheikhTestRequired = required)
+    }
+
     @Serializable
     data class TestResult(
         val id: String = newId(),

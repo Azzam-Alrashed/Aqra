@@ -24,7 +24,8 @@ grows with revision. It's the brightness of the ayah's topic color in the Mushaf
 
 Each memorized ayah has a **half-life**: the number of days until the chance of recalling it falls to half.
 
-- **Declared ayat** (the student says they already know them) start at **14 days**.
+- **Declared ayat** (the student says they already know them) start at **14 days**, or **30** for a juz' the student
+  calls «متين» and **5** for one that «يحتاج مراجعة».
 - **Newly memorized ayat** (a portion of the plan, «تم الحفظ») start at **2 days**, and their pages come back for
   follow-up the next day.
 - **A clean revision** multiplies it by **2.5**.
@@ -45,6 +46,9 @@ times how fresh it is (the chance of recalling it today).
 - The color never disappears entirely while the ayah is memorized.
 
 ## Today's plan («وِرد اليوم»)
+
+**Where the revision starts:** at setup, «أين وصلت في مراجعتك؟» chooses the juz' the rotation continues from (also in
+«خطتي»), so a hafiz whose own manzil stands at juz' 27 carries on from there.
 
 **The daily amount:** the student chooses it, in pages per day. The suggestion is enough to go through everything
 memorized in about a month, between 2 and 20 pages.
@@ -84,7 +88,8 @@ prompting. The student can take back or add any stumble. A heard stumble weighs 
 downloaded once (134 MB on iOS, 67 MB on Android). Built on both platforms; it hasn't yet been tried with real voices.
 
 **Outside the app** (in prayer, or to a friend): the page is checked off from the plan, as a clean revision — or,
-if the student stumbled, the page opens whole and they tap the ayat they stumbled on.
+if the student stumbled, the page opens whole and they tap the ayat they stumbled on. Any other page, or a whole juz',
+is logged the same way from «سجّل مراجعة» in the Mushaf.
 
 **With a friend** (peer tasmee'): the student shows a short code; the friend hears them on their own phone, marks
 the stumbles and the pages heard, and the student's app records it as a peer's revision (it never verifies).

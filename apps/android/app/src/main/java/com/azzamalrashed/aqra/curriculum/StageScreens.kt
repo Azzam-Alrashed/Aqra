@@ -88,6 +88,7 @@ import com.azzamalrashed.aqra.ui.util.formatNumber
 import com.azzamalrashed.aqra.ui.util.formatPercent
 import com.azzamalrashed.aqra.ui.util.formatRelativeAhead
 import kotlin.random.Random
+import androidx.compose.material.icons.rounded.HourglassTop
 
 /** «الأجزاء ٧–٩» */
 @Composable
@@ -143,6 +144,10 @@ fun StagesSection(app: AqraApp, store: MushafStore, onOpen: (Int) -> Unit) {
                         if (status.isPassed) {
                             Box(Modifier.height(22.dp).background(Palette.mint, CircleShape).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
                                 Text(stringResource(R.string.passed), style = aqraStyle(11f, Weight.bold, Palette.success))
+                            }
+                        } else if (status.awaitsSheikh) {
+                            Box(Modifier.height(22.dp).background(Palette.butter, CircleShape).padding(horizontal = 8.dp), contentAlignment = Alignment.Center) {
+                                Text(stringResource(R.string.awaiting_a_sheikhs_test), style = aqraStyle(11f, Weight.bold, Palette.ink))
                             }
                         }
                     }
@@ -210,12 +215,17 @@ private fun RequirementRow(requirement: StageStatus.Requirement, status: StageSt
         StageStatus.Requirement.MASTERED -> stringResource(R.string.n_of_n_ayat, progress.mastered, progress.total)
         StageStatus.Requirement.TEST -> status.bestScore?.let { stringResource(R.string.best_score_s, formatPercent(it, 0)) }
             ?: stringResource(R.string.not_taken_yet)
-        StageStatus.Requirement.SHEIKH -> stringResource(if (status.sheikhPassed) R.string.passed else R.string.book_a_tasmee_and_ask_for_a_stage_test)
+        StageStatus.Requirement.SHEIKH -> stringResource(when {
+            status.sheikhPassed -> R.string.passed
+            status.awaitsSheikh -> R.string.awaiting_a_sheikhs_test_book_a_tasmee_and_ask_for
+            else -> R.string.book_a_tasmee_and_ask_for_a_stage_test
+        })
     }
     Row(Modifier.fillMaxWidth().padding(14.dp).semantics(mergeDescendants = true) {}, verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-        Icon(if (met) Icons.Rounded.CheckCircle else Icons.Rounded.RadioButtonUnchecked, null,
-            tint = if (met) Color(0xFF2E9B63) else Palette.lavender, modifier = Modifier.size(24.dp))
+        val awaiting = requirement == StageStatus.Requirement.SHEIKH && status.awaitsSheikh
+        Icon(if (met) Icons.Rounded.CheckCircle else if (awaiting) Icons.Rounded.HourglassTop else Icons.Rounded.RadioButtonUnchecked, null,
+            tint = if (met) Color(0xFF2E9B63) else if (awaiting) Color(0xFFC98A12) else Palette.lavender, modifier = Modifier.size(24.dp))
         Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
             Text(requirementTitle(requirement, status.policy), style = aqraStyle(15f, Weight.bold, Palette.ink))
             Text(detail, style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
