@@ -1,0 +1,137 @@
+# The four test suites, on every pull request and on main. No secrets: the apps build without their Firebase config
+# (accounts off), the iOS tests skip Firebase under XCTest, and the functions' tests use the emulators' dev keys.
+name: CI
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  backend:
+    name: Backend · rules and functions
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version: 22            # the functions' runtime (functions/package.json engines)
+          cache: npm
+          cache-dependency-path: |
+            backend/package-lock.json
+            backend/functions/package-lock.json
+      - uses: actions/setup-java@v6   # the Firestore and Storage emulators
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Cache the emulator jars
+        uses: actions/cache@v6
+        with:
+          path: ~/.cache/firebase/emulators
+          key: firebase-emulators-${{ runner.os }}-firebase-tools-15
+      - name: Install the Firebase CLI
+        run: npm install -g firebase-tools@15
+      - run: npm ci
+      - run: npm ci
+        working-directory: backend/functions
+      - name: Emulator secrets (the public dev keys of livekit-server --dev)
+        run: cp functions/.secret.local.example functions/.secret.local
+      - name: Rules tests
+        run: npm run test:rules
+      - name: Functions tests
+        run: npm run test:functions
+
+  android:
+    name: Android · unit tests and release build
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    defaults:
+      run:
+        working-directory: apps/android
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-java@v6
+        with:
+          distribution: temurin
+          java-version: 21
+      - name: Restore the 604 page fonts
+        id: fonts
+        uses: actions/cache@v6
+        with:
+          path: shared/quran/qcf4
+          key: qcf4-${{ hashFiles('shared/quran/qcf4.sha256') }}
+      - name: Fetch the page fonts (about 50 MB from Quran Foundation's CDN, verified against qcf4.sha256)
+        if: steps.fonts.outputs.cache-hit != 'true'
+        run: scripts/fetch-mushaf-fonts.sh
+        working-directory: .
+      - uses: gradle/actions/setup-gradle@v6
+      # The emulator flag keeps the build off the production project. The CoreText cross-check is skipped here: its
+      # reference tables come from a Mac (apps/android/README.md); run it locally before a PR.
+      - name: Unit tests
+        run: ./gradlew :app:testDebugUnitTest -PuseFirebaseEmulator
+      # A separate Gradle run, as the README requires. Without google-services.json this release has accounts off,
+      # which is fine for a compile-and-shrink check.
+      - name: Release build
+        run: ./gradlew :app:assembleRelease
+      - name: Keep the R8 mapping
+        uses: actions/upload-artifact@v7
+        with:
+          name: release-mapping
+          path: apps/android/app/build/outputs/mapping/release/mapping.txt
+          if-no-files-found: error
+
+  ios:
+    name: iOS · unit tests
+    runs-on: macos-26                 # ships Xcode 26.6 (17F113), the same build as the owner's machine
+    timeout-minutes: 90
+    defaults:
+      run:
+        working-directory: apps/ios
+    steps:
+      - uses: actions/checkout@v7
+      - name: Select Xcode 26.6
+        run: sudo xcode-select -s /Applications/Xcode_26.6.app && xcodebuild -version
+      - name: Restore the 604 page fonts
+        id: fonts
+        uses: actions/cache@v6
+        with:
+          path: shared/quran/qcf4
+          key: qcf4-${{ hashFiles('shared/quran/qcf4.sha256') }}
+      - name: Fetch the page fonts (about 50 MB from Quran Foundation's CDN, verified against qcf4.sha256)
+        if: steps.fonts.outputs.cache-hit != 'true'
+        run: scripts/fetch-mushaf-fonts.sh
+        working-directory: .
+      - name: Cache the Swift packages
+        uses: actions/cache@v6
+        with:
+          path: ${{ runner.temp }}/SourcePackages
+          key: spm-${{ runner.os }}-${{ hashFiles('apps/ios/Aqra.xcodeproj/project.xcworkspace/xcshareddata/swiftpm/Package.resolved') }}
+      # No signing: the simulator needs none, and the runner has no certificates. DerivedData stays out of the repo.
+      - name: Test
+        run: |
+          set -o pipefail
+          xcodebuild test -project Aqra.xcodeproj -scheme Aqra \
+            -destination 'platform=iOS Simulator,name=iPhone 17,OS=latest' \
+            -derivedDataPath "$RUNNER_TEMP/DerivedData" \
+            -clonedSourcePackagesDirPath "$RUNNER_TEMP/SourcePackages" \
+            -resultBundlePath "$RUNNER_TEMP/Aqra.xcresult" \
+            CODE_SIGNING_ALLOWED=NO CODE_SIGNING_REQUIRED=NO \
+            2>&1 | { command -v xcbeautify >/dev/null && xcbeautify --renderer github-actions || cat; }
+      - name: Keep the result bundle
+        if: failure()
+        uses: actions/upload-artifact@v7
+        with:
+          name: ios-xcresult
+          path: ${{ runner.temp }}/Aqra.xcresult

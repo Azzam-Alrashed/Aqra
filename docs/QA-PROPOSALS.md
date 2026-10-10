@@ -3,7 +3,7 @@
 Changes found during the QA pass ([QA-LOG.md](QA-LOG.md)) that weren't built then, because they're visual or design
 changes, new features, or change the product's behavior or the SRS algorithm. They're ordered by priority. Each has
 the problem, what I proposed, and, where it helps, a screenshot or mock (in [docs/qa](qa)). All 16 were approved on
-2026-10-09 and are now built, on iOS and Android, on the branch `qa/proposals-2026-10` (see "Built" below).
+2026-10-09 and are now built, on iOS and Android, and merged into `main` in `4a55880` (see "Built" below).
 
 ## Decisions (2026-10-09)
 

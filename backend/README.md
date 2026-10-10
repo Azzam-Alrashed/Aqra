@@ -21,7 +21,7 @@ region, Belgium (`europe-west1`): Google refuses new resources in the Middle Eas
   - `placeBid`, `takeFreeSeat`, `settleAuctions` (every 5 minutes), `settleAuctionNow` (administrators),
     `onSessionChanged`: the seat auction, a bidder's free seat taken instead, the settlement, and the releases and
     refunds when a session is cancelled.
-  - `onAccountDeleted`: deletes a deleted account's wallet and ledger.
+  - `onAccountDeleted`: deletes a deleted account's wallet and ledger, and its application to teach.
 
 ### Setting up video (LiveKit Cloud)
 
@@ -42,13 +42,17 @@ On the emulators the functions use `functions/.secret.local` (copy `.secret.loca
 ```
 npm install                                         # once
 npm install && npm --prefix functions install        # once
-npm run test:rules                                  # the rules tests, on the Firestore and Storage emulators (needs Java)
+npm run test:rules                                  # the rules tests, on the Firestore and Storage emulators (needs Java 21)
 npm run test:functions                              # the functions' tests, on the emulators
 npm run emulators                                   # every emulator, functions built first; UI at http://localhost:4000
 npm run seed -- --email teacher@example.com         # make that emulator account a vetted teacher (+ a session)
 npm run admin -- applications --emulator            # administration (see scripts/admin.mjs; drop --emulator for real)
 firebase deploy --only firestore,storage            # publish the rules and the indexes
 ```
+
+`test:rules` and `test:functions` each start their own emulators on the same ports as `npm run emulators`, and they
+wipe the emulators' data: stop a running `npm run emulators` first. The functions' tests read the dev keys in
+`functions/.secret.local` (copy `.secret.local.example`). CI runs both on every pull request (`.github/workflows/ci.yml`).
 
 ## Trying the app against the emulators
 
@@ -62,13 +66,19 @@ has restored) are shared on one simulator.
 
 ### A student's progress: `users/{uid}`
 
-Only the student reads and writes it. Deleting the account deletes all of it.
+Only the student reads and writes it. Deleting the account from the app deletes everything under `users/{uid}`
+(memory, revision, journey, bookings with their seats given back, tasmee' records, inbox), the teacher's file on each
+student if they taught, their uploads, and an application still waiting; the server then deletes the wallet, its ledger
+and any reviewed application (`functions/src/accounts.ts`). What stays: `purchases` (the record of what was sold), the
+account's bids, `teacherBalances`, and a teacher's own `teachers/{uid}` document and sessions (removed by hand).
 
 - `users/{uid}`: `updatedAt`.
 - `users/{uid}/memory/block-NN` (25 blocks of 256 ayat): each memorized ayah as
   `[since, stability, lastReviewed or -1, lapses, verified]`, dates in seconds since 1970.
 - `users/{uid}/revision/state`: the revision record (daily amount, rotation, follow-ups, today's plan, the days
   revised and the last 1,000 revisions) as JSON.
+- `users/{uid}/journey/state`: the personal plan with its history and portions log, the stage test results and the
+  rewards (points, achievements, challenges) as JSON.
 - `users/{uid}/bookings/{sessionId}`: the student's copy of a session they booked (`teacherId`, `teacherName`,
   `startsAt`, `kind`, `place`), so the home can show it.
 - `users/{uid}`: also `displayName`, the name the student chose to show teachers, peers and friends.
