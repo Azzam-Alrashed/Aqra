@@ -539,7 +539,7 @@ private fun LogPanel(store: MushafStore, page: Int, style: MushafStyle, onClose:
                 IconTile("✅", Palette.mint, size = 38.dp)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(stringResource(R.string.revised_this_page_outside_the_wird_q), style = aqraStyle(15f, Weight.heavy, style.ink))
-                    Text(stringResource(R.string.s_page_n, store.surahNames[store.page(page).surah].orEmpty(), page), style = aqraStyle(12f, Weight.semibold, style.chrome))
+                    Text(stringResource(R.string.s_page_n, isolated(store.surahNames[store.page(page).surah].orEmpty()), page), style = aqraStyle(12f, Weight.semibold, style.chrome))
                 }
                 val close = stringResource(R.string.close)
                 Box(Modifier.size(32.dp).background(style.barAccentFill, CircleShape).pressable(onClick = onClose).semantics { contentDescription = close },
@@ -571,7 +571,7 @@ private fun RibbonPanel(store: MushafStore, notice: RibbonNotice, style: MushafS
                         Text(pluralStringResource(R.plurals.recorded_n_pages_revised, logged, logged), style = aqraStyle(15f, Weight.heavy, style.ink))
                         Text(stringResource(R.string.they_count_in_your_streak_and_your_strength), style = aqraStyle(12f, Weight.semibold, style.chrome))
                     } else if (page != null) {
-                        Text(stringResource(R.string.bookmark_placed_at_s_page_n, store.surahNames[store.page(page).surah].orEmpty(), page),
+                        Text(stringResource(R.string.bookmark_placed_at_s_page_n, isolated(store.surahNames[store.page(page).surah].orEmpty()), page),
                             style = aqraStyle(15f, Weight.heavy, style.ink))
                         Text(stringResource(R.string.home_opens_on_it_and_browsing_or_marking_never_moves),
                             style = aqraStyle(12f, Weight.semibold, style.chrome))
@@ -631,3 +631,9 @@ fun MushafModeChip(mode: MushafMode, style: MushafStyle, modifier: Modifier = Mo
         Text(stringResource(text), style = aqraStyle(12f, Weight.heavy, style.barAccent), maxLines = 1)
     }
 }
+
+/**
+ * A name set apart from the sentence around it (Unicode's first-strong isolate), so an Arabic surah name at the start
+ * of an English line doesn't turn the whole line right to left, as iOS does for interpolated text.
+ */
+private fun isolated(text: String) = "\u2068$text\u2069"
