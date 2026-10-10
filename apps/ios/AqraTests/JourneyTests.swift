@@ -177,6 +177,70 @@ struct JourneyTests {
         #expect(abs(after - before) < 0.000_001)
     }
 
+    // MARK: - The same schedule on both platforms
+
+    /// shared/fixtures/schedule-parity.json, read by this test and by the Android app's ScheduleParityTest.
+    private struct ParityFixture: Decodable {
+        struct Entry: Decodable {
+            var ayah: Int
+            var memory: AyahMemory
+        }
+        struct Outcome: Codable {
+            /// Today's plan, as "page:kind".
+            var plan: [String]
+            var strengths: [String: Double]
+            var streak: Int
+            var suggestions: [Int]
+            var nextPortion: [Int]
+        }
+        var zone: String
+        var now: Date
+        var strengthAyahs: [Int]
+        var ayahs: [Entry]
+        var revision: RevisionStore.Snapshot
+        var plan: PlanStore.Snapshot
+        var expected: Outcome?
+    }
+
+    /// The same records, revision state, plan, moment and time zone give the same plan, strengths (to 1e-12), streak,
+    /// suggestions and next portion on iOS and on Android.
+    @Test func scheduleParityFixture() throws {
+        let store = try store()
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let fixture = try JSONDecoder().decode(ParityFixture.self,
+                                               from: Data(contentsOf: root.appendingPathComponent("shared/fixtures/schedule-parity.json")))
+        var zoned = Calendar(identifier: .gregorian)
+        zoned.timeZone = try #require(TimeZone(identifier: fixture.zone))
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.replaceAll(Dictionary(uniqueKeysWithValues: fixture.ayahs.map { ($0.ayah, $0.memory) }))
+        let revision = RevisionStore(fileURL: nil, calendar: zoned)
+        revision.apply(fixture.revision)
+        let plan = PlanStore(fileURL: nil, calendar: zoned)
+        plan.apply(fixture.plan)
+        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization), now: fixture.now)
+        var portion: [Int] = []
+        if case .due(let ayahs) = plan.today(memorization: memorization, store: store, now: fixture.now) { portion = ayahs }
+        let outcome = ParityFixture.Outcome(
+            plan: revision.plan?.items.map { "\($0.page):\($0.kind.rawValue)" } ?? [],
+            strengths: Dictionary(uniqueKeysWithValues: fixture.strengthAyahs.map {
+                (String($0), memorization.strength(ofAyah: $0, at: fixture.now) ?? -1)
+            }),
+            streak: revision.streak(now: fixture.now),
+            suggestions: RotationAdvisor.suggestions(store: store, memorization: memorization, revision: revision, now: fixture.now),
+            nextPortion: portion)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let computed = Comment(rawValue: String(decoding: try encoder.encode(outcome), as: UTF8.self))
+        let expected = try #require(fixture.expected, computed)
+        #expect(outcome.plan == expected.plan && outcome.streak == expected.streak, computed)
+        #expect(outcome.suggestions == expected.suggestions && outcome.nextPortion == expected.nextPortion, computed)
+        #expect(Set(outcome.strengths.keys) == Set(expected.strengths.keys), computed)
+        for (ayah, strength) in expected.strengths {
+            #expect(abs((outcome.strengths[ayah] ?? -1) - strength) < 1e-12, computed)
+        }
+    }
+
     // MARK: - The daily reminder
 
     @Test func theDailyReminderLooksTwoWeeksAheadAndLeavesOutADoneDay() throws {
