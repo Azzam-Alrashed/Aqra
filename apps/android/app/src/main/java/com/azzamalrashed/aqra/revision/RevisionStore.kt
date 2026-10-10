@@ -3,6 +3,7 @@ package com.azzamalrashed.aqra.revision
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.azzamalrashed.aqra.core.CalendarDay
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.core.ProgressJson
 import com.azzamalrashed.aqra.memorization.MemorizationStore
@@ -36,6 +37,11 @@ data class ReviewPolicy(
     val sheikhWeight: Double = 1.5,
     /** A peer's tasmee' sits between self-revision and a sheikh's. Provisional. */
     val peerWeight: Double = 1.25,
+    /**
+     * سبقي, the near lane: this many of the pages most recently memorized in Aqra come back every day, beside the daily
+     * amount, until newer pages take their place. Provisional, see docs/REVISION.md.
+     */
+    val nearLanePages: Int = 20,
 ) {
     companion object {
         val STANDARD = ReviewPolicy()
@@ -73,6 +79,8 @@ data class PlanItem(val page: Int, val kind: Kind = Kind.ROTATION, val done: Boo
     enum class Kind {
         /** It was stumbled on recently and comes back to be made firm. */
         @SerialName("followUp") FOLLOW_UP,
+        /** سبقي: memorized in Aqra lately, it comes back every day. */
+        @SerialName("near") NEAR,
         /** Its turn has come in the rotation through everything memorized. */
         @SerialName("rotation") ROTATION,
     }
@@ -80,14 +88,14 @@ data class PlanItem(val page: Int, val kind: Kind = Kind.ROTATION, val done: Boo
 
 /** Today's plan. It's fixed once made, so it doesn't shift while the student works through it. */
 @Serializable
-data class DayPlan(val day: Moment, val items: List<PlanItem>) {
+data class DayPlan(val day: CalendarDay, val items: List<PlanItem>) {
     val doneCount: Int get() = items.count { it.done }
     val isComplete: Boolean get() = items.isNotEmpty() && items.all { it.done }
 }
 
 @Serializable
 data class FollowUp(
-    val due: Moment,
+    val due: CalendarDay,
     /** Which of the policy's follow-up intervals it's on. */
     val step: Int = 0,
 )
@@ -103,8 +111,12 @@ class RevisionStore(
     /** The file the record lives in, or null to keep it in memory only (previews and tests). */
     private val file: File?,
     val policy: ReviewPolicy = ReviewPolicy.STANDARD,
-    private val zone: ZoneId = ZoneId.systemDefault(),
+    /** The days are counted in this time zone; by default the device's, as it changes. */
+    zone: ZoneId? = null,
 ) {
+    private val fixedZone = zone
+    private val zone: ZoneId get() = fixedZone ?: ZoneId.systemDefault()
+
     /** The pages to revise each day, or null until the student chooses (a suggestion is used meanwhile). */
     var dailyPages: Int? by mutableStateOf(null)
         private set
@@ -121,10 +133,10 @@ class RevisionStore(
      * The days on which at least one page was revised, kept apart from the history so a long streak isn't cut short
      * when old records are dropped.
      */
-    var revisedDays: Set<Moment> by mutableStateOf(emptySet())
+    var revisedDays: Set<CalendarDay> by mutableStateOf(emptySet())
         private set
     /** The days on which the whole of that day's wird was revised. */
-    var completedDays: Set<Moment> by mutableStateOf(emptySet())
+    var completedDays: Set<CalendarDay> by mutableStateOf(emptySet())
         private set
     /** When any of it last changed, to tell which copy is newer when merging with the account's. */
     var updatedAt: Moment by mutableStateOf(Moment.DISTANT_PAST)
@@ -140,19 +152,20 @@ class RevisionStore(
 
     @Serializable
     private class FileContents(
-        val version: Int = 1,
+        /** 2: days are kept as their midnight in UTC (1 kept the device's; both read back as the same days). */
+        val version: Int = 2,
         val dailyPages: Int? = null,
         val rotationCursor: Int,
         val followUps: List<FollowUpRecord>,
         val plan: DayPlan? = null,
         val history: List<RevisionRecord>,
         /** Missing from files written before the streak was kept; it's then rebuilt from the history. */
-        val revisedDays: List<Moment>? = null,
-        val completedDays: List<Moment>? = null,
+        val revisedDays: List<CalendarDay>? = null,
+        val completedDays: List<CalendarDay>? = null,
         val updatedAt: Moment? = null,
     ) {
         @Serializable
-        class FollowUpRecord(val page: Int, val due: Moment, val step: Int)
+        class FollowUpRecord(val page: Int, val due: CalendarDay, val step: Int)
     }
 
     init {
@@ -170,7 +183,7 @@ class RevisionStore(
                 followUps = contents.followUps.associate { it.page to FollowUp(it.due, it.step) }
                 plan = contents.plan
                 history = contents.history
-                revisedDays = (contents.revisedDays ?: contents.history.map { it.date.startOfDay(zone) }).toSet()
+                revisedDays = (contents.revisedDays ?: contents.history.map { CalendarDay.of(it.date, this.zone) }).toSet()
                 completedDays = contents.completedDays.orEmpty().toSet()
                 // Files from before backups were kept don't say when they changed; the file's own date does.
                 updatedAt = contents.updatedAt ?: Moment.ofEpochMillis(file.lastModified())
@@ -188,9 +201,9 @@ class RevisionStore(
         val followUps: Map<Int, FollowUp> = emptyMap(),
         val plan: DayPlan? = null,
         val history: List<RevisionRecord> = emptyList(),
-        val revisedDays: List<Moment> = emptyList(),
+        val revisedDays: List<CalendarDay> = emptyList(),
         /** Missing from backups made before it was kept. */
-        val completedDays: List<Moment>? = null,
+        val completedDays: List<CalendarDay>? = null,
         val updatedAt: Moment = Moment.DISTANT_PAST,
     ) {
         companion object {
@@ -231,10 +244,10 @@ class RevisionStore(
 
     /**
      * Makes today's plan if there isn't one for today yet (or if the one there was empty), and drops pages that are
-     * no longer memorized from it.
+     * no longer memorized from it. [nearPages] is the near lane (سبقي), from [nearLanePages].
      */
-    fun refreshPlan(memorizedPages: List<Int>, now: Moment = Moment.now()) {
-        val day = now.startOfDay(zone)
+    fun refreshPlan(memorizedPages: List<Int>, now: Moment = Moment.now(), nearPages: List<Int> = emptyList()) {
+        val day = today(now)
         val memorized = memorizedPages.toSet()
         val current = plan
         if (current != null && current.day == day && current.items.isNotEmpty()) {
@@ -247,25 +260,55 @@ class RevisionStore(
         }
 
         val amount = effectiveDailyPages(memorizedPages.size)
-        // Pages due for follow-up come first, the most overdue first; at least one rotation page always follows.
+        // Pages due for follow-up come first, the most overdue first, up to half the daily amount: the rotation always has
+        // the other half, so it keeps moving through everything memorized.
         val due = followUps.entries
             .filter { it.value.due <= day && it.key in memorized }
             .sortedWith(compareBy({ it.value.due }, { it.key }))
-            .take(maxOf(amount - 1, 1))
+            .take(maxOf(amount / 2, 1))
             .map { PlanItem(it.key, PlanItem.Kind.FOLLOW_UP) }
+        val taken = due.map { it.page }.toMutableSet()
+
+        // Then the near lane, in Mushaf order: what was memorized lately, every day, beside the daily amount.
+        val near = nearPages.filter { it in memorized && it !in taken }.sorted().map { PlanItem(it, PlanItem.Kind.NEAR) }
+        taken += near.map { it.page }
 
         // Then the rotation, from where it stopped, wrapping round to the start of what's memorized.
         val ordered = memorizedPages.sorted()
         val start = ordered.indexOfFirst { it >= rotationCursor }.let { if (it < 0) 0 else it }
         val wrapped = if (ordered.isEmpty()) emptyList() else ordered.subList(start, ordered.size) + ordered.subList(0, start)
-        val taken = due.map { it.page }.toSet()
         val rotation = wrapped
             .filter { it !in taken }
             .take(maxOf(amount - due.size, 1))
             .map { PlanItem(it, PlanItem.Kind.ROTATION) }
 
-        plan = DayPlan(day, due + rotation)
+        plan = DayPlan(day, due + near + rotation)
         save()
+    }
+
+    /** سبقي: the pages most recently memorized in Aqra, before today, up to the policy's number, in Mushaf order. */
+    fun nearLanePages(store: MushafStore, memorization: MemorizationStore, now: Moment = Moment.now()): List<Int> {
+        if (policy.nearLanePages <= 0) return emptyList()
+        val today = today(now)
+        val ayahs = memorization.ayahs
+        val learned = (1..MushafStore.PAGE_COUNT).mapNotNull { page ->
+            val latest = store.page(page).ayahs.mapNotNull { ayahs[it]?.learnedAt }.maxOrNull()
+            if (latest != null && CalendarDay.of(latest, zone) < today) page to latest else null
+        }
+        return learned.sortedWith(compareByDescending<Pair<Int, Moment>> { it.second }.thenByDescending { it.first })
+            .take(policy.nearLanePages).map { it.first }.sorted()
+    }
+
+    /**
+     * How many days the rotation takes to go through everything memorized outside the near lane, at today's pace: the
+     * rotation pages of today's plan (the daily amount until there is one).
+     */
+    fun cycleDays(memorizedPages: Int, nearPages: Int = 0, now: Moment = Moment.now()): Int {
+        val amount = effectiveDailyPages(memorizedPages)
+        val current = plan
+        val perDay = if (current != null && current.day == today(now)) current.items.count { it.kind == PlanItem.Kind.ROTATION } else amount
+        val pool = maxOf(memorizedPages - nearPages, 0)
+        return maxOf(ceil(pool.toDouble() / maxOf(perDay, 1)).toInt(), 1)
     }
 
     // MARK: - Recording
@@ -284,17 +327,18 @@ class RevisionStore(
         now: Moment = Moment.now(),
     ) {
         memorization.recordRevision(ayahs, stumbles, now, policy, policy.weight(source))
-        val day = now.startOfDay(zone)
+        val day = today(now)
 
-        // A stumble brings the page back tomorrow; clean follow-ups space out until the page leaves follow-up.
+        // A stumble brings the page back tomorrow; a clean revision of a page due for follow-up spaces it out until it
+        // leaves follow-up. Revising it again before it's due changes nothing: the step waits for its day.
         val nextFollowUps = followUps.toMutableMap()
         if (stumbles.isNotEmpty()) {
-            nextFollowUps[page] = FollowUp(day.plusDays((policy.followUpDays.firstOrNull() ?: 1).toLong(), zone), 0)
+            nextFollowUps[page] = FollowUp(day + (policy.followUpDays.firstOrNull() ?: 1), 0)
         } else {
-            followUps[page]?.let { followUp ->
+            followUps[page]?.takeIf { it.due <= day }?.let { followUp ->
                 val next = followUp.step + 1
                 if (next < policy.followUpDays.size) {
-                    nextFollowUps[page] = FollowUp(day.plusDays(policy.followUpDays[next].toLong(), zone), next)
+                    nextFollowUps[page] = FollowUp(day + policy.followUpDays[next], next)
                 } else {
                     nextFollowUps.remove(page)
                 }
@@ -302,14 +346,16 @@ class RevisionStore(
         }
         followUps = nextFollowUps
 
+        // The page is checked off in the plan it belongs to, even one made the day before: a wird carried on past
+        // midnight moves on rather than reopening the page.
         val current = plan
         val index = current?.items?.indexOfFirst { it.page == page } ?: -1
-        if (current != null && current.day == day && index >= 0) {
+        if (current != null && index >= 0) {
             val items = current.items.toMutableList()
             items[index] = items[index].copy(done = true)
             val updated = current.copy(items = items)
             plan = updated
-            if (updated.isComplete) completedDays = completedDays + day
+            if (updated.isComplete) completedDays = completedDays + updated.day
             // The rotation moves past the leading run of revised rotation pages, so a page skipped today (or revised
             // out of order) is still first tomorrow.
             var cursor = rotationCursor
@@ -332,7 +378,7 @@ class RevisionStore(
      * chose to strengthen. A page already due sooner keeps its date.
      */
     fun followUp(pages: Iterable<Int>, now: Moment = Moment.now()) {
-        val due = now.startOfDay(zone).plusDays((policy.followUpDays.firstOrNull() ?: 1).toLong(), zone)
+        val due = today(now) + (policy.followUpDays.firstOrNull() ?: 1)
         val next = followUps.toMutableMap()
         var changed = false
         for (page in pages.toSet()) {
@@ -355,21 +401,24 @@ class RevisionStore(
      * until the day ends, the streak counts back from yesterday.
      */
     fun streak(now: Moment = Moment.now()): Int {
-        var day = now.startOfDay(zone)
-        if (day !in revisedDays) day = day.plusDays(-1, zone)
+        var day = today(now)
+        if (day !in revisedDays) day += -1
         var count = 0
         while (day in revisedDays) {
             count += 1
-            day = day.plusDays(-1, zone)
+            day += -1
         }
         return count
     }
 
     /** Whether the student revised on each of the last [count] days, oldest first, ending today. */
     fun recentDays(count: Int = 7, now: Moment = Moment.now()): List<Boolean> {
-        val today = now.startOfDay(zone)
-        return (count - 1 downTo 0).map { today.plusDays(-it.toLong(), zone) in revisedDays }
+        val today = today(now)
+        return (count - 1 downTo 0).map { today + -it in revisedDays }
     }
+
+    /** The day it is now, in the device's time zone (or the one the store was made with). */
+    fun today(now: Moment = Moment.now()): CalendarDay = CalendarDay.of(now, zone)
 
     // MARK: - Saving
 
@@ -425,6 +474,12 @@ class RevisionSession(
     private var cleared: Set<Int> = emptySet()
 
     val isComplete: Boolean get() = revealed >= ayahs.size
+
+    /**
+     * The ayat «تم» records: those revealed (in full), or all of the page's when the student says they recited the rest
+     * from memory too.
+     */
+    fun revisedAyahs(countingRest: Boolean): List<Int> = if (countingRest) ayahs else ayahs.take(minOf(revealed, ayahs.size))
 
     /** Whether an ayah is covered by this revision. */
     fun covers(ayah: Int): Boolean = ayah in ayahs

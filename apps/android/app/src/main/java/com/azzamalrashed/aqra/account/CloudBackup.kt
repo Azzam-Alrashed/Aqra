@@ -157,16 +157,17 @@ object CloudBackup {
 
     /**
      * The ayat memorized on either side, each merged by [merge]; an ayah unmarked on one side after the other last
-     * touched it stays unmarked, and one marked again after it was unmarked comes back.
+     * touched it stays unmarked, and one marked again after it was unmarked comes back. No date comes out later than
+     * [now] (see [clamped]); the sync passes its clock.
      */
-    fun merge(local: Memory, remote: Memory): Memory {
+    fun merge(local: Memory, remote: Memory, now: Moment = Moment(Double.MAX_VALUE)): Memory {
         val ayahs = HashMap<Int, AyahMemory>()
         val removed = HashMap<Int, Moment>()
         val keys = local.ayahs.keys + remote.ayahs.keys + local.removed.keys + remote.removed.keys
         for (ayah in keys) {
-            val sides = listOfNotNull(local.ayahs[ayah], remote.ayahs[ayah])
+            val sides = listOfNotNull(local.ayahs[ayah], remote.ayahs[ayah]).map { clamped(it, now) }
             val record = if (sides.size == 2) merge(sides[0], sides[1]) else sides.firstOrNull()
-            val removedAt = listOfNotNull(local.removed[ayah], remote.removed[ayah]).maxOrNull()
+            val removedAt = listOfNotNull(local.removed[ayah], remote.removed[ayah]).maxOrNull()?.let { minOf(it, now) }
             when {
                 record != null && removedAt != null && removedAt > sides.maxOf(::lastTouch) -> removed[ayah] = removedAt
                 record != null -> ayahs[ayah] = record
@@ -175,6 +176,17 @@ object CloudBackup {
         }
         return Memory(ayahs, removed)
     }
+
+    /**
+     * A record with no date later than [now]. A device or a teacher whose clock ran ahead would otherwise leave an
+     * ayah revised in the future: bright until then, and every real revision before it ignored.
+     */
+    fun clamped(memory: AyahMemory, now: Moment): AyahMemory = memory.copy(
+        since = minOf(memory.since, now),
+        lastReviewed = memory.lastReviewed?.let { minOf(it, now) },
+        learnedAt = memory.learnedAt?.let { minOf(it, now) },
+        lastLapseAt = memory.lastLapseAt?.let { minOf(it, now) },
+    )
 
     fun merge(local: Map<Int, AyahMemory>, remote: Map<Int, AyahMemory>): Map<Int, AyahMemory> =
         merge(Memory(local), Memory(remote)).ayahs
@@ -196,7 +208,7 @@ object CloudBackup {
     fun merge(local: RevisionStore.Snapshot, remote: RevisionStore.Snapshot): RevisionStore.Snapshot {
         fun lastRevision(snapshot: RevisionStore.Snapshot): Moment = maxOf(
             snapshot.history.maxOfOrNull { it.date } ?: Moment.DISTANT_PAST,
-            snapshot.revisedDays.maxOrNull() ?: Moment.DISTANT_PAST,
+            snapshot.revisedDays.maxOrNull()?.stored ?: Moment.DISTANT_PAST,
         )
         val localRevised = lastRevision(local)
         val remoteRevised = lastRevision(remote)

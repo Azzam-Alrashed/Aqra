@@ -361,7 +361,7 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | STR-01 | Declared ayat start at the policy's declared half-life (14 days). | M | ✅ | R |
-| STR-02 | A clean revision multiplies the half-life by the growth (2.5), reduced by the spacing effect; a declared ayah's first revision counts in full. | M | ✅ | R |
+| STR-02 | A clean revision multiplies the half-life by the growth (2.5), reduced by the spacing effect; a declared ayah's first revision counts in full, and an ayah memorized in Aqra is spaced from when it was learned. | M | ✅ | R |
 | STR-03 | A stumble multiplies it by the lapse factor (0.3), at least 1 day, and counts a lapse. | M | ✅ | R |
 | STR-04 | Evidence weights: self 1, peer 1.25 (provisional), sheikh 1.5 (provisional); a stumble is a stumble whoever heard it; the last revision never moves backwards. | M | ✅ | R, P |
 | STR-05 | Strength = min(stability ÷ mature, 1) × 2^(−days since revision ÷ stability); capped at 365 days; never zero while memorized. | M | ✅ | R |
@@ -372,18 +372,21 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | REV-01 | The daily amount (pages/day, 1–40) is chosen by the student; the suggestion covers everything memorized in about a month (2–20). | M | ✅ | R |
-| REV-02 | Each day's plan takes, in order: pages due for follow-up (most overdue first), then the next rotation pages in Mushaf order, wrapping. | M | ✅ | R |
-| REV-03 | The plan is fixed for the day; pages no longer memorized drop out. | M | ✅ | R |
+| REV-02 | Each day's plan takes, in order: pages due for follow-up (most overdue first, at most half the daily amount), the near lane (REV-14), then the next rotation pages in Mushaf order, wrapping; the rotation always has at least half the daily amount. | M | ✅ | R |
+| REV-03 | The plan is fixed for the day; pages no longer memorized drop out. Days are calendar days in the device's time zone, kept the same across a trip or a change of clocks at midnight; a page finished after midnight is checked off in the plan it belongs to, and the plan is made again when the day, the time zone or the clock changes. | M | ✅ | R |
 | REV-04 | Missed days don't pile up: the rotation only moves past revised pages. | M | ✅ | R |
-| REV-05 | A stumble brings the page back after 1 day, then 3, then 7 while clean. | M | ✅ | R |
+| REV-05 | A stumble brings the page back after 1 day, then 3, then 7 while clean; a clean revision before the page is due doesn't move it on. | M | ✅ | R |
 | REV-06 | In-app revision veils the page's memorized ayat and reveals them one at a time with «الآية التالية»; «تعثّرتُ هنا» reveals the next one marked as a stumble, and a tap on a revealed ayah marks or clears a stumble. «أظهر الصفحة» and «تم» are buttons beside them; «تم» records the page and moves to the next. | M | ✅ | V |
 | REV-07 | A page revised outside the app is logged from «سجّلها» on Home's «اليوم» card: clean, or opened whole to tap its stumbles. | M | ✅ | V |
-| REV-08 | The streak counts days in a row with any revision; today not yet revised doesn't break it. | M | ✅ | V |
+| REV-08 | The streak counts calendar days in a row with any revision; today not yet revised doesn't break it, and neither does a trip to another time zone or a change of clocks. | M | ✅ | V |
 | REV-09 | A revision outside the app may also record the ayat stumbled on. | C | ✅ | R (open Q2), P |
 | REV-10 | The rotation learns: pages that keep slipping (lapses in recent revisions, or low strength while the rest is strong) are suggested for extra follow-up; the student approves or dismisses each suggestion. | S | ✅ | V (agreed direction), R (open Q3) |
 | REV-11 | Today's plan also shows today's new portion (when a plan is set) before the follow-ups. | M | ✅ | E |
 | REV-12 | «سمّع بصوتك»: an in-app revision can be recited aloud, on iOS and Android. A Quran-trained speech model (Tarteel's `whisper-base-ar-quran`, Apache-2.0) runs on the device (WhisperKit and Core ML on iOS; ONNX Runtime, quantized to 8 bits, on Android); what it hears is matched to the official Imla'i text of the page's words and is never shown — the page shows only the Mushaf's own words. Words are revealed as they're recited; a skipped or wrong word is a memorization stumble, going back more than three words to correct is a hesitation, and a pause of 4 s inside an ayah (7 s between two) shows the next word in gold as a prompt and counts as prompting; where the device hears too slowly for the prompt to come in time and the student carries on alone, the pause counts as a hesitation. A device that takes over 1.5 s to hear a stretch reveals words at each pause rather than while they're recited. The isti'adha and a basmala before a surah aren't counted. The student can tap to take back or add any stumble, pause, or go back to revealing by hand; the choice is remembered. A page heard to its end shows a summary of its stumbles by kind, then the next page of the wird, with listening still on. | S | 🟡 | user (2026-10-09), P |
 | REV-13 | The speech model is downloaded once (an Apple Archive of about 134 MB on iOS, a zip of about 67 MB on Android) after a sheet that explains listening and promises the voice stays on the device and isn't kept; it's kept outside the device's backups. It's hosted in the project's storage bucket at `models/recitation/`, readable by anyone and written by no one (uploaded with the owner's credentials). | S | ✅ | user (2026-10-09) |
+| REV-14 | سبقي, the near lane: the pages most recently memorized in Aqra (before today, up to 20, a policy number) come back every day beside the daily amount. Home and «خطتي» show the rotation's real cycle: what's memorized outside the near lane, at the rotation pages of today's plan. | S | ✅ | R, P |
+| REV-15 | «تم» on a page with ayat still veiled asks once «احسب الباقي مراجَعًا؟»: the whole page counts, or only the ayat revealed. | M | ✅ | R |
+| REV-16 | A revision or tasmee' dated later than now (a clock running ahead) counts from now, on the device and in the account's merge; the rules accept a tasmee' record only within a day of the server's time, with at most 604 pages and 6,236 stumbles. | M | ✅ | R |
 
 #### 3.2.6 Home (HOME)
 
@@ -492,7 +495,7 @@ opens on the setup or the home.
 | PLAN-01 | The student sets a daily new amount (from ¼ to 2½ pages, a quarter page at a time, measured in Mushaf lines), study weekdays, and the order (from the end of the Mushaf or from its beginning); the default order continues from what's already memorized. | M | ✅ | E |
 | PLAN-02 | Today's portion is the next unmemorized ayat in that order, about the daily amount, ending at an ayah's end and not spilling into a new surah unless the current one ends. | M | ✅ | E |
 | PLAN-03 | «تم الحفظ» marks the portion memorized (new half-life), puts its pages in follow-up, and logs the portion (date, ayat, planned and actual lines, stage, juz'). The student may mark only part of it. | M | ✅ | E |
-| PLAN-04 | The expected completion date is recalculated from the remaining lines, the study days and the recent actual pace (the last 28 days, once at least 7 study days are logged), else the planned pace. | M | ✅ | E |
+| PLAN-04 | The expected completion date is recalculated from the remaining lines, the study days and the recent actual pace (the last 28 days, once at least 7 study days are logged; days the plan was paused don't count), else the planned pace. | M | ✅ | E |
 | PLAN-05 | Planned and actual are recorded separately; every change of amount, days or order is kept in a plan history. | M | ✅ | E |
 | PLAN-06 | No portion is due on a non-study day; a missed study day doesn't double the next. | M | ✅ | E, R |
 | PLAN-07 | The plan can be paused and resumed. | C | ✅ | P |
@@ -616,7 +619,7 @@ opens on the setup or the home.
 | File | Content |
 |---|---|
 | `memorization.json` (v2) | Each memorized ayah: since, stability, last revision, lapses, verified, when it was learned in Aqra, its last stumble. |
-| `revision.json` (v1) | Daily amount, rotation cursor, follow-ups, today's plan, history (last 1,000), days revised, days the whole wird was done. |
+| `revision.json` (v2) | Daily amount, rotation cursor, follow-ups, today's plan, history (last 1,000), days revised, days the whole wird was done. A day is kept as its midnight in UTC (v1 kept the device's local midnight; both read back as the same day). |
 | `plan.json` | The personal plan, its history of changes, and the portions log (planned vs actual). |
 | `rewards.json` | Points, events, achievements, challenges. |
 | `assessments.json` | In-app test results and sheikh's stage tests applied. |
@@ -686,6 +689,7 @@ Every number below is a default, kept in one place in code, and open to tuning w
 | followUpDays | 1, 3, 7 | Follow-up after a stumble or a new portion. |
 | sheikhWeight | 1.5 | Weight of a sheikh's clean revision. |
 | peerWeight | 1.25 | Weight of a peer's clean revision. |
+| nearLanePages | 20 | Pages of the near lane (سبقي), beside the daily amount. |
 
 #### PlanPolicy (`Plan/PlanStore.swift`)
 

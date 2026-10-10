@@ -312,6 +312,24 @@ describe("tasmee' records", () => {
     await assertFails(setDoc(doc(teacher, "users/alice/tasmee/t1"), tasmee({ extra: true })));
   });
 
+  test("a tasmee' record with too many pages is refused", async () => {
+    const teacher = named("teacher");
+    const everyPage = Array.from({ length: 604 }, (_, index) => index + 1);
+    await assertSucceeds(setDoc(doc(teacher, "users/alice/tasmee/t1"), tasmee({ pages: everyPage })));
+    await assertFails(setDoc(doc(teacher, "users/alice/tasmee/t2"), tasmee({ pages: [...everyPage, 1] })));
+    await assertFails(setDoc(doc(teacher, "users/alice/tasmee/t3"), tasmee({ pages: [] })));
+    await assertFails(setDoc(doc(teacher, "users/alice/tasmee/t4"), tasmee({ stumbles: Array.from({ length: 6237 }, (_, index) => index) })));
+  });
+
+  test("a tasmee' record dated in the future is refused", async () => {
+    const teacher = named("teacher");
+    const hours = (count) => Timestamp.fromMillis(Date.now() + count * 3_600_000);
+    await assertSucceeds(setDoc(doc(teacher, "users/alice/tasmee/t1"), tasmee({ at: hours(2) })));
+    await assertFails(setDoc(doc(teacher, "users/alice/tasmee/t2"), tasmee({ at: hours(30) })));
+    // Nor long in the past: a record is written as the tasmee' ends.
+    await assertFails(setDoc(doc(teacher, "users/alice/tasmee/t3"), tasmee({ at: hours(-30) })));
+  });
+
   test("the student marks it applied, and changes nothing else", async () => {
     await assertSucceeds(setDoc(doc(named("teacher"), "users/alice/tasmee/t1"), tasmee()));
     const alice = named("alice");

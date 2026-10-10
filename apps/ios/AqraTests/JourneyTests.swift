@@ -101,7 +101,7 @@ struct JourneyTests {
             #expect(memory.learnedAt == day(0) && memory.stability == plan.policy.newStability)
         }
         // Its page comes back for follow-up tomorrow.
-        #expect(revision.followUps[1]?.due == calendar.startOfDay(for: day(1)))
+        #expect(revision.followUps[1]?.due == CalendarDay(day(1), in: calendar))
         // Done for today; tomorrow the plan goes on from where the student stopped.
         guard case .done = plan.today(memorization: memorization, store: store, now: day(0)) else {
             Issue.record("Today's portion is done")
@@ -154,6 +154,134 @@ struct JourneyTests {
         let pace = try #require(plan.recentPace(now: day(9)))
         let lines = plan.portions.reduce(0) { $0 + $1.actualLines }
         #expect(abs(pace - lines / 9) < 0.001)
+    }
+
+    /// Ten days paused don't count as study days: the pace after the pause is the pace before it.
+    @Test func recentPaceIgnoresPausedDays() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        let plan = PlanStore(fileURL: nil, calendar: calendar)
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        let everyDay = MemorizationPlan(dailyLines: 15, studyDays: Set(1...7), order: .fromEnd)
+        plan.setPlan(everyDay, now: day(0))
+        for portionDay in 0..<7 {
+            guard case .due(let portion) = plan.today(memorization: memorization, store: store, now: day(portionDay)) else { continue }
+            plan.record(planned: portion, memorized: portion, store: store, memorization: memorization, revision: revision, now: day(portionDay))
+        }
+        let before = try #require(plan.recentPace(now: day(7)))
+        var paused = everyDay
+        paused.paused = true
+        plan.setPlan(paused, now: day(7))
+        plan.setPlan(everyDay, now: day(17))
+        let after = try #require(plan.recentPace(now: day(17)))
+        #expect(abs(after - before) < 0.000_001)
+    }
+
+    // MARK: - The near lane (سبقي)
+
+    /// The pages memorized in Aqra lately (not today's) come back every day beside the daily amount, the newest up to
+    /// the policy's number; the rotation leaves them out and still gets its share.
+    @Test func theNearLaneComesBackDailyBesideTheAmount() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.mark(0...200, memorized: true)
+        // Pages 30 to 33 memorized in Aqra over the last four days, page 34 today.
+        for (offset, page) in [30, 31, 32, 33, 34].enumerated() {
+            memorization.mark(store.page(page).ayahs, memorized: false)
+            memorization.learn(store.page(page).ayahs, at: day(offset - 4), stability: 2)
+        }
+        var policy = ReviewPolicy.standard
+        policy.nearLanePages = 3
+        let revision = RevisionStore(fileURL: nil, policy: policy, calendar: calendar)
+        revision.setDailyPages(4)
+        let near = revision.nearLanePages(in: store, memorization: memorization, now: day(0))
+        #expect(near == [31, 32, 33])
+        let pages = RevisionStore.memorizedPages(in: store, memorization: memorization)
+        revision.refreshPlan(memorizedPages: pages, nearPages: near, now: day(0))
+        let plan = try #require(revision.plan)
+        #expect(plan.items.filter { $0.kind == .near }.map(\.page) == [31, 32, 33])
+        #expect(plan.items.filter { $0.kind == .rotation }.map(\.page) == [1, 2, 3, 4])
+        // The rotation's cycle leaves the near lane out: the other pages, four a day.
+        #expect(revision.cycleDays(memorizedPages: pages.count, nearPages: 3, now: day(0)) == Int((Double(pages.count - 3) / 4).rounded(.up)))
+    }
+
+    /// However many pages are due for follow-up, the rotation keeps at least half the daily amount.
+    @Test func followUpsLeaveTheRotationAtLeastHalf() {
+        let memorization = MemorizationStore(fileURL: nil)
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        revision.setDailyPages(4)
+        for page in 10...15 {
+            revision.record(page: page, ayahs: [], stumbles: [page], source: .app, memorization: memorization, now: day(-1))
+        }
+        revision.refreshPlan(memorizedPages: Array(1...20), now: day(0))
+        #expect(revision.plan?.items.map(\.kind) == [.followUp, .followUp, .rotation, .rotation])
+        #expect(revision.plan?.items.map(\.page) == [10, 11, 1, 2])
+        #expect(revision.cycleDays(memorizedPages: 20, now: day(0)) == 10)
+    }
+
+    // MARK: - The same schedule on both platforms
+
+    /// shared/fixtures/schedule-parity.json, read by this test and by the Android app's ScheduleParityTest.
+    private struct ParityFixture: Decodable {
+        struct Entry: Decodable {
+            var ayah: Int
+            var memory: AyahMemory
+        }
+        struct Outcome: Codable {
+            /// Today's plan, as "page:kind".
+            var plan: [String]
+            var strengths: [String: Double]
+            var streak: Int
+            var suggestions: [Int]
+            var nextPortion: [Int]
+        }
+        var zone: String
+        var now: Date
+        var strengthAyahs: [Int]
+        var ayahs: [Entry]
+        var revision: RevisionStore.Snapshot
+        var plan: PlanStore.Snapshot
+        var expected: Outcome?
+    }
+
+    /// The same records, revision state, plan, moment and time zone give the same plan, strengths (to 1e-12), streak,
+    /// suggestions and next portion on iOS and on Android.
+    @Test func scheduleParityFixture() throws {
+        let store = try store()
+        let root = URL(fileURLWithPath: #filePath).deletingLastPathComponent().deletingLastPathComponent()
+            .deletingLastPathComponent().deletingLastPathComponent()
+        let fixture = try JSONDecoder().decode(ParityFixture.self,
+                                               from: Data(contentsOf: root.appendingPathComponent("shared/fixtures/schedule-parity.json")))
+        var zoned = Calendar(identifier: .gregorian)
+        zoned.timeZone = try #require(TimeZone(identifier: fixture.zone))
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.replaceAll(Dictionary(uniqueKeysWithValues: fixture.ayahs.map { ($0.ayah, $0.memory) }))
+        let revision = RevisionStore(fileURL: nil, calendar: zoned)
+        revision.apply(fixture.revision)
+        let plan = PlanStore(fileURL: nil, calendar: zoned)
+        plan.apply(fixture.plan)
+        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization),
+                             nearPages: revision.nearLanePages(in: store, memorization: memorization, now: fixture.now), now: fixture.now)
+        var portion: [Int] = []
+        if case .due(let ayahs) = plan.today(memorization: memorization, store: store, now: fixture.now) { portion = ayahs }
+        let outcome = ParityFixture.Outcome(
+            plan: revision.plan?.items.map { "\($0.page):\($0.kind.rawValue)" } ?? [],
+            strengths: Dictionary(uniqueKeysWithValues: fixture.strengthAyahs.map {
+                (String($0), memorization.strength(ofAyah: $0, at: fixture.now) ?? -1)
+            }),
+            streak: revision.streak(now: fixture.now),
+            suggestions: RotationAdvisor.suggestions(store: store, memorization: memorization, revision: revision, now: fixture.now),
+            nextPortion: portion)
+        let encoder = JSONEncoder()
+        encoder.outputFormatting = .sortedKeys
+        let computed = Comment(rawValue: String(decoding: try encoder.encode(outcome), as: UTF8.self))
+        let expected = try #require(fixture.expected, computed)
+        #expect(outcome.plan == expected.plan && outcome.streak == expected.streak, computed)
+        #expect(outcome.suggestions == expected.suggestions && outcome.nextPortion == expected.nextPortion, computed)
+        #expect(Set(outcome.strengths.keys) == Set(expected.strengths.keys), computed)
+        for (ayah, strength) in expected.strengths {
+            #expect(abs((outcome.strengths[ayah] ?? -1) - strength) < 1e-12, computed)
+        }
     }
 
     // MARK: - The daily reminder
@@ -358,7 +486,7 @@ struct JourneyTests {
         #expect(rewards.points == rewards.policy.pageRevisedInApp)
         #expect(rewards.achievements[.firstRevision] == day(0) && rewards.achievements[.firstWird] == nil)
         revision.record(page: 3, ayahs: [12], stumbles: [], source: .outside, memorization: memorization, now: day(0))
-        #expect(revision.completedDays.contains(calendar.startOfDay(for: day(0))))
+        #expect(revision.completedDays.contains(CalendarDay(day(0), in: calendar)))
         #expect(rewards.points == rewards.policy.pageRevisedInApp + rewards.policy.pageRevisedOutside + rewards.policy.wirdCompleted)
         #expect(rewards.achievements[.firstWird] != nil)
         // A sheikh's clean page, a peer's page.
@@ -431,7 +559,7 @@ struct JourneyTests {
         #expect(RotationAdvisor.suggestions(store: store, memorization: memorization, revision: revision, now: day(15)).isEmpty)
         UserDefaults.standard.removeObject(forKey: "rotation.dismissed")
         RotationAdvisor.accept([20], revision: revision, now: day(15))
-        #expect(revision.followUps[20]?.due == calendar.startOfDay(for: day(16)))
+        #expect(revision.followUps[20]?.due == CalendarDay(day(16), in: calendar))
         #expect(RotationAdvisor.suggestions(store: store, memorization: memorization, revision: revision, now: day(15)).isEmpty)
     }
 

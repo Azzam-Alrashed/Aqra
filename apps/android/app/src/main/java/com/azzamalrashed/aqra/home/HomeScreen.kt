@@ -65,7 +65,6 @@ import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.revision.PlanItem
 import com.azzamalrashed.aqra.revision.RevisionRecord
 import com.azzamalrashed.aqra.revision.RevisionStore
-import com.azzamalrashed.aqra.revision.cycleDays
 import com.azzamalrashed.aqra.revision.RotationAdvisor
 import com.azzamalrashed.aqra.account.InboxButton
 import com.azzamalrashed.aqra.plan.PlanEditorScreen
@@ -299,7 +298,8 @@ private fun revisesToday(app: AqraApp): Boolean = app.memorization.count > 0 && 
 @Composable
 private fun cycleLine(app: AqraApp, store: MushafStore): String {
     val pages = RevisionStore.memorizedPages(store, app.memorization).size
-    val days = cycleDays(pages, app.revision.effectiveDailyPages(pages))
+    // The rotation's own cycle: what's memorized outside the near lane, at the rotation pages of today's plan.
+    val days = app.revision.cycleDays(pages, app.revision.plan?.items?.count { it.kind == PlanItem.Kind.NEAR } ?: 0)
     return pluralStringResource(R.plurals.a_full_revision_every_n_days, days, days)
 }
 

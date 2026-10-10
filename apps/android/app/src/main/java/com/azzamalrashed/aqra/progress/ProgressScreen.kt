@@ -52,7 +52,7 @@ import com.azzamalrashed.aqra.memorization.MemorizationSetupScreen
 import com.azzamalrashed.aqra.memorization.memorizedSummary
 import com.azzamalrashed.aqra.revision.DailyAmountScreen
 import com.azzamalrashed.aqra.revision.RevisionStore
-import com.azzamalrashed.aqra.revision.cycleDays
+import com.azzamalrashed.aqra.revision.PlanItem
 import com.azzamalrashed.aqra.ui.components.AqraRowDivider
 import com.azzamalrashed.aqra.plan.PlanFormat
 import com.azzamalrashed.aqra.rewards.RewardsSection
@@ -193,7 +193,7 @@ private fun PlanCard(app: AqraApp, store: MushafStore, onEditMemorization: () ->
             AqraRowDivider()
             val pages = RevisionStore.memorizedPages(store, app.memorization).size
             val daily = app.revision.effectiveDailyPages(pages)
-            val days = cycleDays(pages, daily)
+            val days = app.revision.cycleDays(pages, app.revision.plan?.items?.count { it.kind == PlanItem.Kind.NEAR } ?: 0)
             AqraRow("🗓️", Palette.peach, pluralStringResource(R.plurals.n_pages_a_day, daily, daily),
                 Modifier.pressable(pressed = 1f, onClick = onEditAmount),
                 detail = pluralStringResource(R.plurals.a_full_revision_every_n_days, days, days))

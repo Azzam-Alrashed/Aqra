@@ -52,9 +52,10 @@ struct AyahMemory: Codable, Hashable {
             next.lastLapseAt = max(date, lastLapseAt ?? date)
         } else {
             // Revising again before it has had time to slip strengthens it less (the spacing effect). The first
-            // revision of a declared ayah counts in full: it was memorized long before, when isn't known.
+            // revision of a declared ayah counts in full: it was memorized long before, when isn't known. An ayah
+            // memorized in Aqra is spaced from when it was learned, like any other revision.
             let days = max(date.timeIntervalSince(lastReviewed ?? since) / 86_400, 0)
-            let spacing = lastReviewed == nil ? 1 : min(max(days / max(stability, 0.1), 0.1), 1)
+            let spacing = lastReviewed == nil && learnedAt == nil ? 1 : min(max(days / max(stability, 0.1), 0.1), 1)
             next.stability = min(stability * (1 + (policy.growth - 1) * spacing * weight), policy.maxStability)
         }
         // A tasmee' can arrive after a later revision; the last revision never moves backwards.

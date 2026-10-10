@@ -21,6 +21,9 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
     var sheikhWeight = 1.5
     /// A peer's tasmee' sits between self-revision and a sheikh's. Provisional, see docs/REVISION.md.
     var peerWeight = 1.25
+    /// سبقي, the near lane: this many of the pages most recently memorized in Aqra come back every day, beside the
+    /// daily amount, until newer pages take their place. Provisional, see docs/REVISION.md.
+    var nearLanePages = 20
 
     static let standard = ReviewPolicy()
 
@@ -37,6 +40,68 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
     /// A daily amount that goes through everything memorized in about a month.
     static func suggestedDailyPages(memorizedPages: Int) -> Int {
         min(max(Int((Double(memorizedPages) / 30).rounded(.up)), 2), 20)
+    }
+}
+
+/// A day of the calendar, the same wherever the student is: the number of days since 1 January 1970 (day 0).
+///
+/// It's stored as that day's midnight in UTC, so backups keep the shape of the dates earlier versions wrote. Those
+/// were the device's local midnight, which is within twelve hours of it, so they read back as the same day.
+struct CalendarDay: Hashable, Comparable, Codable, Sendable, CustomStringConvertible {
+    var number: Int
+
+    init(number: Int) {
+        self.number = number
+    }
+
+    /// The day a moment falls on in a calendar's time zone, counted on the Gregorian calendar whatever the
+    /// calendar's own (a Hijri calendar has the same days).
+    init(_ date: Date, in calendar: Calendar) {
+        let parts = Self.gregorian(calendar.timeZone).dateComponents([.year, .month, .day], from: date)
+        let midnight = Self.utc.date(from: DateComponents(year: parts.year, month: parts.month, day: parts.day)) ?? date
+        number = Int((midnight.timeIntervalSince1970 / 86_400).rounded())
+    }
+
+    /// A day as stored: the UTC midnight nearest to the date.
+    init(stored date: Date) {
+        number = Int((date.timeIntervalSince1970 / 86_400).rounded())
+    }
+
+    /// The day's midnight in UTC, as it's stored.
+    var stored: Date { Date(timeIntervalSince1970: Double(number) * 86_400) }
+
+    /// When the day begins in a calendar's time zone (after a change of clocks at midnight, when they've changed).
+    func start(in calendar: Calendar) -> Date {
+        let parts = Self.utc.dateComponents([.year, .month, .day], from: stored)
+        let zoned = Self.gregorian(calendar.timeZone)
+        let noon = zoned.date(from: DateComponents(year: parts.year, month: parts.month, day: parts.day, hour: 12)) ?? stored
+        return zoned.startOfDay(for: noon)
+    }
+
+    func adding(_ days: Int) -> CalendarDay { CalendarDay(number: number + days) }
+
+    static func < (lhs: CalendarDay, rhs: CalendarDay) -> Bool { lhs.number < rhs.number }
+
+    var description: String {
+        let parts = Self.utc.dateComponents([.year, .month, .day], from: stored)
+        return String(format: "%04d-%02d-%02d", parts.year ?? 0, parts.month ?? 0, parts.day ?? 0)
+    }
+
+    init(from decoder: Decoder) throws {
+        self.init(stored: try decoder.singleValueContainer().decode(Date.self))
+    }
+
+    func encode(to encoder: Encoder) throws {
+        var container = encoder.singleValueContainer()
+        try container.encode(stored)
+    }
+
+    private static let utc = gregorian(TimeZone(identifier: "UTC")!)
+
+    private static func gregorian(_ zone: TimeZone) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = zone
+        return calendar
     }
 }
 
@@ -75,6 +140,8 @@ struct PlanItem: Codable, Hashable, Identifiable {
     enum Kind: String, Codable {
         /// It was stumbled on recently and comes back to be made firm.
         case followUp
+        /// سبقي: memorized in Aqra lately, it comes back every day.
+        case near
         /// Its turn has come in the rotation through everything memorized.
         case rotation
     }
@@ -102,13 +169,13 @@ struct PlanItem: Codable, Hashable, Identifiable {
 
 /// Today's plan. It's fixed once made, so it doesn't shift while the student works through it.
 struct DayPlan: Codable, Hashable {
-    var day: Date
+    var day: CalendarDay
     var items: [PlanItem]
 
     var doneCount: Int { items.filter(\.done).count }
     var isComplete: Bool { !items.isEmpty && items.allSatisfy(\.done) }
 
-    init(day: Date, items: [PlanItem]) {
+    init(day: CalendarDay, items: [PlanItem]) {
         self.day = day
         self.items = items
     }
@@ -117,7 +184,7 @@ struct DayPlan: Codable, Hashable {
 
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
-        day = try container.decode(Date.self, forKey: .day)
+        day = try container.decode(CalendarDay.self, forKey: .day)
         items = container.decodeLossy([PlanItem].self, forKey: .items)
     }
 }
@@ -130,11 +197,11 @@ struct DayPlan: Codable, Hashable {
 @MainActor @Observable
 final class RevisionStore {
     struct FollowUp: Codable, Hashable {
-        var due: Date
+        var due: CalendarDay
         /// Which of the policy's follow-up intervals it's on.
         var step: Int
 
-        init(due: Date, step: Int) {
+        init(due: CalendarDay, step: Int) {
             self.due = due
             self.step = step
         }
@@ -143,7 +210,7 @@ final class RevisionStore {
 
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
-            due = try container.decode(Date.self, forKey: .due)
+            due = try container.decode(CalendarDay.self, forKey: .due)
             step = container.decodeOr(Int.self, forKey: .step, 0)
         }
     }
@@ -158,9 +225,9 @@ final class RevisionStore {
     private(set) var history: [RevisionRecord] = []
     /// The days on which at least one page was revised, kept apart from the history so a long streak isn't cut
     /// short when old records are dropped.
-    private(set) var revisedDays: Set<Date> = []
+    private(set) var revisedDays: Set<CalendarDay> = []
     /// The days on which the whole of that day's wird was revised.
-    private(set) var completedDays: Set<Date> = []
+    private(set) var completedDays: Set<CalendarDay> = []
     /// When any of it last changed, to tell which copy is newer when merging with the account's.
     private(set) var updatedAt = Date.distantPast
     /// Whether the file on the device couldn't be read: it was set aside, and the account's copy must come first.
@@ -179,7 +246,8 @@ final class RevisionStore {
     }
 
     /// Loads the record from `fileURL`, or keeps it in memory only when it's nil (previews, snapshots and tests).
-    init(fileURL: URL? = RevisionStore.defaultURL, policy: ReviewPolicy = .standard, calendar: Calendar = .current) {
+    /// - Parameter calendar: the days are counted in its time zone; by default the device's, as it changes.
+    init(fileURL: URL? = RevisionStore.defaultURL, policy: ReviewPolicy = .standard, calendar: Calendar = .autoupdatingCurrent) {
         self.fileURL = fileURL
         self.policy = policy
         self.calendar = calendar
@@ -195,7 +263,7 @@ final class RevisionStore {
         followUps = Dictionary(file.followUps.map { ($0.page, FollowUp(due: $0.due, step: $0.step)) }, uniquingKeysWith: { first, _ in first })
         plan = file.plan
         history = file.history
-        revisedDays = Set(file.revisedDays ?? file.history.map { calendar.startOfDay(for: $0.date) })
+        revisedDays = Set(file.revisedDays ?? file.history.map { CalendarDay($0.date, in: calendar) })
         completedDays = Set(file.completedDays ?? [])
         // Files from before backups were kept don't say when they changed; the file's own date does.
         updatedAt = file.updatedAt
@@ -212,15 +280,15 @@ final class RevisionStore {
         var followUps: [Int: FollowUp] = [:]
         var plan: DayPlan?
         var history: [RevisionRecord] = []
-        var revisedDays: [Date] = []
+        var revisedDays: [CalendarDay] = []
         /// Missing from backups made before it was kept.
-        var completedDays: [Date]? = nil
+        var completedDays: [CalendarDay]? = nil
         var updatedAt = Date.distantPast
 
         static let empty = Snapshot()
 
         init(dailyPages: Int? = nil, rotationCursor: Int = 1, followUps: [Int: FollowUp] = [:], plan: DayPlan? = nil,
-             history: [RevisionRecord] = [], revisedDays: [Date] = [], completedDays: [Date]? = nil,
+             history: [RevisionRecord] = [], revisedDays: [CalendarDay] = [], completedDays: [CalendarDay]? = nil,
              updatedAt: Date = .distantPast) {
             self.dailyPages = dailyPages
             self.rotationCursor = rotationCursor
@@ -245,8 +313,8 @@ final class RevisionStore {
             followUps = container.decodeOr([Int: FollowUp].self, forKey: .followUps, [:])
             plan = container.decodeOrNil(DayPlan.self, forKey: .plan)
             history = container.decodeLossy([RevisionRecord].self, forKey: .history)
-            revisedDays = container.decodeOr([Date].self, forKey: .revisedDays, [])
-            completedDays = container.decodeOrNil([Date].self, forKey: .completedDays)
+            revisedDays = container.decodeOr([CalendarDay].self, forKey: .revisedDays, [])
+            completedDays = container.decodeOrNil([CalendarDay].self, forKey: .completedDays)
             updatedAt = container.decodeOr(Date.self, forKey: .updatedAt, .distantPast)
         }
     }
@@ -290,8 +358,9 @@ final class RevisionStore {
 
     /// Makes today's plan if there isn't one for today yet (or if the one there was empty), and drops pages that
     /// are no longer memorized from it.
-    func refreshPlan(memorizedPages: [Int], now: Date = .now) {
-        let day = calendar.startOfDay(for: now)
+    /// - Parameter nearPages: the near lane (سبقي), from `nearLanePages(in:memorization:now:)`.
+    func refreshPlan(memorizedPages: [Int], nearPages: [Int] = [], now: Date = .now) {
+        let day = today(now)
         let memorized = Set(memorizedPages)
         if var plan, plan.day == day, !plan.items.isEmpty {
             let kept = plan.items.filter { $0.done || memorized.contains($0.page) }
@@ -304,25 +373,52 @@ final class RevisionStore {
         }
 
         let amount = effectiveDailyPages(memorizedPages: memorizedPages.count)
-        // Pages due for follow-up come first, the most overdue first; at least one rotation page always follows.
+        // Pages due for follow-up come first, the most overdue first, up to half the daily amount: the rotation always
+        // has the other half, so it keeps moving through everything memorized.
         let due = followUps
             .filter { $0.value.due <= day && memorized.contains($0.key) }
-            .sorted { ($0.value.due, $0.key) < ($1.value.due, $1.key) }
-            .prefix(max(amount - 1, 1))
+            .sorted { ($0.value.due.number, $0.key) < ($1.value.due.number, $1.key) }
+            .prefix(max(amount / 2, 1))
             .map { PlanItem(page: $0.key, kind: .followUp) }
+        var taken = Set(due.map(\.page))
+
+        // Then the near lane, in Mushaf order: what was memorized lately, every day, beside the daily amount.
+        let near = nearPages.filter { memorized.contains($0) && !taken.contains($0) }.sorted()
+            .map { PlanItem(page: $0, kind: .near) }
+        taken.formUnion(near.map(\.page))
 
         // Then the rotation, from where it stopped, wrapping round to the start of what's memorized.
         let ordered = memorizedPages.sorted()
         let start = ordered.firstIndex { $0 >= rotationCursor } ?? 0
         let wrapped = ordered.isEmpty ? [] : Array(ordered[start...] + ordered[..<start])
-        let taken = Set(due.map(\.page))
         let rotation = wrapped
             .filter { !taken.contains($0) }
             .prefix(max(amount - due.count, 1))
             .map { PlanItem(page: $0, kind: .rotation) }
 
-        plan = DayPlan(day: day, items: due + rotation)
+        plan = DayPlan(day: day, items: due + near + rotation)
         save()
+    }
+
+    /// سبقي: the pages most recently memorized in Aqra, before today, up to the policy's number, in Mushaf order.
+    func nearLanePages(in store: MushafStore, memorization: MemorizationStore, now: Date = .now) -> [Int] {
+        guard policy.nearLanePages > 0 else { return [] }
+        let today = today(now)
+        var learned: [(page: Int, at: Date)] = []
+        for page in 1...MushafStore.pageCount {
+            let latest = store.page(page).ayahs.compactMap { memorization.memory(ofAyah: $0)?.learnedAt }.max()
+            if let latest, CalendarDay(latest, in: calendar) < today { learned.append((page, latest)) }
+        }
+        return learned.sorted { ($0.at, $0.page) > ($1.at, $1.page) }.prefix(policy.nearLanePages).map(\.page).sorted()
+    }
+
+    /// How many days the rotation takes to go through everything memorized outside the near lane, at today's pace:
+    /// the rotation pages of today's plan (the daily amount until there is one).
+    func cycleDays(memorizedPages: Int, nearPages: Int = 0, now: Date = .now) -> Int {
+        let amount = effectiveDailyPages(memorizedPages: memorizedPages)
+        let perDay = plan.flatMap { $0.day == today(now) ? $0.items.filter { $0.kind == .rotation }.count : nil } ?? amount
+        let pool = max(memorizedPages - nearPages, 0)
+        return max(Int((Double(pool) / Double(max(perDay, 1))).rounded(.up)), 1)
     }
 
     // MARK: - Recording
@@ -335,22 +431,25 @@ final class RevisionStore {
     func record(page: Int, ayahs: [Int], stumbles: Set<Int>, source: RevisionRecord.Source,
                 memorization: MemorizationStore, now: Date = .now) {
         memorization.recordRevision(ayahs: ayahs, stumbled: stumbles, at: now, policy: policy, weight: policy.weight(of: source))
-        let day = calendar.startOfDay(for: now)
+        let day = today(now)
 
-        // A stumble brings the page back tomorrow; clean follow-ups space out until the page leaves follow-up.
+        // A stumble brings the page back tomorrow; a clean revision of a page due for follow-up spaces it out until
+        // it leaves follow-up. Revising it again before it's due changes nothing: the step waits for its day.
         if !stumbles.isEmpty {
-            followUps[page] = FollowUp(due: date(day, plus: policy.followUpDays.first ?? 1), step: 0)
-        } else if let followUp = followUps[page] {
+            followUps[page] = FollowUp(due: day.adding(policy.followUpDays.first ?? 1), step: 0)
+        } else if let followUp = followUps[page], followUp.due <= day {
             let next = followUp.step + 1
             followUps[page] = next < policy.followUpDays.count
-                ? FollowUp(due: date(day, plus: policy.followUpDays[next]), step: next)
+                ? FollowUp(due: day.adding(policy.followUpDays[next]), step: next)
                 : nil
         }
 
-        if var plan, plan.day == day, let index = plan.items.firstIndex(where: { $0.page == page }) {
+        // The page is checked off in the plan it belongs to, even one made the day before: a wird carried on past
+        // midnight moves on rather than reopening the page.
+        if var plan, let index = plan.items.firstIndex(where: { $0.page == page }) {
             plan.items[index].done = true
             self.plan = plan
-            if plan.isComplete { completedDays.insert(day) }
+            if plan.isComplete { completedDays.insert(plan.day) }
             // The rotation moves past the leading run of revised rotation pages, so a page skipped today
             // (or revised out of order) is still first tomorrow.
             var cursor = rotationCursor
@@ -372,7 +471,7 @@ final class RevisionStore {
     /// Brings pages back for follow-up from tomorrow, as after a stumble: a portion just memorized, or pages the
     /// student chose to strengthen. A page already due sooner keeps its date.
     func followUp(pages: some Sequence<Int>, now: Date = .now) {
-        let due = date(calendar.startOfDay(for: now), plus: policy.followUpDays.first ?? 1)
+        let due = today(now).adding(policy.followUpDays.first ?? 1)
         var changed = false
         for page in Set(pages) where (1...MushafStore.pageCount).contains(page) {
             if let existing = followUps[page], existing.due <= due { continue }
@@ -387,24 +486,25 @@ final class RevisionStore {
     /// The days in a row, up to today, on which the student revised. Today not being revised yet doesn't break
     /// it: until the day ends, the streak counts back from yesterday.
     func streak(now: Date = .now) -> Int {
-        var day = calendar.startOfDay(for: now)
-        if !revisedDays.contains(day) { day = date(day, plus: -1) }
+        var day = today(now)
+        if !revisedDays.contains(day) { day = day.adding(-1) }
         var count = 0
         while revisedDays.contains(day) {
             count += 1
-            day = date(day, plus: -1)
+            day = day.adding(-1)
         }
         return count
     }
 
     /// Whether the student revised on each of the last `count` days, oldest first, ending today.
     func recentDays(_ count: Int = 7, now: Date = .now) -> [Bool] {
-        let today = calendar.startOfDay(for: now)
-        return (0..<count).reversed().map { revisedDays.contains(date(today, plus: -$0)) }
+        let today = self.today(now)
+        return (0..<count).reversed().map { revisedDays.contains(today.adding(-$0)) }
     }
 
-    private func date(_ day: Date, plus days: Int) -> Date {
-        calendar.date(byAdding: .day, value: days, to: day) ?? day.addingTimeInterval(Double(days) * 86_400)
+    /// The day it is now, in the device's time zone (or the calendar's the store was made with).
+    func today(_ now: Date = .now) -> CalendarDay {
+        CalendarDay(now, in: calendar)
     }
 
     // MARK: - Saving
@@ -412,18 +512,20 @@ final class RevisionStore {
     private struct File: Codable {
         struct FollowUpRecord: Codable {
             var page: Int
-            var due: Date
+            var due: CalendarDay
             var step: Int
         }
-        var version = 1
+        /// 2: days are kept as their midnight in UTC (version 1 kept the device's local midnight; both read back
+        /// as the same days).
+        var version = 2
         var dailyPages: Int?
         var rotationCursor: Int
         var followUps: [FollowUpRecord]
         var plan: DayPlan?
         var history: [RevisionRecord]
         /// Missing from files written before the streak was kept; it's then rebuilt from the history.
-        var revisedDays: [Date]?
-        var completedDays: [Date]?
+        var revisedDays: [CalendarDay]?
+        var completedDays: [CalendarDay]?
         var updatedAt: Date?
     }
 
@@ -472,6 +574,12 @@ final class RevisionSession {
     }
 
     var isComplete: Bool { revealed >= ayahs.count }
+
+    /// The ayat «تم» records: those revealed (in full), or all of the page's when the student says they recited the
+    /// rest from memory too.
+    func revisedAyahs(countingRest: Bool) -> [Int] {
+        countingRest ? ayahs : Array(ayahs.prefix(min(revealed, ayahs.count)))
+    }
 
     /// Whether an ayah is covered by this revision.
     func covers(_ ayah: Int) -> Bool { ayahs.contains(ayah) }

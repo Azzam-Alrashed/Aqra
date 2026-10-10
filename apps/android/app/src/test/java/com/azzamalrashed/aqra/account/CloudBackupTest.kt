@@ -1,5 +1,6 @@
 package com.azzamalrashed.aqra.account
 
+import com.azzamalrashed.aqra.TestDates.calendarDay
 import com.azzamalrashed.aqra.TestDates.day
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.memorization.AyahMemory
@@ -15,6 +16,7 @@ import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.azzamalrashed.aqra.core.CalendarDay
 
 /** The account backup's format and merge rules, without the network: the same checks as the iOS app's. */
 class CloudBackupTest {
@@ -50,11 +52,11 @@ class CloudBackupTest {
         val a = RevisionRecord(day(1), 3, Source.APP, emptyList())
         val b = RevisionRecord(day(2), 4, Source.OUTSIDE, emptyList())
         val c = RevisionRecord(day(3), 5, Source.APP, listOf(9))
-        var local = Snapshot(dailyPages = 4, rotationCursor = 10, history = listOf(a, b), revisedDays = listOf(day(1), day(2)), updatedAt = day(2))
-        val remote = Snapshot(dailyPages = 6, rotationCursor = 20, history = listOf(b, c), revisedDays = listOf(day(2), day(3)), updatedAt = day(3))
+        var local = Snapshot(dailyPages = 4, rotationCursor = 10, history = listOf(a, b), revisedDays = listOf(calendarDay(1), calendarDay(2)), updatedAt = day(2))
+        val remote = Snapshot(dailyPages = 6, rotationCursor = 20, history = listOf(b, c), revisedDays = listOf(calendarDay(2), calendarDay(3)), updatedAt = day(3))
         var merged = CloudBackup.merge(local, remote)
         assertTrue(merged.dailyPages == 6 && merged.rotationCursor == 20)   // the account changed and revised more recently
-        assertEquals(listOf(day(1), day(2), day(3)), merged.revisedDays)
+        assertEquals(listOf(calendarDay(1), calendarDay(2), calendarDay(3)), merged.revisedDays)
         assertEquals(listOf(a, b, c), merged.history)
         // A daily amount chosen later on the device wins; the rotation still follows the latest revising.
         local = local.copy(updatedAt = day(4))
@@ -93,10 +95,10 @@ class CloudBackupTest {
         val day = Moment(821_692_800.0)
         val expected = Snapshot(
             dailyPages = 4, rotationCursor = 13,
-            followUps = mapOf(11 to FollowUp(Moment(821_779_200.0), 0), 300 to FollowUp(day, 2)),
-            plan = DayPlan(day, listOf(PlanItem(11, PlanItem.Kind.FOLLOW_UP, done = true), PlanItem(12, PlanItem.Kind.ROTATION))),
+            followUps = mapOf(11 to FollowUp(CalendarDay.stored(Moment(821_779_200.0)), 0), 300 to FollowUp(CalendarDay.stored(day), 2)),
+            plan = DayPlan(CalendarDay.stored(day), listOf(PlanItem(11, PlanItem.Kind.FOLLOW_UP, done = true), PlanItem(12, PlanItem.Kind.ROTATION))),
             history = listOf(RevisionRecord(Moment(821_696_461.5), 11, Source.SHEIKH, listOf(100, 101))),
-            revisedDays = listOf(day), updatedAt = Moment(821_692_800.123456),
+            revisedDays = listOf(CalendarDay.stored(day)), updatedAt = Moment(821_692_800.123456),
         )
         assertEquals(expected, CloudBackup.decodeRevision(ios))
         // An empty record, with the distant past the iOS app starts from.
@@ -110,8 +112,9 @@ class CloudBackupTest {
         val json = CloudBackup.encode(Snapshot.EMPTY)
         for (key in listOf("rotationCursor", "followUps", "history", "revisedDays", "updatedAt")) assertTrue(key, "\"$key\"" in json)
         assertTrue("\"dailyPages\"" !in json && "\"plan\"" !in json && "null" !in json)
-        val withPlan = CloudBackup.encode(Snapshot(followUps = mapOf(11 to FollowUp(Moment(1.0), 0))))
-        assertTrue(withPlan, "\"followUps\":{\"11\":{\"due\":1.0,\"step\":0}}" in withPlan)
+        // A day goes out as its midnight in UTC, in seconds since 2001: 2 January 2001.
+        val withPlan = CloudBackup.encode(Snapshot(followUps = mapOf(11 to FollowUp(CalendarDay.stored(Moment(86_400.0)), 0))))
+        assertTrue(withPlan, "\"followUps\":{\"11\":{\"due\":86400.0,\"step\":0}}" in withPlan)
     }
 
     // MARK: - Merging across devices (the same checks as the iOS app's)
@@ -156,18 +159,18 @@ class CloudBackupTest {
         val a = RevisionRecord(day(1), 3, Source.APP, listOf(7))
         val b = RevisionRecord(day(2), 9, Source.APP, listOf(8))
         val local = Snapshot(
-            followUps = mapOf(3 to FollowUp(day(2), 0), 5 to FollowUp(day(4), 1)),
-            plan = DayPlan(day(2), listOf(PlanItem(3, PlanItem.Kind.FOLLOW_UP, done = true), PlanItem(4, PlanItem.Kind.ROTATION))),
-            history = listOf(a), revisedDays = listOf(day(1)), updatedAt = day(1),
+            followUps = mapOf(3 to FollowUp(calendarDay(2), 0), 5 to FollowUp(calendarDay(4), 1)),
+            plan = DayPlan(calendarDay(2), listOf(PlanItem(3, PlanItem.Kind.FOLLOW_UP, done = true), PlanItem(4, PlanItem.Kind.ROTATION))),
+            history = listOf(a), revisedDays = listOf(calendarDay(1)), updatedAt = day(1),
         )
         val remote = Snapshot(
-            followUps = mapOf(5 to FollowUp(day(6), 2), 9 to FollowUp(day(3), 0)),
-            plan = DayPlan(day(2), listOf(PlanItem(3, PlanItem.Kind.FOLLOW_UP), PlanItem(4, PlanItem.Kind.ROTATION, done = true))),
-            history = listOf(b), revisedDays = listOf(day(2)), updatedAt = day(2),
+            followUps = mapOf(5 to FollowUp(calendarDay(6), 2), 9 to FollowUp(calendarDay(3), 0)),
+            plan = DayPlan(calendarDay(2), listOf(PlanItem(3, PlanItem.Kind.FOLLOW_UP), PlanItem(4, PlanItem.Kind.ROTATION, done = true))),
+            history = listOf(b), revisedDays = listOf(calendarDay(2)), updatedAt = day(2),
         )
         val merged = CloudBackup.merge(local, remote)
         // Page by page: both sides' pages, each at its later date.
-        assertEquals(mapOf(3 to FollowUp(day(2), 0), 5 to FollowUp(day(6), 2), 9 to FollowUp(day(3), 0)), merged.followUps)
+        assertEquals(mapOf(3 to FollowUp(calendarDay(2), 0), 5 to FollowUp(calendarDay(6), 2), 9 to FollowUp(calendarDay(3), 0)), merged.followUps)
         // The same day's plan: a page done on either device is done.
         assertEquals(listOf(true, true), merged.plan!!.items.map { it.done })
         assertEquals(merged.followUps, CloudBackup.merge(remote, local).followUps)
@@ -254,7 +257,7 @@ class CloudBackupTest {
         revision.onChange = { changes += 1 }
 
         memorization.replaceAll(mapOf(7 to memory(0), 8 to memory(0)))
-        revision.apply(Snapshot(dailyPages = 3, rotationCursor = 50, revisedDays = listOf(day(0)), updatedAt = day(0)))
+        revision.apply(Snapshot(dailyPages = 3, rotationCursor = 50, revisedDays = listOf(calendarDay(0)), updatedAt = day(0)))
         assertTrue(memorization.count == 2 && revision.dailyPages == 3 && revision.rotationCursor == 50)
         assertEquals(2, changes)
 

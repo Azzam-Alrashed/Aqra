@@ -138,14 +138,15 @@ enum CloudBackup {
     }
 
     /// The ayat memorized on either side, each merged by `merge(_:_:)`; an ayah unmarked on one side after the
-    /// other last touched it stays unmarked, and one marked again after it was unmarked comes back.
-    static func merge(_ local: Memory, _ remote: Memory) -> Memory {
+    /// other last touched it stays unmarked, and one marked again after it was unmarked comes back. No date comes
+    /// out later than `now` (see `clamped(_:to:)`); the sync passes its clock.
+    static func merge(_ local: Memory, _ remote: Memory, now: Date = .distantFuture) -> Memory {
         var merged = Memory()
         let ayahs = Set(local.ayahs.keys).union(remote.ayahs.keys).union(local.removed.keys).union(remote.removed.keys)
         for ayah in ayahs {
-            let sides = [local.ayahs[ayah], remote.ayahs[ayah]].compactMap { $0 }
+            let sides = [local.ayahs[ayah], remote.ayahs[ayah]].compactMap { $0 }.map { clamped($0, to: now) }
             let record: AyahMemory? = sides.count == 2 ? merge(sides[0], sides[1]) : sides.first
-            let removedAt = [local.removed[ayah], remote.removed[ayah]].compactMap { $0 }.max()
+            let removedAt = [local.removed[ayah], remote.removed[ayah]].compactMap { $0 }.max().map { min($0, now) }
             if let record, let removedAt, removedAt > sides.map(lastTouch).max()! {
                 merged.removed[ayah] = removedAt
             } else if let record {
@@ -155,6 +156,17 @@ enum CloudBackup {
             }
         }
         return merged
+    }
+
+    /// A record with no date later than `now`. A device or a teacher whose clock ran ahead would otherwise leave
+    /// an ayah revised in the future: bright until then, and every real revision before it ignored.
+    static func clamped(_ memory: AyahMemory, to now: Date) -> AyahMemory {
+        var memory = memory
+        memory.since = min(memory.since, now)
+        memory.lastReviewed = memory.lastReviewed.map { min($0, now) }
+        memory.learnedAt = memory.learnedAt.map { min($0, now) }
+        memory.lastLapseAt = memory.lastLapseAt.map { min($0, now) }
+        return memory
     }
 
     static func merge(_ local: [Int: AyahMemory], _ remote: [Int: AyahMemory]) -> [Int: AyahMemory] {
@@ -176,7 +188,7 @@ enum CloudBackup {
     /// Ties go to the account's copy.
     static func merge(_ local: RevisionStore.Snapshot, _ remote: RevisionStore.Snapshot) -> RevisionStore.Snapshot {
         func lastRevision(_ snapshot: RevisionStore.Snapshot) -> Date {
-            max(snapshot.history.map(\.date).max() ?? .distantPast, snapshot.revisedDays.max() ?? .distantPast)
+            max(snapshot.history.map(\.date).max() ?? .distantPast, snapshot.revisedDays.max()?.stored ?? .distantPast)
         }
         let localRevised = lastRevision(local), remoteRevised = lastRevision(remote)
         let revisedLast = remoteRevised > localRevised || (remoteRevised == localRevised && remote.updatedAt >= local.updatedAt)

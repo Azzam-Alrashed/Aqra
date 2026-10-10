@@ -20,6 +20,8 @@ struct WirdView: View {
     @State private var session: RevisionSession?
     @State private var listener: RecitationListener?
     @State private var settingUpListening = false
+    /// «تم» with ayat still veiled: whether to count them too is asked once, in the panel.
+    @State private var askingRest = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -69,6 +71,7 @@ struct WirdView: View {
     }
 
     private func start(_ page: Int) {
+        askingRest = false
         let ayahs = store.page(page).ayahs.filter { memorization.isMemorized($0) }
         let session = RevisionSession(page: page, ayahs: ayahs)
         if outside { session.revealAll() }
@@ -109,16 +112,28 @@ struct WirdView: View {
         revision.plan?.items.contains { !$0.done && $0.page != session.page } ?? false
     }
 
+    /// «تم»: with ayat still veiled, asks first whether the student recited them from memory too; only what was
+    /// revealed counts otherwise.
+    private func done(_ session: RevisionSession) {
+        if outside || session.isComplete {
+            finish(session, record: true)
+        } else {
+            withAnimation(.snappy) { askingRest = true }
+        }
+    }
+
     /// Ends a page's revision. Recorded, it moves straight on to the next page of today's wird, and back home
     /// when the wird is done; left, it goes back home without recording the page.
-    private func finish(_ session: RevisionSession, record: Bool) {
+    private func finish(_ session: RevisionSession, record: Bool, countingRest: Bool = true) {
         guard record else {
             dismiss()
             return
         }
-        revision.record(page: session.page, ayahs: session.ayahs, stumbles: session.stumbles,
+        let ayahs = session.revisedAyahs(countingRest: countingRest)
+        revision.record(page: session.page, ayahs: ayahs, stumbles: session.stumbles.intersection(ayahs),
                         source: outside ? .outside : .app, memorization: memorization)
-        if !outside, let next = revision.plan?.items.first(where: { !$0.done }) {
+        // The page just recorded never comes round again, whichever day's plan it was in.
+        if !outside, let next = revision.plan?.items.first(where: { !$0.done && $0.page != session.page }) {
             withAnimation(.easeInOut(duration: 0.25)) { start(next.page) }
         } else {
             dismiss()
@@ -126,7 +141,9 @@ struct WirdView: View {
     }
 
     @ViewBuilder private func revisionBar(_ session: RevisionSession) -> some View {
-        if let listener, !outside {
+        if askingRest {
+            restQuestion(session)
+        } else if let listener, !outside {
             FloatingPanel {
                 if session.isComplete {
                     ListeningSummary(session: session, store: store, hasNextPage: hasNextPage(after: session)) {
@@ -138,7 +155,7 @@ struct WirdView: View {
                     ListeningPanel(listener: listener, session: session) {
                         withAnimation(.snappy) { stopListening() }
                     } onDone: {
-                        finish(session, record: true)
+                        done(session)
                     }
                 }
             }
@@ -210,7 +227,7 @@ struct WirdView: View {
                         Button("Show page") { withAnimation(.easeOut(duration: 0.2)) { session.revealAll() } }
                             .buttonStyle(MarkingButtonStyle())
                     }
-                    Button("Done") { finish(session, record: true) }
+                    Button("Done") { done(session) }
                         .buttonStyle(MarkingButtonStyle(prominent: outside || session.isComplete))
                 }
                 let canListen = !outside && !session.isComplete && RecitationModel.shared.isAvailable
@@ -229,6 +246,42 @@ struct WirdView: View {
         .animation(.snappy, value: session.isComplete)
         .sensoryFeedback(.selection, trigger: session.revealed)
         .sensoryFeedback(.impact(weight: .light), trigger: session.stumbles.count)
+        .environment(\.layoutDirection, .rightToLeft)
+    }
+}
+
+extension WirdView {
+    /// «احسب الباقي مراجَعًا؟», asked in the panel when «تم» comes with ayat still veiled.
+    fileprivate func restQuestion(_ session: RevisionSession) -> some View {
+        FloatingPanel {
+            VStack(spacing: 12) {
+                VStack(spacing: 4) {
+                    Text("Count the rest as revised?")
+                        .font(.system(size: 17, weight: .heavy, design: .rounded))
+                        .foregroundStyle(MushafStyle.ink)
+                    Text("Revealed: \(min(session.revealed, session.ayahs.count)) of \(session.ayahs.count). Did you recite the rest from memory too?")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(MushafStyle.chrome)
+                        .multilineTextAlignment(.center)
+                        .fixedSize(horizontal: false, vertical: true)
+                }
+                .frame(maxWidth: .infinity)
+                Button("Yes, count them") {
+                    askingRest = false
+                    finish(session, record: true, countingRest: true)
+                }
+                .buttonStyle(MarkingButtonStyle(prominent: true))
+                HStack(spacing: 10) {
+                    Button("Only what I revealed") {
+                        askingRest = false
+                        finish(session, record: true, countingRest: false)
+                    }
+                    .buttonStyle(MarkingButtonStyle())
+                    Button("Back to the page") { withAnimation(.snappy) { askingRest = false } }
+                        .buttonStyle(MarkingButtonStyle())
+                }
+            }
+        }
         .environment(\.layoutDirection, .rightToLeft)
     }
 }
