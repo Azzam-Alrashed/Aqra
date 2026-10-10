@@ -383,6 +383,8 @@
     <string name="ayat_memorized">الآيات المحفوظة</string>
     <!-- Back -->
     <string name="back">رجوع</string>
+    <!-- Back to the page -->
+    <string name="back_to_the_page">عودة إلى الصفحة</string>
     <!-- Backed up %@ -->
     <string name="backed_up_s">آخر نسخة احتياطية %s</string>
     <!-- Backing up… -->
@@ -510,6 +512,8 @@
     <string name="continue_todays_revision">أكمل وِرد اليوم</string>
     <!-- Continue with Google -->
     <string name="continue_with_google">المتابعة باستخدام Google</string>
+    <!-- Count the rest as revised? -->
+    <string name="count_the_rest_as_revised_q">احسب الباقي مراجَعًا؟</string>
     <!-- Counting -->
     <string name="counting">العدّ</string>
     <!-- Create -->
@@ -914,6 +918,8 @@
     <string name="only_part_of_it">حفظت جزءًا منه</string>
     <!-- Only students with a seat join this call. -->
     <string name="only_students_with_a_seat_join_this_call">ينضم إلى هذه المكالمة الطلابُ الذين حجزوا مقعدًا فقط.</string>
+    <!-- Only what I revealed -->
+    <string name="only_what_i_revealed">ما ظهر فقط</string>
     <!-- Open -->
     <string name="open">افتح</string>
     <!-- Open Settings -->
@@ -1032,6 +1038,8 @@
     <string name="resume_it_from_your_plan">استأنفها من خطتك</string>
     <!-- Reveal the next ayah -->
     <string name="reveal_the_next_ayah">كشف الآية التالية</string>
+    <!-- Revealed: %lld of %lld. Did you recite the rest from memory too? -->
+    <string name="revealed_n_of_n_did_you_recite_the_rest_from">ظهر %1$d من %2$d. هل قرأتَ الباقي غيبًا أيضًا؟</string>
     <!-- Reversed: session cancelled -->
     <string name="reversed_session_cancelled">مسترجعة: أُلغيت الجلسة</string>
     <!-- Revise %lld pages -->
@@ -1444,6 +1452,8 @@
     <string name="withdraw_your_application_q">تسحب طلبك؟</string>
     <!-- Won a seat -->
     <string name="won_a_seat">فاز بمقعد</string>
+    <!-- Yes, count them -->
+    <string name="yes_count_them">نعم، احسبها</string>
     <!-- You can take the test again %@ -->
     <string name="you_can_take_the_test_again_s">يمكنك إعادة الاختبار %s</string>
     <!-- You can undo it for a few seconds. -->

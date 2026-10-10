@@ -1,5 +1,6 @@
 package com.azzamalrashed.aqra.revision
 
+import com.azzamalrashed.aqra.TestDates.calendarDay
 import com.azzamalrashed.aqra.TestDates.day
 import com.azzamalrashed.aqra.TestDates.start
 import com.azzamalrashed.aqra.TestDates.utc
@@ -14,6 +15,12 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import com.azzamalrashed.aqra.core.CalendarDay
+import com.azzamalrashed.aqra.account.CloudBackup
+import com.azzamalrashed.aqra.tasmee.TasmeeApply
+import com.azzamalrashed.aqra.tasmee.TasmeeRecord
+import java.time.LocalDateTime
+import java.time.ZoneId
 
 /** The revision engine: the same checks as the iOS app's RevisionTests. */
 class RevisionTest {
@@ -94,9 +101,9 @@ class RevisionTest {
 
         // Clean follow-ups space out (3 days, then 7) and then leave follow-up.
         revision.record(11, listOf(110), emptySet(), Source.APP, memorization, now = day(1))
-        assertEquals(day(4).startOfDay(utc), revision.followUps[11]?.due)
+        assertEquals(calendarDay(4), revision.followUps[11]?.due)
         revision.record(11, listOf(110), emptySet(), Source.APP, memorization, now = day(4))
-        assertEquals(day(11).startOfDay(utc), revision.followUps[11]?.due)
+        assertEquals(calendarDay(11), revision.followUps[11]?.due)
         revision.record(11, listOf(110), emptySet(), Source.APP, memorization, now = day(11))
         assertNull(revision.followUps[11])
     }
@@ -225,6 +232,156 @@ class RevisionTest {
         // A tap on a revealed ayah still clears its stumble.
         session.tap(9)
         assertEquals(setOf(8), session.stumbles)
+    }
+
+    /** «تم» on a partly revealed page records the ayat revealed, or all of them when the student counts the rest. */
+    @Test
+    fun doneCountsOnlyTheRevealedAyatUnlessTheRestIsCounted() {
+        val session = RevisionSession(2, listOf(7, 8, 9, 10))
+        session.revealNext()
+        session.stumbleOnNext()
+        assertEquals(listOf(7, 8), session.revisedAyahs(countingRest = false))
+        assertEquals(listOf(7, 8, 9, 10), session.revisedAyahs(countingRest = true))
+        session.revealAll()
+        assertEquals(listOf(7, 8, 9, 10), session.revisedAyahs(countingRest = false))
+    }
+
+    // MARK: - Days, time zones and the clock (the same checks as the iOS app's RevisionTests)
+
+    /** A moment given as the time on the clock in a time zone. */
+    private fun at(year: Int, month: Int, day: Int, hour: Int, minute: Int = 0, zone: String): Moment =
+        Moment.of(LocalDateTime.of(year, month, day, hour, minute).atZone(ZoneId.of(zone)).toInstant())
+
+    private fun temporaryFile(): File = File.createTempFile("revision", ".json").also { it.delete(); it.deleteOnExit() }
+
+    private fun record(revision: RevisionStore, page: Int, now: Moment, stumbles: Set<Int> = emptySet()) =
+        revision.record(page, emptyList(), stumbles, Source.APP, MemorizationStore(file = null), now)
+
+    @Test
+    fun daysWrittenAsLocalMidnightReadBackAsTheSameDay() {
+        val days = listOf(Triple("Asia/Riyadh", 3, 12), Triple("America/New_York", 3, 12), Triple("Africa/Cairo", 4, 24), Triple("Europe/London", 3, 29))
+        for ((zone, month, date) in days) {
+            val id = ZoneId.of(zone)
+            val noon = at(2026, month, date, 12, zone = zone)
+            assertEquals(zone, CalendarDay.of(noon, id), CalendarDay.stored(noon.startOfDay(id)))
+            assertEquals(String.format("2026-%02d-%02d", month, date), CalendarDay.of(noon, id).toString())
+        }
+        // A whole file from before: its days, its plan's day and its follow-up's day.
+        val riyadh = ZoneId.of("Asia/Riyadh")
+        val midnight = at(2026, 3, 12, 12, zone = "Asia/Riyadh").startOfDay(riyadh).sinceReference
+        val file = temporaryFile()
+        file.writeText(
+            """{"version":1,"rotationCursor":3,"followUps":[{"page":9,"due":${midnight + 86_400},"step":0}],""" +
+                """"plan":{"day":$midnight,"items":[{"page":1,"kind":"rotation","done":true}]},"history":[],""" +
+                """"revisedDays":[${midnight - 86_400},$midnight],"completedDays":[$midnight]}""",
+        )
+        val revision = RevisionStore(file, zone = riyadh)
+        val today = CalendarDay.of(at(2026, 3, 12, 20, zone = "Asia/Riyadh"), riyadh)
+        assertTrue(revision.plan?.day == today && revision.followUps[9]?.due == today + 1)
+        assertEquals(setOf(today + -1, today), revision.revisedDays)
+        assertEquals(setOf(today), revision.completedDays)
+        assertEquals(2, revision.streak(at(2026, 3, 12, 20, zone = "Asia/Riyadh")))
+    }
+
+    @Test
+    fun streakSurvivesATimeZoneChange() {
+        val file = temporaryFile()
+        val riyadh = RevisionStore(file, zone = ZoneId.of("Asia/Riyadh"))
+        for (date in 10..12) record(riyadh, 1, at(2026, 3, date, 21, zone = "Asia/Riyadh"))
+        assertEquals(3, riyadh.streak(at(2026, 3, 12, 22, zone = "Asia/Riyadh")))
+        val london = RevisionStore(file, zone = ZoneId.of("Europe/London"))
+        assertEquals(3, london.streak(at(2026, 3, 12, 19, 30, zone = "Europe/London")))
+        assertEquals(listOf(true, true, true), london.recentDays(3, at(2026, 3, 12, 19, 30, zone = "Europe/London")))
+        assertEquals(3, london.streak(at(2026, 3, 13, 8, zone = "Europe/London")))
+    }
+
+    @Test
+    fun planSurvivesRelaunchInAnotherZoneOnTheSameDay() {
+        val file = temporaryFile()
+        val pages = listOf(1, 2, 3, 4, 5)
+        val riyadh = RevisionStore(file, zone = ZoneId.of("Asia/Riyadh"))
+        riyadh.setDailyPages(3)
+        riyadh.refreshPlan(pages, at(2026, 3, 12, 9, zone = "Asia/Riyadh"))
+        record(riyadh, 1, at(2026, 3, 12, 10, zone = "Asia/Riyadh"))
+        val london = RevisionStore(file, zone = ZoneId.of("Europe/London"))
+        london.refreshPlan(pages, at(2026, 3, 12, 15, zone = "Europe/London"))
+        assertEquals(listOf(1, 2, 3), london.plan?.items?.map { it.page })
+        assertEquals(1, london.plan?.doneCount)
+    }
+
+    /** In Cairo the clocks go forward at midnight on Friday 24 April 2026, so that day starts at 01:00. */
+    @Test
+    fun streakCrossesAMidnightDSTGap() {
+        val cairo = ZoneId.of("Africa/Cairo")
+        assertEquals(1, at(2026, 4, 24, 12, zone = "Africa/Cairo").startOfDay(cairo).toInstant().atZone(cairo).hour)
+        val revision = RevisionStore(file = null, zone = cairo)
+        for (date in 20..27) record(revision, 1, at(2026, 4, date, 20, zone = "Africa/Cairo"))
+        assertEquals(8, revision.streak(at(2026, 4, 27, 21, zone = "Africa/Cairo")))
+        assertTrue(revision.recentDays(8, at(2026, 4, 27, 21, zone = "Africa/Cairo")).all { it })
+    }
+
+    @Test
+    fun followUpSetOnADSTDayIsDueTheNextDay() {
+        val cairo = ZoneId.of("Africa/Cairo")
+        val revision = RevisionStore(file = null, zone = cairo)
+        record(revision, 5, at(2026, 4, 23, 23, 30, zone = "Africa/Cairo"), stumbles = setOf(40))
+        assertEquals(CalendarDay.of(at(2026, 4, 24, 12, zone = "Africa/Cairo"), cairo), revision.followUps[5]?.due)
+        revision.refreshPlan(listOf(5, 6), at(2026, 4, 24, 1, 5, zone = "Africa/Cairo"))
+        assertEquals(PlanItem(5, PlanItem.Kind.FOLLOW_UP), revision.plan?.items?.first())
+    }
+
+    @Test
+    fun recordingAfterMidnightMovesTheWirdOn() {
+        val revision = RevisionStore(file = null, zone = utc)
+        val pages = listOf(10, 11, 12, 13)
+        revision.setDailyPages(3)
+        revision.refreshPlan(pages, day(0))
+        record(revision, 10, day(0))
+        val afterMidnight = day(1).startOfDay(utc) + 10 * 60.0
+        record(revision, 11, afterMidnight)
+        assertEquals(listOf(true, true, false), revision.plan?.items?.map { it.done })
+        assertEquals(12, revision.plan?.items?.first { !it.done }?.page)
+        record(revision, 12, afterMidnight)
+        assertEquals(setOf(calendarDay(0)), revision.completedDays)
+        assertEquals(setOf(calendarDay(0), calendarDay(1)), revision.revisedDays)
+        assertEquals(13, revision.rotationCursor)
+        revision.refreshPlan(pages, afterMidnight)
+        assertTrue(revision.plan?.day == calendarDay(1) && revision.plan?.items?.first()?.page == 13)
+    }
+
+    @Test
+    fun cleanRevisionBeforeDueDoesNotAdvanceAFollowUp() {
+        val revision = RevisionStore(file = null, zone = utc)
+        record(revision, 7, day(0), stumbles = setOf(70))
+        record(revision, 7, day(0) + 2 * 3_600.0)
+        assertEquals(FollowUp(calendarDay(1), 0), revision.followUps[7])
+        record(revision, 7, day(1))
+        assertEquals(FollowUp(calendarDay(4), 1), revision.followUps[7])
+        record(revision, 7, day(9))
+        assertEquals(FollowUp(calendarDay(16), 2), revision.followUps[7])
+    }
+
+    @Test
+    fun futureDatedRevisionIsClampedToNow() {
+        val memorization = MemorizationStore(file = null)
+        val revision = RevisionStore(file = null, zone = utc)
+        memorization.mark(7..8, memorized = true)
+        val record = TasmeeRecord("r", teacherId = "t", teacherName = "x", sessionId = "s", at = day(6), pages = listOf(2), stumbles = emptyList())
+        TasmeeApply.apply(record, memorization, revision, now = day(5)) { 7..8 }
+        assertTrue(memorization.memory(7)?.lastReviewed == day(5) && revision.history.last().date == day(5))
+
+        val ahead = AyahMemory(since = day(0), lastReviewed = day(40), lastLapseAt = day(40))
+        val merged = CloudBackup.merge(CloudBackup.Memory(mapOf(9 to ahead)), CloudBackup.Memory(removed = mapOf(10 to day(40))), now = day(5))
+        assertTrue(merged.ayahs[9]?.lastReviewed == day(5) && merged.ayahs[9]?.lastLapseAt == day(5) && merged.removed[10] == day(5))
+    }
+
+    @Test
+    fun firstRevisionOfALearnedAyahIsSpaced() {
+        val policy = ReviewPolicy.STANDARD
+        val learned = AyahMemory(stability = 2.0, since = start, learnedAt = start)
+        assertTrue(learned.revised(false, start + 3_600.0, policy).stability < 2 * 1.2)
+        assertEquals(2 * policy.growth, learned.revised(false, day(2), policy).stability, 1e-12)
+        assertEquals(policy.declaredStability * policy.growth, AyahMemory(since = start).revised(false, start, policy).stability, 1e-12)
     }
 
     @Test

@@ -192,9 +192,12 @@ enum CompetitionScore {
         switch metric {
         case .pagesRevised: return revision.history.filter { within($0.date) }.count
         case .daysRevised:
-            // Days revised are kept as the start of each day: the first day counts whatever hour the race began.
+            // A day revised counts by when it began: the first day counts whatever hour the race began.
             let firstDay = calendar.startOfDay(for: start)
-            return revision.revisedDays.filter { $0 >= firstDay && $0 < end }.count
+            return revision.revisedDays.filter { day in
+                let begins = day.start(in: calendar)
+                return begins >= firstDay && begins < end
+            }.count
         case .ayatMemorized: return memorization.ayahs.values.filter { $0.learnedAt.map(within) ?? false }.count
         case .parts, .cleanPages: return 0
         }

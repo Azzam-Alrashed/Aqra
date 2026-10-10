@@ -1,5 +1,6 @@
 package com.azzamalrashed.aqra.tasmee
 
+import com.azzamalrashed.aqra.TestDates.calendarDay
 import com.azzamalrashed.aqra.TestDates.day
 import com.azzamalrashed.aqra.TestDates.utc
 import com.azzamalrashed.aqra.memorization.MemorizationStore
@@ -12,6 +13,7 @@ import org.junit.Assert.assertNotNull
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.azzamalrashed.aqra.core.Moment
 
 /** The tasmee' values and how a tasmee' is applied to the student's progress: the same checks as the iOS app's. */
 class TasmeeTest {
@@ -90,7 +92,7 @@ class TasmeeTest {
 
         // Page 2 holds ayat 7…20; the student memorized 7…11 and stumbled on 8 (and on 300, which isn't on the page).
         val record = TasmeeRecord("r", teacherId = "t", teacherName = "x", sessionId = "s", at = day(5), pages = listOf(2, 9), stumbles = listOf(8, 300))
-        TasmeeApply.apply(record, memorization, revision) { if (it == 2) 7..20 else 500..520 }
+        TasmeeApply.apply(record, memorization, revision, now = Moment(Double.MAX_VALUE)) { if (it == 2) 7..20 else 500..520 }
 
         // One revision, the sheikh's, of page 2 with the stumble that was on it; page 9 had nothing memorized.
         assertEquals(1, revision.history.size)
@@ -106,8 +108,8 @@ class TasmeeTest {
         // Ayat the student never marked stay unmarked.
         assertEquals(0, memorization.memorizedCount(12..20))
         // The page follows up tomorrow, the day counts, and today's plan item is checked off.
-        assertEquals(day(6).startOfDay(utc), revision.followUps[2]?.due)
-        assertTrue(day(5).startOfDay(utc) in revision.revisedDays)
+        assertEquals(calendarDay(6), revision.followUps[2]?.due)
+        assertTrue(calendarDay(5) in revision.revisedDays)
         assertTrue(revision.plan!!.items.first { it.page == 2 }.done)
     }
 
@@ -141,7 +143,7 @@ class TasmeeTest {
         val revision = RevisionStore(file = null, zone = utc)
         memorization.mark(7..11, memorized = true)
         val record = TasmeeRecord("p", TasmeeRecord.Kind.PEER, "friend", "", "ABC234", day(5), listOf(2), listOf(8))
-        TasmeeApply.apply(record, memorization, revision) { 7..20 }
+        TasmeeApply.apply(record, memorization, revision, now = Moment(Double.MAX_VALUE)) { 7..20 }
         assertTrue(revision.history.last().source == RevisionRecord.Source.PEER && revision.history.last().stumbles == listOf(8))
         assertEquals(1, memorization.memory(8)!!.lapses)
         for (ayah in listOf(7, 9, 10, 11)) {

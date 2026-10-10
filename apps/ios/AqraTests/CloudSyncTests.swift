@@ -7,6 +7,8 @@ import Testing
 struct CloudSyncTests {
     private let start = Date(timeIntervalSince1970: 1_800_000_000)
     private func day(_ n: Int) -> Date { start.addingTimeInterval(Double(n) * 86_400) }
+    /// A test day as the revision store keeps it.
+    private func calendarDay(_ n: Int) -> CalendarDay { CalendarDay(stored: day(n)) }
 
     private func memory(since: Int, reviewed: Int? = nil, stability: Double = 14, verified: Bool = false) -> AyahMemory {
         var memory = AyahMemory(since: day(since), stability: stability)
@@ -41,11 +43,11 @@ struct CloudSyncTests {
         let a = RevisionRecord(date: day(1), page: 3, source: .app, stumbles: [])
         let b = RevisionRecord(date: day(2), page: 4, source: .outside, stumbles: [])
         let c = RevisionRecord(date: day(3), page: 5, source: .app, stumbles: [9])
-        var local = RevisionStore.Snapshot(dailyPages: 4, rotationCursor: 10, history: [a, b], revisedDays: [day(1), day(2)], updatedAt: day(2))
-        let remote = RevisionStore.Snapshot(dailyPages: 6, rotationCursor: 20, history: [b, c], revisedDays: [day(2), day(3)], updatedAt: day(3))
+        var local = RevisionStore.Snapshot(dailyPages: 4, rotationCursor: 10, history: [a, b], revisedDays: [calendarDay(1), calendarDay(2)], updatedAt: day(2))
+        let remote = RevisionStore.Snapshot(dailyPages: 6, rotationCursor: 20, history: [b, c], revisedDays: [calendarDay(2), calendarDay(3)], updatedAt: day(3))
         var merged = CloudBackup.merge(local, remote)
         #expect(merged.dailyPages == 6 && merged.rotationCursor == 20)     // the account changed and revised more recently
-        #expect(merged.revisedDays == [day(1), day(2), day(3)])
+        #expect(merged.revisedDays == [calendarDay(1), calendarDay(2), calendarDay(3)])
         #expect(merged.history == [a, b, c])
         // A daily amount chosen later on the device wins; the rotation still follows the latest revising.
         local.updatedAt = day(4)
@@ -87,7 +89,7 @@ struct CloudSyncTests {
         revision.onChange = { changes += 1 }
 
         memorization.replaceAll([7: memory(since: 0), 8: memory(since: 0)])
-        let snapshot = RevisionStore.Snapshot(dailyPages: 3, rotationCursor: 50, revisedDays: [day(0)], updatedAt: day(0))
+        let snapshot = RevisionStore.Snapshot(dailyPages: 3, rotationCursor: 50, revisedDays: [calendarDay(0)], updatedAt: day(0))
         revision.apply(snapshot)
         #expect(memorization.count == 2 && revision.dailyPages == 3 && revision.rotationCursor == 50)
         #expect(changes == 2)
@@ -139,15 +141,15 @@ struct CloudSyncTests {
     @Test func mergeKeepsFollowUpsOfBothSides() {
         let a = RevisionRecord(date: day(1), page: 3, source: .app, stumbles: [7])
         let b = RevisionRecord(date: day(2), page: 9, source: .app, stumbles: [8])
-        let local = RevisionStore.Snapshot(followUps: [3: .init(due: day(2), step: 0), 5: .init(due: day(4), step: 1)],
-                                           plan: DayPlan(day: day(2), items: [PlanItem(page: 3, kind: .followUp, done: true), PlanItem(page: 4, kind: .rotation)]),
-                                           history: [a], revisedDays: [day(1)], updatedAt: day(1))
-        let remote = RevisionStore.Snapshot(followUps: [5: .init(due: day(6), step: 2), 9: .init(due: day(3), step: 0)],
-                                            plan: DayPlan(day: day(2), items: [PlanItem(page: 3, kind: .followUp), PlanItem(page: 4, kind: .rotation, done: true)]),
-                                            history: [b], revisedDays: [day(2)], updatedAt: day(2))
+        let local = RevisionStore.Snapshot(followUps: [3: .init(due: calendarDay(2), step: 0), 5: .init(due: calendarDay(4), step: 1)],
+                                           plan: DayPlan(day: calendarDay(2), items: [PlanItem(page: 3, kind: .followUp, done: true), PlanItem(page: 4, kind: .rotation)]),
+                                           history: [a], revisedDays: [calendarDay(1)], updatedAt: day(1))
+        let remote = RevisionStore.Snapshot(followUps: [5: .init(due: calendarDay(6), step: 2), 9: .init(due: calendarDay(3), step: 0)],
+                                            plan: DayPlan(day: calendarDay(2), items: [PlanItem(page: 3, kind: .followUp), PlanItem(page: 4, kind: .rotation, done: true)]),
+                                            history: [b], revisedDays: [calendarDay(2)], updatedAt: day(2))
         let merged = CloudBackup.merge(local, remote)
         // Page by page: both sides' pages, each at its later date.
-        #expect(merged.followUps == [3: .init(due: day(2), step: 0), 5: .init(due: day(6), step: 2), 9: .init(due: day(3), step: 0)])
+        #expect(merged.followUps == [3: .init(due: calendarDay(2), step: 0), 5: .init(due: calendarDay(6), step: 2), 9: .init(due: calendarDay(3), step: 0)])
         // The same day's plan: a page done on either device is done.
         #expect(merged.plan?.items.map(\.done) == [true, true])
         #expect(CloudBackup.merge(remote, local).followUps == merged.followUps)
@@ -227,13 +229,14 @@ struct CloudSyncTests {
         let decoded = try #require(CloudBackup.decodeRevision(android))
         let day = Date(timeIntervalSinceReferenceDate: 821_692_800)
         #expect(decoded.dailyPages == nil && decoded.rotationCursor == 13)
-        #expect(decoded.followUps == [11: .init(due: Date(timeIntervalSinceReferenceDate: 821_779_200), step: 0), 300: .init(due: day, step: 0)])
+        #expect(decoded.followUps == [11: .init(due: CalendarDay(stored: Date(timeIntervalSinceReferenceDate: 821_779_200)), step: 0),
+                                      300: .init(due: CalendarDay(stored: day), step: 0)])
         // A kind this version doesn't know reads as a rotation page: the page is kept rather than lost.
-        #expect(decoded.plan == DayPlan(day: day, items: [PlanItem(page: 11, kind: .followUp, done: true), PlanItem(page: 12, kind: .rotation),
+        #expect(decoded.plan == DayPlan(day: CalendarDay(stored: day), items: [PlanItem(page: 11, kind: .followUp, done: true), PlanItem(page: 12, kind: .rotation),
                                                           PlanItem(page: 13, kind: .rotation)]))
         #expect(decoded.history == [RevisionRecord(date: Date(timeIntervalSinceReferenceDate: 821_696_461.5), page: 11, source: .sheikh, stumbles: [100, 101]),
                                     RevisionRecord(date: Date(timeIntervalSinceReferenceDate: 821_696_462), page: 12, source: .app, stumbles: [])])
-        #expect(decoded.revisedDays == [day] && decoded.completedDays == nil)
+        #expect(decoded.revisedDays == [CalendarDay(stored: day)] && decoded.completedDays == nil)
         // The bare record a fresh Android install writes.
         #expect(CloudBackup.decodeRevision(#"{"rotationCursor":1,"followUps":{},"history":[],"revisedDays":[],"updatedAt":-63114076800.0}"#) == .empty)
     }
@@ -367,7 +370,7 @@ struct CloudSyncTests {
         await tablet.sync.attach(uid: "u")
 
         let record = TasmeeRecord(id: "r1", teacherId: "t", teacherName: "Sheikh", sessionId: "s", at: day(2), pages: [1], stumbles: [3])
-        TasmeeApply.apply(record, memorization: phone.memorization, revision: phone.revision) { _ in 0...6 }
+        TasmeeApply.apply(record, memorization: phone.memorization, revision: phone.revision, now: .distantFuture) { _ in 0...6 }
         try await phone.sync.upload()
         await tablet.sync.syncIfChanged()
         #expect(tablet.memorization.memory(ofAyah: 0)?.verified == true)
@@ -430,7 +433,9 @@ private struct Device {
     init(store: FakeCloudStore, id: String, memorization: MemorizationStore = MemorizationStore(fileURL: nil)) {
         self.memorization = memorization
         revision = RevisionStore(fileURL: nil)
-        sync = CloudSync(memorization: memorization, revision: revision, store: store, installID: id)
+        // The tests' days are in 2027: the clock is set after all of them, so no merge takes them for the future.
+        sync = CloudSync(memorization: memorization, revision: revision, store: store, installID: id,
+                         clock: { Date(timeIntervalSince1970: 1_900_000_000) })
     }
 }
 

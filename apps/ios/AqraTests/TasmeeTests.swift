@@ -67,7 +67,7 @@ struct TasmeeTests {
         // the page) before the sheikh on day 5.
         let record = TasmeeRecord(id: "r", teacherId: "t", teacherName: "x", sessionId: "s", at: day(5),
                                   pages: [2, 9], stumbles: [8, 300])
-        TasmeeApply.apply(record, memorization: memorization, revision: revision) { $0 == 2 ? 7...20 : 500...520 }
+        TasmeeApply.apply(record, memorization: memorization, revision: revision, now: .distantFuture) { $0 == 2 ? 7...20 : 500...520 }
 
         // One revision, the sheikh's, of page 2 with the stumble that was on it; page 9 had nothing memorized.
         #expect(revision.history.count == 1)
@@ -81,8 +81,8 @@ struct TasmeeTests {
         // Ayat the student never marked stay unmarked.
         #expect(memorization.memorizedCount(in: 12...20) == 0)
         // The page follows up tomorrow, the day counts, and today's plan item is checked off.
-        #expect(revision.followUps[2]?.due == calendar.startOfDay(for: day(6)))
-        #expect(revision.revisedDays.contains(calendar.startOfDay(for: day(5))))
+        #expect(revision.followUps[2]?.due == CalendarDay(day(6), in: calendar))
+        #expect(revision.revisedDays.contains(CalendarDay(day(5), in: calendar)))
         #expect(revision.plan?.items.first { $0.page == 2 }?.done == true)
     }
 
@@ -123,7 +123,7 @@ struct TasmeeTests {
         memorization.mark(7...11, memorized: true)
         let record = TasmeeRecord(id: "p", kind: .peer, teacherId: "friend", teacherName: "", sessionId: "ABC234",
                                   at: day(5), pages: [2], stumbles: [8])
-        TasmeeApply.apply(record, memorization: memorization, revision: revision) { _ in 7...20 }
+        TasmeeApply.apply(record, memorization: memorization, revision: revision, now: .distantFuture) { _ in 7...20 }
         #expect(revision.history.last?.source == .peer && revision.history.last?.stumbles == [8])
         #expect(memorization.memory(ofAyah: 8)?.lapses == 1)
         for ayah in [7, 9, 10, 11] {

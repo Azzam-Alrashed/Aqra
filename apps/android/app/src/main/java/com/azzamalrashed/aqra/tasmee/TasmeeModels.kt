@@ -345,10 +345,15 @@ object TasmeeApply {
      * Each page heard is recorded as a revision of its memorized ayat, by a sheikh or a peer: the stumbled ones
      * weaken, the rest grow by the listener's weight. Only a sheikh's tasmee' verifies: the clean ayat get the mark
      * and the stumbled ones lose it. Ayat the student never marked as memorized are left alone: the student owns the
-     * map of what they know. [pageAyahs] gives the ayat of a page (from the Mushaf).
+     * map of what they know. [pageAyahs] gives the ayat of a page (from the Mushaf). A record dated after [now] (the
+     * listener's clock ran ahead) counts from now.
      */
-    fun apply(record: TasmeeRecord, memorization: MemorizationStore, revision: RevisionStore, pageAyahs: (Int) -> IntRange) {
+    fun apply(
+        record: TasmeeRecord, memorization: MemorizationStore, revision: RevisionStore,
+        now: Moment = Moment.now(), pageAyahs: (Int) -> IntRange,
+    ) {
         val stumbles = record.stumbles.toSet()
+        val heardAt = minOf(record.at, now)
         for (page in record.pages.toSet().sorted()) {
             if (page !in 1..MushafStore.PAGE_COUNT) continue
             val memorized = pageAyahs(page).filter(memorization::isMemorized)
@@ -357,7 +362,7 @@ object TasmeeApply {
             revision.record(
                 page, memorized, pageStumbles,
                 if (record.kind == TasmeeRecord.Kind.PEER) RevisionRecord.Source.PEER else RevisionRecord.Source.SHEIKH,
-                memorization, now = record.at,
+                memorization, now = heardAt,
             )
             if (record.kind == TasmeeRecord.Kind.SHEIKH) memorization.verify(memorized, except = pageStumbles)
         }

@@ -3189,6 +3189,17 @@
         }
       }
     },
+    "Back to the page" : {
+      "comment" : "Closes the question and goes on revising the page.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "عودة إلى الصفحة"
+          }
+        }
+      }
+    },
     "Before: %@" : {
       "localizations" : {
         "ar" : {
@@ -3752,6 +3763,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "المتابعة باستخدام Google"
+          }
+        }
+      }
+    },
+    "Count the rest as revised?" : {
+      "comment" : "Asked in the revision panel when Done comes with ayat still veiled.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "احسب الباقي مراجَعًا؟"
           }
         }
       }
@@ -5700,6 +5722,17 @@
         }
       }
     },
+    "Only what I revealed" : {
+      "comment" : "Counts only the ayat revealed in the revision.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ما ظهر فقط"
+          }
+        }
+      }
+    },
     "Open" : {
       "localizations" : {
         "ar" : {
@@ -6218,6 +6251,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "استأنفها من خطتك"
+          }
+        }
+      }
+    },
+    "Revealed: %lld of %lld. Did you recite the rest from memory too?" : {
+      "comment" : "Under 'Count the rest as revised?': how many ayat were revealed, of the page's memorized ayat.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "ظهر %lld من %lld. هل قرأتَ الباقي غيبًا أيضًا؟"
           }
         }
       }
@@ -8208,6 +8252,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "فاز بمقعد"
+          }
+        }
+      }
+    },
+    "Yes, count them" : {
+      "comment" : "Counts the veiled ayat as revised too.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نعم، احسبها"
           }
         }
       }

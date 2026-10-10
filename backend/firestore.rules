@@ -22,14 +22,20 @@ service cloud.firestore {
       return request.resource.data.keys().hasAll(required) && request.resource.data.keys().hasOnly(required.concat(optional));
     }
     function peerRequest(code) { return get(/databases/$(database)/documents/peerRequests/$(code)).data; }
-    // What every tasmee' record holds, whoever heard it.
+    // What every tasmee' record holds, whoever heard it. It's dated within a day of the server's clock (a listener's
+    // clock running ahead or behind can't move a student's revision), and its lists are bounded: at most every page of
+    // the Mushaf, and at most every ayah stumbled on. Rules can't check each entry; the apps ignore any out of range.
     function isTasmeeRecord() {
       return request.resource.data.teacherId == request.auth.uid
         && request.resource.data.teacherName is string
         && request.resource.data.sessionId is string
         && request.resource.data.at is timestamp
+        && request.resource.data.at > request.time - duration.value(1, 'd')
+        && request.resource.data.at < request.time + duration.value(1, 'd')
         && request.resource.data.pages is list
+        && request.resource.data.pages.size() >= 1 && request.resource.data.pages.size() <= 604
         && request.resource.data.stumbles is list
+        && request.resource.data.stumbles.size() <= 6236
         && request.resource.data.get('mistakes', []) is list
         && request.resource.data.appliedAt == null;
     }

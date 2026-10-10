@@ -183,9 +183,9 @@ object CompetitionScore {
         return when (metric) {
             Competition.Metric.PAGES_REVISED -> revision.history.count { within(it.date) }
             Competition.Metric.DAYS_REVISED -> {
-                // Days revised are kept as the start of each day: the first day counts whatever hour the race began.
+                // A day revised counts by when it began: the first day counts whatever hour the race began.
                 val firstDay = start.startOfDay(zone)
-                revision.revisedDays.count { it >= firstDay && it < end }
+                revision.revisedDays.count { day -> day.start(zone).let { it >= firstDay && it < end } }
             }
             Competition.Metric.AYAT_MEMORIZED -> memorization.ayahs.values.count { memory -> memory.learnedAt?.let(::within) ?: false }
             Competition.Metric.PARTS, Competition.Metric.CLEAN_PAGES -> 0

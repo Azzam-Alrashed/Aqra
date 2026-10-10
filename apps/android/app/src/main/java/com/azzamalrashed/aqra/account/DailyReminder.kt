@@ -17,6 +17,7 @@ import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.AqraApplication
 import com.azzamalrashed.aqra.MainActivity
 import com.azzamalrashed.aqra.R
+import com.azzamalrashed.aqra.core.CalendarDay
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.core.Preferences
 import com.azzamalrashed.aqra.revision.DayPlan
@@ -61,7 +62,7 @@ object DailyReminder {
      * recorded (or nothing left to memorize: [portionDue] is false).
      */
     fun isTodayDone(wird: DayPlan?, portionDue: Boolean, now: Moment = Moment.now(), zone: ZoneId = ZoneId.systemDefault()): Boolean =
-        wird != null && wird.day.startOfDay(zone) == now.startOfDay(zone) && wird.isComplete && !portionDue
+        wird != null && wird.day == CalendarDay.of(now, zone) && wird.isComplete && !portionDue
 
     fun isTodayDone(app: AqraApp): Boolean = isTodayDone(app.revision.plan, app.plan.isPortionDue(app.memorization))
 

@@ -108,6 +108,8 @@ fun WirdScreen(
     /** Aqra following the revision by ear («سمّع بصوتك»), while the student revises aloud. */
     var listener by remember { mutableStateOf<RecitationListener?>(null) }
     var settingUpListening by remember { mutableStateOf(false) }
+    /** «تم» with ayat still veiled: whether to count them too is asked once, in the panel. */
+    var askingRest by remember { mutableStateOf(false) }
 
     fun startListening() {
         val started = RecitationListener(session, store, app.recitationModel)
@@ -146,6 +148,7 @@ fun WirdScreen(
     BackHandler(onBack = onClose)
 
     fun show(next: RevisionSession) {
+        askingRest = false
         session = next
         listener?.let {
             it.follow(next)
@@ -154,17 +157,27 @@ fun WirdScreen(
     }
 
     /** Recorded, it moves straight on to the next page of today's wird, and back home when the wird is done. */
-    fun finish() {
+    fun finish(countingRest: Boolean) {
         val current = session
-        app.revision.record(current.page, current.ayahs, current.stumbles,
+        val ayahs = current.revisedAyahs(countingRest)
+        app.revision.record(current.page, ayahs, current.stumbles.intersect(ayahs.toSet()),
             if (outside) RevisionRecord.Source.OUTSIDE else RevisionRecord.Source.APP, app.memorization)
-        val next = if (outside) null else app.revision.plan?.items?.firstOrNull { !it.done }
+        // The page just recorded never comes round again, whichever day's plan it was in.
+        val next = if (outside) null else app.revision.plan?.items?.firstOrNull { !it.done && it.page != current.page }
         if (next != null) {
             show(session(next.page))
         } else {
             haptics.performHapticFeedback(HapticFeedbackType.Confirm)
             onClose()
         }
+    }
+
+    /**
+     * «تم»: with ayat still veiled, asks first whether the student recited them from memory too; only what was revealed
+     * counts otherwise.
+     */
+    fun done() {
+        if (outside || session.isComplete) finish(countingRest = true) else askingRest = true
     }
 
     // The bars stay for the whole revision, so the page sits between them rather than under them: every ayah stays in
@@ -191,14 +204,19 @@ fun WirdScreen(
             }
         }
         val following = listener
-        if (following != null && !outside) {
+        if (askingRest) {
+            RestQuestion(session, style,
+                onCount = { askingRest = false; finish(countingRest = true) },
+                onRevealed = { askingRest = false; finish(countingRest = false) },
+                onBack = { askingRest = false })
+        } else if (following != null && !outside) {
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                 FloatingPanel(style) {
                     if (session.isComplete) {
                         val hasNext = app.revision.plan?.items?.any { !it.done && it.page != session.page } ?: false
-                        ListeningSummary(session, store, style, hasNext, onAgain = { show(session(session.page)) }, onNext = ::finish)
+                        ListeningSummary(session, store, style, hasNext, onAgain = { show(session(session.page)) }, onNext = { finish(true) })
                     } else {
-                        ListeningPanel(following, session, style, onStop = ::stopListening, onDone = ::finish)
+                        ListeningPanel(following, session, style, onStop = ::stopListening, onDone = ::done)
                     }
                 }
             }
@@ -207,7 +225,7 @@ fun WirdScreen(
             LaunchedEffect(session.isComplete) { if (session.isComplete) haptics.performHapticFeedback(HapticFeedbackType.Confirm) }
         } else {
             RevisionBar(session, style, outside, canListen = !outside && !session.isComplete, onListen = ::beginListening,
-                onLeave = onClose, onDone = ::finish)
+                onLeave = onClose, onDone = ::done)
         }
     }
     if (settingUpListening) {
@@ -289,6 +307,29 @@ private fun RevisionBar(
                     Icon(Icons.Rounded.Mic, null, tint = style.barAccent, modifier = Modifier.size(18.dp))
                     Text(stringResource(R.string.recite_aloud_instead), style = aqraStyle(14f, Weight.bold, style.barAccent))
                 }
+            }
+        }
+    }
+}
+
+/** «احسب الباقي مراجَعًا؟», asked in the panel when «تم» comes with ayat still veiled. */
+@Composable
+private fun RestQuestion(session: RevisionSession, style: MushafStyle, onCount: () -> Unit, onRevealed: () -> Unit, onBack: () -> Unit) {
+    CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
+        FloatingPanel(style) {
+            Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(stringResource(R.string.count_the_rest_as_revised_q), style = aqraStyle(17f, Weight.heavy, style.ink), textAlign = TextAlign.Center)
+                Text(
+                    stringResource(R.string.revealed_n_of_n_did_you_recite_the_rest_from, minOf(session.revealed, session.ayahs.size), session.ayahs.size),
+                    style = aqraStyle(12f, Weight.semibold, style.chrome), textAlign = TextAlign.Center,
+                )
+            }
+            Spacer(Modifier.height(12.dp))
+            MarkingButton(stringResource(R.string.yes_count_them), style, Modifier.fillMaxWidth(), prominent = true, onClick = onCount)
+            Spacer(Modifier.height(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MarkingButton(stringResource(R.string.only_what_i_revealed), style, Modifier.weight(1f), onClick = onRevealed)
+                MarkingButton(stringResource(R.string.back_to_the_page), style, Modifier.weight(1f), onClick = onBack)
             }
         }
     }

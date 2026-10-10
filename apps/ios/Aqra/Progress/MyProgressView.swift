@@ -120,7 +120,7 @@ struct MyProgressView: View {
                         editingAmount = true
                     } label: {
                         AqraRow(icon: "🗓️", tint: Palette.peach, title: Text("\(dailyPages) pages a day"),
-                                detail: Text("A full revision every \(DailyAmountView.cycleDays(memorizedPages: memorizedPageCount, amount: dailyPages)) days"))
+                                detail: Text("A full revision every \(revision.cycleDays(memorizedPages: memorizedPageCount, nearPages: revision.plan?.items.filter { $0.kind == .near }.count ?? 0)) days"))
                     }
                     .buttonStyle(.plain)
                 }

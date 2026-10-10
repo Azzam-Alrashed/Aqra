@@ -279,6 +279,8 @@
     <string name="ayat_memorized">Ayat memorized</string>
     <!-- Back -->
     <string name="back">Back</string>
+    <!-- Back to the page -->
+    <string name="back_to_the_page">Back to the page</string>
     <!-- Backed up %@ -->
     <string name="backed_up_s">Backed up %s</string>
     <!-- Backing up… -->
@@ -402,6 +404,8 @@
     <string name="continue_todays_revision">Continue today\'s revision</string>
     <!-- Continue with Google -->
     <string name="continue_with_google">Continue with Google</string>
+    <!-- Count the rest as revised? -->
+    <string name="count_the_rest_as_revised_q">Count the rest as revised?</string>
     <!-- Counting -->
     <string name="counting">Counting</string>
     <!-- Create -->
@@ -798,6 +802,8 @@
     <string name="only_part_of_it">Only part of it</string>
     <!-- Only students with a seat join this call. -->
     <string name="only_students_with_a_seat_join_this_call">Only students with a seat join this call.</string>
+    <!-- Only what I revealed -->
+    <string name="only_what_i_revealed">Only what I revealed</string>
     <!-- Open -->
     <string name="open">Open</string>
     <!-- Open Settings -->
@@ -916,6 +922,8 @@
     <string name="resume_it_from_your_plan">Resume it from your plan</string>
     <!-- Reveal the next ayah -->
     <string name="reveal_the_next_ayah">Reveal the next ayah</string>
+    <!-- Revealed: %lld of %lld. Did you recite the rest from memory too? -->
+    <string name="revealed_n_of_n_did_you_recite_the_rest_from">Revealed: %1$d of %2$d. Did you recite the rest from memory too?</string>
     <!-- Reversed: session cancelled -->
     <string name="reversed_session_cancelled">Reversed: session cancelled</string>
     <!-- Revise %lld pages -->
@@ -1312,6 +1320,8 @@
     <string name="withdraw_your_application_q">Withdraw your application?</string>
     <!-- Won a seat -->
     <string name="won_a_seat">Won a seat</string>
+    <!-- Yes, count them -->
+    <string name="yes_count_them">Yes, count them</string>
     <!-- You can take the test again %@ -->
     <string name="you_can_take_the_test_again_s">You can take the test again %s</string>
     <!-- You can undo it for a few seconds. -->

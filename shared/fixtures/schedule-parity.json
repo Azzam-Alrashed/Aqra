@@ -1,0 +1,799 @@
+{
+ "about": "One student's records, revision state and plan, at one moment in one time zone. The iOS and Android tests (JourneyTests.scheduleParityFixture, ScheduleParityTest) must both give `expected`. Dates are seconds since 2001; a day is its midnight in UTC.",
+ "zone": "Asia/Riyadh",
+ "now": 795024000.0,
+ "strengthAyahs": [
+  0,
+  5,
+  13,
+  40,
+  57,
+  63
+ ],
+ "ayahs": [
+  {
+   "ayah": 0,
+   "memory": {
+    "stability": 3.0,
+    "lapses": 0,
+    "verified": true,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 1,
+   "memory": {
+    "stability": 10.25,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794908080.0
+   }
+  },
+  {
+   "ayah": 2,
+   "memory": {
+    "stability": 17.5,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794792160.0
+   }
+  },
+  {
+   "ayah": 3,
+   "memory": {
+    "stability": 24.75,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794676240.0
+   }
+  },
+  {
+   "ayah": 4,
+   "memory": {
+    "stability": 31.0,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794560320.0,
+    "lastLapseAt": 793296000.0
+   }
+  },
+  {
+   "ayah": 5,
+   "memory": {
+    "stability": 38.25,
+    "lapses": 2,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 794444400.0
+   }
+  },
+  {
+   "ayah": 6,
+   "memory": {
+    "stability": 45.5,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 7,
+   "memory": {
+    "stability": 52.75,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794237760.0
+   }
+  },
+  {
+   "ayah": 8,
+   "memory": {
+    "stability": 9.0,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794121840.0
+   }
+  },
+  {
+   "ayah": 9,
+   "memory": {
+    "stability": 16.25,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794005920.0
+   }
+  },
+  {
+   "ayah": 10,
+   "memory": {
+    "stability": 23.5,
+    "lapses": 1,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 795013200.0
+   }
+  },
+  {
+   "ayah": 11,
+   "memory": {
+    "stability": 30.75,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794897280.0
+   }
+  },
+  {
+   "ayah": 12,
+   "memory": {
+    "stability": 37.0,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 13,
+   "memory": {
+    "stability": 44.25,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794665440.0,
+    "lastLapseAt": 793296000.0
+   }
+  },
+  {
+   "ayah": 14,
+   "memory": {
+    "stability": 51.5,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794574720.0
+   }
+  },
+  {
+   "ayah": 15,
+   "memory": {
+    "stability": 8.75,
+    "lapses": 0,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 794458800.0
+   }
+  },
+  {
+   "ayah": 16,
+   "memory": {
+    "stability": 15.0,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794342880.0
+   }
+  },
+  {
+   "ayah": 17,
+   "memory": {
+    "stability": 22.25,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794226960.0
+   }
+  },
+  {
+   "ayah": 18,
+   "memory": {
+    "stability": 29.5,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 19,
+   "memory": {
+    "stability": 36.75,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 793995120.0
+   }
+  },
+  {
+   "ayah": 20,
+   "memory": {
+    "stability": 43.0,
+    "lapses": 2,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 795002400.0
+   }
+  },
+  {
+   "ayah": 21,
+   "memory": {
+    "stability": 50.25,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794911680.0
+   }
+  },
+  {
+   "ayah": 22,
+   "memory": {
+    "stability": 7.5,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794795760.0,
+    "lastLapseAt": 793296000.0
+   }
+  },
+  {
+   "ayah": 23,
+   "memory": {
+    "stability": 14.75,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794679840.0
+   }
+  },
+  {
+   "ayah": 24,
+   "memory": {
+    "stability": 21.0,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 25,
+   "memory": {
+    "stability": 28.25,
+    "lapses": 1,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 794448000.0
+   }
+  },
+  {
+   "ayah": 26,
+   "memory": {
+    "stability": 35.5,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794332080.0
+   }
+  },
+  {
+   "ayah": 27,
+   "memory": {
+    "stability": 42.75,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794216160.0
+   }
+  },
+  {
+   "ayah": 28,
+   "memory": {
+    "stability": 49.0,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794125440.0
+   }
+  },
+  {
+   "ayah": 29,
+   "memory": {
+    "stability": 6.25,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794009520.0
+   }
+  },
+  {
+   "ayah": 30,
+   "memory": {
+    "stability": 13.5,
+    "lapses": 0,
+    "verified": true,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 31,
+   "memory": {
+    "stability": 20.75,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794900880.0,
+    "lastLapseAt": 793296000.0
+   }
+  },
+  {
+   "ayah": 32,
+   "memory": {
+    "stability": 27.0,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794784960.0
+   }
+  },
+  {
+   "ayah": 33,
+   "memory": {
+    "stability": 34.25,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794669040.0
+   }
+  },
+  {
+   "ayah": 34,
+   "memory": {
+    "stability": 41.5,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794553120.0
+   }
+  },
+  {
+   "ayah": 35,
+   "memory": {
+    "stability": 48.75,
+    "lapses": 2,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 794462400.0
+   }
+  },
+  {
+   "ayah": 36,
+   "memory": {
+    "stability": 5.0,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 37,
+   "memory": {
+    "stability": 12.25,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794230560.0
+   }
+  },
+  {
+   "ayah": 38,
+   "memory": {
+    "stability": 19.5,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794114640.0
+   }
+  },
+  {
+   "ayah": 39,
+   "memory": {
+    "stability": 26.75,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 793998720.0
+   }
+  },
+  {
+   "ayah": 40,
+   "memory": {
+    "stability": 33.0,
+    "lapses": 1,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 795006000.0,
+    "lastLapseAt": 793296000.0
+   }
+  },
+  {
+   "ayah": 41,
+   "memory": {
+    "stability": 40.25,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794890080.0
+   }
+  },
+  {
+   "ayah": 42,
+   "memory": {
+    "stability": 47.5,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 43,
+   "memory": {
+    "stability": 4.75,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794683440.0
+   }
+  },
+  {
+   "ayah": 44,
+   "memory": {
+    "stability": 11.0,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794567520.0
+   }
+  },
+  {
+   "ayah": 45,
+   "memory": {
+    "stability": 18.25,
+    "lapses": 0,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 794451600.0
+   }
+  },
+  {
+   "ayah": 46,
+   "memory": {
+    "stability": 25.5,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794335680.0
+   }
+  },
+  {
+   "ayah": 47,
+   "memory": {
+    "stability": 32.75,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794219760.0
+   }
+  },
+  {
+   "ayah": 48,
+   "memory": {
+    "stability": 39.0,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 49,
+   "memory": {
+    "stability": 46.25,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794013120.0,
+    "lastLapseAt": 793296000.0
+   }
+  },
+  {
+   "ayah": 50,
+   "memory": {
+    "stability": 3.5,
+    "lapses": 2,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 795020400.0
+   }
+  },
+  {
+   "ayah": 51,
+   "memory": {
+    "stability": 10.75,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794904480.0
+   }
+  },
+  {
+   "ayah": 52,
+   "memory": {
+    "stability": 17.0,
+    "lapses": 1,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794788560.0
+   }
+  },
+  {
+   "ayah": 53,
+   "memory": {
+    "stability": 24.25,
+    "lapses": 2,
+    "verified": false,
+    "since": 777744000.0,
+    "lastReviewed": 794672640.0
+   }
+  },
+  {
+   "ayah": 54,
+   "memory": {
+    "stability": 31.5,
+    "lapses": 0,
+    "verified": false,
+    "since": 777744000.0
+   }
+  },
+  {
+   "ayah": 55,
+   "memory": {
+    "stability": 38.75,
+    "lapses": 1,
+    "verified": true,
+    "since": 777744000.0,
+    "lastReviewed": 794440800.0
+   }
+  },
+  {
+   "ayah": 56,
+   "memory": {
+    "stability": 45.0,
+    "lapses": 2,
+    "verified": false,
+    "since": 794160000.0,
+    "lastReviewed": 794350080.0,
+    "learnedAt": 794160000.0
+   }
+  },
+  {
+   "ayah": 57,
+   "memory": {
+    "stability": 52.25,
+    "lapses": 0,
+    "verified": false,
+    "since": 794160000.0,
+    "lastReviewed": 794234160.0,
+    "learnedAt": 794160000.0
+   }
+  },
+  {
+   "ayah": 58,
+   "memory": {
+    "stability": 9.5,
+    "lapses": 1,
+    "verified": false,
+    "since": 794160000.0,
+    "lastReviewed": 794118240.0,
+    "learnedAt": 794160000.0,
+    "lastLapseAt": 793296000.0
+   }
+  },
+  {
+   "ayah": 59,
+   "memory": {
+    "stability": 16.75,
+    "lapses": 2,
+    "verified": false,
+    "since": 794160000.0,
+    "lastReviewed": 794002320.0,
+    "learnedAt": 794160000.0
+   }
+  },
+  {
+   "ayah": 60,
+   "memory": {
+    "stability": 23.0,
+    "lapses": 0,
+    "verified": true,
+    "since": 794160000.0,
+    "learnedAt": 794160000.0
+   }
+  },
+  {
+   "ayah": 61,
+   "memory": {
+    "stability": 30.25,
+    "lapses": 1,
+    "verified": false,
+    "since": 794160000.0,
+    "lastReviewed": 794893680.0,
+    "learnedAt": 794160000.0
+   }
+  },
+  {
+   "ayah": 62,
+   "memory": {
+    "stability": 37.5,
+    "lapses": 2,
+    "verified": false,
+    "since": 794160000.0,
+    "lastReviewed": 794777760.0,
+    "learnedAt": 794160000.0
+   }
+  },
+  {
+   "ayah": 63,
+   "memory": {
+    "stability": 44.75,
+    "lapses": 0,
+    "verified": false,
+    "since": 794160000.0,
+    "lastReviewed": 794687040.0,
+    "learnedAt": 794160000.0
+   }
+  }
+ ],
+ "revision": {
+  "dailyPages": 3,
+  "rotationCursor": 4,
+  "followUps": {
+   "6": {
+    "due": 794880000.0,
+    "step": 0
+   },
+   "2": {
+    "due": 795139200.0,
+    "step": 1
+   }
+  },
+  "history": [
+   {
+    "date": 793987200.0,
+    "page": 7,
+    "source": "app",
+    "stumbles": [
+     50
+    ]
+   },
+   {
+    "date": 794592000.0,
+    "page": 7,
+    "source": "app",
+    "stumbles": [
+     52
+    ]
+   },
+   {
+    "date": 794678400.0,
+    "page": 3,
+    "source": "sheikh",
+    "stumbles": []
+   },
+   {
+    "date": 791568000.0,
+    "page": 8,
+    "source": "app",
+    "stumbles": [
+     60
+    ]
+   },
+   {
+    "date": 794851200.0,
+    "page": 8,
+    "source": "outside",
+    "stumbles": [
+     61
+    ]
+   }
+  ],
+  "revisedDays": [
+   794534400.0,
+   794620800.0,
+   794707200.0,
+   794793600.0,
+   794880000.0
+  ],
+  "completedDays": [
+   794707200.0,
+   794793600.0
+  ],
+  "updatedAt": 794937600.0
+ },
+ "plan": {
+  "plan": {
+   "dailyLines": 8,
+   "studyDays": [
+    1,
+    2,
+    3,
+    4,
+    5,
+    6,
+    7
+   ],
+   "order": "fromEnd",
+   "paused": false
+  },
+  "portions": [],
+  "history": [
+   {
+    "date": 792432000.0,
+    "plan": {
+     "dailyLines": 8,
+     "studyDays": [
+      1,
+      2,
+      3,
+      4,
+      5,
+      6,
+      7
+     ],
+     "order": "fromEnd",
+     "paused": false
+    }
+   }
+  ],
+  "updatedAt": 792432000.0
+ },
+ "expected": {
+  "nextPortion": [
+   6230,
+   6231,
+   6232,
+   6233,
+   6234,
+   6235,
+   6225,
+   6226,
+   6227,
+   6228,
+   6229,
+   6221,
+   6222,
+   6223,
+   6224
+  ],
+  "plan": [
+   "6:followUp",
+   "8:near",
+   "4:rotation",
+   "5:rotation"
+  ],
+  "streak": 5,
+  "strengths": {
+   "0": 2.845852373867155e-22,
+   "13": 0.4607216001726549,
+   "40": 0.36506566479442193,
+   "5": 0.3763517233275382,
+   "57": 0.5142514665469913,
+   "63": 0.46807507313631636
+  },
+  "suggestions": [
+   7
+  ]
+ }
+}

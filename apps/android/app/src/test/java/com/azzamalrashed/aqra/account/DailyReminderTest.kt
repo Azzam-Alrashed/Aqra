@@ -14,14 +14,15 @@ import com.azzamalrashed.aqra.revision.RevisionStore
 import org.junit.Assert.assertFalse
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import com.azzamalrashed.aqra.core.CalendarDay
 
 /** Today's reminder is left out once today's work is done, as the iOS app's JourneyTests check it. */
 class DailyReminderTest {
     @Test
     fun todaysWorkIsDoneWithTheWirdAndTheDuePortion() {
         val now = day(0)
-        val done = DayPlan(now, listOf(PlanItem(1, PlanItem.Kind.ROTATION, done = true), PlanItem(2, PlanItem.Kind.ROTATION, done = true)))
-        val halfway = DayPlan(now, listOf(PlanItem(1, PlanItem.Kind.ROTATION, done = true), PlanItem(2, PlanItem.Kind.ROTATION)))
+        val done = DayPlan(CalendarDay.of(now, utc), listOf(PlanItem(1, PlanItem.Kind.ROTATION, done = true), PlanItem(2, PlanItem.Kind.ROTATION, done = true)))
+        val halfway = DayPlan(CalendarDay.of(now, utc), listOf(PlanItem(1, PlanItem.Kind.ROTATION, done = true), PlanItem(2, PlanItem.Kind.ROTATION)))
         assertTrue(DailyReminder.isTodayDone(done, portionDue = false, now = now, zone = utc))
         // Not with the wird half done, a portion still due, yesterday's wird, or no wird at all.
         assertFalse(DailyReminder.isTodayDone(halfway, portionDue = false, now = now, zone = utc))
