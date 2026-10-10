@@ -208,7 +208,10 @@ struct CloudSyncTests {
         #expect(json.contains("\"achievements\":[\"firstRevision\",\(seconds)]"), Comment(rawValue: json))
         #expect(json.contains("\"passes\":{\"1\":\(seconds)}"), Comment(rawValue: json))
         #expect(json.contains("\"studyDays\":[") && json.contains("\"order\":\"fromEnd\"") && !json.contains("null"), Comment(rawValue: json))
-        #expect(json.contains("\"reading\":{\"bookmark\":{\"page\":3,\"placedAt\":\(seconds)}"), Comment(rawValue: json))
+        // The ribbon as an object (keys in any order): its page, and its date in seconds since 2001.
+        let object = try #require(try JSONSerialization.jsonObject(with: Data(json.utf8)) as? [String: Any])
+        let bookmark = (object["reading"] as? [String: Any])?["bookmark"] as? [String: Any]
+        #expect(bookmark?["page"] as? Int == 3 && bookmark?["placedAt"] as? Int == seconds, Comment(rawValue: json))
         #expect(CloudBackup.decodeJourney(json) == Journey.Snapshot(plan: plan, rewards: rewards, assessments: assessments, reading: reading))
     }
 
