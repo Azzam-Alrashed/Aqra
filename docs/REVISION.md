@@ -14,7 +14,7 @@ Huffaz everywhere revise in three lanes:
 | Lane | In the hifz tradition | In Aqra |
 |---|---|---|
 | New memorization | السبق | Today's portion, from the personal plan |
-| Near revision | السبقي | Follow-up: pages stumbled on come back soon |
+| Near revision | السبقي | The near lane: the pages memorized in Aqra lately come back every day; and follow-up: pages stumbled on come back soon |
 | Far revision | المنزل | The rotation through everything memorized, in Mushaf order |
 
 Aqra adds one thing the tradition can't easily keep track of: **the strength of every ayah**. It fades with time and
@@ -30,6 +30,7 @@ Each memorized ayah has a **half-life**: the number of days until the chance of 
 - **A clean revision** multiplies it by **2.5**.
   - The multiplier is smaller if the revision comes before the memory has had time to slip (the spacing effect).
   - The first revision of a declared ayah counts in full.
+  - The first revision of an ayah memorized in Aqra is spaced from when it was learned.
 - **A stumble** multiplies it by **0.3**, with a minimum of 1 day.
 - **A sheikh's tasmee'** counts more: a clean revision heard by a sheikh grows the half-life by **1.5 times** the
   usual growth; a **peer's** by **1.25 times**. A stumble is a stumble, whoever heard it. Provisional, see the
@@ -49,12 +50,20 @@ times how fresh it is (the chance of recalling it today).
 memorized in about a month, between 2 and 20 pages.
 
 **Each day the plan takes, in order:**
-1. **Follow-up pages:** pages stumbled on recently, most overdue first.
-2. **Rotation pages:** the next pages after where the rotation stopped, among pages with memorized ayat, in Mushaf
-   order, wrapping back to the start.
+1. **Follow-up pages:** pages stumbled on recently, most overdue first, at most **half** the daily amount.
+2. **The near lane (سبقي):** the pages memorized in Aqra most recently, before today, up to **20**, every day, beside the
+   daily amount.
+3. **Rotation pages:** the next pages after where the rotation stopped, among pages with memorized ayat (outside the
+   near lane), in Mushaf order, wrapping back to the start. The rotation always has at least half the daily amount.
+
+The cycle shown on Home and in «خطتي» is the rotation's: the pages outside the near lane, at the rotation pages of
+today's plan.
 
 **Rules:**
 - **The plan is fixed for the day** once made.
+- **A day is a calendar day** in the device's time zone. A trip to another time zone or a change of clocks at
+  midnight doesn't break the streak or remake today's plan. A wird carried on past midnight carries on: each page is
+  checked off in the plan it belongs to, and the wird counts for its own day.
 - **Missed days don't pile up.** The rotation only moves past pages that were revised, so tomorrow starts where the
   student stopped, with the same daily amount.
 
@@ -64,7 +73,8 @@ memorized in about a month, between 2 and 20 pages.
 1. The page's memorized ayat are veiled.
 2. The student recites, revealing one ayah at a time.
 3. They tap an ayah they stumbled on.
-4. «تم» records the page.
+4. «تم» records the page. If some ayat are still veiled, it asks once «احسب الباقي مراجَعًا؟»: the whole page, or
+   only the ayat revealed.
 
 **Aloud, in the app** («سمّع بصوتك»): a Quran-trained speech model (Tarteel's `whisper-base-ar-quran`) runs on the
 device and follows the recitation; nothing it hears is shown or kept, only the Mushaf's own words. Words are revealed
@@ -87,7 +97,10 @@ until a teacher hears the ayah clean again. Ayat the student never marked as mem
 student owns the map of what they know.
 
 **Follow-up after a stumble:** the page comes back after **1 day**, then **3**, then **7**, as long as it stays
-clean. A new stumble starts it again at 1 day. A newly memorized portion's pages follow the same steps.
+clean. A new stumble starts it again at 1 day. A clean revision before the page is due doesn't move it on. A newly
+memorized portion's pages follow the same steps.
+
+**Dates:** a revision or a tasmee' dated later than now (a phone whose clock runs ahead) counts from now.
 
 ## The rotation learns
 
@@ -114,3 +127,4 @@ revision. It's shown apart from what's memorized and what's verified, for each s
 5. **Mastery:** is 60 days with a clean last revision the right bar?
 6. **Heard stumbles:** until listening has been tried with real huffaz, should a stumble the device hears count in full,
    or be a suggestion the student confirms? And should a pause at a waqf mark ever count?
+7. **The near lane:** are 20 pages the right size, every day beside the daily amount?
