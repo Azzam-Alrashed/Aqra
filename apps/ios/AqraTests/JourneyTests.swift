@@ -177,6 +177,29 @@ struct JourneyTests {
         #expect(abs(after - before) < 0.000_001)
     }
 
+    /// A stage met but for the sheikh's test waits for one («ينتظر اختبار شيخ»); with the test switched off on the
+    /// server, nothing waits.
+    @Test func aStageAwaitsTheSheikhOnceTheRestIsMet() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        let juz = Curriculum.juz(ofStage: 10)
+        let ayahs = try #require(store.juzAyahs[juz.lowerBound]).lowerBound...(try #require(store.juzAyahs[juz.upperBound])).upperBound
+        var firm = AyahMemory(since: day(-200), stability: 120)
+        firm.lastReviewed = day(0)
+        memorization.replaceAll(Dictionary(uniqueKeysWithValues: ayahs.map { ($0, firm) }))
+        let progress = StageProgress(stage: 10, store: store, memorization: memorization)
+        var status = StageStatus(progress: progress, testPassed: true, bestScore: 1, sheikhPassed: false, passedAt: nil, retestAt: nil, policy: .standard)
+        #expect(status.awaitsSheikh && !status.meetsAll)
+        status.testPassed = false
+        #expect(!status.awaitsSheikh)
+        status.testPassed = true
+        status.policy.sheikhTestRequired = false
+        #expect(!status.awaitsSheikh && status.meetsAll)
+        let assessments = AssessmentStore(fileURL: nil)
+        assessments.setSheikhTestRequired(false)
+        #expect(!assessments.policy.sheikhTestRequired)
+    }
+
     // MARK: - The near lane (سبقي)
 
     /// The pages memorized in Aqra lately (not today's) come back every day beside the daily amount, the newest up to

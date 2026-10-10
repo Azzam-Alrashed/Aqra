@@ -228,6 +228,62 @@ struct RevisionTests {
         #expect(session.revisedAyahs(countingRest: false) == [7, 8, 9, 10])
     }
 
+    /// «أين وصلت في مراجعتك؟»: the rotation continues from the page chosen; today's plan is made again from it unless
+    /// some of it is already revised.
+    @Test func rotationStartsWhereChosen() {
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        let memorization = MemorizationStore(fileURL: nil)
+        let pages = Array(1...40)
+        revision.setDailyPages(3)
+        revision.refreshPlan(memorizedPages: pages, now: day(0))
+        #expect(revision.plan?.items.map(\.page) == [1, 2, 3])
+        revision.setRotationStart(page: 30)
+        revision.refreshPlan(memorizedPages: pages, now: day(0))
+        #expect(revision.plan?.items.map(\.page) == [30, 31, 32])
+        // With a page already revised, today's plan stays; the rotation still moves from the chosen place.
+        revision.record(page: 30, ayahs: [], stumbles: [], source: .app, memorization: memorization, now: day(0))
+        revision.setRotationStart(page: 10)
+        revision.refreshPlan(memorizedPages: pages, now: day(0))
+        #expect(revision.plan?.items.map(\.page) == [30, 31, 32] && revision.rotationCursor == 10)
+        revision.refreshPlan(memorizedPages: pages, now: day(1))
+        #expect(revision.plan?.items.first?.page == 10)
+    }
+
+    /// A page revised outside today's wird (logged from the Mushaf) counts: its ayat, the day, the history and its
+    /// follow-up; today's plan and the rotation stay as they were.
+    @Test func outsideRevisionOfAnyPageIsRecorded() {
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.mark(500...510, memorized: true)
+        revision.setDailyPages(2)
+        revision.refreshPlan(memorizedPages: [1, 2, 3, 80], now: day(0))
+        let before = revision.plan
+        revision.record(page: 80, ayahs: Array(500...505), stumbles: [502], source: .outside, memorization: memorization, now: day(0))
+        #expect(revision.history.last == RevisionRecord(date: day(0), page: 80, source: .outside, stumbles: [502]))
+        #expect(revision.revisedDays.contains(CalendarDay(day(0), in: calendar)))
+        #expect(memorization.memory(ofAyah: 500)?.lastReviewed == day(0) && memorization.memory(ofAyah: 502)?.lapses == 1)
+        #expect(revision.followUps[80]?.due == CalendarDay(day(1), in: calendar))
+        #expect(revision.plan == before && revision.rotationCursor == 1)
+    }
+
+    /// متين / متوسط / يحتاج مراجعة at setup: declared ayat start at the policy's half-life for it; an ayah already
+    /// revised, or memorized in Aqra, keeps what's been measured.
+    @Test func firmnessSetsStartingStability() {
+        let policy = ReviewPolicy.standard
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.mark(0...9, memorized: true)
+        memorization.recordRevision(ayahs: [9], stumbled: [], at: day(0), policy: policy)
+        memorization.learn([20], at: day(0), stability: 2)
+        memorization.setFirmness(.firm, of: 0...4, policy: policy)
+        memorization.setFirmness(.weak, of: 5...9, policy: policy)
+        memorization.setFirmness(.firm, of: [20], policy: policy)
+        #expect((0...4).allSatisfy { memorization.memory(ofAyah: $0)?.stability == policy.firmStability })
+        #expect((5...8).allSatisfy { memorization.memory(ofAyah: $0)?.stability == policy.weakStability })
+        #expect(memorization.memory(ofAyah: 9)?.stability == policy.declaredStability * policy.growth)
+        #expect(memorization.memory(ofAyah: 20)?.stability == 2)
+        #expect(policy.stability(for: .middling) == policy.declaredStability)
+    }
+
     // MARK: - Days, time zones and the clock
 
     private func zoned(_ identifier: String) -> Calendar {

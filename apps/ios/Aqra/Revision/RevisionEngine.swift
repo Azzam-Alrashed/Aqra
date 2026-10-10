@@ -4,8 +4,12 @@ import Observation
 /// Every rule of revision in one place, so they can be tuned after trying them, not buried in the code.
 /// See docs/REVISION.md.
 struct ReviewPolicy: Codable, Hashable, Sendable {
-    /// The half-life, in days, given to ayat the student declares they already know.
+    /// The half-life, in days, given to ayat the student declares they already know: «متوسط», the default.
     var declaredStability = 14.0
+    /// The half-life of a declared juz' the student calls «متين»: revised regularly, without stumbling.
+    var firmStability = 30.0
+    /// The half-life of a declared juz' the student says «يحتاج مراجعة».
+    var weakStability = 5.0
     /// How much a clean revision multiplies the half-life, when it comes after the memory has had time to slip.
     var growth = 2.5
     /// What a stumble multiplies the half-life by.
@@ -26,6 +30,20 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
     var nearLanePages = 20
 
     static let standard = ReviewPolicy()
+
+    /// How firm a declared juz' is, as the student says at setup.
+    enum Firmness: String, CaseIterable, Sendable {
+        case firm, middling, weak
+    }
+
+    /// The starting half-life for ayat declared at a firmness.
+    func stability(for firmness: Firmness) -> Double {
+        switch firmness {
+        case .firm: firmStability
+        case .middling: declaredStability
+        case .weak: weakStability
+        }
+    }
 
     /// The weight of a revision's evidence: self-revision, in or outside the app, counts once; a peer's more,
     /// and a sheikh's more still.
@@ -346,6 +364,14 @@ final class RevisionStore {
 
     func setDailyPages(_ pages: Int) {
         dailyPages = min(max(pages, 1), 40)
+        save()
+    }
+
+    /// «أين وصلت في مراجعتك؟»: the rotation continues from this page. Today's plan is made again from it, unless
+    /// some of it is already revised.
+    func setRotationStart(page: Int) {
+        rotationCursor = min(max(page, 1), MushafStore.pageCount)
+        if let plan, plan.doneCount == 0 { self.plan = nil }
         save()
     }
 

@@ -94,6 +94,14 @@ struct StagesSection: View {
                                 .padding(.vertical, 3)
                                 .frame(minHeight: 22)
                                 .background(Palette.mint, in: Capsule())
+                        } else if status.awaitsSheikh {
+                            Text("Awaiting a sheikh's test")
+                                .aqraFont(size: 11, weight: .bold)
+                                .foregroundStyle(Palette.ink)
+                                .padding(.horizontal, 8)
+                                .padding(.vertical, 3)
+                                .frame(minHeight: 22)
+                                .background(Palette.butter, in: Capsule())
                         }
                     }
                     ProgressBars(memorized: status.progress.memorizedShare, mastered: status.progress.masteredShare, tint: face.bottom)
@@ -196,10 +204,11 @@ struct StageDetailView: View {
 
     private func requirementRow(_ requirement: StageStatus.Requirement, status: StageStatus) -> some View {
         let met = status.isMet(requirement)
+        let awaiting = requirement == .sheikh && status.awaitsSheikh
         return HStack(spacing: 12) {
-            Image(systemName: met ? "checkmark.circle.fill" : "circle")
+            Image(systemName: met ? "checkmark.circle.fill" : awaiting ? "hourglass.circle.fill" : "circle")
                 .aqraFont(size: 22, weight: .semibold)
-                .foregroundStyle(met ? Color(light: 0x2E9B63, dark: 0x2E9B63) : Palette.lavender)
+                .foregroundStyle(met ? Color(light: 0x2E9B63, dark: 0x2E9B63) : awaiting ? Color(light: 0xC98A12, dark: 0xC98A12) : Palette.lavender)
             VStack(alignment: .leading, spacing: 2) {
                 StageFormat.requirement(requirement, policy: status.policy)
                     .aqraFont(size: 15, weight: .bold)
@@ -217,7 +226,13 @@ struct StageDetailView: View {
                             Text("Not taken yet")
                         }
                     case .sheikh:
-                        Text(status.sheikhPassed ? "Passed" : "Book a tasmee' and ask for a stage test")
+                        if status.sheikhPassed {
+                            Text("Passed")
+                        } else if awaiting {
+                            Text("Awaiting a sheikh's test: book a tasmee' and ask for one")
+                        } else {
+                            Text("Book a tasmee' and ask for a stage test")
+                        }
                     }
                 }
                 .aqraFont(size: 12, weight: .semibold)

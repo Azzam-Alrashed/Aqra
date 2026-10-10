@@ -123,6 +123,8 @@ struct MyProgressView: View {
                                 detail: Text("A full revision every \(revision.cycleDays(memorizedPages: memorizedPageCount, nearPages: revision.plan?.items.filter { $0.kind == .near }.count ?? 0)) days"))
                     }
                     .buttonStyle(.plain)
+                    AqraRowDivider()
+                    rotationStart
                 }
                 AqraRowDivider()
                 Button {
@@ -140,6 +142,29 @@ struct MyProgressView: View {
                 .buttonStyle(.plain)
             }
         }
+    }
+
+    /// «أين وصلت في مراجعتك؟»: the juz' the rotation continues from, to set it where the student's own revision stands.
+    private var rotationStart: some View {
+        let pages = RevisionStore.memorizedPages(in: store, memorization: memorization)
+        let juzList = Array(Set(pages.map { store.page($0).juz })).sorted()
+        let current = store.page(revision.rotationCursor).juz
+        let choice = Binding {
+            current
+        } set: { juz in
+            if let page = pages.first(where: { store.page($0).juz == juz }) { revision.setRotationStart(page: page) }
+        }
+        return Menu {
+            Picker(selection: choice) {
+                ForEach(juzList, id: \.self) { Text("Juz' \($0)").tag($0) }
+            } label: {
+                EmptyView()
+            }
+        } label: {
+            AqraRow(icon: "🧭", tint: Palette.sky, title: Text("Your revision continues from juz' \(current)"),
+                    detail: Text("Where are you in your revision?"))
+        }
+        .buttonStyle(.plain)
     }
 
     private var memorizedPageCount: Int {
