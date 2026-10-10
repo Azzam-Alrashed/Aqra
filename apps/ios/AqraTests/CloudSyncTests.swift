@@ -202,12 +202,14 @@ struct CloudSyncTests {
         rewards.events = [RewardStore.Event(date: day(1), points: 2, reason: "page")]
         let plan = PlanStore.Snapshot(plan: MemorizationPlan(dailyLines: 8, studyDays: [1, 2], order: .fromEnd), updatedAt: day(1))
         let assessments = AssessmentStore.Snapshot(passes: [1: day(1)], updatedAt: day(1))
-        let json = try CloudBackup.encode(Journey.Snapshot(plan: plan, rewards: rewards, assessments: assessments))
+        let reading = ReadingStore.Snapshot(bookmark: .init(page: 3, placedAt: day(1)), updatedAt: day(1))
+        let json = try CloudBackup.encode(Journey.Snapshot(plan: plan, rewards: rewards, assessments: assessments, reading: reading))
         let seconds = Int(day(1).timeIntervalSinceReferenceDate)   // a whole number of seconds is written without ".0"
         #expect(json.contains("\"achievements\":[\"firstRevision\",\(seconds)]"), Comment(rawValue: json))
         #expect(json.contains("\"passes\":{\"1\":\(seconds)}"), Comment(rawValue: json))
         #expect(json.contains("\"studyDays\":[") && json.contains("\"order\":\"fromEnd\"") && !json.contains("null"), Comment(rawValue: json))
-        #expect(CloudBackup.decodeJourney(json) == Journey.Snapshot(plan: plan, rewards: rewards, assessments: assessments))
+        #expect(json.contains("\"reading\":{\"bookmark\":{\"page\":3,\"placedAt\":\(seconds)}"), Comment(rawValue: json))
+        #expect(CloudBackup.decodeJourney(json) == Journey.Snapshot(plan: plan, rewards: rewards, assessments: assessments, reading: reading))
     }
 
     @Test func readsTheRevisionRecordTheAndroidAppWrites() throws {
@@ -241,7 +243,8 @@ struct CloudSyncTests {
         "rewards":{"points":12,"events":[{"date":821692800.0,"points":2,"reason":"page"}],"achievements":{"firstRevision":821692800.0,"ascended":1.0},\
         "challenges":[],"updatedAt":821692800.0},\
         "assessments":{"results":[{"id":"6B5D2E0A-2A3B-4C0D-9E8F-000000000002","stage":1,"date":821692800.0,"questions":10,"correct":9}],\
-        "sheikhTests":[],"passes":{"1":821692800.0},"updatedAt":821692800.0},"extra":{"a":1}}
+        "sheikhTests":[],"passes":{"1":821692800.0},"updatedAt":821692800.0},\
+        "reading":{"bookmark":{"page":3,"placedAt":821692800.0},"updatedAt":821692800.0},"extra":{"a":1}}
         """
         let decoded = try #require(CloudBackup.decodeJourney(android))
         let day = Date(timeIntervalSinceReferenceDate: 821_692_800)
@@ -249,7 +252,10 @@ struct CloudSyncTests {
         #expect(decoded.rewards.points == 12 && decoded.rewards.events.count == 1)
         #expect(decoded.rewards.achievements == [.firstRevision: day])   // the unknown achievement is passed over
         #expect(decoded.assessments.results.first?.correct == 9 && decoded.assessments.passes == [1: day])
-        // Missing parts are empty, not fatal.
+        #expect(decoded.reading?.bookmark == .init(page: 3, placedAt: day))
+        // Missing parts are empty, not fatal, and an unreadable ribbon is left out rather than losing the rest.
+        let unreadableRibbon = CloudBackup.decodeJourney(#"{"rewards":{"points":3},"reading":{"bookmark":{"page":"three"}}}"#)
+        #expect(unreadableRibbon?.rewards.points == 3 && unreadableRibbon?.reading == nil)
         #expect(CloudBackup.decodeJourney(#"{"rewards":{"points":3}}"#)?.rewards.points == 3)
         #expect(CloudBackup.decodeJourney(#"{"rewards":{"points":3}}"#)?.plan == .empty)
     }

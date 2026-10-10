@@ -35,21 +35,24 @@ final class Journey {
 
         static let empty = Snapshot()
 
-        init(plan: PlanStore.Snapshot = .empty, rewards: RewardStore.Snapshot = .empty, assessments: AssessmentStore.Snapshot = .empty) {
+        init(plan: PlanStore.Snapshot = .empty, rewards: RewardStore.Snapshot = .empty, assessments: AssessmentStore.Snapshot = .empty,
+             reading: ReadingStore.Snapshot? = nil) {
             self.plan = plan
             self.rewards = rewards
             self.assessments = assessments
+            self.reading = reading
         }
 
         // The account's copy may come from the Android app or a newer version: a part missing or unreadable
         // never loses the others.
-        private enum CodingKeys: String, CodingKey { case plan, rewards, assessments }
+        private enum CodingKeys: String, CodingKey { case plan, rewards, assessments, reading }
 
         init(from decoder: Decoder) throws {
             let container = try decoder.container(keyedBy: CodingKeys.self)
             plan = container.decodeOr(PlanStore.Snapshot.self, forKey: .plan, .empty)
             rewards = container.decodeOr(RewardStore.Snapshot.self, forKey: .rewards, .empty)
             assessments = container.decodeOr(AssessmentStore.Snapshot.self, forKey: .assessments, .empty)
+            reading = container.decodeOrNil(ReadingStore.Snapshot.self, forKey: .reading)
         }
 
         static func merge(_ local: Snapshot, _ remote: Snapshot) -> Snapshot {

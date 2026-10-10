@@ -226,7 +226,8 @@ class CloudBackupTest {
             """"challenges":[{"id":"6B5D2E0A-2A3B-4C0D-9E8F-000000000003","kind":"wirdDays","target":5,"start":821692800,"end":822297600},""" +
             """{"id":"6B5D2E0A-2A3B-4C0D-9E8F-000000000004","kind":"later","target":1,"start":821692800,"end":822297600}],"updatedAt":821692800},""" +
             """"assessments":{"results":[{"id":"6B5D2E0A-2A3B-4C0D-9E8F-000000000002","stage":1,"date":821692800,"questions":10,"correct":9}],""" +
-            """"sheikhTests":[{"id":"r1","stage":1,"date":821692800,"teacherName":"Sheikh","passed":true}],"passes":{"1":821692800},"updatedAt":821692800}}"""
+            """"sheikhTests":[{"id":"r1","stage":1,"date":821692800,"teacherName":"Sheikh","passed":true}],"passes":{"1":821692800},"updatedAt":821692800},""" +
+            """"reading":{"bookmark":{"page":3,"placedAt":821692800},"updatedAt":821692800}}"""
         val decoded = Journey.decode(ios)!!
         val day = Moment(821_692_800.0)
         assertTrue(decoded.plan.plan?.dailyLines == 8 && decoded.plan.portions.size == 1 && decoded.plan.history.size == 1)
@@ -236,7 +237,10 @@ class CloudBackupTest {
         assertEquals(1, decoded.rewards.challenges.size)   // the unknown kind is passed over, the rest kept
         assertTrue(decoded.assessments.results[0].correct == 9 && decoded.assessments.sheikhTests[0].passed)
         assertEquals(mapOf(1 to day), decoded.assessments.passes)
-        // Missing parts are empty, not fatal.
+        assertEquals(ReadingStore.Bookmark(3, day), decoded.reading?.bookmark)
+        // Missing parts are empty, not fatal, and an unreadable ribbon is left out rather than losing the rest.
+        val unreadableRibbon = Journey.decode("""{"rewards":{"points":3},"reading":{"bookmark":{"page":"three"}}}""")
+        assertTrue(unreadableRibbon?.rewards?.points == 3 && unreadableRibbon.reading == null)
         assertEquals(3, Journey.decode("""{"rewards":{"points":3}}""")!!.rewards.points)
         assertEquals(com.azzamalrashed.aqra.plan.PlanStore.Snapshot.EMPTY, Journey.decode("""{"rewards":{"points":3}}""")!!.plan)
     }

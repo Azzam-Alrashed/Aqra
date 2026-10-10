@@ -88,8 +88,16 @@ class Journey(
          * The account's journey as this app or the iOS app wrote it, or a newer version of either: a key missing or
          * unknown never fails it, and an entry of its lists that can't be read is skipped rather than losing the rest.
          */
-        fun decode(json: String): Snapshot? = ProgressJson.decodeLossy(Snapshot.serializer(), json,
-            listOf("plan.portions", "plan.history", "rewards.events", "rewards.challenges", "assessments.results", "assessments.sheikhTests"))
+        fun decode(json: String): Snapshot? {
+            ProgressJson.decodeLossy(Snapshot.serializer(), json, LISTS)?.let { return it }
+            // An unreadable ribbon is left out rather than losing the rest of the journey.
+            val root = runCatching { ProgressJson.parseToJsonElement(json).jsonObject }.getOrNull() ?: return null
+            if ("reading" !in root) return null
+            return ProgressJson.decodeLossy(Snapshot.serializer(), JsonObject(root - "reading").toString(), LISTS)
+        }
+
+        private val LISTS =
+            listOf("plan.portions", "plan.history", "rewards.events", "rewards.challenges", "assessments.results", "assessments.sheikhTests")
 
         /** The account's copy as a JSON object, to carry what this app doesn't know; empty if it isn't one. */
         fun original(json: String): JsonObject =
