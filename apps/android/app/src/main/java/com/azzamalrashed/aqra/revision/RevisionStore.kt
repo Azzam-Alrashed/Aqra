@@ -53,8 +53,9 @@ data class ReviewPolicy(
 }
 
 /** One page revised: when, how, and which of its ayat the student stumbled on. */
+// A record another app wrote with a source or stumbles left out still reads (see CloudBackup.decodeRevision).
 @Serializable
-data class RevisionRecord(val date: Moment, val page: Int, val source: Source, val stumbles: List<Int>) {
+data class RevisionRecord(val date: Moment, val page: Int, val source: Source = Source.APP, val stumbles: List<Int> = emptyList()) {
     /** Who heard the revision: the student alone, in the app or outside it, a peer, or a sheikh in a tasmee'. */
     @Serializable
     enum class Source {
@@ -67,7 +68,7 @@ data class RevisionRecord(val date: Moment, val page: Int, val source: Source, v
 
 /** A page in today's plan. */
 @Serializable
-data class PlanItem(val page: Int, val kind: Kind, val done: Boolean = false) {
+data class PlanItem(val page: Int, val kind: Kind = Kind.ROTATION, val done: Boolean = false) {
     @Serializable
     enum class Kind {
         /** It was stumbled on recently and comes back to be made firm. */
@@ -88,7 +89,7 @@ data class DayPlan(val day: Moment, val items: List<PlanItem>) {
 data class FollowUp(
     val due: Moment,
     /** Which of the policy's follow-up intervals it's on. */
-    val step: Int,
+    val step: Int = 0,
 )
 
 /**
@@ -128,6 +129,9 @@ class RevisionStore(
     /** When any of it last changed, to tell which copy is newer when merging with the account's. */
     var updatedAt: Moment by mutableStateOf(Moment.DISTANT_PAST)
         private set
+    /** Whether the file on the device couldn't be read: it was set aside, and the account's copy must come first. */
+    var loadFailed = false
+        private set
 
     /** Called after every change, so the backup can follow. */
     var onChange: (() -> Unit)? = null
@@ -154,7 +158,13 @@ class RevisionStore(
     init {
         val file = file
         if (file != null && file.exists()) {
-            runCatching { ProgressJson.decodeFromString<FileContents>(file.readText()) }.getOrNull()?.let { contents ->
+            val contents = runCatching { ProgressJson.decodeFromString<FileContents>(file.readText()) }.getOrNull()
+            if (contents == null) {
+                // An unreadable file is kept aside, never replaced by an empty one; the account's copy comes first.
+                MemorizationStore.setAside(file)
+                loadFailed = true
+            }
+            contents?.let { contents ->
                 dailyPages = contents.dailyPages
                 rotationCursor = contents.rotationCursor
                 followUps = contents.followUps.associate { it.page to FollowUp(it.due, it.step) }
@@ -202,7 +212,10 @@ class RevisionStore(
         history = snapshot.history.takeLast(1_000)
         revisedDays = snapshot.revisedDays.toSet()
         completedDays = snapshot.completedDays.orEmpty().toSet()
-        save()
+        // A restore keeps the record's own date, so two devices holding one merged copy don't keep writing it to
+        // each other; the student's own changes still date it from now.
+        updatedAt = snapshot.updatedAt
+        save(touching = false)
     }
 
     /** The daily amount in effect: the student's choice, or the suggestion for what they've memorized. */
@@ -360,8 +373,8 @@ class RevisionStore(
 
     // MARK: - Saving
 
-    private fun save() {
-        updatedAt = Moment.now()
+    private fun save(touching: Boolean = true) {
+        if (touching) updatedAt = Moment.now()
         onChange?.invoke()
         val file = file ?: return
         val contents = FileContents(

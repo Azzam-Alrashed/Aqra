@@ -12,6 +12,7 @@ import com.azzamalrashed.aqra.revision.RevisionRecord.Source
 import com.azzamalrashed.aqra.revision.RevisionStore
 import com.azzamalrashed.aqra.revision.RevisionStore.Snapshot
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 
@@ -111,6 +112,133 @@ class CloudBackupTest {
         assertTrue("\"dailyPages\"" !in json && "\"plan\"" !in json && "null" !in json)
         val withPlan = CloudBackup.encode(Snapshot(followUps = mapOf(11 to FollowUp(Moment(1.0), 0))))
         assertTrue(withPlan, "\"followUps\":{\"11\":{\"due\":1.0,\"step\":0}}" in withPlan)
+    }
+
+    // MARK: - Merging across devices (the same checks as the iOS app's)
+
+    @Test
+    fun mergePrefersRevisedRecordOverFreshDeclaration() {
+        // A hafiz on a new phone declares the juz' again (dated now, never revised), then signs in: months of
+        // revision in the account win, and the memorization is dated from its earliest declaration.
+        val history = memory(0, reviewed = 60, stability = 80.0, verified = true)
+        val fresh = AyahMemory(since = day(90))
+        for (merged in listOf(CloudBackup.merge(fresh, history), CloudBackup.merge(history, fresh))) {
+            assertTrue(merged.stability == 80.0 && merged.lastReviewed == day(60) && merged.verified && merged.lapses == 2)
+            assertEquals(day(0), merged.since)
+        }
+        // Neither revised: the earlier declaration is the record, still dated from the earliest.
+        val early = AyahMemory(since = day(1))
+        val late = AyahMemory(since = day(5), stability = 30.0)
+        assertEquals(14.0, CloudBackup.merge(early, late).stability, 0.0)
+        assertEquals(day(1), CloudBackup.merge(late, early).since)
+        // When it was learned as a new portion is kept from whichever side knows.
+        val learned = memory(3, reviewed = 4).copy(learnedAt = day(3))
+        assertEquals(day(3), CloudBackup.merge(learned, memory(3, reviewed = 9)).learnedAt)
+    }
+
+    @Test
+    fun mergeDropsVerifiedAfterALaterStumble() {
+        // Verified by a sheikh on one device (day 10), then stumbled on with the other device (day 20).
+        val verified = memory(0, reviewed = 10, stability = 40.0, verified = true).copy(lapses = 0)
+        var stumbled = memory(0, reviewed = 20, stability = 12.0).copy(lapses = 1, lastLapseAt = day(20))
+        val merged = CloudBackup.merge(verified, stumbled)
+        assertTrue(!merged.verified && merged.lastLapseAt == day(20) && merged.lapses == 1)
+        assertEquals(merged, CloudBackup.merge(stumbled, verified))
+        // A stumble before the teacher heard it clean doesn't take the mark away.
+        stumbled = stumbled.copy(lastLapseAt = day(5), lastReviewed = day(5))
+        assertTrue(CloudBackup.merge(verified, stumbled).verified)
+        // A device that never saw the tasmee' revised later, clean: the mark holds.
+        assertTrue(CloudBackup.merge(verified, memory(0, reviewed = 30, stability = 50.0)).verified)
+    }
+
+    @Test
+    fun mergeKeepsFollowUpsOfBothSides() {
+        val a = RevisionRecord(day(1), 3, Source.APP, listOf(7))
+        val b = RevisionRecord(day(2), 9, Source.APP, listOf(8))
+        val local = Snapshot(
+            followUps = mapOf(3 to FollowUp(day(2), 0), 5 to FollowUp(day(4), 1)),
+            plan = DayPlan(day(2), listOf(PlanItem(3, PlanItem.Kind.FOLLOW_UP, done = true), PlanItem(4, PlanItem.Kind.ROTATION))),
+            history = listOf(a), revisedDays = listOf(day(1)), updatedAt = day(1),
+        )
+        val remote = Snapshot(
+            followUps = mapOf(5 to FollowUp(day(6), 2), 9 to FollowUp(day(3), 0)),
+            plan = DayPlan(day(2), listOf(PlanItem(3, PlanItem.Kind.FOLLOW_UP), PlanItem(4, PlanItem.Kind.ROTATION, done = true))),
+            history = listOf(b), revisedDays = listOf(day(2)), updatedAt = day(2),
+        )
+        val merged = CloudBackup.merge(local, remote)
+        // Page by page: both sides' pages, each at its later date.
+        assertEquals(mapOf(3 to FollowUp(day(2), 0), 5 to FollowUp(day(6), 2), 9 to FollowUp(day(3), 0)), merged.followUps)
+        // The same day's plan: a page done on either device is done.
+        assertEquals(listOf(true, true), merged.plan!!.items.map { it.done })
+        assertEquals(merged.followUps, CloudBackup.merge(remote, local).followUps)
+    }
+
+    @Test
+    fun unmarkedAyatStayUnmarkedAcrossDevices() {
+        // Unmarked on the phone (day 5) after the account last touched the ayah (revised day 3): it stays gone.
+        val phone = CloudBackup.Memory(mapOf(1 to memory(0)), mapOf(2 to day(5)))
+        val account = CloudBackup.Memory(mapOf(1 to memory(0), 2 to memory(0, reviewed = 3)))
+        var merged = CloudBackup.merge(phone, account)
+        assertTrue(merged.ayahs.keys == setOf(1) && merged.removed == mapOf(2 to day(5)))
+        assertEquals(merged, CloudBackup.merge(account, phone))
+        // Marked again on the tablet after that (day 7): it's back, and the tombstone goes.
+        val tablet = CloudBackup.Memory(mapOf(2 to AyahMemory(since = day(7))))
+        merged = CloudBackup.merge(merged, tablet)
+        assertTrue(merged.ayahs[2]!!.since == day(7) && merged.removed.isEmpty())
+        // Tombstones travel through the blocks, and no app reads one as memorized.
+        val blocks = CloudBackup.blocks(phone)
+        assertEquals(CloudBackup.tombstone(day(5)), blocks[0]!!["2"])
+        assertNull(CloudBackup.decode(CloudBackup.tombstone(day(5))))
+        assertEquals(phone, CloudBackup.memory(blocks.values))
+    }
+
+    @Test
+    fun decodeRejectsNonFiniteRows() {
+        val good = listOf(day(0).epochSeconds, 14.0, -1.0, 0.0, 0.0, -1.0, -1.0)
+        assertTrue(CloudBackup.decode(good) != null)
+        for ((index, bad) in listOf(0 to Double.NaN, 1 to Double.POSITIVE_INFINITY, 2 to Double.NEGATIVE_INFINITY, 3 to Double.NaN,
+            3 to 1e300, 0 to 1e300, 5 to Double.NaN, 6 to Double.POSITIVE_INFINITY)) {
+            val row = good.toMutableList().also { it[index] = bad }
+            assertNull("row[$index] = $bad", CloudBackup.decode(row))
+            assertNull(CloudBackup.removedAt(row))
+        }
+        assertNull(CloudBackup.removedAt(listOf(Double.NaN, 0.0)))
+        assertNull(CloudBackup.removedAt(listOf(1e300, 0.0)))
+    }
+
+    @Test
+    fun strengthLevelHandlesNaN() {
+        // A corrupt record's strength can't crash the page: it draws as the faintest shade.
+        assertEquals(0, com.azzamalrashed.aqra.mushaf.TopicHighlight(0, Double.NaN).level)
+        assertEquals(0, com.azzamalrashed.aqra.mushaf.TopicHighlight(0, Double.POSITIVE_INFINITY).level)
+        assertEquals(2, com.azzamalrashed.aqra.mushaf.TopicHighlight(0, 0.5).level)
+    }
+
+    /** The account's journey as the iOS app writes it (Swift's JSONEncoder), read by this app. */
+    @Test
+    fun readsTheJourneyTheIosAppWrites() {
+        // Dates as seconds since 2001, a dictionary keyed by an enum as a flat list, one keyed by a number as an
+        // object, a set as a list, plus a challenge of a kind this version doesn't know and a part left out.
+        val ios = """{"plan":{"plan":{"dailyLines":8,"studyDays":[1,2,3,4,5,7],"order":"fromEnd","paused":false},""" +
+            """"portions":[{"id":"6B5D2E0A-2A3B-4C0D-9E8F-000000000001","date":821692800,"planned":[1,2],"memorized":[1],"plannedLines":2,"actualLines":1}],""" +
+            """"history":[{"date":821692800,"plan":{"dailyLines":8,"studyDays":[1],"order":"fromStart","paused":false}}],"updatedAt":821692800},""" +
+            """"rewards":{"points":12,"events":[{"date":821692800,"points":2,"reason":"page"}],"achievements":["firstRevision",821692800],""" +
+            """"challenges":[{"id":"6B5D2E0A-2A3B-4C0D-9E8F-000000000003","kind":"wirdDays","target":5,"start":821692800,"end":822297600},""" +
+            """{"id":"6B5D2E0A-2A3B-4C0D-9E8F-000000000004","kind":"later","target":1,"start":821692800,"end":822297600}],"updatedAt":821692800},""" +
+            """"assessments":{"results":[{"id":"6B5D2E0A-2A3B-4C0D-9E8F-000000000002","stage":1,"date":821692800,"questions":10,"correct":9}],""" +
+            """"sheikhTests":[{"id":"r1","stage":1,"date":821692800,"teacherName":"Sheikh","passed":true}],"passes":{"1":821692800},"updatedAt":821692800}}"""
+        val decoded = Journey.decode(ios)!!
+        val day = Moment(821_692_800.0)
+        assertTrue(decoded.plan.plan?.dailyLines == 8 && decoded.plan.portions.size == 1 && decoded.plan.history.size == 1)
+        assertEquals(2.0, decoded.plan.portions[0].plannedLines, 0.0)
+        assertTrue(decoded.rewards.points == 12 && decoded.rewards.events.size == 1)
+        assertEquals(mapOf("firstRevision" to day), decoded.rewards.achievements)
+        assertEquals(1, decoded.rewards.challenges.size)   // the unknown kind is passed over, the rest kept
+        assertTrue(decoded.assessments.results[0].correct == 9 && decoded.assessments.sheikhTests[0].passed)
+        assertEquals(mapOf(1 to day), decoded.assessments.passes)
+        // Missing parts are empty, not fatal.
+        assertEquals(3, Journey.decode("""{"rewards":{"points":3}}""")!!.rewards.points)
+        assertEquals(com.azzamalrashed.aqra.plan.PlanStore.Snapshot.EMPTY, Journey.decode("""{"rewards":{"points":3}}""")!!.plan)
     }
 
     @Test

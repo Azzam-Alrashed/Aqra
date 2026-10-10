@@ -6,6 +6,8 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.azzamalrashed.aqra.account.AccountStore
 import com.azzamalrashed.aqra.account.CloudSync
+import com.azzamalrashed.aqra.account.FirestoreCloudStore
+import com.azzamalrashed.aqra.account.InstallId
 import com.azzamalrashed.aqra.account.Journey
 import com.azzamalrashed.aqra.account.ReadingStore
 import com.azzamalrashed.aqra.core.AssetQuranFiles
@@ -58,7 +60,7 @@ class AqraApp(application: Application) {
     val reading = ReadingStore(File(application.filesDir, "reading.json"))
     val journey = Journey(plan, rewards, assessments, reading)
     val router = AppRouter()
-    val sync = CloudSync(memorization, revision, journey, prefs, scope)
+    val sync = CloudSync(memorization, revision, journey, scope, FirestoreCloudStore(), InstallId.of(application))
     val tasmee = TasmeeStore(memorization, revision, prefs)
     val social = SocialStore(memorization, revision)
     /** The account the progress is backed up to. */

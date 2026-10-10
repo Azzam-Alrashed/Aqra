@@ -5,6 +5,7 @@ import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.core.ProgressJson
+import com.azzamalrashed.aqra.core.decodeLossy
 import com.azzamalrashed.aqra.curriculum.AssessmentStore
 import com.azzamalrashed.aqra.memorization.writeAtomically
 import com.azzamalrashed.aqra.quran.MushafStore
@@ -83,7 +84,12 @@ class Journey(
             return JsonObject(merged).toString()
         }
 
-        fun decode(json: String): Snapshot? = runCatching { ProgressJson.decodeFromString(Snapshot.serializer(), json) }.getOrNull()
+        /**
+         * The account's journey as this app or the iOS app wrote it, or a newer version of either: a key missing or
+         * unknown never fails it, and an entry of its lists that can't be read is skipped rather than losing the rest.
+         */
+        fun decode(json: String): Snapshot? = ProgressJson.decodeLossy(Snapshot.serializer(), json,
+            listOf("plan.portions", "plan.history", "rewards.events", "rewards.challenges", "assessments.results", "assessments.sheikhTests"))
 
         /** The account's copy as a JSON object, to carry what this app doesn't know; empty if it isn't one. */
         fun original(json: String): JsonObject =
