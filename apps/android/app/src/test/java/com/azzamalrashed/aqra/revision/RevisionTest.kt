@@ -211,6 +211,22 @@ class RevisionTest {
         assertTrue(!session.covers(40) && !session.isVeiled(40))
     }
 
+    /** «تعثّرتُ هنا» reveals the next ayah already marked as a stumble; past the last ayah it does nothing. */
+    @Test
+    fun stumblingOnTheNextAyahRevealsItMarked() {
+        val session = RevisionSession(2, listOf(7, 8, 9))
+        session.revealNext()
+        session.stumbleOnNext()
+        assertTrue(session.revealed == 2 && session.stumbles == setOf(8))
+        session.stumbleOnNext()
+        assertTrue(session.isComplete && session.stumbles == setOf(8, 9))
+        session.stumbleOnNext()
+        assertTrue(session.revealed == 3 && session.stumbles == setOf(8, 9))
+        // A tap on a revealed ayah still clears its stumble.
+        session.tap(9)
+        assertEquals(setOf(8), session.stumbles)
+    }
+
     @Test
     fun suggestedDailyAmountCoversAboutAMonth() {
         assertEquals(2, ReviewPolicy.suggestedDailyPages(20))

@@ -59,6 +59,14 @@ import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.buildAnnotatedString
+import androidx.compose.ui.text.withStyle
+import com.azzamalrashed.aqra.mushaf.MushafMode
+import com.azzamalrashed.aqra.mushaf.MushafModeChip
+import com.azzamalrashed.aqra.ui.components.FittedText
+import com.azzamalrashed.aqra.ui.util.factSeparator
 import com.azzamalrashed.aqra.mushaf.MushafColorsMenu
 import com.azzamalrashed.aqra.mushaf.MushafPageOptions
 import com.azzamalrashed.aqra.mushaf.MushafPageView
@@ -231,30 +239,56 @@ private fun RevisionBar(
                 }
                 Column(verticalArrangement = Arrangement.spacedBy(2.dp)) {
                     Text(stringResource(R.string.page_n, session.page), style = aqraStyle(17f, Weight.heavy, style.ink))
-                    Text(stringResource(R.string.n_of_n, minOf(session.revealed, session.ayahs.size), session.ayahs.size), style = aqraStyle(12f, Weight.semibold, style.chrome))
+                    val progress = stringResource(R.string.n_of_n, minOf(session.revealed, session.ayahs.size), session.ayahs.size)
+                    val stumbles = pluralStringResource(R.plurals.n_stumbles, session.stumbles.size, session.stumbles.size)
+                    Text(
+                        buildAnnotatedString {
+                            append(progress)
+                            if (session.stumbles.isNotEmpty()) {
+                                append(factSeparator())
+                                withStyle(SpanStyle(color = style.stumbleText)) { append(stumbles) }
+                            }
+                        },
+                        style = aqraStyle(12f, Weight.semibold, style.chrome),
+                    )
                 }
                 Spacer(Modifier.weight(1f))
-                AnimatedVisibility(session.stumbles.isNotEmpty(), enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
-                    Box(Modifier.height(30.dp).background(style.stumble.copy(alpha = 0.6f), CircleShape).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
-                        Text(pluralStringResource(R.plurals.n_stumbles, session.stumbles.size, session.stumbles.size), style = aqraStyle(13f, Weight.bold, style.stumbleText))
-                    }
-                }
+                MushafModeChip(MushafMode.REVISING, style)
             }
             Text(
-                stringResource(if (outside) R.string.tap_the_ayat_you_stumbled_on_when_you_revised_this else R.string.tap_to_reveal_the_next_ayah_and_tap_a_revealed),
+                stringResource(when {
+                    outside -> R.string.tap_the_ayat_you_stumbled_on_when_you_revised_this
+                    session.isComplete -> R.string.tap_an_ayah_to_mark_or_clear_a_stumble_then
+                    else -> R.string.recite_the_next_ayah_from_memory_then_reveal_it
+                }),
                 style = aqraStyle(12f, Weight.semibold, style.chrome), textAlign = TextAlign.Center, maxLines = 2,
                 modifier = Modifier.fillMaxWidth().padding(vertical = 12.dp),
             )
-            if (canListen) {
-                MarkingButton(stringResource(R.string.recite_aloud), style, Modifier.fillMaxWidth().padding(bottom = 10.dp), prominent = true,
-                    leading = { Icon(Icons.Rounded.Mic, null, tint = Color.White, modifier = Modifier.size(18.dp)) }, onClick = onListen)
+            if (!outside && !session.isComplete) {
+                MarkingButton(stringResource(R.string.next_ayah), style, Modifier.fillMaxWidth().padding(bottom = 10.dp), prominent = true) { session.revealNext() }
             }
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                if (!outside) {
-                    MarkingButton(stringResource(R.string.next_ayah), style, Modifier.weight(1f), enabled = !session.isComplete) { session.revealNext() }
-                    MarkingButton(stringResource(R.string.show_page), style, Modifier.weight(1f), enabled = !session.isComplete) { session.revealAll() }
+                if (!outside && !session.isComplete) {
+                    // «تعثّرتُ هنا»: the stumble color, a soft red that says what it does.
+                    Box(
+                        Modifier.weight(1f).heightIn(min = 46.dp).background(style.stumble.copy(alpha = 0.55f), CircleShape)
+                            .pressable(pressed = 0.97f) { session.stumbleOnNext() }.padding(horizontal = 8.dp),
+                        contentAlignment = Alignment.Center,
+                    ) {
+                        FittedText(stringResource(R.string.i_stumbled_here), aqraStyle(15f, Weight.bold, style.stumbleText), minScale = 0.65f)
+                    }
+                    MarkingButton(stringResource(R.string.show_page), style, Modifier.weight(1f)) { session.revealAll() }
                 }
-                MarkingButton(stringResource(R.string.done), style, Modifier.weight(1f), prominent = !canListen, onClick = onDone)
+                MarkingButton(stringResource(R.string.done), style, Modifier.weight(1f), prominent = outside || session.isComplete, onClick = onDone)
+            }
+            if (canListen) {
+                Row(
+                    Modifier.fillMaxWidth().heightIn(min = 44.dp).padding(top = 6.dp).pressable(onClick = onListen),
+                    verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+                ) {
+                    Icon(Icons.Rounded.Mic, null, tint = style.barAccent, modifier = Modifier.size(18.dp))
+                    Text(stringResource(R.string.recite_aloud_instead), style = aqraStyle(14f, Weight.bold, style.barAccent))
+                }
             }
         }
     }

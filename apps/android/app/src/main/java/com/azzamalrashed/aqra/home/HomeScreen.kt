@@ -7,7 +7,6 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
-import androidx.compose.foundation.ExperimentalFoundationApi
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.combinedClickable
@@ -24,21 +23,17 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.rounded.CheckCircle
 import androidx.compose.material.icons.rounded.Close
-import androidx.compose.material.icons.rounded.ErrorOutline
-import androidx.compose.material3.DropdownMenu
-import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.AbsoluteAlignment
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -55,36 +50,26 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
-import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
-import androidx.compose.ui.text.style.TextDecoration
 import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.azzamalrashed.aqra.AppTab
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.account.AccountStore
-import com.azzamalrashed.aqra.account.SignInButtons
 import com.azzamalrashed.aqra.core.Moment
+import com.azzamalrashed.aqra.core.weekday
 import com.azzamalrashed.aqra.memorization.MemorizationSetupScreen
-import com.azzamalrashed.aqra.memorization.memorizedSummary
 import com.azzamalrashed.aqra.mushaf.MushafThumbnail
 import com.azzamalrashed.aqra.quran.MushafStore
-import com.azzamalrashed.aqra.revision.DailyAmountScreen
-import com.azzamalrashed.aqra.revision.DayPlan
 import com.azzamalrashed.aqra.revision.PlanItem
 import com.azzamalrashed.aqra.revision.RevisionRecord
 import com.azzamalrashed.aqra.revision.RevisionStore
 import com.azzamalrashed.aqra.revision.cycleDays
 import com.azzamalrashed.aqra.revision.RotationAdvisor
 import com.azzamalrashed.aqra.account.InboxButton
-import com.azzamalrashed.aqra.curriculum.AssessmentStore
-import com.azzamalrashed.aqra.curriculum.StageCard
-import com.azzamalrashed.aqra.curriculum.StageSheet
 import com.azzamalrashed.aqra.plan.PlanEditorScreen
-import com.azzamalrashed.aqra.plan.PortionCard
 import com.azzamalrashed.aqra.ui.components.ChipButton
-import com.azzamalrashed.aqra.tasmee.Booking
 import com.azzamalrashed.aqra.tasmee.TasmeeRecord
 import com.azzamalrashed.aqra.tasmee.TasmeeSession
 import com.azzamalrashed.aqra.tasmee.placeText
@@ -96,14 +81,10 @@ import com.azzamalrashed.aqra.ui.art.AqraGlowRings
 import com.azzamalrashed.aqra.ui.art.GlossyStairs
 import com.azzamalrashed.aqra.ui.art.Manazil
 import com.azzamalrashed.aqra.ui.components.AqraCard
-import com.azzamalrashed.aqra.ui.components.AqraChevron
 import com.azzamalrashed.aqra.ui.components.AqraChip
-import com.azzamalrashed.aqra.ui.components.AqraRow
 import com.azzamalrashed.aqra.ui.components.AqraRowDivider
-import com.azzamalrashed.aqra.ui.components.BrandButton
 import com.azzamalrashed.aqra.ui.components.ChipText
 import com.azzamalrashed.aqra.ui.components.IconTile
-import com.azzamalrashed.aqra.ui.components.ProblemLine
 import com.azzamalrashed.aqra.ui.components.TwoLineHeadline
 import com.azzamalrashed.aqra.ui.components.pressScale
 import com.azzamalrashed.aqra.ui.components.pressable
@@ -121,13 +102,29 @@ import com.azzamalrashed.aqra.ui.util.formatPercent
 import com.azzamalrashed.aqra.ui.util.formatWhen
 import com.azzamalrashed.aqra.ui.util.hijriToday
 import com.azzamalrashed.aqra.ui.util.factSeparator
+import androidx.compose.foundation.layout.heightIn
+import androidx.compose.foundation.layout.offset
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.navigationBarsPadding
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
+import androidx.compose.material.icons.automirrored.rounded.KeyboardArrowRight
+import androidx.compose.material.icons.rounded.Check
+import androidx.compose.ui.semantics.clearAndSetSemantics
+import androidx.compose.ui.semantics.heading
+import androidx.compose.ui.text.style.TextOverflow
+import com.azzamalrashed.aqra.plan.PlanFormat
+import com.azzamalrashed.aqra.plan.TodayPortion
+import com.azzamalrashed.aqra.tasmee.Booking
+import com.azzamalrashed.aqra.ui.util.weekdayName
+import java.time.ZoneId
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
 import kotlin.math.sin
 
 /**
- * The home: the منازل stairs on a glowing stage, today's wird and one button to start it, then the Mushaf where the
- * student left it, today's pages, and what they've memorized. The Mushaf and the wird open full screen over it.
+ * The home: the منازل stairs on a glowing stage, then «اليوم» — the day's steps in order, each its own button: revise,
+ * memorize, recite — then the Mushaf at the reader's ribbon. The Mushaf and the wird open full screen over it.
  */
 @Composable
 fun HomeScreen(app: AqraApp, store: MushafStore) {
@@ -136,9 +133,9 @@ fun HomeScreen(app: AqraApp, store: MushafStore) {
     val revision = app.revision
     val haptics = LocalHapticFeedback.current
     var editingMemorization by remember { mutableStateOf(false) }
-    var editingAmount by remember { mutableStateOf(false) }
     var editingPlan by remember { mutableStateOf(false) }
-    var openedStage by remember { mutableStateOf<Int?>(null) }
+    // «سجّلها»: a page of today's wird revised outside the app.
+    var loggingOutside by remember { mutableStateOf(false) }
 
     // The entrance plays once: the stage opens, the stairs climb, the chips pop out and the rest rises.
     var entered by rememberSaveable { mutableStateOf(false) }
@@ -184,41 +181,32 @@ fun HomeScreen(app: AqraApp, store: MushafStore) {
             Modifier.graphicsLayer { alpha = shown; translationY = (1 - shown) * 16.dp.toPx() },
             verticalArrangement = Arrangement.spacedBy(14.dp),
         ) {
-            Headline(app, store, Modifier.padding(top = 4.dp))
-            Action(app, store, Modifier.padding(top = 10.dp, bottom = 8.dp)) { editingMemorization = true }
-            // Today's portion, or the invitation to a plan — not for a student who has memorized the whole Quran.
-            if (app.plan.plan != null || memorization.count < MushafStore.AYAH_COUNT) {
-                PortionCard(app, store, onMemorize = { overlays.open(FullScreen.Memorize(it)) }, onEditPlan = { editingPlan = true })
-            }
-            if (memorization.count > 0 || app.plan.plan != null) {
-                val stage = currentStage(app, store)
-                StageCard(app, store, stage) { openedStage = stage }
-            }
+            TodayCard(
+                app, store, Modifier.padding(top = 4.dp),
+                onChooseMemorization = { editingMemorization = true },
+                onEditPlan = { editingPlan = true },
+                onLogOutside = { loggingOutside = true },
+            )
             SuggestionCard(app, store)
             newTasmee(app)?.let { HeardCard(app, it) }
-            app.tasmee.nextBooking?.let { TasmeeCard(app, it) }
             MushafCard(app, store) { overlays.open(FullScreen.Mushaf(marking = false)) }
-            revision.plan?.takeIf { it.items.isNotEmpty() }?.let { PagesCard(app, store, it) }
-            if (showsSaveProgress(app)) SaveProgressCard(app)
-            MemorizationCard(app, store, onEditMemorization = { editingMemorization = true }, onEditAmount = { editingAmount = true })
+            ProgressLink(app)
         }
     }
 
     if (editingPlan) {
         AqraSheet(onDismiss = { editingPlan = false }) { PlanEditorScreen(app, store, isSetup = false) { editingPlan = false } }
     }
-    openedStage?.let { stage -> StageSheet(app, store, stage) { openedStage = null } }
     if (editingMemorization) {
         AqraSheet(onDismiss = { editingMemorization = false }) {
             MemorizationSetupScreen(app, store, isSheet = true) { editingMemorization = false }
         }
     }
-    if (editingAmount) {
-        val pages = RevisionStore.memorizedPages(store, memorization).size
-        AqraSheet(onDismiss = { editingAmount = false }) {
-            DailyAmountScreen(pages, revision.effectiveDailyPages(pages), isEditor = true) {
-                revision.setDailyPages(it)
-                editingAmount = false
+    if (loggingOutside) {
+        AqraSheet(onDismiss = { loggingOutside = false }, fullHeight = false) {
+            OutsideRevisionSheet(app, store, onDone = { loggingOutside = false }) { page ->
+                loggingOutside = false
+                overlays.open(FullScreen.Wird(page, outside = true))
             }
         }
     }
@@ -300,9 +288,13 @@ private fun androidx.compose.foundation.layout.BoxScope.FloatingChip(
     ) { content() }
 }
 
-// MARK: - Today's wird
+// MARK: - Today
 
+/** What's left of today's wird: the pages not yet revised, the first of them leading. */
 private fun remaining(revision: RevisionStore): List<PlanItem> = revision.plan?.items?.filter { !it.done }.orEmpty()
+
+/** Whether there's a wird today: something memorized, and pages in today's plan. */
+private fun revisesToday(app: AqraApp): Boolean = app.memorization.count > 0 && app.revision.plan?.items?.isNotEmpty() == true
 
 @Composable
 private fun cycleLine(app: AqraApp, store: MushafStore): String {
@@ -311,57 +303,215 @@ private fun cycleLine(app: AqraApp, store: MushafStore): String {
     return pluralStringResource(R.plurals.a_full_revision_every_n_days, days, days)
 }
 
+/** «اليوم»: the day's steps in order, each its own button: revise, memorize, recite. */
 @Composable
-private fun Headline(app: AqraApp, store: MushafStore, modifier: Modifier) {
-    val plan = app.revision.plan
-    val remaining = remaining(app.revision)
-    Column(modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(10.dp)) {
-        val journeyBegins = app.memorization.count == 0 && app.plan.plan != null
-        when {
-            journeyBegins -> TwoLineHeadline(stringResource(R.string.begin_your_journey), stringResource(R.string.with_todays_portion))
-            app.memorization.count == 0 || plan == null || plan.items.isEmpty() ->
-                TwoLineHeadline(stringResource(R.string.what_have_you_memorized), stringResource(R.string.of_the_quran_q))
-            remaining.isNotEmpty() -> TwoLineHeadline(
-                stringResource(R.string.your_revision_today),
-                pluralStringResource(R.plurals.n_pages_from_s, remaining.size, remaining.size, store.surahNames[store.page(remaining.first().page).surah].orEmpty()),
-            )
-            else -> TwoLineHeadline(stringResource(R.string.todays_revision_is_done), stringResource(R.string.may_allah_bless_you))
+private fun TodayCard(
+    app: AqraApp, store: MushafStore, modifier: Modifier,
+    onChooseMemorization: () -> Unit, onEditPlan: () -> Unit, onLogOutside: () -> Unit,
+) {
+    val portion = if (app.plan.plan == null) null else app.plan.today(app.memorization, store)
+    val revises = revisesToday(app)
+    val steps = (if (revises) 1 else 0) + (if (portion is TodayPortion.Due || portion is TodayPortion.Done) 1 else 0)
+    val done = (if (revises && app.revision.plan?.isComplete == true) 1 else 0) + (if (portion is TodayPortion.Done) 1 else 0)
+    AqraCard(modifier.fillMaxWidth(), animated = true, padding = 0.dp, radius = 26.dp) {
+        Row(Modifier.padding(14.dp), verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+            IconTile("☀️", Palette.butter, size = 40.dp)
+            Column(Modifier.weight(1f).semantics(mergeDescendants = true) { heading() }, verticalArrangement = Arrangement.spacedBy(1.dp)) {
+                Text(stringResource(R.string.today), style = aqraStyle(19f, Weight.heavy, Palette.ink))
+                Text(stringResource(R.string.your_days_steps_in_order), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
+            }
+            if (steps > 0) {
+                Box(Modifier.heightIn(min = 28.dp).background(Palette.lavender, CircleShape).padding(horizontal = 10.dp), contentAlignment = Alignment.Center) {
+                    Text(stringResource(R.string.n_of_n, done, steps), style = aqraStyle(13f, Weight.bold, Palette.brand))
+                }
+            }
         }
-        Text(
-            when {
-                journeyBegins -> stringResource(R.string.every_ayah_you_memorize_is_a_step_up)
-                app.memorization.count == 0 -> stringResource(R.string.choose_what_youve_memorized_to_start_climbing)
-                else -> cycleLine(app, store)
-            },
-            style = aqraStyle(16f, Weight.medium, Palette.inkSoft), textAlign = TextAlign.Center,
-        )
+        ReviseStep(app, store, onChooseMemorization)
+        AqraRowDivider()
+        MemorizeStep(app, store, portion, onEditPlan)
+        AqraRowDivider()
+        ReciteStep(app)
+        if (revises && remaining(app.revision).isNotEmpty()) {
+            AqraRowDivider()
+            Row(
+                Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp),
+            ) {
+                Text(stringResource(R.string.revised_a_page_outside_the_app_q), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft), modifier = Modifier.weight(1f))
+                ChipButton(stringResource(R.string.log_it), filled = false, onClick = onLogOutside)
+            }
+        }
     }
 }
 
+/** ١ Revise: today's wird, started or carried on; a tick once it's done. */
 @Composable
-private fun Action(app: AqraApp, store: MushafStore, modifier: Modifier, onChooseMemorization: () -> Unit) {
+private fun ReviseStep(app: AqraApp, store: MushafStore, onChooseMemorization: () -> Unit) {
     val overlays = LocalOverlays.current
-    val next = remaining(app.revision).firstOrNull()
     val plan = app.revision.plan
+    val left = remaining(app.revision)
+    val next = left.firstOrNull()
     when {
-        app.memorization.count == 0 && app.plan.plan != null -> Unit
-        app.memorization.count == 0 -> BrandButton(stringResource(R.string.choose_what_youve_memorized), modifier, onClick = onChooseMemorization)
-        next != null && plan != null -> BrandButton(
-            stringResource(if (plan.doneCount == 0) R.string.start_todays_revision else R.string.continue_todays_revision), modifier,
+        app.memorization.count == 0 -> TodayStep(
+            1, "📖", Palette.sky, stringResource(R.string.choose_what_youve_memorized),
+            stringResource(R.string.your_daily_revision_starts_from_it), stringResource(R.string.choose), onClick = onChooseMemorization,
+        )
+        next != null && plan != null -> TodayStep(
+            1, "🔁", Palette.sky, stringResource(R.string.revise_todays_wird),
+            pluralStringResource(R.plurals.n_pages_from_s, left.size, left.size, store.surahNames[store.page(next.page).surah].orEmpty()) +
+                factSeparator() + cycleLine(app, store),
+            stringResource(if (plan.doneCount == 0) R.string.start else R.string.carry_on),
         ) { overlays.open(FullScreen.Wird(next.page)) }
+        plan != null && plan.isComplete -> TodayStep(
+            1, "✅", Palette.mint, pluralStringResource(R.plurals.you_revised_n_pages, plan.items.size, plan.items.size),
+            stringResource(R.string.todays_wird_is_done_may_allah_bless_you), done = true,
+        )
+        else -> TodayStep(1, "🔁", Palette.sky, stringResource(R.string.nothing_to_revise_today), cycleLine(app, store))
+    }
+}
+
+/** ٢ Memorize: today's portion of the plan, a rest day, or the invitation to a plan. */
+@Composable
+private fun MemorizeStep(app: AqraApp, store: MushafStore, today: TodayPortion?, onEditPlan: () -> Unit) {
+    val overlays = LocalOverlays.current
+    when (today) {
+        null -> if (app.plan.plan?.paused == true) {
+            TodayStep(2, "⏸️", Palette.lavender, stringResource(R.string.your_memorization_plan_is_paused),
+                stringResource(R.string.resume_it_from_your_plan), stringResource(R.string.your_plan), onClick = onEditPlan)
+        } else {
+            TodayStep(2, "✍️", Palette.butter, stringResource(R.string.memorize_new_portions),
+                stringResource(R.string.a_daily_amount_and_the_date_youd_complete_the_quran), stringResource(R.string.start), onClick = onEditPlan)
+        }
+        is TodayPortion.Due -> TodayStep(2, "✍️", Palette.butter, stringResource(R.string.memorize_todays_portion),
+            PlanFormat.portion(today.ayahs, store), stringResource(R.string.memorize)) { overlays.open(FullScreen.Memorize(today.ayahs)) }
+        is TodayPortion.Done -> TodayStep(2, "✅", Palette.mint, stringResource(R.string.memorized_today),
+            PlanFormat.portion(today.portion.memorized, store), done = true)
+        is TodayPortion.RestDay -> TodayStep(2, "🌙", Palette.lavender, stringResource(R.string.a_rest_day_from_new_memorization),
+            stringResource(R.string.next_portion_s, weekdayName(today.next.weekday(ZoneId.systemDefault()), narrow = false)))
+        TodayPortion.Complete -> TodayStep(2, "⭐️", Palette.butter, stringResource(R.string.every_ayah_is_memorized),
+            stringResource(R.string.may_allah_bless_you), done = true)
+    }
+}
+
+/** ٣ Recite: the next tasmee' booked, or where to book one. */
+@Composable
+private fun ReciteStep(app: AqraApp) {
+    val booking = app.tasmee.nextBooking
+    if (booking != null) {
+        val live = app.tasmee.session(booking)
+        val cancelled = live?.status == TasmeeSession.Status.CANCELLED
+        TodayStep(
+            3, "🎓", if (cancelled) Palette.rose else Palette.mint,
+            if (cancelled) stringResource(R.string.tasmee_cancelled) else stringResource(R.string.your_tasmee_with_s, booking.teacherName),
+            formatWhen((live?.startsAt ?: booking.startsAt).toInstant()) + factSeparator() + placeText(live?.let(::Booking) ?: booking),
+            stringResource(R.string.open),
+        ) { app.router.tab = AppTab.TASMEE }
+    } else {
+        TodayStep(3, "🎤", Palette.peach, stringResource(R.string.recite_to_a_sheikh_or_a_friend),
+            stringResource(R.string.book_a_session_or_recite_to_a_friend_with_a), stringResource(R.string.book)) { app.router.tab = AppTab.TASMEE }
+    }
+}
+
+/** A step of «اليوم»: its number on its icon, what it is, and one button for it, or a tick once it's done. */
+@Composable
+private fun TodayStep(
+    number: Int, icon: String, tint: Color, title: String, detail: String,
+    action: String? = null, done: Boolean = false, onClick: (() -> Unit)? = null,
+) {
+    val doneLabel = stringResource(R.string.done)
+    Row(
+        Modifier
+            .fillMaxWidth()
+            .then(if (onClick != null) Modifier.pressable(pressed = 0.98f, onClick = onClick) else Modifier)
+            .semantics(mergeDescendants = true) {}
+            .padding(14.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.spacedBy(12.dp),
+    ) {
+        Box {
+            IconTile(icon, tint, size = 38.dp)
+            Box(
+                Modifier.align(Alignment.TopEnd).offset(x = 6.dp, y = (-6).dp).size(18.dp).background(Palette.brand, CircleShape)
+                    .clearAndSetSemantics {},
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(formatNumber(number), style = aqraStyle(10f, Weight.heavy, Color.White))
+            }
+        }
+        Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
+            Text(title, style = aqraStyle(16f, Weight.heavy, if (done) Palette.inkSoft else Palette.ink), maxLines = 2, overflow = TextOverflow.Ellipsis)
+            Text(detail, style = aqraStyle(12f, Weight.semibold, Palette.inkSoft), maxLines = 3, overflow = TextOverflow.Ellipsis)
+        }
+        if (done) {
+            Box(Modifier.size(30.dp).background(Palette.mint, CircleShape).semantics { contentDescription = doneLabel }, contentAlignment = Alignment.Center) {
+                Icon(Icons.Rounded.Check, null, tint = Palette.brand, modifier = Modifier.size(16.dp))
+            }
+        } else if (action != null) {
+            Box(
+                Modifier.heightIn(min = 36.dp).background(Brush.verticalGradient(Palette.brandGradient), CircleShape).padding(horizontal = 16.dp),
+                contentAlignment = Alignment.Center,
+            ) {
+                Text(action, style = aqraStyle(14f, Weight.bold, Color.White), maxLines = 1)
+            }
+        }
+    }
+}
+
+/** «سجّلها»: a page of today's wird revised outside the app (in prayer, to a friend), clean or with stumbles. */
+@Composable
+private fun OutsideRevisionSheet(app: AqraApp, store: MushafStore, onDone: () -> Unit, onStumbles: (Int) -> Unit) {
+    val pages = remaining(app.revision)
+    Column(Modifier.fillMaxWidth().navigationBarsPadding(), verticalArrangement = Arrangement.spacedBy(16.dp)) {
+        Column(
+            Modifier.fillMaxWidth().padding(top = 8.dp, start = 22.dp, end = 22.dp),
+            horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(4.dp),
+        ) {
+            TwoLineHeadline(stringResource(R.string.revised_outside_the_app_q), stringResource(R.string.log_the_page), size = 24f)
+            Text(stringResource(R.string.in_prayer_or_to_a_friend_it_counts_in_todays), style = aqraStyle(13f, Weight.semibold, Palette.inkSoft), textAlign = TextAlign.Center)
+        }
+        Column(
+            Modifier.weight(1f, fill = false).verticalScroll(rememberScrollState()).padding(horizontal = 22.dp).padding(bottom = 16.dp),
+            verticalArrangement = Arrangement.spacedBy(10.dp),
+        ) {
+            pages.forEach { item ->
+                val page = store.page(item.page)
+                AqraCard(Modifier.fillMaxWidth(), padding = 12.dp, radius = 20.dp) {
+                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        Box(
+                            Modifier.size(44.dp).background(StepFaces.forJuz(page.juz).first.copy(alpha = 0.6f), RoundedCornerShape(14.dp)),
+                            contentAlignment = Alignment.Center,
+                        ) {
+                            Text(formatNumber(item.page), style = aqraStyle(17f, Weight.heavy, Palette.ink))
+                        }
+                        Text(store.surahNames[page.surah].orEmpty(), style = aqraStyle(15f, Weight.bold, Palette.ink), maxLines = 1,
+                            overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
+                        ChipButton(stringResource(R.string.no_stumbles), filled = true) {
+                            val ayahs = page.ayahs.filter(app.memorization::isMemorized)
+                            app.revision.record(item.page, ayahs, emptySet(), RevisionRecord.Source.OUTSIDE, app.memorization)
+                            if (app.revision.plan?.items?.all { it.done } == true) onDone()
+                        }
+                        ChipButton(stringResource(R.string.with_stumbles), filled = false) { onStumbles(item.page) }
+                    }
+                }
+            }
+        }
     }
 }
 
 // MARK: - Cards
 
-/** The Mushaf, open on the page last read. */
+/** The Mushaf, open on the reader's ribbon (or the page last read). */
 @Composable
 private fun MushafCard(app: AqraApp, store: MushafStore, onOpen: () -> Unit) {
-    val page = store.page(app.prefs.lastPage.value)
+    val bookmark = app.reading.bookmark?.page
+    val page = store.page(bookmark ?: app.prefs.lastPage.value)
     val interaction = remember { MutableInteractionSource() }
     AqraCard(
         Modifier.fillMaxWidth().pressScale(interaction)
-            .combinedClickable(interaction, indication = null, onClick = onOpen),
+            .combinedClickable(interaction, indication = null) {
+                if (bookmark != null) app.prefs.lastPage.value = bookmark
+                onOpen()
+            },
         padding = 12.dp, radius = 24.dp,
     ) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
@@ -369,109 +519,30 @@ private fun MushafCard(app: AqraApp, store: MushafStore, onOpen: () -> Unit) {
             MushafThumbnail(page, store, app.fonts, app.memorization,
                 Modifier.size(40.dp, 63.dp).clip(shape).border(1.dp, MushafStyle.LIGHT.chrome.copy(alpha = 0.25f), shape))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(R.string.continue_reading), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
+                Text(stringResource(if (bookmark != null) R.string.your_bookmark else R.string.continue_reading), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
                 Text(store.surahNames[page.surah].orEmpty() + factSeparator() + stringResource(R.string.page_n, page.number),
                     style = aqraStyle(16f, Weight.heavy, Palette.ink), maxLines = 1)
             }
-            IconTile("📖", Palette.sky, size = 40.dp)
+            IconTile(if (bookmark != null) "🔖" else "📖", if (bookmark != null) Palette.rose else Palette.sky, size = 40.dp)
         }
     }
 }
 
+/** Where the plan, the stages and the rewards are now. */
 @Composable
-private fun PagesCard(app: AqraApp, store: MushafStore, plan: DayPlan) {
-    AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 14.dp, radius = 24.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            IconTile("📄", Palette.sky, size = 40.dp)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                Text(stringResource(R.string.todays_pages), style = aqraStyle(19f, Weight.heavy, Palette.ink))
-                if (!plan.isComplete) {
-                    Text(stringResource(R.string.revised_a_page_outside_the_app_q_press_and_hold), style = aqraStyle(11f, Weight.semibold, Palette.inkSoft))
-                }
-            }
-            Box(Modifier.height(28.dp).background(Palette.lavender, CircleShape).padding(horizontal = 10.dp), contentAlignment = Alignment.Center) {
-                Text(stringResource(R.string.n_of_n, plan.doneCount, plan.items.size), style = aqraStyle(13f, Weight.bold, Palette.brand))
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-        for (row in plan.items.chunked(3)) {
-            Row(Modifier.fillMaxWidth().padding(bottom = 8.dp), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
-                row.forEach { PageTile(app, store, it, Modifier.weight(1f)) }
-                repeat(3 - row.size) { Spacer(Modifier.weight(1f)) }
-            }
-        }
+private fun ProgressLink(app: AqraApp) {
+    Row(
+        Modifier.fillMaxWidth().heightIn(min = 44.dp).pressable(pressed = 0.98f) { app.router.tab = AppTab.PROGRESS },
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,
+    ) {
+        Text(stringResource(R.string.your_plan_stages_and_rewards_are_in_progress), style = aqraStyle(13f, Weight.semibold, Palette.inkSoft),
+            textAlign = TextAlign.Center, modifier = Modifier.weight(1f, fill = false))
+        Spacer(Modifier.width(6.dp))
+        Icon(Icons.AutoMirrored.Rounded.KeyboardArrowRight, null, tint = Palette.brand, modifier = Modifier.size(16.dp))
     }
 }
 
-/** A page of today's wird, in its juz's band color: tap to revise it, press and hold if it was revised elsewhere. */
-@OptIn(ExperimentalFoundationApi::class)
-@Composable
-private fun PageTile(app: AqraApp, store: MushafStore, item: PlanItem, modifier: Modifier) {
-    val overlays = LocalOverlays.current
-    val page = store.page(item.page)
-    val (top, bottom) = StepFaces.forJuz(page.juz)
-    val shape = RoundedCornerShape(16.dp)
-    var menu by remember { mutableStateOf(false) }
-    val interaction = remember { MutableInteractionSource() }
-    val haptics = LocalHapticFeedback.current
-    val revised = stringResource(R.string.revised)
-    Box(modifier) {
-        Column(
-            Modifier
-                .fillMaxWidth()
-                .height(62.dp)
-                .pressScale(interaction)
-                .clip(shape)
-                .background(if (item.done) Brush.verticalGradient(listOf(top.copy(alpha = 0.14f), top.copy(alpha = 0.14f)))
-                    else Brush.verticalGradient(listOf(top.copy(alpha = 0.6f), top.copy(alpha = 0.28f))))
-                .border(1.dp, Color.White.copy(alpha = 0.8f), shape)
-                .combinedClickable(interaction, indication = null,
-                    onLongClick = { if (!item.done) { haptics.performHapticFeedback(HapticFeedbackType.LongPress); menu = true } },
-                    onClick = { overlays.open(FullScreen.Wird(item.page)) })
-                .semantics { if (item.done) stateDescription = revised }
-                .padding(horizontal = 6.dp),
-            horizontalAlignment = Alignment.CenterHorizontally,
-            verticalArrangement = Arrangement.Center,
-        ) {
-            Text(formatNumber(item.page), style = aqraStyle(18f, Weight.heavy, if (item.done) Palette.inkSoft else Palette.ink))
-            if (item.kind == PlanItem.Kind.FOLLOW_UP) {
-                Text(stringResource(R.string.follow_up), style = aqraStyle(11f, Weight.semibold, Palette.warning), maxLines = 1)
-            } else {
-                Text(store.surahNames[page.surah].orEmpty(), style = aqraStyle(11f, Weight.semibold, Palette.inkSoft), maxLines = 1)
-            }
-        }
-        AnimatedVisibility(item.done, Modifier.align(Alignment.TopEnd).padding(6.dp), enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
-            Box(Modifier.size(16.dp).background(Color.White, CircleShape), contentAlignment = Alignment.Center) {
-                Icon(Icons.Rounded.CheckCircle, null, tint = bottom, modifier = Modifier.size(18.dp))
-            }
-        }
-        DropdownMenu(menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.revised_outside_the_app), style = aqraStyle(15f, Weight.semibold)) },
-                leadingIcon = { Icon(Icons.Rounded.CheckCircle, null) },
-                onClick = {
-                    menu = false
-                    val ayahs = page.ayahs.filter(app.memorization::isMemorized)
-                    app.revision.record(item.page, ayahs, emptySet(), RevisionRecord.Source.OUTSIDE, app.memorization)
-                },
-            )
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.revised_outside_the_app_with_stumbles), style = aqraStyle(15f, Weight.semibold)) },
-                leadingIcon = { Icon(Icons.Rounded.ErrorOutline, null) },
-                onClick = {
-                    menu = false
-                    overlays.open(FullScreen.Wird(item.page, outside = true))
-                },
-            )
-        }
-    }
-}
-
-// MARK: - The journey
-
-/** The stage the student is in. */
-private fun currentStage(app: AqraApp, store: MushafStore): Int =
-    AssessmentStore.currentStage(app.plan.nextAyah(app.memorization, store), app.memorization, store, app.assessments.passes)
+// MARK: - Suggestions
 
 /** Pages that keep slipping, suggested for extra follow-up. */
 @Composable
@@ -507,29 +578,6 @@ private fun SuggestionCard(app: AqraApp, store: MushafStore) {
 
 // MARK: - Tasmee'
 
-/** The next tasmee' booked, with a teacher: when and where, or that the teacher cancelled it. */
-@Composable
-private fun TasmeeCard(app: AqraApp, booking: Booking) {
-    val live = app.tasmee.session(booking)
-    val cancelled = live?.status == TasmeeSession.Status.CANCELLED
-    AqraCard(Modifier.fillMaxWidth().pressable { app.router.tab = AppTab.TASMEE }.semantics(mergeDescendants = true) {}, padding = 12.dp, radius = 24.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconTile("🎓", if (cancelled) Palette.rose else Palette.mint, size = 40.dp)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(if (cancelled) R.string.tasmee_cancelled else R.string.your_next_tasmee), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
-                Text(booking.teacherName, style = aqraStyle(16f, Weight.heavy, Palette.ink), maxLines = 1)
-                Text(
-                    formatWhen((live?.startsAt ?: booking.startsAt).toInstant()) + factSeparator() + placeText(live?.let(::Booking) ?: booking),
-                    style = aqraStyle(12f, Weight.bold, if (cancelled) Palette.inkSoft else Palette.brand)
-                        .copy(textDecoration = if (cancelled) TextDecoration.LineThrough else null),
-                    maxLines = 1,
-                )
-            }
-            AqraChevron()
-        }
-    }
-}
-
 /** A tasmee' applied in the last two days that the student hasn't closed yet. */
 private fun newTasmee(app: AqraApp): TasmeeRecord? {
     val record = app.tasmee.history.firstOrNull { it.appliedAt != null } ?: return null
@@ -560,56 +608,6 @@ private fun HeardCard(app: AqraApp, record: TasmeeRecord) {
             ) {
                 Icon(Icons.Rounded.Close, stringResource(R.string.close), tint = Palette.brand, modifier = Modifier.size(16.dp))
             }
-        }
-    }
-}
-
-// MARK: - Saving progress
-
-/** The invitation to sign in: only for an anonymous student, and only once they've revised, so it comes after something worth keeping. */
-private fun showsSaveProgress(app: AqraApp): Boolean =
-    AccountStore.isAvailable && app.account.profile?.isAnonymous == true && app.revision.revisedDays.isNotEmpty() &&
-        System.currentTimeMillis() / 1000.0 > app.prefs.saveProgressSnoozedUntil.value
-
-@Composable
-private fun SaveProgressCard(app: AqraApp) {
-    AqraCard(Modifier.fillMaxWidth(), padding = 14.dp, radius = 24.dp) {
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconTile("🪪", Palette.butter, size = 40.dp)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                Text(stringResource(R.string.save_your_progress), style = aqraStyle(17f, Weight.heavy, Palette.ink))
-                Text(stringResource(R.string.your_progress_is_only_on_this_device_until_you_sign), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
-            }
-            Box(
-                Modifier.height(28.dp).background(Palette.lavender, CircleShape)
-                    .pressable { app.prefs.saveProgressSnoozedUntil.value = System.currentTimeMillis() / 1000.0 + 7 * 86_400 }
-                    .padding(horizontal = 10.dp),
-                contentAlignment = Alignment.Center,
-            ) {
-                Text(stringResource(R.string.later), style = aqraStyle(13f, Weight.bold, Palette.brand))
-            }
-        }
-        Spacer(Modifier.height(14.dp))
-        SignInButtons(app)
-        app.account.problem?.let { ProblemLine(it, Modifier.padding(top = 10.dp)) }
-    }
-}
-
-/** What's memorized and how much is revised each day, each opening its editor. */
-@Composable
-private fun MemorizationCard(app: AqraApp, store: MushafStore, onEditMemorization: () -> Unit, onEditAmount: () -> Unit) {
-    val count = app.memorization.count
-    AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
-        AqraRow("✏️", Palette.butter,
-            stringResource(if (count == 0) R.string.choose_what_youve_memorized else R.string.edit_what_youve_memorized),
-            Modifier.pressable(pressed = 1f, onClick = onEditMemorization),
-            detail = if (count == 0) null else memorizedSummary(app, store))
-        if (count > 0) {
-            AqraRowDivider()
-            val pages = RevisionStore.memorizedPages(store, app.memorization).size
-            val daily = app.revision.effectiveDailyPages(pages)
-            AqraRow("🗓️", Palette.peach, pluralStringResource(R.plurals.n_pages_a_day, daily, daily),
-                Modifier.pressable(pressed = 1f, onClick = onEditAmount), detail = cycleLine(app, store))
         }
     }
 }

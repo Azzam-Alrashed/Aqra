@@ -443,7 +443,7 @@ fun SignInButtons(app: AqraApp) {
 
 /** Signing in to the local Auth emulator with any email, and this account's uid for the seed script. */
 @Composable
-private fun EmulatorSignIn(app: AqraApp, profile: AccountStore.Profile) {
+internal fun EmulatorSignIn(app: AqraApp, profile: AccountStore.Profile) {
     var email by remember { mutableStateOf("") }
     val scope = rememberCoroutineScope()
     Column(verticalArrangement = Arrangement.spacedBy(8.dp)) {

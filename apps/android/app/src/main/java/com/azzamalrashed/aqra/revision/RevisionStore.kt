@@ -450,6 +450,15 @@ class RevisionSession(
         revealedPosition = 0
     }
 
+    /** «تعثّرتُ هنا»: the student stumbled reciting the next ayah from memory. It's revealed, marked as a stumble. */
+    fun stumbleOnNext() {
+        if (isComplete) return
+        val ayah = ayahs[revealed]
+        revealNext()
+        stumbles = stumbles + ayah
+        cleared = cleared - ayah
+    }
+
     fun revealAll() {
         revealed = ayahs.size
         revealedPosition = 0

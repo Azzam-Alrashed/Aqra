@@ -19,11 +19,11 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
+import androidx.compose.runtime.Composable
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.Alignment
@@ -48,6 +48,12 @@ import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.curriculum.StageSheet
 import com.azzamalrashed.aqra.curriculum.StagesSection
 import com.azzamalrashed.aqra.plan.PlanEditorScreen
+import com.azzamalrashed.aqra.memorization.MemorizationSetupScreen
+import com.azzamalrashed.aqra.memorization.memorizedSummary
+import com.azzamalrashed.aqra.revision.DailyAmountScreen
+import com.azzamalrashed.aqra.revision.RevisionStore
+import com.azzamalrashed.aqra.revision.cycleDays
+import com.azzamalrashed.aqra.ui.components.AqraRowDivider
 import com.azzamalrashed.aqra.plan.PlanFormat
 import com.azzamalrashed.aqra.rewards.RewardsSection
 import com.azzamalrashed.aqra.social.TogetherSection
@@ -80,6 +86,8 @@ fun ProgressScreen(app: AqraApp, store: MushafStore) {
     val memorization = app.memorization
     val revision = app.revision
     var editingPlan by remember { mutableStateOf(false) }
+    var editingMemorization by remember { mutableStateOf(false) }
+    var editingAmount by remember { mutableStateOf(false) }
     var openedStage by remember { mutableStateOf<Int?>(null) }
     TabPage(top = 16.dp) {
         val share = memorization.quranShare(store)
@@ -99,8 +107,13 @@ fun ProgressScreen(app: AqraApp, store: MushafStore) {
         JuzGrid(app, store)
         Text(stringResource(R.string.the_fuller_a_juz_the_more_of_it_youve_memorized), style = aqraStyle(12f, Weight.medium, Palette.inkSoft))
 
-        AqraSectionTitle(stringResource(R.string.your_plan), Modifier.padding(top = 10.dp))
-        PlanCard(app, store) { editingPlan = true }
+        AqraSectionTitle(stringResource(R.string.my_plan), Modifier.padding(top = 10.dp))
+        PlanCard(
+            app, store,
+            onEditMemorization = { editingMemorization = true },
+            onEditAmount = { editingAmount = true },
+            onEditPlan = { editingPlan = true },
+        )
 
         AqraSectionTitle(stringResource(R.string.the_stages), Modifier.padding(top = 10.dp))
         StagesSection(app, store) { openedStage = it }
@@ -111,6 +124,20 @@ fun ProgressScreen(app: AqraApp, store: MushafStore) {
     }
     if (editingPlan) {
         AqraSheet(onDismiss = { editingPlan = false }) { PlanEditorScreen(app, store, isSetup = false) { editingPlan = false } }
+    }
+    if (editingMemorization) {
+        AqraSheet(onDismiss = { editingMemorization = false }) {
+            MemorizationSetupScreen(app, store, isSheet = true) { editingMemorization = false }
+        }
+    }
+    if (editingAmount) {
+        val pages = RevisionStore.memorizedPages(store, memorization).size
+        AqraSheet(onDismiss = { editingAmount = false }) {
+            DailyAmountScreen(pages, revision.effectiveDailyPages(pages), isEditor = true) {
+                revision.setDailyPages(it)
+                editingAmount = false
+            }
+        }
     }
     openedStage?.let { stage -> StageSheet(app, store, stage) { openedStage = null } }
 }
@@ -149,20 +176,40 @@ private fun Share(value: Double, label: String, color: Color, modifier: Modifier
     }
 }
 
-/** The plan in a line: the daily amount and days, the lines this week and the completion date; or the invitation. */
+/**
+ * «خطتي»: what's memorized, how much is revised each day, and the plan for new memorization (its daily amount and
+ * days, the lines this week and the completion date, or the invitation) — each opening its editor, in one place.
+ */
 @Composable
-private fun PlanCard(app: AqraApp, store: MushafStore, onOpen: () -> Unit) {
+private fun PlanCard(app: AqraApp, store: MushafStore, onEditMemorization: () -> Unit, onEditAmount: () -> Unit, onEditPlan: () -> Unit) {
     val current = app.plan.plan
-    AqraCard(Modifier.fillMaxWidth().pressable(onClick = onOpen), padding = 0.dp, radius = 24.dp) {
+    val count = app.memorization.count
+    AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
+        AqraRow("📖", Palette.sky,
+            stringResource(if (count == 0) R.string.choose_what_youve_memorized else R.string.edit_what_youve_memorized),
+            Modifier.pressable(pressed = 1f, onClick = onEditMemorization),
+            detail = if (count == 0) null else memorizedSummary(app, store))
+        if (count > 0) {
+            AqraRowDivider()
+            val pages = RevisionStore.memorizedPages(store, app.memorization).size
+            val daily = app.revision.effectiveDailyPages(pages)
+            val days = cycleDays(pages, daily)
+            AqraRow("🗓️", Palette.peach, pluralStringResource(R.plurals.n_pages_a_day, daily, daily),
+                Modifier.pressable(pressed = 1f, onClick = onEditAmount),
+                detail = pluralStringResource(R.plurals.a_full_revision_every_n_days, days, days))
+        }
+        AqraRowDivider()
+        val plan = Modifier.pressable(pressed = 1f, onClick = onEditPlan)
         if (current != null) {
             val week = Math.round(app.plan.lines(inLast = 7)).toInt()
             val lines = pluralStringResource(R.plurals.n_lines_this_week, week, week)
             val date = app.plan.completionDate(app.memorization, store)
             AqraRow(if (current.paused) "⏸️" else "✍️", Palette.butter,
                 PlanFormat.amount(current.dailyLines) + factSeparator() + pluralStringResource(R.plurals.n_days_a_week, current.studyDays.size, current.studyDays.size),
-                detail = if (date != null) lines + factSeparator() + stringResource(R.string.completion_s, PlanFormat.month(date)) else lines)
+                plan, detail = if (date != null) lines + factSeparator() + stringResource(R.string.completion_s, PlanFormat.month(date)) else lines)
         } else {
-            AqraRow("✍️", Palette.butter, stringResource(R.string.memorize_new_portions), detail = stringResource(R.string.a_daily_amount_and_the_date_youd_complete_the_quran))
+            AqraRow("✍️", Palette.butter, stringResource(R.string.memorize_new_portions), plan,
+                detail = stringResource(R.string.a_daily_amount_and_the_date_youd_complete_the_quran))
         }
     }
 }

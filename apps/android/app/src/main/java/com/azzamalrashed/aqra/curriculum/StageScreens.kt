@@ -36,14 +36,14 @@ import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.RadioButtonUnchecked
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.alpha
@@ -119,28 +119,6 @@ private fun Bar(value: Double, color: Color) {
     BoxWithConstraints(Modifier.fillMaxWidth().height(6.dp).background(Palette.lavender, CircleShape)) {
         val share = value.coerceIn(0.0, 1.0).toFloat()
         if (share > 0) Box(Modifier.width(maxOf(maxWidth * share, 6.dp)).height(6.dp).background(color, CircleShape))
-    }
-}
-
-// MARK: - The current stage on the home
-
-/** The stage the student is in: how much of it is memorized and mastered; it opens the stage. */
-@Composable
-fun StageCard(app: AqraApp, store: MushafStore, stage: Int, onOpen: () -> Unit) {
-    val status = app.assessments.status(stage, store, app.memorization)
-    AqraCard(Modifier.fillMaxWidth().pressable(onClick = onOpen), padding = 14.dp, radius = 24.dp) {
-        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconTile(if (status.isPassed) "🏅" else "🪜", Palette.lavender, size = 40.dp)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(stringResource(R.string.stage_n_of_n, stage, Curriculum.STAGE_COUNT), style = aqraStyle(16f, Weight.heavy, Palette.ink))
-                Text(stageJuz(stage), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
-            }
-            Box(Modifier.height(28.dp).background(Palette.lavender, CircleShape).padding(horizontal = 10.dp), contentAlignment = Alignment.Center) {
-                Text(formatPercent(status.progress.memorizedShare, 0), style = aqraStyle(13f, Weight.bold, Palette.brand))
-            }
-        }
-        Spacer(Modifier.height(10.dp))
-        ProgressBars(status.progress.memorizedShare, status.progress.masteredShare)
     }
 }
 

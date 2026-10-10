@@ -74,8 +74,19 @@ import androidx.compose.ui.unit.dp
 import androidx.core.view.WindowCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.WindowInsetsControllerCompat
+import androidx.compose.animation.slideInVertically
+import androidx.compose.animation.slideOutVertically
+import androidx.compose.material.icons.rounded.Bookmark
+import androidx.compose.material.icons.rounded.BookmarkBorder
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.graphics.Path
+import androidx.compose.ui.semantics.contentDescription
+import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.draw.drawBehind
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
+import com.azzamalrashed.aqra.ui.components.IconTile
+import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.memorization.MarkingSession
 import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.ui.components.FloatingCapsule
@@ -112,6 +123,13 @@ fun MushafScreen(
     var toolbarVisible by remember { mutableStateOf(startsMarking) }
     var showingIndex by remember { mutableStateOf(false) }
     var marking by remember { mutableStateOf(if (startsMarking) MarkingSession(app.memorization) else null) }
+    /** What the ribbon button just did, shown for a moment above the slider. */
+    var ribbonNotice by remember { mutableStateOf<RibbonNotice?>(null) }
+    LaunchedEffect(ribbonNotice) {
+        val notice = ribbonNotice ?: return@LaunchedEffect
+        delay(3_000)
+        if (ribbonNotice === notice) ribbonNotice = null
+    }
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
 
@@ -156,7 +174,7 @@ fun MushafScreen(
             // In marking mode, taps belong to the page and the toolbar stays.
             onTap = { if (marking == null) toolbarVisible = !toolbarVisible },
         )
-        MushafPager(pagerState, facing, store, app.fonts, style, options)
+        MushafPager(pagerState, facing, store, app.fonts, style, options, bookmark = app.reading.bookmark?.page)
 
         Column(Modifier.fillMaxSize()) {
             AnimatedVisibility(toolbarVisible, enter = fadeIn(), exit = fadeOut()) {
@@ -190,7 +208,21 @@ fun MushafScreen(
                             if (startsMarking) onClose() else marking = null
                         }
                     } else {
-                        PageSlider(lastPage, style, ::go)
+                        Column {
+                            AnimatedVisibility(ribbonNotice != null, enter = slideInVertically { it } + fadeIn(), exit = slideOutVertically { it } + fadeOut()) {
+                                ribbonNotice?.let { notice -> RibbonPanel(store, notice, style) }
+                            }
+                            PageSlider(lastPage, style, ::go, bookmarked = app.reading.bookmark?.page == lastPage) {
+                                if (app.reading.bookmark?.page == lastPage) {
+                                    app.reading.remove()
+                                    ribbonNotice = RibbonNotice(null)
+                                } else {
+                                    app.reading.place(lastPage)
+                                    ribbonNotice = RibbonNotice(lastPage)
+                                }
+                                haptics.performHapticFeedback(HapticFeedbackType.Confirm)
+                            }
+                        }
                     }
                 }
             }
@@ -219,6 +251,8 @@ fun MushafScreen(
 fun MushafPager(
     pagerState: PagerState, facing: Boolean, store: MushafStore, fonts: MushafFonts, style: MushafStyle, options: MushafPageOptions,
     modifier: Modifier = Modifier, userScrollEnabled: Boolean = true,
+    /** The page the reader's ribbon is on, drawn on whichever page it is. */
+    bookmark: Int? = null,
 ) {
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         // The page lays out inside the screen's safe area, which stays put while the status bar hides and shows.
@@ -229,12 +263,21 @@ fun MushafPager(
         ) { index ->
             if (facing) {
                 Row(Modifier.fillMaxSize()) {
-                    MushafPageView(store.page(index * 2 + 1), store, fonts, style, options, Modifier.weight(1f).fillMaxSize())
+                    Box(Modifier.weight(1f).fillMaxSize()) {
+                        MushafPageView(store.page(index * 2 + 1), store, fonts, style, options, Modifier.fillMaxSize())
+                        if (bookmark == index * 2 + 1) MushafRibbon(index * 2 + 1)
+                    }
                     Box(Modifier.width(1.dp).fillMaxSize().background(style.chrome.copy(alpha = 0.18f)))
-                    MushafPageView(store.page(index * 2 + 2), store, fonts, style, options, Modifier.weight(1f).fillMaxSize())
+                    Box(Modifier.weight(1f).fillMaxSize()) {
+                        MushafPageView(store.page(index * 2 + 2), store, fonts, style, options, Modifier.fillMaxSize())
+                        if (bookmark == index * 2 + 2) MushafRibbon(index * 2 + 2)
+                    }
                 }
             } else {
-                MushafPageView(store.page(index + 1), store, fonts, style, options, Modifier.fillMaxSize())
+                Box(Modifier.fillMaxSize()) {
+                    MushafPageView(store.page(index + 1), store, fonts, style, options, Modifier.fillMaxSize())
+                    if (bookmark == index + 1) MushafRibbon(index + 1)
+                }
             }
         }
     }
@@ -321,7 +364,7 @@ private fun ColorToggle(title: String, on: Boolean, onChange: (Boolean) -> Unit)
 /** Dragging only moves the number; the Mushaf turns once, to the page let go on. Page 1 sits at the right end. */
 @OptIn(androidx.compose.material3.ExperimentalMaterial3Api::class)
 @Composable
-private fun PageSlider(lastPage: Int, style: MushafStyle, onGo: (Int) -> Unit) {
+private fun PageSlider(lastPage: Int, style: MushafStyle, onGo: (Int) -> Unit, bookmarked: Boolean, onRibbon: () -> Unit) {
     var dragging by remember { mutableStateOf<Float?>(null) }
     val shown = (dragging ?: lastPage.toFloat()).let { Math.round(it) }
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
@@ -354,8 +397,11 @@ private fun PageSlider(lastPage: Int, style: MushafStyle, onGo: (Int) -> Unit) {
                     track = { state ->
                         SliderDefaults.Track(state, Modifier.height(4.dp), colors = colors, drawStopIndicator = null, thumbTrackGapSize = 0.dp)
                     },
-                    modifier = Modifier.weight(1f).padding(start = 12.dp, end = 14.dp),
+                    modifier = Modifier.weight(1f).padding(start = 12.dp, end = 4.dp),
                 )
+                // «الفاصل هنا»: places the ribbon on the page shown, or takes it away from it.
+                MushafBarIcon(if (bookmarked) Icons.Rounded.Bookmark else Icons.Rounded.BookmarkBorder,
+                    stringResource(if (bookmarked) R.string.remove_the_bookmark else R.string.bookmark_here), style, onRibbon)
             }
         }
     }
@@ -385,17 +431,23 @@ private fun MarkingBar(
     CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
         FloatingPanel(style) {
             Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
-                // While a range waits for its end, the bar says so.
-                AnimatedContent(marking.rangeStart == null, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "marking") { idle ->
-                    Text(
-                        stringResource(if (idle) R.string.tap_the_ayat_youve_memorized else R.string.now_tap_the_last_ayah_of_the_range),
-                        style = aqraStyle(17f, Weight.heavy, style.ink),
-                    )
+                CompositionLocalProvider(LocalLayoutDirection provides direction) {
+                    MushafModeChip(MushafMode.MARKING, style, Modifier.padding(bottom = 4.dp))
                 }
+                // While a range waits for its first or last ayah, the bar says so.
+                val prompt = when {
+                    marking.choosingRangeStart -> R.string.tap_the_first_ayah_of_the_range
+                    marking.rangeStart != null -> R.string.now_tap_the_last_ayah_of_the_range
+                    else -> R.string.tap_the_ayat_youve_memorized
+                }
+                AnimatedContent(prompt, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "marking") { text ->
+                    Text(stringResource(text), style = aqraStyle(17f, Weight.heavy, style.ink))
+                }
+                val choosing = marking.choosingRangeStart || marking.rangeStart != null
                 if (unmarked.isEmpty()) {
                     Text(
-                        pluralStringResource(R.plurals.n_ayat_memorized, app.memorization.count, app.memorization.count) + factSeparator() +
-                            stringResource(R.string.press_and_hold_an_ayah_to_mark_from_it_to),
+                        pluralStringResource(R.plurals.n_ayat_memorized, app.memorization.count, app.memorization.count) +
+                            (if (choosing) "" else factSeparator() + stringResource(R.string.or_mark_from_one_ayah_to_another_with_select_a)),
                         style = aqraStyle(12f, Weight.semibold, style.chrome), maxLines = 1,
                     )
                 } else {
@@ -417,13 +469,95 @@ private fun MarkingBar(
                 }
             }
             Spacer(Modifier.size(14.dp))
+            val choosing = marking.choosingRangeStart || marking.rangeStart != null
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                MarkingButton(stringResource(if (choosing) R.string.cancel_the_range else R.string.select_a_range), style, Modifier.weight(1f)) {
+                    if (choosing) marking.cancelRange() else marking.chooseRange()
+                }
                 MarkingButton(stringResource(if (pages.size > 1) R.string.both_pages else R.string.whole_page), style, Modifier.weight(1f)) {
                     marking.toggle(ayahs)
                 }
+            }
+            Spacer(Modifier.size(10.dp))
+            Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 MarkingButton(stringResource(R.string.juz_surahs), style, Modifier.weight(1f), onClick = onChooseJuzAndSurahs)
                 MarkingButton(stringResource(R.string.done), style, Modifier.weight(1f), prominent = true, onClick = onDone)
             }
         }
+    }
+}
+
+// MARK: - The ribbon
+
+/** What the ribbon button just did: placed on a page, or taken away (null). */
+private class RibbonNotice(val page: Int?)
+
+@Composable
+private fun RibbonPanel(store: MushafStore, notice: RibbonNotice, style: MushafStyle) {
+    Box(Modifier.fillMaxWidth().padding(horizontal = 12.dp).padding(bottom = 6.dp), contentAlignment = Alignment.Center) {
+        FloatingPanel(style, Modifier.widthIn(max = 620.dp).semantics(mergeDescendants = true) {}) {
+            Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
+                IconTile("🔖", Palette.rose, size = 38.dp)
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    val page = notice.page
+                    if (page != null) {
+                        Text(stringResource(R.string.bookmark_placed_at_s_page_n, store.surahNames[store.page(page).surah].orEmpty(), page),
+                            style = aqraStyle(15f, Weight.heavy, style.ink))
+                        Text(stringResource(R.string.home_opens_on_it_and_browsing_or_marking_never_moves),
+                            style = aqraStyle(12f, Weight.semibold, style.chrome))
+                    } else {
+                        Text(stringResource(R.string.bookmark_removed), style = aqraStyle(15f, Weight.heavy, style.ink))
+                    }
+                }
+            }
+        }
+    }
+}
+
+/**
+ * The ribbon (فاصل) hanging from the top of the page it marks, with the page's number. It lies in the page's header
+ * band, beside the juz' label, and ends above the first line, so it never covers a word of the page.
+ */
+@Composable
+fun MushafRibbon(page: Int) {
+    val label = stringResource(R.string.your_bookmark)
+    BoxWithConstraints(Modifier.fillMaxSize()) {
+        val depth = (PageMetrics(maxWidth.value, maxHeight.value).topInset + PageMetrics.CHROME).dp
+        Box(
+            Modifier.align(Alignment.TopStart).padding(start = 112.dp).width(30.dp).height(depth)
+                .semantics { contentDescription = label }
+                .drawBehind {
+                    val notch = 12.dp.toPx()
+                    val path = Path().apply {
+                        moveTo(0f, 0f); lineTo(size.width, 0f); lineTo(size.width, size.height)
+                        lineTo(size.width / 2, size.height - notch); lineTo(0f, size.height); close()
+                    }
+                    drawPath(path, Brush.verticalGradient(Palette.brandGradient))
+                },
+            contentAlignment = Alignment.BottomCenter,
+        ) {
+            Text(arabicDigits(page), style = aqraStyle(12f, Weight.heavy, Color.White), maxLines = 1, modifier = Modifier.padding(bottom = 16.dp))
+        }
+    }
+}
+
+// MARK: - The mode
+
+enum class MushafMode { REVISING, MARKING, MEMORIZING }
+
+/** What a tap on the page does now, said in the panel of each mode: revising, marking or memorizing. */
+@Composable
+fun MushafModeChip(mode: MushafMode, style: MushafStyle, modifier: Modifier = Modifier) {
+    val (icon, text) = when (mode) {
+        MushafMode.REVISING -> "🧠" to R.string.revising
+        MushafMode.MARKING -> "✅" to R.string.marking_what_youve_memorized
+        MushafMode.MEMORIZING -> "✍️" to R.string.memorizing
+    }
+    Row(
+        modifier.heightIn(min = 26.dp).background(style.barAccentFill, CircleShape).padding(horizontal = 10.dp).semantics(mergeDescendants = true) {},
+        verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(6.dp),
+    ) {
+        Text(icon, style = aqraStyle(13f, Weight.medium, style.ink))
+        Text(stringResource(text), style = aqraStyle(12f, Weight.heavy, style.barAccent), maxLines = 1)
     }
 }
