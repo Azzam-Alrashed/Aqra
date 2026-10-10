@@ -7,9 +7,9 @@
 | **Document** | Software Requirements Specification (SRS) |
 | **Product** | Aqra — Quran memorization, revision and mastery |
 | **Standard** | Structured after IEEE Std 830-1998, with the requirement attributes of ISO/IEC/IEEE 29148:2018 |
-| **Version** | 1.4 |
+| **Version** | 1.5 |
 | **Date** | 2026-10-10 |
-| **Baseline** | Commit `f7ac25b` ("Add the landing page") on `main`. Statuses below are as of `main` at `5091999` (2026-10-10): the full journey, the Android app, the October QA fixes and proposals (`4a55880`) and listening («سمّع بصوتك», `5091999`) are all merged |
+| **Baseline** | Commit `f7ac25b` ("Add the landing page") on `main`. Statuses below are as of `main` at `5091999` (2026-10-10): the full journey, the Android app, the October QA fixes and proposals (`4a55880`) and listening («سمّع بصوتك», `5091999`) are all merged, and so are the five changes from TestFlight feedback (2026-10-10: «اليوم» on Home, the ribbon, visible controls, «لديّ حساب في اقرأ», safe unmarking) |
 | **Related documents** | [VISION.md](VISION.md) (product decisions), [REVISION.md](REVISION.md) (revision policy), [backend/README.md](../backend/README.md) (data and rules), [shared/quran/README.md](../shared/quran/README.md) (Quran sources) |
 
 ---
@@ -279,7 +279,7 @@ Developer documentation lives in the repository READMEs.
 | UI-05 | VoiceOver and TalkBack read each Mushaf page as the official plain (Imla'i) text with ayah numbers, leaving out the ayat a revision veils or a student hid while memorizing (and saying how many are hidden); the page's taps are actions (reveal, stumble, hide and show, mark). Every control has a label. | M | ✅ | V |
 | UI-06 | The Mushaf follows the system's dark mode (warm dark paper, cream ink, lighter gold). | M | ✅ | V |
 | UI-07 | The app's own screens follow the system's dark mode with a very dark purple surface (not pure black), muted pastels and more prominent gold. | S | ❓ A-23 | V |
-| UI-08 | Layouts adapt to iPhone and iPad in every orientation; the Mushaf shows two facing pages on a wide iPad in landscape. Below 700 pt (dp) of height, the home's stage is drawn smaller so today's wird comes up on the first screen. | M | ✅ | V |
+| UI-08 | Layouts adapt to iPhone and iPad in every orientation; the Mushaf shows two facing pages on a wide iPad in landscape. Below 700 pt (dp) of height, the home's stage is drawn smaller so «اليوم» comes up on the first screen. | M | ✅ | V |
 | UI-09 | Rewards are celebrated with animation and a short, gentle sound (never on the welcome screen); sounds respect the silent switch. | S | ✅ | V |
 | UI-10 | Navigation: the system tab bar (Liquid Glass on iOS 26, shrinking to the selected tab while a page scrolls down) with Home, Tasmee', Progress and Account; the Mushaf and today's wird open full screen from the home and close back to where they were opened. | M | ✅ | V |
 | UI-11 | Launch: the launch screen is the lavender surface with a faint blurred hint of the arch logo, in light and dark mode (no white or black flash, no spinner). The splash continues from the hint without a seam: the logo fades in and comes into focus, the star turns in and lands with a soft haptic, the sparkles follow, and gold light swells as the logo breathes, while the Mushaf loads and the home is built beneath; then it drifts out of focus for the home's entrance. On first launch the hint fades as the welcome builds the logo. Reduce Motion cross-fades in place. The motion runs in Core Animation, so building the first screen never freezes it. | S | ✅ | V |
@@ -327,8 +327,8 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | ONB-01 | Onboarding is shown on first launch only and has four pages: the hadith (Ahmad's wording, «اقرَأ وارقَ» emphasized, «رواه أحمد», the Tirmidhi translation in English), the manazil, the features, and «ابدأ رحلتك». | M | ✅ | V |
-| ONB-02 | There is no sign-in in onboarding; every user starts anonymously. | M | ✅ | V |
-| ONB-03 | Right after onboarding the student declares what they've memorized («ماذا تحفظ؟»), then chooses a daily revision amount; "I'm just starting" skips both. Choosing to mark it in the Mushaf instead, the daily amount (when anything is marked) and the plan's offer follow the first Done or the Mushaf's closing, even after the app was closed during the marking. | M | ✅ | V |
+| ONB-02 | There is no sign-in in onboarding's pages; every user starts anonymously (a returning student may sign in from «ماذا تحفظ؟», ONB-03). | M | ✅ | V |
+| ONB-03 | Right after onboarding the student declares what they've memorized («ماذا تحفظ؟»), then chooses a daily revision amount; "I'm just starting" skips both. Choosing to mark it in the Mushaf instead, the daily amount (when anything is marked) and the plan's offer follow the first Done or the Mushaf's closing, even after the app was closed during the marking. Before anything is declared, «لديّ حساب في اقرأ» lets a returning student sign in instead: once a backup newer than the sign-in has arrived, Home opens with their progress; an account with nothing memorized goes back to declaring. | M | ✅ | V |
 | ONB-04 | After «ماذا تحفظ؟», a student offers to set up a personal memorization plan (or skips it). | S | ✅ | E |
 
 #### 3.2.2 Mushaf (MUS)
@@ -339,17 +339,18 @@ opens on the setup or the home.
 | MUS-02 | Surah headers in the Complex's header font; the basmala in the Hafs Smart font; ayah-end markers on a soft disc. | M | ✅ | V |
 | MUS-03 | Tajweed colors tint the letters (clipped to the plain outline), with a toggle, on by default. | M | ✅ | V |
 | MUS-04 | Memorized ayat sit on a soft rounded highlight in their topic section's color, its depth reflecting the ayah's strength (five steps); unmemorized ayat stay plain paper; toggle, on by default. | M | ✅ | V |
-| MUS-05 | Pages turn right-to-left; the last page read is remembered and the Mushaf opens on it. | M | ✅ | V |
+| MUS-05 | Pages turn right-to-left; the last page read is remembered and the Mushaf opens on it. The reader can place a ribbon (الفاصل) on a page from the Mushaf's bottom bar: browsing, revising and marking never move it, Home's Mushaf card opens on it, and it's backed up with the journey (the later placing or removal wins across devices). | M | ✅ | V |
 | MUS-06 | An index of surahs and juz' with ayah counts and the current one highlighted; a page slider. | M | ✅ | V |
-| MUS-07 | Marking mode: tap toggles an ayah; press-and-hold starts a range that the next tap ends (across pages); "whole page / both pages"; juz' and surahs sheet. | M | ✅ | V |
+| MUS-07 | Marking mode: tap toggles an ayah; «حدّد نطاقًا» (or a press-and-hold) starts a range that the next tap ends (across pages); "whole page / both pages"; juz' and surahs sheet. | M | ✅ | V |
 | MUS-08 | Two facing pages on a wide iPad in landscape, odd page on the right. | S | ✅ | V |
 | MUS-09 | While a new portion is being memorized, its ayat are framed on the page and the rest of the page is dimmed. | S | ✅ | E |
+| MUS-10 | Each panel over the Mushaf names its mode in a chip: marking, revising or memorizing. | S | ✅ | V |
 
 #### 3.2.3 Memorization map (MEM)
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| MEM-01 | Declare memorization by juz', surah (setup screen), page and ayah (Mushaf marking), with a whole-Quran shortcut. Unmarking (a tap, a range or a page) can be undone for a few seconds, restoring the records exactly. | M | ✅ | V |
+| MEM-01 | Declare memorization by juz', surah (setup screen), page and ayah (Mushaf marking), with a whole-Quran shortcut. Removing ayat that carry revisions, stumbles or a teacher's mark asks first and says what goes with them. Unmarking (a tap, a range or a page) can be undone for six seconds, restoring the records exactly. | M | ✅ | V |
 | MEM-02 | Each memorized ayah keeps `since`, stability, last revision, lapses and the verified mark; stored on device and reloaded, including older file versions. | M | ✅ | V |
 | MEM-03 | The share of the Quran memorized counts every juz' equally (a juz' memorized in part counts by its ayat). | M | ✅ | V |
 | MEM-04 | A tasmee' never marks new ayat as memorized; the student owns the map. | M | ✅ | V |
@@ -375,8 +376,8 @@ opens on the setup or the home.
 | REV-03 | The plan is fixed for the day; pages no longer memorized drop out. | M | ✅ | R |
 | REV-04 | Missed days don't pile up: the rotation only moves past revised pages. | M | ✅ | R |
 | REV-05 | A stumble brings the page back after 1 day, then 3, then 7 while clean. | M | ✅ | R |
-| REV-06 | In-app revision veils the page's memorized ayat, reveals them one at a time, and taps on revealed ayat mark stumbles; «تم» records the page and moves to the next. | M | ✅ | V |
-| REV-07 | A page revised outside the app is checked off with a long press. | M | ✅ | V |
+| REV-06 | In-app revision veils the page's memorized ayat and reveals them one at a time with «الآية التالية»; «تعثّرتُ هنا» reveals the next one marked as a stumble, and a tap on a revealed ayah marks or clears a stumble. «أظهر الصفحة» and «تم» are buttons beside them; «تم» records the page and moves to the next. | M | ✅ | V |
+| REV-07 | A page revised outside the app is logged from «سجّلها» on Home's «اليوم» card: clean, or opened whole to tap its stumbles. | M | ✅ | V |
 | REV-08 | The streak counts days in a row with any revision; today not yet revised doesn't break it. | M | ✅ | V |
 | REV-09 | A revision outside the app may also record the ayat stumbled on. | C | ✅ | R (open Q2), P |
 | REV-10 | The rotation learns: pages that keep slipping (lapses in recent revisions, or low strength while the rest is strong) are suggested for extra follow-up; the student approves or dismisses each suggestion. | S | ✅ | V (agreed direction), R (open Q3) |
@@ -390,10 +391,10 @@ opens on the setup or the home.
 |---|---|---|---|---|
 | HOME-01 | The home answers «وش علي اليوم؟»: greeting, Hijri date (Umm al-Qura), streak chip. | M | ✅ | V |
 | HOME-02 | The stage: the manazil stairs climbing to the share memorized, in glowing rings, with share and strength chips. | M | ✅ | V |
-| HOME-03 | The wird headline (pages left, cycle length) and one button to start or continue. | M | ✅ | V |
-| HOME-04 | Cards: next tasmee' (or its cancellation), continue reading (page miniature), today's pages, the invitation to save progress (anonymous, after a first revision, snooze 7 days), what's memorized and the daily amount. | M | ✅ | V |
-| HOME-05 | A card for today's new portion (from the plan) with «تم الحفظ», and the expected completion date. | M | ✅ | E |
-| HOME-06 | The current stage and its progress lead to the stage's page. | S | ✅ | E |
+| HOME-03 | «اليوم»: the day's steps in order, each with its own button: revise today's wird (start, carry on, or a tick when done), memorize today's portion (or the plan's invitation, a rest day, a paused plan), and recite (the next tasmee', or booking one); a count of the steps done, and «سجّلها» for a page revised outside the app. | M | ✅ | V |
+| HOME-04 | Cards: rotation suggestions and newly applied tasmee' records (HOME-07), the Mushaf at the reader's ribbon or the page last read (a miniature), and a line leading to تقدّمي. The invitation to save progress is on the Account tab. | M | ✅ | V |
+| HOME-05 | Today's new portion (from the plan) is the second step of «اليوم», with «احفظ»; the expected completion date is in «خطتي» (PRG-06). | M | ✅ | E |
+| HOME-06 | The stages and their progress are in تقدّمي (PRG-03), which Home links to. | S | ✅ | E |
 | HOME-07 | Rotation suggestions (REV-10) and newly applied tasmee' records ("your teacher heard pages …") appear as cards. | S | ✅ | V |
 | HOME-08 | An inbox badge for server events (outbid, seat won, session cancelled and refunded, application status). | S | ✅ | P |
 
@@ -406,6 +407,7 @@ opens on the setup or the home.
 | PRG-03 | Stages: each of the ten with memorized %, mastered %, tests and passed state. | M | ✅ | E |
 | PRG-04 | Points, achievements and personal challenges. | S | ✅ | V |
 | PRG-05 | The tasmee' history: each record with who heard it (teacher or peer), when, pages heard and stumbles (with mistake types). | S | ✅ | V |
+| PRG-06 | «خطتي»: what's memorized, the daily revision amount and the personal plan, each opening its editor. | S | ✅ | V |
 
 #### 3.2.8 Account, identity and backup (ACC)
 
@@ -419,7 +421,7 @@ opens on the setup or the home.
 | ACC-06 | Account deletion deletes the backup, bookings (seats given back) and tasmee' records, revokes Apple's token, deletes the user; the device's progress stays. A student who hasn't signed in deletes their anonymous backup the same way ("Delete my backup"); the device then backs up afresh to a new anonymous account. | M | ✅ | A, V |
 | ACC-07 | Sign-in is required before booking, bidding, buying credits, joining video, adding friends or applying to teach. | M | ✅ | V |
 | ACC-08 | A display name the student chooses is shown to teachers, peers and friends instead of the sign-in's name or email. | S | ✅ | P |
-| ACC-09 | The backup also covers the personal plan, rewards and test results; deletion removes them and the wallet, applications, friendships and competition entries. | M | ✅ | A, P |
+| ACC-09 | The backup also covers the personal plan, rewards, test results and the reader's ribbon; deletion removes them and the wallet, applications, friendships and competition entries. | M | ✅ | A, P |
 
 #### 3.2.9 Settings and reminders (SET)
 
@@ -618,6 +620,7 @@ opens on the setup or the home.
 | `plan.json` | The personal plan, its history of changes, and the portions log (planned vs actual). |
 | `rewards.json` | Points, events, achievements, challenges. |
 | `assessments.json` | In-app test results and sheikh's stage tests applied. |
+| `reading.json` | The reader's ribbon: its page, when it was placed, and when it last changed. |
 | UserDefaults | Onboarding seen, declared, last page, toggles, reminder, sounds, snoozes, dismissed suggestions, applied record ids. |
 
 #### In Firestore
@@ -767,7 +770,7 @@ default adopted is given; every one lives in a policy and can be changed without
 |---|---|---|---|
 | A-1 | Topic sections from a published thematic Mushaf (and permission). | QUL "Ayah theme" stand-in. | DEP-03 |
 | A-2 | Revision numbers (14 d, ×2.5, ×0.3, 1/3/7, 90 d). | As in REVISION.md. | ReviewPolicy |
-| A-3 | Revisions outside the app: record stumbles too? | Optional: a page can be checked off clean (long press) or with stumbles. | REV-09 |
+| A-3 | Revisions outside the app: record stumbles too? | Optional: a page is logged from «سجّلها», clean or with stumbles. | REV-09 |
 | A-4 | The rotation: adapt by itself or suggest? | Suggest; the student approves. | REV-10 |
 | A-5 | Peer weight. | 1.25 (between self 1 and sheikh 1.5). | ReviewPolicy |
 | A-6 | Should a sheikh hearing an undeclared ayah clean mark it memorized? | No. | MEM-04 |
@@ -799,7 +802,8 @@ default adopted is given; every one lives in a policy and can be changed without
 in-person tasmee'; wave 3 not started.
 
 **Merged into `main`:** the full journey (`d4ce963`, 2026-10-07), the Android app (the same day), the October QA
-fixes (`9dd3ee7`) and proposals (`4a55880`), and listening (`5091999`, 2026-10-09). Every requirement above marked ✅
+fixes (`9dd3ee7`) and proposals (`4a55880`), listening (`5091999`, 2026-10-09), and the five changes from
+TestFlight feedback (2026-10-10). Every requirement above marked ✅
 is in the code with a test or a walkthrough. What remains, and why:
 
 | Requirement | Status | Why |

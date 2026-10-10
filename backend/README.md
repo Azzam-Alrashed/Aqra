@@ -77,8 +77,8 @@ account's bids, `teacherBalances`, and a teacher's own `teachers/{uid}` document
   `[since, stability, lastReviewed or -1, lapses, verified]`, dates in seconds since 1970.
 - `users/{uid}/revision/state`: the revision record (daily amount, rotation, follow-ups, today's plan, the days
   revised and the last 1,000 revisions) as JSON.
-- `users/{uid}/journey/state`: the personal plan with its history and portions log, the stage test results and the
-  rewards (points, achievements, challenges) as JSON.
+- `users/{uid}/journey/state`: the personal plan with its history and portions log, the stage test results, the
+  rewards (points, achievements, challenges) and the reader's ribbon (`reading`, optional) as JSON.
 - `users/{uid}/bookings/{sessionId}`: the student's copy of a session they booked (`teacherId`, `teacherName`,
   `startsAt`, `kind`, `place`), so the home can show it.
 - `users/{uid}`: also `displayName`, the name the student chose to show teachers, peers and friends.
