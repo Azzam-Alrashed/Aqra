@@ -68,6 +68,12 @@ import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import kotlinx.coroutines.launch
+import android.content.BroadcastReceiver
+import android.content.Context
+import android.content.Intent
+import android.content.IntentFilter
+import androidx.compose.runtime.DisposableEffect
+import androidx.core.content.ContextCompat
 
 /** What opens full screen over the tabs, growing out of the home. */
 sealed interface FullScreen {
@@ -221,6 +227,22 @@ private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
     // The account's copy merged in (another device revised): today's plan follows.
     val lastMerge = app.sync.lastMerge
     LaunchedEffect(lastMerge) { if (lastMerge != null) app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization)) }
+    // A new day while the app is open (midnight, or another time zone, or the clock set): today's plan follows.
+    val dayContext = LocalContext.current
+    DisposableEffect(Unit) {
+        val receiver = object : BroadcastReceiver() {
+            override fun onReceive(context: Context, intent: Intent) {
+                app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization))
+            }
+        }
+        val changes = IntentFilter().apply {
+            addAction(Intent.ACTION_DATE_CHANGED)
+            addAction(Intent.ACTION_TIMEZONE_CHANGED)
+            addAction(Intent.ACTION_TIME_CHANGED)
+        }
+        ContextCompat.registerReceiver(dayContext, receiver, changes, ContextCompat.RECEIVER_NOT_EXPORTED)
+        onDispose { dayContext.unregisterReceiver(receiver) }
+    }
     // A reminder an hour before each booked session, as the sessions are now; set again once the daily reminder has
     // been allowed to notify.
     val context = LocalContext.current

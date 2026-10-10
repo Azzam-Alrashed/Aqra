@@ -73,9 +73,10 @@ data class AyahMemory(
                 lastLapseAt = maxOf(at, lastLapseAt ?: at))
         } else {
             // Revising again before it has had time to slip strengthens it less (the spacing effect). The first
-            // revision of a declared ayah counts in full: it was memorized long before, when isn't known.
+            // revision of a declared ayah counts in full: it was memorized long before, when isn't known. An ayah
+            // memorized in Aqra is spaced from when it was learned, like any other revision.
             val days = max((at - (lastReviewed ?: since)) / 86_400, 0.0)
-            val spacing = if (lastReviewed == null) 1.0 else (days / max(stability, 0.1)).coerceIn(0.1, 1.0)
+            val spacing = if (lastReviewed == null && learnedAt == null) 1.0 else (days / max(stability, 0.1)).coerceIn(0.1, 1.0)
             copy(stability = min(stability * (1 + (policy.growth - 1) * spacing * weight), policy.maxStability))
         }
         // A tasmee' can arrive after a later revision; the last revision never moves backwards.

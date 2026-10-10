@@ -22,6 +22,7 @@ import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
 import java.nio.file.Files
+import com.azzamalrashed.aqra.core.Moment
 
 /** The backup's orchestration across devices, with a fake store in place of Firestore: the same checks as the iOS app's. */
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -33,7 +34,8 @@ class CloudSyncTest {
     private class Device(store: FakeCloudStore, id: String, scope: CoroutineScope, val memorization: MemorizationStore = MemorizationStore(file = null)) {
         val revision = RevisionStore(file = null, zone = utc)
         val journey = Journey(PlanStore(file = null, zone = utc), RewardStore(file = null, zone = utc), AssessmentStore(file = null))
-        val sync = CloudSync(memorization, revision, journey, scope, store, id)
+        // The tests' days are in 2027: the clock is set after all of them, so no merge takes them for the future.
+        val sync = CloudSync(memorization, revision, journey, scope, store, id, clock = { Moment.ofEpochSeconds(1_900_000_000.0) })
     }
 
     @Test
@@ -150,7 +152,7 @@ class CloudSyncTest {
         advanceUntilIdle()
 
         val record = TasmeeRecord(id = "r1", teacherId = "t", teacherName = "Sheikh", sessionId = "s", at = day(2), pages = listOf(1), stumbles = listOf(3))
-        TasmeeApply.apply(record, phone.memorization, phone.revision) { 0..6 }
+        TasmeeApply.apply(record, phone.memorization, phone.revision, now = Moment(Double.MAX_VALUE)) { 0..6 }
         phone.sync.upload()
         tablet.sync.syncIfChanged()
         advanceUntilIdle()

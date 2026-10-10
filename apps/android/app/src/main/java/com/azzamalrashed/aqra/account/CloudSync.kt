@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.azzamalrashed.aqra.core.CalendarDay
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.memorization.MemorizationStore
 import com.azzamalrashed.aqra.revision.RevisionStore
@@ -51,6 +52,8 @@ class CloudSync(
      * only when another device wrote it since.
      */
     val installId: String,
+    /** What time it is; a merge never keeps a date later than it (tests set their own). */
+    private val clock: () -> Moment = { Moment.now() },
 ) {
     /** When the account last confirmed it holds the device's progress. */
     var lastBackup: Moment? by mutableStateOf(null)
@@ -196,14 +199,15 @@ class CloudSync(
             if (remoteRevision != null || remote.revisedDays.isNotEmpty() || remote.completedDays.isNotEmpty()) {
                 val record = remoteRevision ?: RevisionStore.Snapshot.EMPTY
                 remoteRevision = record.copy(
-                    revisedDays = (record.revisedDays + remote.revisedDays.map(::Moment)).toSortedSet().toList(),
-                    completedDays = (record.completedDays.orEmpty() + remote.completedDays.map(::Moment)).toSortedSet().toList().ifEmpty { null },
+                    // Either version's form of a day (UTC or the device's midnight) reads as the same day.
+                    revisedDays = (record.revisedDays + remote.revisedDays.map { CalendarDay.stored(Moment(it)) }).toSortedSet().toList(),
+                    completedDays = (record.completedDays.orEmpty() + remote.completedDays.map { CalendarDay.stored(Moment(it)) }).toSortedSet().toList().ifEmpty { null },
                 )
             }
             val remoteJourney = readJourney(remote.journeyJson)
 
             isRestoring = true
-            memorization.replaceAll(CloudBackup.merge(memorization.memory, remoteMemory))
+            memorization.replaceAll(CloudBackup.merge(memorization.memory, remoteMemory, clock()))
             if (remoteRevision != null) revision.apply(CloudBackup.merge(revision.snapshot, remoteRevision))
             if (remoteJourney != null) journey.apply(Journey.Snapshot.merge(journey.snapshot, remoteJourney))
             isRestoring = false
@@ -277,8 +281,8 @@ class CloudSync(
         val write = CloudWrite(
             rows = rows,
             revisionJson = if (revisionChanged) CloudBackup.encode(snapshot, revisionExtras) else null,
-            revisedDays = if (revisionChanged) snapshot.revisedDays.map { it.sinceReference } else emptyList(),
-            completedDays = if (revisionChanged) snapshot.completedDays.orEmpty().map { it.sinceReference } else emptyList(),
+            revisedDays = if (revisionChanged) snapshot.revisedDays.map { it.stored.sinceReference } else emptyList(),
+            completedDays = if (revisionChanged) snapshot.completedDays.orEmpty().map { it.stored.sinceReference } else emptyList(),
             journeyJson = if (journeyChanged) Journey.encode(journeySnapshot, journeyOriginal) else null,
             writer = installId,
         )

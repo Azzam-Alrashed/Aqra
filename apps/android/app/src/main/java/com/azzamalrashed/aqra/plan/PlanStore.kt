@@ -93,8 +93,12 @@ sealed interface TodayPortion {
 class PlanStore(
     private val file: File?,
     val policy: PlanPolicy = PlanPolicy.STANDARD,
-    private val zone: ZoneId = ZoneId.systemDefault(),
+    /** Days are counted in this time zone; by default the device's, as it changes. */
+    zone: ZoneId? = null,
 ) {
+    private val fixedZone = zone
+    private val zone: ZoneId get() = fixedZone ?: ZoneId.systemDefault()
+
     var plan: MemorizationPlan? by mutableStateOf(null)
         private set
     var portions: List<Portion> by mutableStateOf(emptyList())
@@ -213,7 +217,11 @@ class PlanStore(
 
     // MARK: - The completion date
 
-    /** Lines memorized per study day lately, once enough study days have passed to tell; null until then. */
+    /**
+     * Lines memorized per study day lately, once enough study days have passed to tell; null until then. A day counts
+     * when it was a study day of the plan as it stood that day, and the plan wasn't paused: a pause doesn't slow the
+     * pace.
+     */
     fun recentPace(now: Moment = Moment.now()): Double? {
         // Since the plan was last turned on: the earliest change in the run of changes that kept it on.
         var started: Moment? = null
@@ -221,7 +229,7 @@ class PlanStore(
             if (change.plan == null) break
             started = change.date
         }
-        val plan = plan ?: return null
+        if (plan == null) return null
         val start = started ?: return null
         val today = now.startOfDay(zone)
         val windowStart = maxOf(start.startOfDay(zone), today.plusDays(-policy.paceWindowDays.toLong(), zone))
@@ -229,8 +237,11 @@ class PlanStore(
         var studyDays = 0
         var day = windowStart
         while (day < today || (day == today && doneToday)) {
-            if (day.weekday(zone) in plan.studyDays) studyDays += 1
-            day = day.plusDays(1, zone)
+            val next = day.plusDays(1, zone)
+            // The plan as it stood by the end of the day.
+            val standing = history.lastOrNull { it.date < next }?.plan
+            if (standing != null && !standing.paused && day.weekday(zone) in standing.studyDays) studyDays += 1
+            day = next
         }
         if (studyDays < policy.minPaceDays) return null
         val lines = portions.filter { it.date >= windowStart }.sumOf { it.actualLines }

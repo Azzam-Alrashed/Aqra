@@ -3,6 +3,7 @@ package com.azzamalrashed.aqra.rewards
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.azzamalrashed.aqra.core.CalendarDay
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.core.ProgressJson
 import com.azzamalrashed.aqra.core.newId
@@ -120,8 +121,12 @@ data class Celebration(val kind: Kind, val id: String = newId()) {
 class RewardStore(
     private val file: File?,
     val policy: RewardPolicy = RewardPolicy.STANDARD,
-    private val zone: ZoneId = ZoneId.systemDefault(),
+    /** Days are counted in this time zone; by default the device's, as it changes. */
+    zone: ZoneId? = null,
 ) {
+    private val fixedZone = zone
+    private val zone: ZoneId get() = fixedZone ?: ZoneId.systemDefault()
+
     @Serializable
     data class Event(val date: Moment, val points: Int, val reason: String)
 
@@ -173,8 +178,9 @@ class RewardStore(
         earn(Achievement.FIRST_REVISION, now)
         if (record.source == RevisionRecord.Source.PEER) earn(Achievement.FIRST_PEER, now)
         if (record.source == RevisionRecord.Source.SHEIKH && record.stumbles.isEmpty()) earn(Achievement.FIRST_VERIFIED, now)
-        val day = now.startOfDay(zone)
-        if (day in revision.completedDays && events.none { it.reason == "wird" && it.date.startOfDay(zone) == day }) {
+        // The wird this page belongs to: today's, or yesterday's carried on past midnight.
+        val day = revision.plan?.day ?: CalendarDay.of(now, zone)
+        if (day in revision.completedDays && events.none { it.reason == "wird" && it.date.startOfDay(zone) == now.startOfDay(zone) }) {
             total += policy.wirdCompleted
             reason = "wird"
             earn(Achievement.FIRST_WIRD, now)
@@ -271,10 +277,10 @@ class RewardStore(
     fun progress(challenge: Challenge, revision: RevisionStore, plan: PlanStore): Int {
         fun inWeek(date: Moment) = date >= challenge.start && date < challenge.end
         return when (challenge.kind) {
-            Challenge.Kind.WIRD_DAYS -> revision.completedDays.count(::inWeek)
+            Challenge.Kind.WIRD_DAYS -> revision.completedDays.count { inWeek(it.start(zone)) }
             Challenge.Kind.PAGES_REVISED -> revision.history.count { inWeek(it.date) }
             Challenge.Kind.LINES_MEMORIZED -> plan.portions.filter { inWeek(it.date) }.sumOf { it.actualLines }.toInt()
-            Challenge.Kind.DAILY_REVISION -> revision.revisedDays.count(::inWeek)
+            Challenge.Kind.DAILY_REVISION -> revision.revisedDays.count { inWeek(it.start(zone)) }
         }
     }
 

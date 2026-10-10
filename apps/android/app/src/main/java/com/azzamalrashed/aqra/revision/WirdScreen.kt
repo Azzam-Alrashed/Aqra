@@ -158,7 +158,8 @@ fun WirdScreen(
         val current = session
         app.revision.record(current.page, current.ayahs, current.stumbles,
             if (outside) RevisionRecord.Source.OUTSIDE else RevisionRecord.Source.APP, app.memorization)
-        val next = if (outside) null else app.revision.plan?.items?.firstOrNull { !it.done }
+        // The page just recorded never comes round again, whichever day's plan it was in.
+        val next = if (outside) null else app.revision.plan?.items?.firstOrNull { !it.done && it.page != current.page }
         if (next != null) {
             show(session(next.page))
         } else {
