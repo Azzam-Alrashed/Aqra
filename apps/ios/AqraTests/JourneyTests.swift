@@ -101,7 +101,7 @@ struct JourneyTests {
             #expect(memory.learnedAt == day(0) && memory.stability == plan.policy.newStability)
         }
         // Its page comes back for follow-up tomorrow.
-        #expect(revision.followUps[1]?.due == calendar.startOfDay(for: day(1)))
+        #expect(revision.followUps[1]?.due == CalendarDay(day(1), in: calendar))
         // Done for today; tomorrow the plan goes on from where the student stopped.
         guard case .done = plan.today(memorization: memorization, store: store, now: day(0)) else {
             Issue.record("Today's portion is done")
@@ -154,6 +154,27 @@ struct JourneyTests {
         let pace = try #require(plan.recentPace(now: day(9)))
         let lines = plan.portions.reduce(0) { $0 + $1.actualLines }
         #expect(abs(pace - lines / 9) < 0.001)
+    }
+
+    /// Ten days paused don't count as study days: the pace after the pause is the pace before it.
+    @Test func recentPaceIgnoresPausedDays() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        let plan = PlanStore(fileURL: nil, calendar: calendar)
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        let everyDay = MemorizationPlan(dailyLines: 15, studyDays: Set(1...7), order: .fromEnd)
+        plan.setPlan(everyDay, now: day(0))
+        for portionDay in 0..<7 {
+            guard case .due(let portion) = plan.today(memorization: memorization, store: store, now: day(portionDay)) else { continue }
+            plan.record(planned: portion, memorized: portion, store: store, memorization: memorization, revision: revision, now: day(portionDay))
+        }
+        let before = try #require(plan.recentPace(now: day(7)))
+        var paused = everyDay
+        paused.paused = true
+        plan.setPlan(paused, now: day(7))
+        plan.setPlan(everyDay, now: day(17))
+        let after = try #require(plan.recentPace(now: day(17)))
+        #expect(abs(after - before) < 0.000_001)
     }
 
     // MARK: - The daily reminder
@@ -358,7 +379,7 @@ struct JourneyTests {
         #expect(rewards.points == rewards.policy.pageRevisedInApp)
         #expect(rewards.achievements[.firstRevision] == day(0) && rewards.achievements[.firstWird] == nil)
         revision.record(page: 3, ayahs: [12], stumbles: [], source: .outside, memorization: memorization, now: day(0))
-        #expect(revision.completedDays.contains(calendar.startOfDay(for: day(0))))
+        #expect(revision.completedDays.contains(CalendarDay(day(0), in: calendar)))
         #expect(rewards.points == rewards.policy.pageRevisedInApp + rewards.policy.pageRevisedOutside + rewards.policy.wirdCompleted)
         #expect(rewards.achievements[.firstWird] != nil)
         // A sheikh's clean page, a peer's page.
@@ -431,7 +452,7 @@ struct JourneyTests {
         #expect(RotationAdvisor.suggestions(store: store, memorization: memorization, revision: revision, now: day(15)).isEmpty)
         UserDefaults.standard.removeObject(forKey: "rotation.dismissed")
         RotationAdvisor.accept([20], revision: revision, now: day(15))
-        #expect(revision.followUps[20]?.due == calendar.startOfDay(for: day(16)))
+        #expect(revision.followUps[20]?.due == CalendarDay(day(16), in: calendar))
         #expect(RotationAdvisor.suggestions(store: store, memorization: memorization, revision: revision, now: day(15)).isEmpty)
     }
 

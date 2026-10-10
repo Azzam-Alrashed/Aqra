@@ -1,3 +1,4 @@
+import Combine
 import SwiftUI
 import UIKit
 
@@ -74,6 +75,13 @@ struct AppTabView: View {
                 refreshReminder()
             }
         }
+        // A new day while the app is open (midnight, or another time zone, or the clock set): today's plan follows.
+        .onReceive(NotificationCenter.default.publisher(for: .NSCalendarDayChanged).receive(on: DispatchQueue.main)) { _ in
+            dayChanged()
+        }
+        .onReceive(NotificationCenter.default.publisher(for: UIApplication.significantTimeChangeNotification)) { _ in
+            dayChanged()
+        }
         // A reminder an hour before each booked session.
         .onChange(of: tasmee.upcomingBookings, initial: true) { SessionReminders.schedule(tasmee.upcomingBookings) }
         // The daily reminder mentions the new portion on the plan's study days, and today's goes once today's work
@@ -91,6 +99,11 @@ struct AppTabView: View {
 
     private func refreshPlan() {
         revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization))
+    }
+
+    private func dayChanged() {
+        refreshPlan()
+        refreshReminder()
     }
 }
 

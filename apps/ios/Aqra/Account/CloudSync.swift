@@ -24,6 +24,7 @@ final class CloudSync {
     /// Tells this install's writes from another device's, so coming back to the foreground fetches the account's
     /// copy only when another device wrote it since.
     @ObservationIgnored let installID: String
+    @ObservationIgnored private let clock: () -> Date
     @ObservationIgnored private var uid: String?
     @ObservationIgnored private var pendingUpload: Task<Void, Never>?
     /// The rows the account is known to hold, from the last merge and this install's writes since, so only what
@@ -48,13 +49,16 @@ final class CloudSync {
     /// A fetch right as the app comes back can fail while the connection is re-established; it's tried again.
     private static let mergeAttempts = 3
 
+    /// - Parameter clock: what time it is; a merge never keeps a date later than it (tests set their own).
     init(memorization: MemorizationStore, revision: RevisionStore, journey: Journey? = nil,
-         store: any CloudStore = FirestoreCloudStore(), installID: String = InstallID.current) {
+         store: any CloudStore = FirestoreCloudStore(), installID: String = InstallID.current,
+         clock: @escaping () -> Date = { .now }) {
         self.memorization = memorization
         self.revision = revision
         self.journey = journey
         self.store = store
         self.installID = installID
+        self.clock = clock
         memorization.onChange = { [weak self] in self?.scheduleUpload() }
         revision.onChange = { [weak self] in self?.scheduleUpload() }
         journey?.onChange = { [weak self] in self?.scheduleUpload() }
@@ -154,8 +158,10 @@ final class CloudSync {
             // The days are kept beside the record too, only ever added to; whatever the record says, they count.
             if remoteRevision != nil || !remote.revisedDays.isEmpty || !remote.completedDays.isEmpty {
                 var record = remoteRevision ?? .empty
-                record.revisedDays = Set(record.revisedDays).union(remote.revisedDays.map(Date.init(timeIntervalSinceReferenceDate:))).sorted()
-                let completed = Set(record.completedDays ?? []).union(remote.completedDays.map(Date.init(timeIntervalSinceReferenceDate:)))
+                // Either version's form of a day (UTC or the device's midnight) reads as the same day.
+                let day = { (seconds: Double) in CalendarDay(stored: Date(timeIntervalSinceReferenceDate: seconds)) }
+                record.revisedDays = Set(record.revisedDays).union(remote.revisedDays.map(day)).sorted()
+                let completed = Set(record.completedDays ?? []).union(remote.completedDays.map(day))
                 record.completedDays = completed.isEmpty ? nil : completed.sorted()
                 remoteRevision = record
             }
@@ -163,7 +169,7 @@ final class CloudSync {
             remoteJourneyReadable = remote.journeyJSON == nil || remoteJourney != nil
 
             isRestoring = true
-            memorization.replaceAll(CloudBackup.merge(memorization.memory, remoteMemory))
+            memorization.replaceAll(CloudBackup.merge(memorization.memory, remoteMemory, now: clock()))
             if let remoteRevision {
                 revision.apply(CloudBackup.merge(revision.snapshot, remoteRevision))
             }
@@ -225,8 +231,8 @@ final class CloudSync {
         write.rows = rows
         if revisionChanged {
             write.revisionJSON = try CloudBackup.encode(snapshot)
-            write.revisedDays = snapshot.revisedDays.map(\.timeIntervalSinceReferenceDate)
-            write.completedDays = (snapshot.completedDays ?? []).map(\.timeIntervalSinceReferenceDate)
+            write.revisedDays = snapshot.revisedDays.map(\.stored.timeIntervalSinceReferenceDate)
+            write.completedDays = (snapshot.completedDays ?? []).map(\.stored.timeIntervalSinceReferenceDate)
         }
         if journeyChanged, let journeySnapshot {
             write.journeyJSON = try CloudBackup.encode(journeySnapshot)

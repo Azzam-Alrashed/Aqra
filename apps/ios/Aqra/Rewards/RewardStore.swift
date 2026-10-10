@@ -117,7 +117,7 @@ final class RewardStore {
             .appendingPathComponent("rewards.json")
     }
 
-    init(fileURL: URL? = RewardStore.defaultURL, policy: RewardPolicy = .standard, calendar: Calendar = .current) {
+    init(fileURL: URL? = RewardStore.defaultURL, policy: RewardPolicy = .standard, calendar: Calendar = .autoupdatingCurrent) {
         self.fileURL = fileURL
         self.policy = policy
         self.calendar = calendar
@@ -146,7 +146,8 @@ final class RewardStore {
         earn(.firstRevision, at: now)
         if record.source == .peer { earn(.firstPeer, at: now) }
         if record.source == .sheikh && record.stumbles.isEmpty { earn(.firstVerified, at: now) }
-        let day = calendar.startOfDay(for: now)
+        // The wird this page belongs to: today's, or yesterday's carried on past midnight.
+        let day = revision.plan?.day ?? CalendarDay(now, in: calendar)
         if revision.completedDays.contains(day), !events.contains(where: { $0.reason == "wird" && calendar.isDate($0.date, inSameDayAs: now) }) {
             total += policy.wirdCompleted
             reasons.append("wird")
@@ -247,10 +248,10 @@ final class RewardStore {
     func progress(of challenge: Challenge, revision: RevisionStore, plan: PlanStore) -> Int {
         let inWeek = { (date: Date) in date >= challenge.start && date < challenge.end }
         switch challenge.kind {
-        case .wirdDays: return revision.completedDays.filter(inWeek).count
+        case .wirdDays: return revision.completedDays.filter { inWeek($0.start(in: calendar)) }.count
         case .pagesRevised: return revision.history.filter { inWeek($0.date) }.count
         case .linesMemorized: return Int(plan.portions.filter { inWeek($0.date) }.reduce(0) { $0 + $1.actualLines }.rounded(.down))
-        case .dailyRevision: return revision.revisedDays.filter(inWeek).count
+        case .dailyRevision: return revision.revisedDays.filter { inWeek($0.start(in: calendar)) }.count
         }
     }
 

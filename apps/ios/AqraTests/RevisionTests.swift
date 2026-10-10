@@ -94,9 +94,9 @@ struct RevisionTests {
 
         // Clean follow-ups space out (3 days, then 7) and then leave follow-up.
         revision.record(page: 11, ayahs: [110], stumbles: [], source: .app, memorization: memorization, now: day(1))
-        #expect(revision.followUps[11]?.due == calendar.startOfDay(for: day(4)))
+        #expect(revision.followUps[11]?.due == CalendarDay(day(4), in: calendar))
         revision.record(page: 11, ayahs: [110], stumbles: [], source: .app, memorization: memorization, now: day(4))
-        #expect(revision.followUps[11]?.due == calendar.startOfDay(for: day(11)))
+        #expect(revision.followUps[11]?.due == CalendarDay(day(11), in: calendar))
         revision.record(page: 11, ayahs: [110], stumbles: [], source: .app, memorization: memorization, now: day(11))
         #expect(revision.followUps[11] == nil)
     }
@@ -217,6 +217,171 @@ struct RevisionTests {
     }
 
     /// «تعثّرتُ هنا» reveals the next ayah already marked as a stumble; past the last ayah it does nothing.
+    // MARK: - Days, time zones and the clock
+
+    private func zoned(_ identifier: String) -> Calendar {
+        var calendar = Calendar(identifier: .gregorian)
+        calendar.timeZone = TimeZone(identifier: identifier)!
+        return calendar
+    }
+
+    /// A moment given as the time on the clock in a time zone.
+    private func at(_ year: Int, _ month: Int, _ day: Int, _ hour: Int, _ minute: Int = 0, in zone: String) -> Date {
+        zoned(zone).date(from: DateComponents(year: year, month: month, day: day, hour: hour, minute: minute))!
+    }
+
+    private func temporaryURL() -> URL {
+        FileManager.default.temporaryDirectory.appendingPathComponent("revision-\(UUID().uuidString).json")
+    }
+
+    /// Earlier versions kept a day as the device's local midnight; it reads back as the same calendar day, in a zone
+    /// ahead of UTC, one behind it, and on a day whose midnight the clocks skipped.
+    @Test func daysWrittenAsLocalMidnightReadBackAsTheSameDay() throws {
+        for (zone, month, date) in [("Asia/Riyadh", 3, 12), ("America/New_York", 3, 12), ("Africa/Cairo", 4, 24), ("Europe/London", 3, 29)] {
+            let calendar = zoned(zone)
+            let noon = at(2026, month, date, 12, in: zone)
+            #expect(CalendarDay(stored: calendar.startOfDay(for: noon)) == CalendarDay(noon, in: calendar), Comment(rawValue: zone))
+            #expect(CalendarDay(noon, in: calendar).description == String(format: "2026-%02d-%02d", month, date))
+        }
+        // A whole file from before: its days, its plan's day and its follow-up's day.
+        let riyadh = zoned("Asia/Riyadh")
+        let midnight = riyadh.startOfDay(for: at(2026, 3, 12, 12, in: "Asia/Riyadh")).timeIntervalSinceReferenceDate
+        let url = temporaryURL()
+        try Data("""
+        {"version":1,"rotationCursor":3,"followUps":[{"page":9,"due":\(midnight + 86_400),"step":0}],
+        "plan":{"day":\(midnight),"items":[{"page":1,"kind":"rotation","done":true}]},"history":[],
+        "revisedDays":[\(midnight - 86_400),\(midnight)],"completedDays":[\(midnight)]}
+        """.utf8).write(to: url)
+        let revision = RevisionStore(fileURL: url, calendar: riyadh)
+        let today = CalendarDay(at(2026, 3, 12, 20, in: "Asia/Riyadh"), in: riyadh)
+        #expect(revision.plan?.day == today && revision.followUps[9]?.due == today.adding(1))
+        #expect(revision.revisedDays == [today.adding(-1), today] && revision.completedDays == [today])
+        #expect(revision.streak(now: at(2026, 3, 12, 20, in: "Asia/Riyadh")) == 2)
+    }
+
+    /// Three evenings revised in Riyadh, then a flight to London: the streak is still there, the same evening and
+    /// the next morning.
+    @Test func streakSurvivesATimeZoneChange() {
+        let url = temporaryURL()
+        let memorization = MemorizationStore(fileURL: nil)
+        let riyadh = RevisionStore(fileURL: url, calendar: zoned("Asia/Riyadh"))
+        for date in 10...12 {
+            riyadh.record(page: 1, ayahs: [], stumbles: [], source: .app, memorization: memorization,
+                          now: at(2026, 3, date, 21, in: "Asia/Riyadh"))
+        }
+        #expect(riyadh.streak(now: at(2026, 3, 12, 22, in: "Asia/Riyadh")) == 3)
+        let london = RevisionStore(fileURL: url, calendar: zoned("Europe/London"))
+        #expect(london.streak(now: at(2026, 3, 12, 19, 30, in: "Europe/London")) == 3)
+        #expect(london.recentDays(3, now: at(2026, 3, 12, 19, 30, in: "Europe/London")) == [true, true, true])
+        #expect(london.streak(now: at(2026, 3, 13, 8, in: "Europe/London")) == 3)
+    }
+
+    /// Today's plan, made in Riyadh with a page done, is the same plan after landing in London that day.
+    @Test func planSurvivesRelaunchInAnotherZoneOnTheSameDay() {
+        let url = temporaryURL()
+        let memorization = MemorizationStore(fileURL: nil)
+        let pages = [1, 2, 3, 4, 5]
+        let riyadh = RevisionStore(fileURL: url, calendar: zoned("Asia/Riyadh"))
+        riyadh.setDailyPages(3)
+        riyadh.refreshPlan(memorizedPages: pages, now: at(2026, 3, 12, 9, in: "Asia/Riyadh"))
+        riyadh.record(page: 1, ayahs: [], stumbles: [], source: .app, memorization: memorization,
+                      now: at(2026, 3, 12, 10, in: "Asia/Riyadh"))
+        let london = RevisionStore(fileURL: url, calendar: zoned("Europe/London"))
+        london.refreshPlan(memorizedPages: pages, now: at(2026, 3, 12, 15, in: "Europe/London"))
+        #expect(london.plan?.items.map(\.page) == [1, 2, 3] && london.plan?.doneCount == 1)
+    }
+
+    /// In Cairo the clocks go forward at midnight on Friday 24 April 2026, so that day starts at 01:00. A revision
+    /// every evening from the 20th to the 27th is a streak of eight.
+    @Test func streakCrossesAMidnightDSTGap() {
+        let cairo = zoned("Africa/Cairo")
+        #expect(cairo.component(.hour, from: cairo.startOfDay(for: at(2026, 4, 24, 12, in: "Africa/Cairo"))) == 1)
+        let revision = RevisionStore(fileURL: nil, calendar: cairo)
+        let memorization = MemorizationStore(fileURL: nil)
+        for date in 20...27 {
+            revision.record(page: 1, ayahs: [], stumbles: [], source: .app, memorization: memorization,
+                            now: at(2026, 4, date, 20, in: "Africa/Cairo"))
+        }
+        #expect(revision.streak(now: at(2026, 4, 27, 21, in: "Africa/Cairo")) == 8)
+        #expect(revision.recentDays(8, now: at(2026, 4, 27, 21, in: "Africa/Cairo")).allSatisfy { $0 })
+    }
+
+    /// A stumble just before the clocks go forward at midnight brings the page back the next calendar day.
+    @Test func followUpSetOnADSTDayIsDueTheNextDay() {
+        let cairo = zoned("Africa/Cairo")
+        let revision = RevisionStore(fileURL: nil, calendar: cairo)
+        let memorization = MemorizationStore(fileURL: nil)
+        revision.record(page: 5, ayahs: [], stumbles: [40], source: .app, memorization: memorization,
+                        now: at(2026, 4, 23, 23, 30, in: "Africa/Cairo"))
+        #expect(revision.followUps[5]?.due == CalendarDay(at(2026, 4, 24, 12, in: "Africa/Cairo"), in: cairo))
+        revision.refreshPlan(memorizedPages: [5, 6], now: at(2026, 4, 24, 1, 5, in: "Africa/Cairo"))
+        #expect(revision.plan?.items.first == PlanItem(page: 5, kind: .followUp))
+    }
+
+    /// A wird carried on past midnight: each page recorded is checked off and the wird moves on, the wird counts
+    /// for the day it was made, and the next plan continues the rotation.
+    @Test func recordingAfterMidnightMovesTheWirdOn() {
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        let memorization = MemorizationStore(fileURL: nil)
+        let pages = [10, 11, 12, 13]
+        revision.setDailyPages(3)
+        revision.refreshPlan(memorizedPages: pages, now: day(0))
+        revision.record(page: 10, ayahs: [], stumbles: [], source: .app, memorization: memorization, now: day(0))
+        let afterMidnight = calendar.startOfDay(for: day(1)).addingTimeInterval(10 * 60)
+        revision.record(page: 11, ayahs: [], stumbles: [], source: .app, memorization: memorization, now: afterMidnight)
+        #expect(revision.plan?.items.map(\.done) == [true, true, false])
+        #expect(revision.plan?.items.first { !$0.done }?.page == 12)
+        revision.record(page: 12, ayahs: [], stumbles: [], source: .app, memorization: memorization, now: afterMidnight)
+        #expect(revision.completedDays == [CalendarDay(day(0), in: calendar)])
+        #expect(revision.revisedDays == [CalendarDay(day(0), in: calendar), CalendarDay(day(1), in: calendar)])
+        #expect(revision.rotationCursor == 13)
+        revision.refreshPlan(memorizedPages: pages, now: afterMidnight)
+        #expect(revision.plan?.day == CalendarDay(day(1), in: calendar) && revision.plan?.items.first?.page == 13)
+    }
+
+    /// Revising a page again the same day it was stumbled on doesn't move its follow-up on: the step waits for
+    /// its day.
+    @Test func cleanRevisionBeforeDueDoesNotAdvanceAFollowUp() {
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        let memorization = MemorizationStore(fileURL: nil)
+        revision.record(page: 7, ayahs: [], stumbles: [70], source: .app, memorization: memorization, now: day(0))
+        revision.record(page: 7, ayahs: [], stumbles: [], source: .app, memorization: memorization,
+                        now: day(0).addingTimeInterval(2 * 3_600))
+        #expect(revision.followUps[7] == .init(due: CalendarDay(day(1), in: calendar), step: 0))
+        revision.record(page: 7, ayahs: [], stumbles: [], source: .app, memorization: memorization, now: day(1))
+        #expect(revision.followUps[7] == .init(due: CalendarDay(day(4), in: calendar), step: 1))
+        // A late revision, after the day it was due, still moves it on.
+        revision.record(page: 7, ayahs: [], stumbles: [], source: .app, memorization: memorization, now: day(9))
+        #expect(revision.followUps[7] == .init(due: CalendarDay(day(16), in: calendar), step: 2))
+    }
+
+    /// A teacher's phone a day ahead, or a device whose clock ran ahead: what they wrote counts from now.
+    @Test func futureDatedRevisionIsClampedToNow() {
+        let memorization = MemorizationStore(fileURL: nil)
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        memorization.mark(7...8, memorized: true)
+        let record = TasmeeRecord(id: "r", teacherId: "t", teacherName: "x", sessionId: "s", at: day(6), pages: [2], stumbles: [])
+        TasmeeApply.apply(record, memorization: memorization, revision: revision, now: day(5)) { _ in 7...8 }
+        #expect(memorization.memory(ofAyah: 7)?.lastReviewed == day(5) && revision.history.last?.date == day(5))
+
+        var ahead = AyahMemory(since: day(0))
+        ahead.lastReviewed = day(40)
+        ahead.lastLapseAt = day(40)
+        let merged = CloudBackup.merge(CloudBackup.Memory(ayahs: [9: ahead]), CloudBackup.Memory(removed: [10: day(40)]), now: day(5))
+        #expect(merged.ayahs[9]?.lastReviewed == day(5) && merged.ayahs[9]?.lastLapseAt == day(5) && merged.removed[10] == day(5))
+    }
+
+    /// The first revision of an ayah memorized in Aqra is spaced from when it was learned: right away it grows a
+    /// little, after the follow-up's wait it grows in full. A declared ayah's first revision still counts in full.
+    @Test func firstRevisionOfALearnedAyahIsSpaced() {
+        let policy = ReviewPolicy.standard
+        let learned = AyahMemory(since: start, stability: 2, learnedAt: start)
+        #expect(learned.revised(stumbled: false, at: start.addingTimeInterval(3_600), policy: policy).stability < 2 * 1.2)
+        #expect(learned.revised(stumbled: false, at: day(2), policy: policy).stability == 2 * policy.growth)
+        #expect(AyahMemory(since: start).revised(stumbled: false, at: start, policy: policy).stability
+                == policy.declaredStability * policy.growth)
+    }
+
     @Test func stumblingOnTheNextAyahRevealsItMarked() {
         let session = RevisionSession(page: 2, ayahs: [7, 8, 9])
         session.revealNext()

@@ -641,7 +641,7 @@ enum DailyReminder {
     /// Whether today's work is done: today's wird complete and, on a study day of an active plan, the new portion
     /// recorded (or nothing left to memorize).
     static func isTodayDone(revision: RevisionStore, plan: PlanStore, memorization: MemorizationStore, now: Date = .now) -> Bool {
-        guard let wird = revision.plan, Calendar.current.isDate(wird.day, inSameDayAs: now), wird.isComplete else { return false }
+        guard let wird = revision.plan, wird.day == revision.today(now), wird.isComplete else { return false }
         return !plan.isPortionDue(memorization: memorization, now: now)
     }
 

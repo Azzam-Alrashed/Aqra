@@ -118,7 +118,8 @@ struct WirdView: View {
         }
         revision.record(page: session.page, ayahs: session.ayahs, stumbles: session.stumbles,
                         source: outside ? .outside : .app, memorization: memorization)
-        if !outside, let next = revision.plan?.items.first(where: { !$0.done }) {
+        // The page just recorded never comes round again, whichever day's plan it was in.
+        if !outside, let next = revision.plan?.items.first(where: { !$0.done && $0.page != session.page }) {
             withAnimation(.easeInOut(duration: 0.25)) { start(next.page) }
         } else {
             dismiss()

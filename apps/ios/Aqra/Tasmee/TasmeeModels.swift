@@ -353,16 +353,18 @@ enum TasmeeApply {
     /// mark and the stumbled ones lose it. Ayat the student never marked as memorized are left alone: the student
     /// owns the map of what they know.
     /// - Parameter pageAyahs: the ayat of a page (from the Mushaf; a closure so this stays testable).
+    /// - Parameter now: a record dated later (the listener's clock ran ahead) counts from now.
     @MainActor
     static func apply(_ record: TasmeeRecord, memorization: MemorizationStore, revision: RevisionStore,
-                      pageAyahs: (Int) -> ClosedRange<Int>) {
+                      now: Date = .now, pageAyahs: (Int) -> ClosedRange<Int>) {
         let stumbles = Set(record.stumbles)
+        let heardAt = min(record.at, now)
         for page in Set(record.pages).sorted() where (1...MushafStore.pageCount).contains(page) {
             let memorized = pageAyahs(page).filter { memorization.isMemorized($0) }
             guard !memorized.isEmpty else { continue }
             let pageStumbles = stumbles.intersection(memorized)
             revision.record(page: page, ayahs: memorized, stumbles: pageStumbles,
-                            source: record.kind == .peer ? .peer : .sheikh, memorization: memorization, now: record.at)
+                            source: record.kind == .peer ? .peer : .sheikh, memorization: memorization, now: heardAt)
             if record.kind == .sheikh {
                 memorization.verify(memorized, except: pageStumbles)
             }

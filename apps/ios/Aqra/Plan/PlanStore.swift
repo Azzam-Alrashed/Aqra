@@ -85,7 +85,7 @@ final class PlanStore {
             .appendingPathComponent("plan.json")
     }
 
-    init(fileURL: URL? = PlanStore.defaultURL, policy: PlanPolicy = .standard, calendar: Calendar = .current) {
+    init(fileURL: URL? = PlanStore.defaultURL, policy: PlanPolicy = .standard, calendar: Calendar = .autoupdatingCurrent) {
         self.fileURL = fileURL
         self.policy = policy
         self.calendar = calendar
@@ -228,7 +228,9 @@ final class PlanStore {
 
     // MARK: - The completion date
 
-    /// Lines memorized per study day lately, once enough study days have passed to tell; nil until then.
+    /// Lines memorized per study day lately, once enough study days have passed to tell; nil until then. A day
+    /// counts when it was a study day of the plan as it stood that day, and the plan wasn't paused: a pause
+    /// doesn't slow the pace.
     func recentPace(now: Date = .now) -> Double? {
         // Since the plan was last turned on: the earliest change in the run of changes that kept it on.
         var started: Date?
@@ -236,15 +238,20 @@ final class PlanStore {
             guard change.plan != nil else { break }
             started = change.date
         }
-        guard let plan, let started else { return nil }
+        guard plan != nil, let started else { return nil }
         let today = calendar.startOfDay(for: now)
         let windowStart = max(calendar.startOfDay(for: started), date(today, plus: -policy.paceWindowDays))
         let doneToday = portions.contains { calendar.startOfDay(for: $0.date) == today }
         var studyDays = 0
         var day = windowStart
         while day < today || (day == today && doneToday) {
-            if plan.studyDays.contains(calendar.component(.weekday, from: day)) { studyDays += 1 }
-            day = date(day, plus: 1)
+            let next = date(day, plus: 1)
+            // The plan as it stood by the end of the day.
+            if let standing = history.last(where: { $0.date < next })?.plan, !standing.paused,
+               standing.studyDays.contains(calendar.component(.weekday, from: day)) {
+                studyDays += 1
+            }
+            day = next
         }
         guard studyDays >= policy.minPaceDays else { return nil }
         let lines = portions.filter { $0.date >= windowStart }.reduce(0) { $0 + $1.actualLines }
