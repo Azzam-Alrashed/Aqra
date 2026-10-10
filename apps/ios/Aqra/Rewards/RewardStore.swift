@@ -281,6 +281,39 @@ final class RewardStore {
 
         static let empty = Snapshot()
 
+        init(points: Int = 0, events: [Event] = [], achievements: [Achievement: Date] = [:], challenges: [Challenge] = [],
+             updatedAt: Date = .distantPast) {
+            self.points = points
+            self.events = events
+            self.achievements = achievements
+            self.challenges = challenges
+            self.updatedAt = updatedAt
+        }
+
+        // The account's copy may come from the Android app or a newer version: a key missing, unknown or
+        // unreadable never loses the rest, and an achievement this version doesn't know is passed over.
+        private enum CodingKeys: String, CodingKey { case points, events, achievements, challenges, updatedAt }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            points = container.decodeOr(Int.self, forKey: .points, 0)
+            events = container.decodeLossy([Event].self, forKey: .events)
+            // Swift writes a dictionary keyed by an enum as a flat list, name then date; the Android app writes the
+            // same, and either may one day write an object instead.
+            var named: [String: Date] = [:]
+            if let object = try? container.decodeIfPresent([String: Date].self, forKey: .achievements) {
+                named = object
+            } else if var list = try? container.nestedUnkeyedContainer(forKey: .achievements) {
+                while !list.isAtEnd {
+                    guard let name = try? list.decode(String.self), let date = try? list.decode(Date.self) else { break }
+                    named[name] = date
+                }
+            }
+            achievements = Dictionary(uniqueKeysWithValues: named.compactMap { name, date in Achievement(rawValue: name).map { ($0, date) } })
+            challenges = container.decodeLossy([Challenge].self, forKey: .challenges)
+            updatedAt = container.decodeOr(Date.self, forKey: .updatedAt, .distantPast)
+        }
+
         /// Both copies as one: the larger total (points only grow), every achievement at its earliest, and the
         /// challenges of both.
         static func merge(_ local: Snapshot, _ remote: Snapshot) -> Snapshot {

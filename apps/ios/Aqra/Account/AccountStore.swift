@@ -290,7 +290,9 @@ final class AccountStore {
     }
 
     /// Deletes the account and everything it holds. The progress on this device stays, under a new anonymous
-    /// account. Apple accounts are signed in again first, so Apple's token can be revoked as Apple requires.
+    /// account. Signed-in accounts are signed in again first (Apple's token is revoked as Apple requires), so
+    /// a sign-in refused or cancelled never leaves a live account with its data gone; then the backups stop,
+    /// the data goes, and the account last.
     @discardableResult
     func deleteAccount() async -> Bool {
         guard let user = Auth.auth().currentUser else { return false }
@@ -300,7 +302,8 @@ final class AccountStore {
         do {
             // Deleting needs the server: offline, say so now, before anything is asked or half of it is queued.
             _ = try await Firestore.firestore().collection("users").document(user.uid).getDocument(source: .server)
-            if profile?.provider == .apple {
+            switch profile?.provider {
+            case .apple:
                 let authorization = try await apple.request()
                 guard let (credential, _) = apple.credential(from: authorization) else { throw CloudSyncError.timedOut }
                 try await user.reauthenticate(with: credential)
@@ -308,17 +311,22 @@ final class AccountStore {
                    let code = appleCredential.authorizationCode.flatMap({ String(data: $0, encoding: .utf8) }) {
                     try? await Auth.auth().revokeToken(withAuthorizationCode: code)
                 }
-            }
-            try await withServerTimeout(.seconds(60)) {
-                try await self.tasmee.deleteAccountData(uid: user.uid)
-                try await self.social.deleteAccountData(uid: user.uid)
-                try await self.sync.deleteAccountData(uid: user.uid)
-            }
-            do {
-                try await user.delete()
-            } catch let error as NSError where error.code == AuthErrorCode.requiresRecentLogin.rawValue {
+            case .google:
                 try await reauthenticateWithGoogle(user)
+            case nil:
+                break
+            }
+            sync.stopUploads()
+            do {
+                try await withServerTimeout(.seconds(60)) {
+                    try await self.tasmee.deleteAccountData(uid: user.uid)
+                    try await self.social.deleteAccountData(uid: user.uid)
+                    try await self.sync.deleteAccountData(uid: user.uid)
+                }
                 try await user.delete()
+            } catch {
+                sync.resumeUploads()
+                throw error
             }
             sync.detach()
             tasmee.detach()

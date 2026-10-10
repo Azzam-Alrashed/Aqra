@@ -72,11 +72,15 @@ student if they taught, their uploads, and an application still waiting; the ser
 and any reviewed application (`functions/src/accounts.ts`). What stays: `purchases` (the record of what was sold), the
 account's bids, `teacherBalances`, and a teacher's own `teachers/{uid}` document and sessions (removed by hand).
 
-- `users/{uid}`: `updatedAt`.
+- `users/{uid}`: `updatedAt`, and `lastWriter`, the install that last wrote the progress: a device coming back to
+  the foreground reads it and fetches the account's copy only when another device wrote since.
 - `users/{uid}/memory/block-NN` (25 blocks of 256 ayat): each memorized ayah as
-  `[since, stability, lastReviewed or -1, lapses, verified]`, dates in seconds since 1970.
+  `[since, stability, lastReviewed or -1, lapses, verified, learnedAt or -1, lastLapseAt or -1]`, dates in seconds
+  since 1970; an ayah unmarked leaves a tombstone, `[removedAt, 0, -1, 0, 0, -1, -1]`, which no app reads as
+  memorized. A device writes only the rows that changed, merged into the block.
 - `users/{uid}/revision/state`: the revision record (daily amount, rotation, follow-ups, today's plan, the days
-  revised and the last 1,000 revisions) as JSON.
+  revised and the last 1,000 revisions) as JSON, beside `revisedDays` and `completedDays` as arrays (seconds since
+  2001) only ever added to, so a day one device wrote survives another's write of the JSON.
 - `users/{uid}/journey/state`: the personal plan with its history and portions log, the stage test results, the
   rewards (points, achievements, challenges) and the reader's ribbon (`reading`, optional) as JSON.
 - `users/{uid}/bookings/{sessionId}`: the student's copy of a session they booked (`teacherId`, `teacherName`,
@@ -92,8 +96,9 @@ account's bids, `teacherBalances`, and a teacher's own `teachers/{uid}` document
 - `users/{uid}/inbox/{id}`: messages from the server or an administrator (`kind`, `at`, `readAt`): the
   application's status, payouts, and later bids and refunds. The student reads, marks read and deletes them.
 
-The device's copy is the one the app works from; the account is its backup. See
-`apps/ios/Aqra/Account/CloudBackup.swift` for the merge rules.
+The device's copy is the one the app works from; the account is its backup, merged into the device's copy whenever
+an account is attached and whenever the app comes back after another device wrote (unions, never a blind overwrite).
+See `apps/ios/Aqra/Account/CloudBackup.swift` and the Android `CloudBackup.kt` for the merge rules.
 
 ### Peer tasmee': `peerRequests/{code}`
 

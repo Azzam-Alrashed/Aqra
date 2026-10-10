@@ -49,6 +49,25 @@ struct RevisionRecord: Codable, Hashable {
     var page: Int
     var source: Source
     var stumbles: [Int]
+
+    init(date: Date, page: Int, source: Source, stumbles: [Int]) {
+        self.date = date
+        self.page = page
+        self.source = source
+        self.stumbles = stumbles
+    }
+
+    // Read as another app wrote it: a source or stumbles it left out, or one this version doesn't know, don't
+    // lose the record.
+    private enum CodingKeys: String, CodingKey { case date, page, source, stumbles }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        date = try container.decode(Date.self, forKey: .date)
+        page = try container.decode(Int.self, forKey: .page)
+        source = container.decodeOr(Source.self, forKey: .source, .app)
+        stumbles = container.decodeOr([Int].self, forKey: .stumbles, [])
+    }
 }
 
 /// A page in today's plan.
@@ -64,6 +83,21 @@ struct PlanItem: Codable, Hashable, Identifiable {
     var kind: Kind
     var done = false
     var id: Int { page }
+
+    init(page: Int, kind: Kind, done: Bool = false) {
+        self.page = page
+        self.kind = kind
+        self.done = done
+    }
+
+    private enum CodingKeys: String, CodingKey { case page, kind, done }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        page = try container.decode(Int.self, forKey: .page)
+        kind = container.decodeOr(Kind.self, forKey: .kind, .rotation)
+        done = container.decodeOr(Bool.self, forKey: .done, false)
+    }
 }
 
 /// Today's plan. It's fixed once made, so it doesn't shift while the student works through it.
@@ -73,6 +107,19 @@ struct DayPlan: Codable, Hashable {
 
     var doneCount: Int { items.filter(\.done).count }
     var isComplete: Bool { !items.isEmpty && items.allSatisfy(\.done) }
+
+    init(day: Date, items: [PlanItem]) {
+        self.day = day
+        self.items = items
+    }
+
+    private enum CodingKeys: String, CodingKey { case day, items }
+
+    init(from decoder: Decoder) throws {
+        let container = try decoder.container(keyedBy: CodingKeys.self)
+        day = try container.decode(Date.self, forKey: .day)
+        items = container.decodeLossy([PlanItem].self, forKey: .items)
+    }
 }
 
 /// The revision plan and its record, kept on the device.
@@ -86,6 +133,19 @@ final class RevisionStore {
         var due: Date
         /// Which of the policy's follow-up intervals it's on.
         var step: Int
+
+        init(due: Date, step: Int) {
+            self.due = due
+            self.step = step
+        }
+
+        private enum CodingKeys: String, CodingKey { case due, step }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            due = try container.decode(Date.self, forKey: .due)
+            step = container.decodeOr(Int.self, forKey: .step, 0)
+        }
     }
 
     let policy: ReviewPolicy
@@ -103,6 +163,8 @@ final class RevisionStore {
     private(set) var completedDays: Set<Date> = []
     /// When any of it last changed, to tell which copy is newer when merging with the account's.
     private(set) var updatedAt = Date.distantPast
+    /// Whether the file on the device couldn't be read: it was set aside, and the account's copy must come first.
+    private(set) var loadFailed = false
     /// Called after every change, so the backup can follow.
     @ObservationIgnored var onChange: (() -> Void)?
     /// Called after each page is recorded, so rewards can follow.
@@ -121,8 +183,13 @@ final class RevisionStore {
         self.fileURL = fileURL
         self.policy = policy
         self.calendar = calendar
-        guard let fileURL, let data = try? Data(contentsOf: fileURL),
-              let file = try? JSONDecoder().decode(File.self, from: data) else { return }
+        guard let fileURL, let data = try? Data(contentsOf: fileURL) else { return }
+        guard let file = try? JSONDecoder().decode(File.self, from: data) else {
+            // An unreadable file is kept aside, never replaced by an empty one; the account's copy comes first.
+            MemorizationStore.setAside(fileURL)
+            loadFailed = true
+            return
+        }
         dailyPages = file.dailyPages
         rotationCursor = file.rotationCursor
         followUps = Dictionary(file.followUps.map { ($0.page, FollowUp(due: $0.due, step: $0.step)) }, uniquingKeysWith: { first, _ in first })
@@ -151,6 +218,37 @@ final class RevisionStore {
         var updatedAt = Date.distantPast
 
         static let empty = Snapshot()
+
+        init(dailyPages: Int? = nil, rotationCursor: Int = 1, followUps: [Int: FollowUp] = [:], plan: DayPlan? = nil,
+             history: [RevisionRecord] = [], revisedDays: [Date] = [], completedDays: [Date]? = nil,
+             updatedAt: Date = .distantPast) {
+            self.dailyPages = dailyPages
+            self.rotationCursor = rotationCursor
+            self.followUps = followUps
+            self.plan = plan
+            self.history = history
+            self.revisedDays = revisedDays
+            self.completedDays = completedDays
+            self.updatedAt = updatedAt
+        }
+
+        // The account's record may come from the Android app or a newer version: a key missing, unknown or
+        // unreadable never loses the rest.
+        private enum CodingKeys: String, CodingKey {
+            case dailyPages, rotationCursor, followUps, plan, history, revisedDays, completedDays, updatedAt
+        }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            dailyPages = container.decodeOrNil(Int.self, forKey: .dailyPages)
+            rotationCursor = container.decodeOr(Int.self, forKey: .rotationCursor, 1)
+            followUps = container.decodeOr([Int: FollowUp].self, forKey: .followUps, [:])
+            plan = container.decodeOrNil(DayPlan.self, forKey: .plan)
+            history = container.decodeLossy([RevisionRecord].self, forKey: .history)
+            revisedDays = container.decodeOr([Date].self, forKey: .revisedDays, [])
+            completedDays = container.decodeOrNil([Date].self, forKey: .completedDays)
+            updatedAt = container.decodeOr(Date.self, forKey: .updatedAt, .distantPast)
+        }
     }
 
     var snapshot: Snapshot {
@@ -169,7 +267,8 @@ final class RevisionStore {
         history = Array(snapshot.history.suffix(1_000))
         revisedDays = Set(snapshot.revisedDays)
         completedDays = Set(snapshot.completedDays ?? [])
-        save()
+        updatedAt = snapshot.updatedAt
+        save(touching: false)
     }
 
     /// The daily amount in effect: the student's choice, or the suggestion for what they've memorized.
@@ -328,8 +427,8 @@ final class RevisionStore {
         var updatedAt: Date?
     }
 
-    private func save() {
-        updatedAt = .now
+    private func save(touching: Bool = true) {
+        if touching { updatedAt = .now }
         onChange?()
         guard let fileURL else { return }
         let file = File(

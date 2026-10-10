@@ -4,6 +4,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import com.azzamalrashed.aqra.account.CloudBackup
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.core.ProgressJson
 import com.azzamalrashed.aqra.curriculum.StagePolicy
@@ -93,6 +94,12 @@ class MemorizationStore(
 ) {
     var ayahs: Map<Int, AyahMemory> by mutableStateOf(emptyMap())
         private set
+    /** The ayat unmarked, and when, kept so the account's merge doesn't bring them back (see [CloudBackup]). */
+    var removed: Map<Int, Moment> by mutableStateOf(emptyMap())
+        private set
+    /** Whether the file on the device couldn't be read: it was set aside, and the account's copy must come first. */
+    var loadFailed = false
+        private set
 
     /** Called after every change, so the backup can follow. */
     var onChange: (() -> Unit)? = null
@@ -101,21 +108,36 @@ class MemorizationStore(
     private var unsaved = false
 
     @Serializable
-    private class FileContents(val version: Int = 2, val ayahs: List<Record>) {
+    private class FileContents(val version: Int = 3, val ayahs: List<Record>, val removed: List<Removed>? = null) {
         @Serializable
         class Record(val ayah: Int, val memory: AyahMemory)
+
+        /** Missing from files written before unmarking was remembered (version 2). */
+        @Serializable
+        class Removed(val ayah: Int, val at: Moment)
     }
 
     init {
         val file = file
         if (file != null && file.exists()) {
-            runCatching { ProgressJson.decodeFromString<FileContents>(file.readText()) }.getOrNull()?.let { contents ->
+            val contents = runCatching { ProgressJson.decodeFromString<FileContents>(file.readText()) }.getOrNull()
+            if (contents == null) {
+                // An unreadable file is kept aside, never replaced by an empty one; the account's copy comes first.
+                setAside(file)
+                loadFailed = true
+            } else {
                 val loaded = LinkedHashMap<Int, AyahMemory>()
                 for (record in contents.ayahs) loaded.putIfAbsent(record.ayah, record.memory)
                 ayahs = loaded
+                val tombstones = LinkedHashMap<Int, Moment>()
+                for (record in contents.removed.orEmpty()) if (record.ayah !in loaded) tombstones.putIfAbsent(record.ayah, record.at)
+                removed = tombstones
             }
         }
     }
+
+    /** What's memorized and what was unmarked, as the account's merge needs them. */
+    val memory: CloudBackup.Memory get() = CloudBackup.Memory(ayahs, removed)
 
     val count: Int get() = ayahs.size
 
@@ -198,9 +220,15 @@ class MemorizationStore(
     fun toggle(ayah: Int) = mark(listOf(ayah), memorized = !isMemorized(ayah))
 
     /** Replaces everything memorized: restoring from the account, or clearing the device on signing out. */
-    fun replaceAll(memories: Map<Int, AyahMemory>) {
-        if (memories == ayahs) return
-        ayahs = memories.filterKeys { it in 0 until MushafStore.AYAH_COUNT }
+    fun replaceAll(memories: Map<Int, AyahMemory>) = replaceAll(CloudBackup.Memory(memories))
+
+    /** Replaces everything memorized and the record of what was unmarked, after merging with the account. */
+    fun replaceAll(memory: CloudBackup.Memory) {
+        val ayahs = memory.ayahs.filterKeys { it in 0 until MushafStore.AYAH_COUNT }
+        val removed = memory.removed.filterKeys { it in 0 until MushafStore.AYAH_COUNT && it !in ayahs }
+        if (ayahs == this.ayahs && removed == this.removed) return
+        this.ayahs = ayahs
+        this.removed = removed
         scheduleSave()
         saveNow()
     }
@@ -212,13 +240,16 @@ class MemorizationStore(
     fun learn(learned: Iterable<Int>, at: Moment = Moment.now(), stability: Double) {
         val next = ayahs.toMutableMap()
         var changed = false
+        val tombstones = removed.toMutableMap()
         for (ayah in learned) {
             if (ayah !in 0 until MushafStore.AYAH_COUNT || ayah in next) continue
             next[ayah] = AyahMemory(stability = stability, since = at, learnedAt = at)
+            tombstones.remove(ayah)
             changed = true
         }
         if (changed) {
             ayahs = next
+            removed = tombstones
             scheduleSave()
             saveNow()
         }
@@ -242,25 +273,40 @@ class MemorizationStore(
      */
     fun mark(range: Iterable<Int>, memorized: Boolean): Map<Int, AyahMemory> {
         val next = ayahs.toMutableMap()
-        val removed = HashMap<Int, AyahMemory>()
+        val tombstones = removed.toMutableMap()
+        val unmarked = HashMap<Int, AyahMemory>()
         var changed = false
         val now = Moment.now()
         for (ayah in range) {
             if (ayah !in 0 until MushafStore.AYAH_COUNT || (ayah in next) == memorized) continue
-            if (memorized) next[ayah] = AyahMemory(since = now) else next.remove(ayah)?.let { removed[ayah] = it }
+            if (memorized) {
+                next[ayah] = AyahMemory(since = now)
+                tombstones.remove(ayah)
+            } else {
+                next.remove(ayah)?.let { unmarked[ayah] = it }
+                tombstones[ayah] = now
+            }
             changed = true
         }
         if (changed) {
             ayahs = next
+            removed = tombstones
             scheduleSave()
         }
-        return removed
+        return unmarked
     }
 
-    /** Puts records back exactly as they were (undoing an unmarking), over whatever the ayat hold now. */
+    /**
+     * Puts records back as they were (undoing an unmarking), over whatever the ayat hold now. Each comes back dated
+     * from now, so that across devices the unmarking, already on its way to the account, is seen to come before it;
+     * what it knew of revisions, stumbles and a teacher's mark is kept.
+     */
     fun restore(records: Map<Int, AyahMemory>) {
         if (records.isEmpty()) return
-        ayahs = ayahs + records.filterKeys { it in 0 until MushafStore.AYAH_COUNT }
+        val now = Moment.now()
+        val back = records.filterKeys { it in 0 until MushafStore.AYAH_COUNT }.mapValues { (_, memory) -> memory.copy(since = maxOf(memory.since, now)) }
+        ayahs = ayahs + back
+        removed = removed - back.keys
         scheduleSave()
     }
 
@@ -291,7 +337,17 @@ class MemorizationStore(
         unsaved = false
     }
 
-    private fun contents() = FileContents(ayahs = ayahs.entries.sortedBy { it.key }.map { FileContents.Record(it.key, it.value) })
+    private fun contents() = FileContents(
+        ayahs = ayahs.entries.sortedBy { it.key }.map { FileContents.Record(it.key, it.value) },
+        removed = removed.entries.sortedBy { it.key }.map { FileContents.Removed(it.key, it.value) }.ifEmpty { null },
+    )
+
+    companion object {
+        /** Moves a file that couldn't be read beside itself, with when, so nothing is lost and the app can go on. */
+        fun setAside(file: File) {
+            runCatching { file.renameTo(File(file.parentFile, "${file.name}.corrupt-${System.currentTimeMillis() / 1000}")) }
+        }
+    }
 
     private fun write(contents: FileContents, file: File) {
         writeAtomically(file, ProgressJson.encodeToString(FileContents.serializer(), contents))

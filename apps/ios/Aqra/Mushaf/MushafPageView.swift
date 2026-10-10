@@ -693,12 +693,13 @@ enum AyahLineLayout {
 
 /// The soft highlight behind a memorized word: its topic section's color, faint when newly memorized and
 /// fuller as the memorization grows strong.
-private struct TopicHighlight {
+struct TopicHighlight {
     var topic: Int
     var strength: Double
 
-    /// The strength in five steps, so ayat of nearly equal strength share one shade.
-    var level: Int { Int((min(max(strength, 0), 1) * 4).rounded()) }
+    /// The strength in five steps, so ayat of nearly equal strength share one shade. A strength that isn't a
+    /// number (a corrupt record) shows as the faintest.
+    var level: Int { strength.isFinite ? Int((min(max(strength, 0), 1) * 4).rounded()) : 0 }
 
     var color: Color { Self.color(topic: topic, level: level) }
 

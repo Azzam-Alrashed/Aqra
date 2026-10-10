@@ -304,8 +304,11 @@ private fun pageActions(page: MushafPage, store: MushafStore, options: MushafPag
 
 /** The soft highlight behind a memorized word: its section's color, faint when new and fuller as it grows strong. */
 class TopicHighlight(val topic: Int, strength: Double) {
-    /** The strength in five steps, so ayat of nearly equal strength share one shade. */
-    val level: Int = (strength.coerceIn(0.0, 1.0) * 4).roundToInt()
+    /**
+     * The strength in five steps, so ayat of nearly equal strength share one shade. A strength that isn't a number (a
+     * corrupt record) shows as the faintest.
+     */
+    val level: Int = if (strength.isFinite()) (strength.coerceIn(0.0, 1.0) * 4).roundToInt() else 0
 
     companion object {
         /** Its size, as fractions of the line height. */

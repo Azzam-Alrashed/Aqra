@@ -348,22 +348,31 @@ class AccountStore(
         try {
             // Deleting needs the server: offline, say so now, before anything is asked or half of it is queued.
             FirebaseFirestore.getInstance().collection("users").document(user.uid).get(Source.SERVER).await()
-            if (profile?.provider == Provider.APPLE) {
-                val provider = OAuthProvider.newBuilder(Provider.APPLE.id).build()
-                val result = user.startActivityForReauthenticateWithProvider(activity, provider).await()
-                (result.credential as? OAuthCredential)?.accessToken?.let { token -> runCatching { auth.revokeAccessToken(token).await() } }
+            // Signed in again first (Apple's token revoked as Apple requires), so a sign-in refused or cancelled never
+            // leaves a live account with its data gone; then the backups stop, the data goes, and the account last.
+            when (profile?.provider) {
+                Provider.APPLE -> {
+                    val provider = OAuthProvider.newBuilder(Provider.APPLE.id).build()
+                    val result = user.startActivityForReauthenticateWithProvider(activity, provider).await()
+                    (result.credential as? OAuthCredential)?.accessToken?.let { token -> runCatching { auth.revokeAccessToken(token).await() } }
+                }
+                Provider.GOOGLE -> {
+                    val clientId = googleClientId ?: throw IllegalStateException("No Google client")
+                    user.reauthenticate(GoogleAuthProvider.getCredential(googleIdToken(activity, clientId), null)).await()
+                }
+                null -> Unit
             }
-            withTimeout(60_000) {
-                tasmee.deleteAccountData(user.uid)
-                social.deleteAccountData(user.uid)
-                sync.deleteAccountData(user.uid)
-            }
+            sync.stopUploads()
             try {
+                withTimeout(60_000) {
+                    tasmee.deleteAccountData(user.uid)
+                    social.deleteAccountData(user.uid)
+                    sync.deleteAccountData(user.uid)
+                }
                 user.delete().await()
-            } catch (_: FirebaseAuthRecentLoginRequiredException) {
-                val clientId = googleClientId ?: throw IllegalStateException("No Google client")
-                user.reauthenticate(GoogleAuthProvider.getCredential(googleIdToken(activity, clientId), null)).await()
-                user.delete().await()
+            } catch (error: Exception) {
+                sync.resumeUploads()
+                throw error
             }
             sync.detach()
             tasmee.detach()

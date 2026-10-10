@@ -36,15 +36,11 @@ class Preferences(context: Context) {
     /** The gentle chime for rewards. */
     val soundsOn = bool("sounds.on", true)
 
-    /** The account whose copy this install has already merged, so it's merged once rather than on every launch. */
-    var restoredAccount: String?
-        get() = prefs.getString("cloud.restoredAccount", null)
-        set(value) = prefs.edit { if (value == null) remove("cloud.restoredAccount") else putString("cloud.restoredAccount", value) }
-
-    /** The same, for the journey (the plan, rewards and stages), kept since a later version of the app. */
-    var journeyRestoredAccount: String?
-        get() = prefs.getString("cloud.journeyRestoredAccount", null)
-        set(value) = prefs.edit { if (value == null) remove("cloud.journeyRestoredAccount") else putString("cloud.journeyRestoredAccount", value) }
+    init {
+        // Earlier versions kept an "already merged" marker here; the account's copy is now merged in every session
+        // (a marker could come back with a device backup and skip the merge), so the marker goes.
+        prefs.edit { remove("cloud.restoredAccount"); remove("cloud.journeyRestoredAccount") }
+    }
 
     /** Pages the rotation's suggestions were dismissed for, and until when (seconds since 1970). */
     var rotationDismissed: Map<Int, Double>

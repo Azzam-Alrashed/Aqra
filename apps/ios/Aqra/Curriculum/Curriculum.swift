@@ -274,6 +274,25 @@ final class AssessmentStore {
 
         static let empty = Snapshot()
 
+        init(results: [TestResult] = [], sheikhTests: [SheikhTest] = [], passes: [Int: Date] = [:], updatedAt: Date = .distantPast) {
+            self.results = results
+            self.sheikhTests = sheikhTests
+            self.passes = passes
+            self.updatedAt = updatedAt
+        }
+
+        // The account's copy may come from the Android app or a newer version: a key missing, unknown or
+        // unreadable never loses the rest.
+        private enum CodingKeys: String, CodingKey { case results, sheikhTests, passes, updatedAt }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            results = container.decodeLossy([TestResult].self, forKey: .results)
+            sheikhTests = container.decodeLossy([SheikhTest].self, forKey: .sheikhTests)
+            passes = container.decodeOr([Int: Date].self, forKey: .passes, [:])
+            updatedAt = container.decodeOr(Date.self, forKey: .updatedAt, .distantPast)
+        }
+
         /// Both copies as one: every result and test of both, and each stage passed at its earliest.
         static func merge(_ local: Snapshot, _ remote: Snapshot) -> Snapshot {
             var ids = Set<UUID>()

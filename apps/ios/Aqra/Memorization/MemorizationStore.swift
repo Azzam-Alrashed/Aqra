@@ -69,7 +69,9 @@ struct AyahMemory: Codable, Hashable {
     init(from decoder: Decoder) throws {
         let container = try decoder.container(keyedBy: CodingKeys.self)
         since = try container.decode(Date.self, forKey: .since)
-        stability = try container.decodeIfPresent(Double.self, forKey: .stability) ?? ReviewPolicy.standard.declaredStability
+        let stability = try container.decodeIfPresent(Double.self, forKey: .stability) ?? ReviewPolicy.standard.declaredStability
+        // A half-life that isn't a positive finite number was never written by this app: the declared default is taken.
+        self.stability = stability.isFinite && stability > 0 ? stability : ReviewPolicy.standard.declaredStability
         lastReviewed = try container.decodeIfPresent(Date.self, forKey: .lastReviewed)
         lapses = try container.decodeIfPresent(Int.self, forKey: .lapses) ?? 0
         verified = try container.decodeIfPresent(Bool.self, forKey: .verified) ?? false
@@ -83,6 +85,10 @@ struct AyahMemory: Codable, Hashable {
 @MainActor @Observable
 final class MemorizationStore {
     private(set) var ayahs: [Int: AyahMemory] = [:]
+    /// The ayat unmarked, and when, kept so the account's merge doesn't bring them back (see `CloudBackup`).
+    private(set) var removed: [Int: Date] = [:]
+    /// Whether the file on the device couldn't be read: it was set aside, and the account's copy must come first.
+    private(set) var loadFailed = false
     /// Called after every change, so the backup can follow.
     @ObservationIgnored var onChange: (() -> Void)?
     @ObservationIgnored private let fileURL: URL?
@@ -97,10 +103,25 @@ final class MemorizationStore {
     /// Loads the records from `fileURL`, or keeps them in memory only when it's nil (previews and snapshots).
     init(fileURL: URL? = MemorizationStore.defaultURL) {
         self.fileURL = fileURL
-        guard let fileURL, let data = try? Data(contentsOf: fileURL),
-              let file = try? JSONDecoder().decode(File.self, from: data) else { return }
+        guard let fileURL, let data = try? Data(contentsOf: fileURL) else { return }
+        guard let file = try? JSONDecoder().decode(File.self, from: data) else {
+            // An unreadable file is kept aside, never replaced by an empty one; the account's copy comes first.
+            Self.setAside(fileURL)
+            loadFailed = true
+            return
+        }
         ayahs = Dictionary(file.ayahs.map { ($0.ayah, $0.memory) }, uniquingKeysWith: { first, _ in first })
+        removed = Dictionary((file.removed ?? []).map { ($0.ayah, $0.at) }, uniquingKeysWith: { first, _ in first })
     }
+
+    /// Moves a file that couldn't be read beside itself, with when, so nothing is lost and the app can go on.
+    static func setAside(_ url: URL) {
+        let aside = url.appendingPathExtension("corrupt-\(Int(Date.now.timeIntervalSince1970))")
+        try? FileManager.default.moveItem(at: url, to: aside)
+    }
+
+    /// What's memorized and what was unmarked, as the account's merge needs them.
+    var memory: CloudBackup.Memory { CloudBackup.Memory(ayahs: ayahs, removed: removed) }
 
     var count: Int { ayahs.count }
 
@@ -178,8 +199,16 @@ final class MemorizationStore {
 
     /// Replaces everything memorized: restoring from the account, or clearing the device on signing out.
     func replaceAll(_ memories: [Int: AyahMemory]) {
-        guard memories != ayahs else { return }
-        ayahs = memories.filter { (0..<MushafStore.ayahCount).contains($0.key) }
+        replaceAll(CloudBackup.Memory(ayahs: memories))
+    }
+
+    /// Replaces everything memorized and the record of what was unmarked, after merging with the account.
+    func replaceAll(_ memory: CloudBackup.Memory) {
+        let ayahs = memory.ayahs.filter { (0..<MushafStore.ayahCount).contains($0.key) }
+        let removed = memory.removed.filter { (0..<MushafStore.ayahCount).contains($0.key) && ayahs[$0.key] == nil }
+        guard ayahs != self.ayahs || removed != self.removed else { return }
+        self.ayahs = ayahs
+        self.removed = removed
         scheduleSave()
         saveNow()
     }
@@ -190,6 +219,7 @@ final class MemorizationStore {
         var changed = false
         for ayah in learned where (0..<MushafStore.ayahCount).contains(ayah) && !isMemorized(ayah) {
             ayahs[ayah] = AyahMemory(since: date, stability: stability, learnedAt: date)
+            removed[ayah] = nil
             changed = true
         }
         if changed {
@@ -212,22 +242,35 @@ final class MemorizationStore {
     /// - Returns: the records of the ayat it unmarked, so the unmarking can be undone.
     @discardableResult
     func mark(_ range: some Sequence<Int>, memorized: Bool) -> [Int: AyahMemory] {
-        var removed: [Int: AyahMemory] = [:]
+        var unmarked: [Int: AyahMemory] = [:]
         var changed = false
+        let now = Date.now
         for ayah in range where (0..<MushafStore.ayahCount).contains(ayah) && isMemorized(ayah) != memorized {
-            if !memorized { removed[ayah] = ayahs[ayah] }
-            ayahs[ayah] = memorized ? AyahMemory(since: .now) : nil
+            if memorized {
+                ayahs[ayah] = AyahMemory(since: now)
+                self.removed[ayah] = nil
+            } else {
+                unmarked[ayah] = ayahs[ayah]
+                ayahs[ayah] = nil
+                self.removed[ayah] = now
+            }
             changed = true
         }
         if changed { scheduleSave() }
-        return removed
+        return unmarked
     }
 
-    /// Puts records back exactly as they were (undoing an unmarking), over whatever the ayat hold now.
+    /// Puts records back as they were (undoing an unmarking), over whatever the ayat hold now. Each comes back
+    /// dated from now, so that across devices the unmarking, already on its way to the account, is seen to come
+    /// before it; what it knew of revisions, stumbles and a teacher's mark is kept.
     func restore(_ records: [Int: AyahMemory]) {
         guard !records.isEmpty else { return }
+        let now = Date.now
         for (ayah, memory) in records where (0..<MushafStore.ayahCount).contains(ayah) {
+            var memory = memory
+            memory.since = max(memory.since, now)
             ayahs[ayah] = memory
+            removed[ayah] = nil
         }
         scheduleSave()
     }
@@ -239,8 +282,19 @@ final class MemorizationStore {
             var ayah: Int
             var memory: AyahMemory
         }
-        var version = 2
+        struct Removed: Codable {
+            var ayah: Int
+            var at: Date
+        }
+        var version = 3
         var ayahs: [Record]
+        /// Missing from files written before unmarking was remembered (version 2).
+        var removed: [Removed]?
+    }
+
+    private var file: File {
+        File(ayahs: ayahs.sorted { $0.key < $1.key }.map { File.Record(ayah: $0.key, memory: $0.value) },
+             removed: removed.isEmpty ? nil : removed.sorted { $0.key < $1.key }.map { File.Removed(ayah: $0.key, at: $0.value) })
     }
 
     /// Writes shortly after the last change, so marking many ayat at once writes once.
@@ -248,7 +302,7 @@ final class MemorizationStore {
         onChange?()
         guard let fileURL else { return }
         pendingSave?.cancel()
-        let file = File(ayahs: ayahs.sorted { $0.key < $1.key }.map { File.Record(ayah: $0.key, memory: $0.value) })
+        let file = file
         pendingSave = Task {
             try? await Task.sleep(for: .milliseconds(300))
             guard !Task.isCancelled else { return }
@@ -261,7 +315,7 @@ final class MemorizationStore {
         guard let fileURL, pendingSave != nil else { return }
         pendingSave?.cancel()
         pendingSave = nil
-        Self.write(File(ayahs: ayahs.sorted { $0.key < $1.key }.map { File.Record(ayah: $0.key, memory: $0.value) }), to: fileURL)
+        Self.write(file, to: fileURL)
     }
 
     private static func write(_ file: File, to url: URL) {

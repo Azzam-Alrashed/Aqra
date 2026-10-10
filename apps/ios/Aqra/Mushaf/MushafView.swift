@@ -477,6 +477,7 @@ struct MushafRootView: View {
     @State private var setupStep = SetupStep.memorized
     /// When they chose to mark it in the Mushaf instead, the same two steps follow the marking.
     @AppStorage(SetupAfterMarking.key) private var afterMarking = SetupAfterMarking.none
+    @Environment(\.scenePhase) private var scenePhase
 
     private enum SetupStep { case memorized, dailyAmount, plan }
 
@@ -533,6 +534,10 @@ struct MushafRootView: View {
             if !router.open(url) { _ = GIDSignIn.sharedInstance.handle(url) }
         }
         .task { account.start() }
+        // Back in the foreground: what another device wrote to the account meanwhile is merged in.
+        .onChange(of: scenePhase) {
+            if scenePhase == .active { Task { await account.sync.syncIfChanged() } }
+        }
         .task {
             guard store == nil else { return }
             // Decoding the Quran data takes a moment; keep it off the main thread so the app stays responsive.

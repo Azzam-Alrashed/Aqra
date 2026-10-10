@@ -159,7 +159,7 @@ See [REVISION.md](REVISION.md) for the policy, its defaults, and the open questi
 
 Every user starts as an anonymous Firebase user, and their progress is backed up to that account from the first day. Signing in with Apple or Google links the sign-in to the same account, so nothing is lost. If the sign-in already belongs to an account (another device, an earlier install), that account is used and this device's progress is merged into it. Signing in is required before booking tasmee' or buying credits.
 
-- **What's stored:** what's memorized (with each ayah's strength and the verified mark), the revision record, the student's bookings, and the tasmee' records teachers write. The device's copy is the one the app works from; the account is its backup, restored on a new device or after a reinstall. It isn't live editing on two devices at once.
+- **What's stored:** what's memorized (with each ayah's strength and the verified mark), the revision record, the student's bookings, and the tasmee' records teachers write. The device's copy is the one the app works from; the account is its backup, merged into the device's copy whenever the app opens or comes back after another device wrote. Two devices never overwrite each other: what each adds is kept, an ayah unmarked on one stays unmarked, and a tasmee' applied on one reaches the other. It isn't live editing on two devices at once.
 - **Where:** Firestore, Storage and the Cloud Functions together in Belgium (europe-west1).
 - **Signing out** keeps the progress in the account and clears the device.
 - **Deleting the account** deletes the account and everything backed up in it, as Apple requires; the progress on the device stays.

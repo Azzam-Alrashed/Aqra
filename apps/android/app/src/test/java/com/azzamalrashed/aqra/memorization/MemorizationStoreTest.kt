@@ -10,6 +10,7 @@ import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
 import java.io.File
+import java.nio.file.Files
 
 class MemorizationStoreTest {
     @Test
@@ -31,6 +32,45 @@ class MemorizationStoreTest {
         assertNull(memory.lastReviewed)
         assertFalse(memory.verified)
         assertTrue((memorization.strength(0) ?: 1.0) < 0.2)
+    }
+
+    /** A file written by an earlier version (version 2, before unmarking was remembered) still loads whole. */
+    @Test
+    fun anOlderMemorizationFileStillLoads() {
+        val file = File(Files.createTempDirectory("aqra-memorization").toFile(), "memorization.json")
+        file.writeText("""{"version":2,"ayahs":[{"ayah":5,"memory":{"stability":21.5,"lastReviewed":821692800.0,"lapses":1,"verified":true,"since":800000000.0}},""" +
+            """{"ayah":6,"memory":{"since":800000000.0}}]}""")
+        val memorization = MemorizationStore(file)
+        assertTrue(!memorization.loadFailed && memorization.count == 2 && memorization.removed.isEmpty())
+        val memory = memorization.memory(5)!!
+        assertTrue(memory.stability == 21.5 && memory.verified && memory.lapses == 1 && memory.lastReviewed == Moment(821_692_800.0))
+        assertEquals(ReviewPolicy.STANDARD.declaredStability, memorization.memory(6)!!.stability, 0.0)
+    }
+
+    @Test
+    fun unmarkingLeavesATombstoneUntilTheAyahIsMarkedAgain() {
+        val file = File(Files.createTempDirectory("aqra-memorization").toFile(), "memorization.json")
+        val memorization = MemorizationStore(file)
+        memorization.mark(listOf(1, 2, 3), memorized = true)
+        memorization.mark(listOf(2), memorized = false)
+        assertTrue(memorization.removed.keys == setOf(2) && memorization.memory.removed.size == 1)
+        memorization.saveNow()
+        // The tombstone is kept with the file, so a merge after a relaunch still knows.
+        val reloaded = MemorizationStore(file)
+        assertTrue(reloaded.removed.keys == setOf(2) && reloaded.count == 2)
+        // Marking it again, or learning it as a new portion, takes the tombstone away.
+        reloaded.mark(listOf(2), memorized = true)
+        assertTrue(reloaded.removed.isEmpty())
+        reloaded.mark(listOf(3), memorized = false)
+        reloaded.learn(listOf(3), stability = 2.0)
+        assertTrue(reloaded.removed.isEmpty() && reloaded.count == 3)
+        // An undo brings the record back, dated from the undo, and takes the tombstone away.
+        val unmarked = reloaded.mark(listOf(1), memorized = false)
+        reloaded.restore(unmarked)
+        assertTrue(reloaded.isMemorized(1) && reloaded.removed.isEmpty() && reloaded.memory(1)!!.since >= unmarked[1]!!.since)
+        // A merge with the account keeps what the account unmarked too.
+        reloaded.replaceAll(com.azzamalrashed.aqra.account.CloudBackup.Memory(mapOf(1 to AyahMemory(since = Moment.now())), mapOf(9 to Moment.now())))
+        assertTrue(reloaded.count == 1 && reloaded.removed.keys == setOf(9))
     }
 
     @Test
@@ -128,6 +168,9 @@ class MemorizationStoreTest {
         assertTrue(memorization.isMemorized(50) && session.rangeStart == null && memorization.count == 6)
     }
 
+    /** The records with their dates of memorization set aside: an undo dates them from itself. */
+    private fun ignoringSince(ayahs: Map<Int, AyahMemory>) = ayahs.mapValues { (_, memory) -> memory.copy(since = Moment.DISTANT_PAST) }
+
     @Test
     fun undoingAnUnmarkingRestoresTheRecordsExactly() {
         val memorization = MemorizationStore(file = null)
@@ -146,7 +189,9 @@ class MemorizationStoreTest {
         session.tap(22)
         assertTrue(session.unmarked.size == 1 && !memorization.isMemorized(22))
         session.undo()
-        assertTrue(memorization.ayahs == before && session.unmarked.isEmpty())
+        assertTrue(ignoringSince(memorization.ayahs) == ignoringSince(before) && session.unmarked.isEmpty())
+        // Dated from the undo, so that across devices the unmarking is seen to come before it; the tombstone goes.
+        assertTrue(memorization.memory(22)!!.since >= before[22]!!.since && 22 !in memorization.removed)
 
         // A range that unmarks counts its first ayah, unmarked when the range began.
         session.beginRange(21)
@@ -154,13 +199,13 @@ class MemorizationStoreTest {
         session.tap(24)
         assertTrue(session.unmarked.size == 4 && memorization.memorizedCount(20..29) == 6)
         session.undo()
-        assertEquals(before, memorization.ayahs)
+        assertEquals(ignoringSince(before), ignoringSince(memorization.ayahs))
 
         // A whole page.
         session.toggle(20..29)
         assertTrue(session.unmarked.size == 10 && memorization.count == 0)
         session.undo()
-        assertEquals(before, memorization.ayahs)
+        assertEquals(ignoringSince(before), ignoringSince(memorization.ayahs))
 
         // The undo expires, but an earlier unmarking's timer doesn't take a later one's.
         session.tap(25)

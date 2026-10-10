@@ -67,6 +67,7 @@ import com.azzamalrashed.aqra.ui.theme.MushafStyle
 import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
+import kotlinx.coroutines.launch
 
 /** What opens full screen over the tabs, growing out of the home. */
 sealed interface FullScreen {
@@ -214,7 +215,12 @@ private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
         app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization))
         app.rewards.checkChallenges(app.revision, app.plan)
+        // Back in the foreground: what another device wrote to the account meanwhile is merged in.
+        app.scope.launch { app.sync.syncIfChanged() }
     }
+    // The account's copy merged in (another device revised): today's plan follows.
+    val lastMerge = app.sync.lastMerge
+    LaunchedEffect(lastMerge) { if (lastMerge != null) app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization)) }
     // A reminder an hour before each booked session, as the sessions are now; set again once the daily reminder has
     // been allowed to notify.
     val context = LocalContext.current
