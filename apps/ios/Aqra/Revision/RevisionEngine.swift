@@ -542,6 +542,12 @@ final class RevisionSession {
 
     var isComplete: Bool { revealed >= ayahs.count }
 
+    /// The ayat «تم» records: those revealed (in full), or all of the page's when the student says they recited the
+    /// rest from memory too.
+    func revisedAyahs(countingRest: Bool) -> [Int] {
+        countingRest ? ayahs : Array(ayahs.prefix(min(revealed, ayahs.count)))
+    }
+
     /// Whether an ayah is covered by this revision.
     func covers(_ ayah: Int) -> Bool { ayahs.contains(ayah) }
 

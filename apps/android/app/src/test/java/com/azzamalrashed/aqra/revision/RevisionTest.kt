@@ -234,6 +234,18 @@ class RevisionTest {
         assertEquals(setOf(8), session.stumbles)
     }
 
+    /** «تم» on a partly revealed page records the ayat revealed, or all of them when the student counts the rest. */
+    @Test
+    fun doneCountsOnlyTheRevealedAyatUnlessTheRestIsCounted() {
+        val session = RevisionSession(2, listOf(7, 8, 9, 10))
+        session.revealNext()
+        session.stumbleOnNext()
+        assertEquals(listOf(7, 8), session.revisedAyahs(countingRest = false))
+        assertEquals(listOf(7, 8, 9, 10), session.revisedAyahs(countingRest = true))
+        session.revealAll()
+        assertEquals(listOf(7, 8, 9, 10), session.revisedAyahs(countingRest = false))
+    }
+
     // MARK: - Days, time zones and the clock (the same checks as the iOS app's RevisionTests)
 
     /** A moment given as the time on the clock in a time zone. */

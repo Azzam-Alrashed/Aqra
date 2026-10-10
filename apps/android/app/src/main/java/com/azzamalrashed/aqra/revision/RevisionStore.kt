@@ -438,6 +438,12 @@ class RevisionSession(
 
     val isComplete: Boolean get() = revealed >= ayahs.size
 
+    /**
+     * The ayat «تم» records: those revealed (in full), or all of the page's when the student says they recited the rest
+     * from memory too.
+     */
+    fun revisedAyahs(countingRest: Boolean): List<Int> = if (countingRest) ayahs else ayahs.take(minOf(revealed, ayahs.size))
+
     /** Whether an ayah is covered by this revision. */
     fun covers(ayah: Int): Boolean = ayah in ayahs
 

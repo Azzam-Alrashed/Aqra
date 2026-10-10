@@ -217,6 +217,17 @@ struct RevisionTests {
     }
 
     /// «تعثّرتُ هنا» reveals the next ayah already marked as a stumble; past the last ayah it does nothing.
+    /// «تم» on a partly revealed page records the ayat revealed, or all of them when the student counts the rest.
+    @Test func doneCountsOnlyTheRevealedAyatUnlessTheRestIsCounted() {
+        let session = RevisionSession(page: 2, ayahs: [7, 8, 9, 10])
+        session.revealNext()
+        session.stumbleOnNext()
+        #expect(session.revisedAyahs(countingRest: false) == [7, 8])
+        #expect(session.revisedAyahs(countingRest: true) == [7, 8, 9, 10])
+        session.revealAll()
+        #expect(session.revisedAyahs(countingRest: false) == [7, 8, 9, 10])
+    }
+
     // MARK: - Days, time zones and the clock
 
     private func zoned(_ identifier: String) -> Calendar {
