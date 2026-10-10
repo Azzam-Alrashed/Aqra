@@ -361,7 +361,7 @@ private fun AccountCard(app: AqraApp) {
                     IconTile("🪪", Palette.butter, size = 40.dp)
                     Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
                         Text(stringResource(R.string.save_your_progress), style = aqraStyle(16f, Weight.heavy, Palette.ink))
-                        Text(stringResource(R.string.your_progress_is_only_on_this_device_until_you_sign), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
+                        Text(stringResource(R.string.your_progress_is_backed_up_to_a_temporary_account_sign), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
                     }
                 }
                 if (AccountStore.isAvailable) SignInButtons(app)

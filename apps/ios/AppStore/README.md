@@ -63,10 +63,10 @@ What is entered in App Store Connect, kept here so it can be reviewed and reused
 • تنافسوا بين الأصحاب، واقتسموا الختمة أجزاءً.
 
 بلا حساب
-• يعمل اقرأ دون تسجيل، ويبقى تقدّمك على جهازك. وإذا شئت سجّلت الدخول بحساب Apple أو Google ليُحفظ تقدّمك في حسابك.
+• يعمل اقرأ دون تسجيل، ويحفظ تقدّمك احتياطيًا في حساب مؤقت لا يحمل اسمك. وإذا شئت سجّلت الدخول بحساب Apple أو Google ليعود إليك تقدّمك على أي جهاز.
 
 مصادر موثوقة
-• نصّ المصحف وخطّه وتخطيط صفحاته من مجمع الملك فهد لطباعة المصحف الشريف، كما هي دون أي تعديل.
+• نصّ المصحف وخطّه من مجمع الملك فهد لطباعة المصحف الشريف، وتخطيط صفحاته من مكتبة القرآن الشاملة (QUL)، كما هي دون أي تعديل.
 ```
 
 **What's new** (first version: not shown).
@@ -114,10 +114,10 @@ TASMEE'
 • Race your friends, and share a khatmah by juz'.
 
 NO ACCOUNT NEEDED
-• Aqra works without signing in, and your progress stays on your device. Sign in with Apple or Google whenever you like to keep it in your account.
+• Aqra works without signing in, and backs up your progress to a temporary account that carries no name. Sign in with Apple or Google whenever you like to have it on any device.
 
 TRUSTED SOURCES
-• The Mushaf's text, script and page layout come from the King Fahd Glorious Quran Printing Complex, unmodified.
+• The Mushaf's text and script come from the King Fahd Glorious Quran Printing Complex, and its page layout from the Quranic Universal Library (QUL), all unmodified.
 ```
 
 ## Screenshots
@@ -159,20 +159,23 @@ app functionality:
 | Data type | Why |
 |---|---|
 | Contact info: Name | Sign-in name, the display name shown to teachers and friends, a teacher's application |
-| Contact info: Email address | Sign in with Apple or Google |
-| Contact info: Phone number | A teacher's application ("how to reach you"), optional |
+| Contact info: Email address | Sign in with Apple or Google; a teacher's application ("how to reach you") may give an email |
+| Contact info: Phone number | A teacher's application ("how to reach you") may give a phone number |
 | User content: Photos or videos | Copies of a teacher's ijazah |
-| User content: Other user content | Memorization progress and revision backup, tasmee' records, competitions, a teacher's notes |
+| User content: Other user content | Memorization progress and revision backup (from the first launch, for an anonymous account too), tasmee' records, competitions, a teacher's notes |
 | Identifiers: User ID | The Firebase account |
 | Purchases: Purchase history | Credit packs bought |
+| Financial info: Other financial info | A teacher's earnings from booked seats, and the payouts recorded (bank details aren't kept in the app) |
 
-Video and audio in video tasmee' are streamed live through LiveKit and never stored, so they aren't "collected".
+Video and audio in video tasmee' are streamed live through LiveKit and never stored, so they aren't "collected". «سمّع بصوتك»
+(recite aloud) hears the microphone with a speech model on the device; the audio never leaves it and isn't kept, so it
+isn't collected either.
 
 ## App Review notes
 
 ```
-Aqra works without an account: on first launch it creates an anonymous account, and every revision feature works offline.
-Sign in with Apple or Google (Account tab) is needed only to back up progress, book a tasmee' session, apply to teach, or buy credits.
+Aqra works without an account: on first launch it creates an anonymous account, backs up progress to it, and every revision feature works offline.
+Sign in with Apple or Google (Account tab) ties the backup to the user, and is needed to book a tasmee' session, apply to teach, or buy credits.
 No demo account is needed: sign in with any Apple ID.
 Teachers are vetted by our team (ijazah review and an interview) before they can open sessions.
 ```

@@ -290,7 +290,7 @@ struct AccountCard: View {
                 Text("Save your progress")
                     .aqraFont(size: 16, weight: .heavy)
                     .foregroundStyle(Palette.ink)
-                Text("Your progress is only on this device until you sign in.")
+                Text("Your progress is backed up to a temporary account. Sign in to keep it on all your devices.")
                     .aqraFont(size: 12, weight: .semibold)
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)

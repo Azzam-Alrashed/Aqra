@@ -76,6 +76,7 @@
 		C07E4DA1A47CB3F5AD4F1A84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99C540650E9663B5B728582A /* Assets.xcassets */; };
 		C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */; };
 		C367E709A040189141DC730C /* StageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9BFF882A84556422BB47BD5 /* StageViews.swift */; };
+		C663F5D1650842FFBC6DB5A1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5EF4219FE33D695A359F7938 /* PrivacyInfo.xcprivacy */; };
 		C742A43BE7BE5DB9FAF34336 /* SacredText.swift in Sources */ = {isa = PBXBuildFile; fileRef = FF793C12D16FB36F80C61903 /* SacredText.swift */; };
 		CA36F4A0D29DE63EAD73FA60 /* OFL.txt in Resources */ = {isa = PBXBuildFile; fileRef = 69FA526BC35C31760E96760B /* OFL.txt */; };
 		CFE907F55F9252A073A6EBF5 /* FirebaseFirestore in Frameworks */ = {isa = PBXBuildFile; productRef = AB3061F1929AE7431B17E2DF /* FirebaseFirestore */; };
@@ -154,6 +155,7 @@
 		5D81E6FBDB58FBFAFF3DF0FA /* RewardViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RewardViews.swift; sourceTree = "<group>"; };
 		5DB683A2A8EACC0D30A1D343 /* Info.plist */ = {isa = PBXFileReference; lastKnownFileType = text.plist; path = Info.plist; sourceTree = "<group>"; };
 		5ED2439632E5AA260610DF87 /* MemorizationStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MemorizationStore.swift; sourceTree = "<group>"; };
+		5EF4219FE33D695A359F7938 /* PrivacyInfo.xcprivacy */ = {isa = PBXFileReference; path = PrivacyInfo.xcprivacy; sourceTree = "<group>"; };
 		5F0FEB648DEA1EB151C40C01 /* SocialTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = SocialTests.swift; sourceTree = "<group>"; };
 		69FA526BC35C31760E96760B /* OFL.txt */ = {isa = PBXFileReference; lastKnownFileType = text; path = OFL.txt; sourceTree = "<group>"; };
 		6DC9532CAE4D490BCD61621A /* TeacherViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeacherViews.swift; sourceTree = "<group>"; };
@@ -397,6 +399,7 @@
 				5DB683A2A8EACC0D30A1D343 /* Info.plist */,
 				C03FFBBE60EB3AC1DA597F5D /* InfoPlist.xcstrings */,
 				35F03A505062D433A0B82952 /* Localizable.xcstrings */,
+				5EF4219FE33D695A359F7938 /* PrivacyInfo.xcprivacy */,
 				8B4F7800401DDED08D9DE514 /* Account */,
 				E067C2A5094B3CE9CB4A956E /* Credits */,
 				81C502B75D62374FE38C8CA8 /* Curriculum */,
@@ -604,6 +607,7 @@
 				02DACF5341F5E6E331EEEBD4 /* InfoPlist.xcstrings in Resources */,
 				57DEC10A3EC756442E353877 /* Localizable.xcstrings in Resources */,
 				CA36F4A0D29DE63EAD73FA60 /* OFL.txt in Resources */,
+				C663F5D1650842FFBC6DB5A1 /* PrivacyInfo.xcprivacy in Resources */,
 				0B3D2921336B533833058829 /* quran in Resources */,
 			);
 			runOnlyForDeploymentPostprocessing = 0;

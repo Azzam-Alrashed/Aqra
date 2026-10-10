@@ -9160,22 +9160,24 @@
         }
       }
     },
-    "Your progress is only on this device until you sign in." : {
+    "Your progress is backed up to a temporary account. Sign in to keep it on all your devices." : {
+      "comment" : "On the Account tab, for a student who hasn't signed in: the progress is already backed up, to an anonymous account.",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تقدّمك على هذا الجهاز فقط حتى تسجّل الدخول."
+            "value" : "تقدّمك محفوظ احتياطيًا في حساب مؤقت؛ سجّل الدخول لتحتفظ به على كل أجهزتك."
           }
         }
       }
     },
-    "Your progress is saved on your device, and you can link it to your account anytime." : {
+    "Your progress is kept on your device and backed up; link it to your account anytime." : {
+      "comment" : "The last onboarding page.",
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
-            "value" : "تقدّمك يُحفظ على جهازك، ويمكنك ربطه بحسابك متى شئت."
+            "value" : "تقدّمك محفوظ على جهازك ومنسوخ احتياطيًا، وتربطه بحسابك متى شئت."
           }
         }
       }
