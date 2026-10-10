@@ -19,6 +19,7 @@ import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.imePadding
 import androidx.compose.foundation.layout.navigationBars
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.offset
@@ -161,7 +162,7 @@ fun TabPage(modifier: Modifier = Modifier, top: Dp = 8.dp, content: @Composable 
     }
 }
 
-/** A sheet over the screen, in the app's surface, opened all the way. */
+/** A sheet over the screen, in the app's surface, opened all the way. Its content rises above the keyboard. */
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun AqraSheet(onDismiss: () -> Unit, fullHeight: Boolean = true, content: @Composable ColumnScope.() -> Unit) {
@@ -171,6 +172,6 @@ fun AqraSheet(onDismiss: () -> Unit, fullHeight: Boolean = true, content: @Compo
         containerColor = Palette.surface,
         contentWindowInsets = { WindowInsets(0) },
     ) {
-        Column(if (fullHeight) Modifier.fillMaxHeight(0.96f) else Modifier, content = content)
+        Column((if (fullHeight) Modifier.fillMaxHeight(0.96f) else Modifier).imePadding(), content = content)
     }
 }

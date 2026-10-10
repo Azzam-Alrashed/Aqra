@@ -337,7 +337,7 @@ fun SessionPage(app: AqraApp, store: MushafStore, session: TasmeeSession, naviga
                     val detail = seatDetail(seat)
                     AqraRow("🧑‍🎓", Palette.butter, seat.name, Modifier.pressable(pressed = 1f) {
                         overlays.open(FullScreen.Custom("mark-${seat.id}") { close ->
-                            TasmeeMarkingScreen(app, store, seat.name, startPage(seat, store), allowsStageTest = true, onClose = close) { result ->
+                            TasmeeMarkingScreen(app, store, seat.name, startPage(seat, store), draftKey = "${live.id}-${seat.id}", allowsStageTest = true, onClose = close) { result ->
                                 tasmee.recordTasmee(seat, live, result.pages, result.stumbles, result.mistakes, result.test)
                             }
                         })

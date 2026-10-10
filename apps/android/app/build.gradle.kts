@@ -1,4 +1,5 @@
 import org.jetbrains.kotlin.gradle.dsl.JvmTarget
+import java.util.Properties
 
 plugins {
     alias(libs.plugins.android.application)
@@ -6,13 +7,35 @@ plugins {
     alias(libs.plugins.kotlin.serialization)
 }
 
-// The Firebase config isn't in git (see README.md). Without it the app still runs, with accounts and backup off.
+// ---- Which Firebase project a build talks to (README.md, "Builds") ----
+//
+// Debug builds talk to the local emulators unless production is asked for; a release always talks to production.
+// The google-services plugin works per project, not per variant: when it's applied, every variant starts Firebase as
+// the real project before the app could set it up as the emulators' demo project. So one Gradle run builds either
+// emulator builds or production ones, and the release is always its own run.
+val emulatorFlag = project.findProperty("useFirebaseEmulator")?.toString()
+val emulatorAsked = emulatorFlag != null && (emulatorFlag.isEmpty() || emulatorFlag.toBoolean())
+val productionAsked = project.hasProperty("aqra.production") || (emulatorFlag != null && !emulatorAsked)
+val debugUsesEmulator = !productionAsked
+// The Firebase config isn't in git (see README.md). Without it the app runs with accounts and backup off.
 val hasFirebaseConfig = file("google-services.json").exists()
-// A build for the local emulators leaves the config out: the plugin would start Firebase as the real project before
-// the app sets it up as the emulators' demo project, and the emulators would then be asked for the real project.
-if (hasFirebaseConfig && project.findProperty("useFirebaseEmulator") == null) {
+// A CI runner has no config: its release is a compile-and-shrink check and says so with this property or variable.
+val ciRelease = project.hasProperty("aqra.ciRelease") || System.getenv("AQRA_CI_RELEASE") == "1"
+val requestedTasks = gradle.startParameter.taskNames.map { it.substringAfterLast(':') }
+val buildsRelease = requestedTasks.any { it.contains("Release") || it in setOf("assemble", "build", "bundle", "install") }
+val buildsDebug = requestedTasks.any { it.contains("Debug") || it in setOf("assemble", "build", "bundle", "install") }
+if (buildsRelease && buildsDebug && debugUsesEmulator) {
+    throw GradleException("Build the release in its own Gradle run: a debug build for the emulators and a release can't share one (README.md, \"Builds\").")
+}
+if (hasFirebaseConfig && (productionAsked || buildsRelease)) {
     apply(plugin = libs.plugins.google.services.get().pluginId)
 }
+
+// ---- Signing (README.md, "Signing the release") ----
+// The Play upload key: apps/android/keystore.properties (gitignored; keystore.properties.example lists its keys). Without
+// it a release is built unsigned, which Play refuses but a compile check doesn't need.
+val keystoreFile = rootProject.file("keystore.properties")
+val keystore = Properties().apply { if (keystoreFile.exists()) keystoreFile.inputStream().use(::load) }
 
 android {
     namespace = "com.azzamalrashed.aqra"
@@ -22,12 +45,25 @@ android {
         applicationId = "com.azzamalrashed.aqra"
         minSdk = 26
         targetSdk = 36
-        versionCode = 2
-        versionName = "0.1.0"
+        // Each upload to Play needs a higher code: -Paqra.versionCode=N (and -Paqra.versionName=x.y.z) on the release run.
+        versionCode = project.findProperty("aqra.versionCode")?.toString()?.toInt() ?: 2
+        versionName = project.findProperty("aqra.versionName")?.toString() ?: "0.1.0"
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
-        // Debug builds made with -PuseFirebaseEmulator talk only to the local emulators (see backend/README.md).
-        buildConfigField("boolean", "USE_FIREBASE_EMULATOR", (project.findProperty("useFirebaseEmulator") != null).toString())
-        buildConfigField("boolean", "HAS_FIREBASE_CONFIG", hasFirebaseConfig.toString())
+        // Debug builds talk only to the local emulators (see backend/README.md) unless built with -Paqra.production.
+        buildConfigField("boolean", "USE_FIREBASE_EMULATOR", debugUsesEmulator.toString())
+        // Whether the Firebase config is bundled: never in an emulator build, whose plugin stays off.
+        buildConfigField("boolean", "HAS_FIREBASE_CONFIG", (hasFirebaseConfig && !debugUsesEmulator).toString())
+    }
+
+    signingConfigs {
+        if (keystoreFile.exists()) {
+            create("release") {
+                storeFile = rootProject.file(keystore.getProperty("storeFile"))
+                storePassword = keystore.getProperty("storePassword")
+                keyAlias = keystore.getProperty("keyAlias")
+                keyPassword = keystore.getProperty("keyPassword")
+            }
+        }
     }
 
     buildTypes {
@@ -36,7 +72,17 @@ android {
             isShrinkResources = true
             proguardFiles(getDefaultProguardFile("proguard-android-optimize.txt"), "proguard-rules.pro")
             buildConfigField("boolean", "USE_FIREBASE_EMULATOR", "false")
+            buildConfigField("boolean", "HAS_FIREBASE_CONFIG", hasFirebaseConfig.toString())
+            signingConfig = signingConfigs.findByName("release")
         }
+    }
+
+    // Play builds each device's APK from the bundle: its own ABI's native code (ONNX Runtime and LiveKit are most of
+    // the app), its screen density's drawables and its languages. The universal APK of assembleRelease has them all.
+    bundle {
+        abi { enableSplit = true }
+        density { enableSplit = true }
+        language { enableSplit = true }
     }
 
     compileOptions {
@@ -65,6 +111,26 @@ kotlin {
         jvmTarget.set(JvmTarget.JVM_17)
     }
 }
+
+// A release that would ship wrong stops before it compiles: with accounts off (no Firebase config), or pointed at the
+// emulators. The check runs with the release's own tasks only, so debug builds and tests never see it.
+val checkReleaseConfig = tasks.register("checkReleaseConfig") {
+    val emulatorAsked = emulatorAsked
+    val hasFirebaseConfig = hasFirebaseConfig
+    val ciRelease = ciRelease
+    val signed = keystoreFile.exists()
+    doLast {
+        if (emulatorAsked) {
+            throw GradleException("A release never talks to the emulators: leave out -PuseFirebaseEmulator and build the release in its own Gradle run.")
+        }
+        if (!hasFirebaseConfig && !ciRelease) {
+            throw GradleException("A release needs app/google-services.json, or it ships with accounts off. On a CI runner, which has none, pass -Paqra.ciRelease (or set AQRA_CI_RELEASE=1) for a compile check.")
+        }
+        if (!signed) logger.warn("No apps/android/keystore.properties: this release is unsigned (README.md, \"Signing the release\").")
+    }
+}
+tasks.matching { it.name == "preReleaseBuild" }.configureEach { dependsOn(checkReleaseConfig) }
+tasks.matching { it.name == "assembleRelease" || it.name == "bundleRelease" }.configureEach { dependsOn(checkReleaseConfig) }
 
 /**
  * Bundles the shared Quran data (shared/quran) as the app's "quran" assets, exactly as it is in the repository.

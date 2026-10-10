@@ -15,6 +15,8 @@ struct MemorizeView: View {
     @State private var focus: MemorizeFocus
     @State private var page: Int
     @State private var repetitions = 0
+    /// The X once the student has started (repeating, hiding, choosing): closing records nothing, so it's asked first.
+    @State private var confirmingLeave = false
 
     init(store: MushafStore, portion: [Int]) {
         self.store = store
@@ -39,7 +41,11 @@ struct MemorizeView: View {
             MushafTopBar(page: store.page(page), store: store) {
                 FloatingCapsule {
                     Button {
-                        dismiss()
+                        if repetitions > 0 || !focus.hidden.isEmpty || focus.choosingEnd {
+                            confirmingLeave = true
+                        } else {
+                            dismiss()
+                        }
                     } label: {
                         MushafBarIcon("Close", systemImage: "xmark")
                     }
@@ -67,6 +73,10 @@ struct MemorizeView: View {
         .sensoryFeedback(.selection, trigger: page)
         .sensoryFeedback(.impact(weight: .light), trigger: repetitions)
         .sensoryFeedback(.selection, trigger: focus.hidden)
+        .alert("Leave without recording?", isPresented: $confirmingLeave) {
+            Button("Leave", role: .destructive) { dismiss() }
+            Button("Stay", role: .cancel) {}
+        }
     }
 
     private var bar: some View {

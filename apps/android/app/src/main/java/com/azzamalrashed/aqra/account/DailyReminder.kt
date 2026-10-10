@@ -22,16 +22,34 @@ import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.core.Preferences
 import com.azzamalrashed.aqra.revision.DayPlan
 import java.time.ZoneId
-import java.util.Calendar
 
 /**
  * The daily reminder of today's wird: one notification a day at the chosen time. On the plan's study days it also
  * mentions the new portion. Once today's work is done it isn't sent, and one already shown is taken away.
+ *
+ * The alarm means a time of day where the student is, so it's set again whenever the app comes to the front, after
+ * the device restarts, and when its clock or time zone changes (the iOS app refreshes its dated reminders the same way).
  */
 object DailyReminder {
     private const val CHANNEL = "daily-wird"
     internal const val ACTION = "com.azzamalrashed.aqra.DAILY_WIRD"
     private const val NOTIFICATION = 1
+
+    /** Where the reminder's alarm is kept: Android's AlarmManager, or a stand-in in tests. */
+    interface Alarms {
+        fun set(atMillis: Long)
+        fun cancel()
+    }
+
+    private class SystemAlarms(private val context: Context) : Alarms {
+        private val manager: AlarmManager get() = context.getSystemService(AlarmManager::class.java)
+
+        // Inexact, so it needs no exact-alarm permission; allowed while the device dozes, so it isn't held back until
+        // the device wakes (setWindow was, by hours).
+        override fun set(atMillis: Long) = manager.setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, atMillis, pendingIntent(context))
+
+        override fun cancel() = manager.cancel(pendingIntent(context))
+    }
 
     /** Whether the app may post notifications (asked for at run time from Android 13). */
     fun isAllowed(context: Context): Boolean =
@@ -39,22 +57,38 @@ object DailyReminder {
             ContextCompat.checkSelfPermission(context, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) &&
             NotificationManagerCompat.from(context).areNotificationsEnabled()
 
+    /** The next time the reminder is due: [minutes] after midnight, today if that's still ahead, else tomorrow. */
+    fun nextTime(minutes: Int, now: Moment = Moment.now(), zone: ZoneId = ZoneId.systemDefault()): Moment {
+        val today = now.toInstant().atZone(zone).toLocalDate()
+        fun at(day: java.time.LocalDate) = Moment.of(day.atTime(minutes / 60, minutes % 60).atZone(zone).toInstant())
+        val todays = at(today)
+        return if (todays > now) todays else at(today.plusDays(1))
+    }
+
+    /**
+     * Sets the reminder as the settings say, or takes it back when it's off. Returns the time set, so a test can
+     * check it: the time chosen, in the time zone the device is in now.
+     */
+    fun refresh(on: Boolean, minutes: Int, alarms: Alarms, now: Moment = Moment.now(), zone: ZoneId = ZoneId.systemDefault()): Moment? {
+        if (!on) {
+            alarms.cancel()
+            return null
+        }
+        return nextTime(minutes, now, zone).also { alarms.set(it.epochMillis) }
+    }
+
+    /** Sets the reminder as the settings say: on every launch and resume, and from the receiver below. */
+    fun refresh(context: Context, prefs: Preferences = Preferences(context)) {
+        refresh(prefs.reminderOn.value, prefs.reminderMinutes.value, SystemAlarms(context))
+    }
+
     /** Sets the next reminder, at [minutes] after midnight, today if that's still ahead, else tomorrow. */
     fun schedule(context: Context, minutes: Int) {
-        val next = Calendar.getInstance().apply {
-            set(Calendar.HOUR_OF_DAY, minutes / 60)
-            set(Calendar.MINUTE, minutes % 60)
-            set(Calendar.SECOND, 0)
-            set(Calendar.MILLISECOND, 0)
-            if (timeInMillis <= System.currentTimeMillis()) add(Calendar.DAY_OF_YEAR, 1)
-        }
-        val alarms = context.getSystemService(AlarmManager::class.java)
-        // Within a quarter of an hour of the time chosen, which needs no exact-alarm permission.
-        alarms.setWindow(AlarmManager.RTC_WAKEUP, next.timeInMillis, 15 * 60 * 1000L, pendingIntent(context))
+        refresh(on = true, minutes = minutes, alarms = SystemAlarms(context))
     }
 
     fun cancel(context: Context) {
-        context.getSystemService(AlarmManager::class.java).cancel(pendingIntent(context))
+        SystemAlarms(context).cancel()
     }
 
     /**
@@ -78,9 +112,9 @@ object DailyReminder {
 
     internal fun handle(context: Context, intent: Intent) {
         val prefs = Preferences(context)
-        if (!prefs.reminderOn.value) return
-        if (intent.action == ACTION) post(context)
-        schedule(context, prefs.reminderMinutes.value)
+        if (intent.action == ACTION && prefs.reminderOn.value) post(context)
+        // After each reminder, a restart, or a change of clock or time zone: the next one, at the time chosen.
+        refresh(context, prefs)
     }
 
     private fun post(context: Context) {
@@ -115,10 +149,17 @@ object DailyReminder {
     }
 }
 
-/** Posts the day's reminder and sets the next one; sets it again after the device restarts. */
+/**
+ * Posts the day's reminder and sets the next one; sets it again after the device restarts and when its clock or time
+ * zone changes.
+ */
 class DailyReminderReceiver : BroadcastReceiver() {
     override fun onReceive(context: Context, intent: Intent) {
-        if (intent.action != DailyReminder.ACTION && intent.action != Intent.ACTION_BOOT_COMPLETED) return
+        if (intent.action !in HANDLED) return
         DailyReminder.handle(context, intent)
+    }
+
+    private companion object {
+        val HANDLED = setOf(DailyReminder.ACTION, Intent.ACTION_BOOT_COMPLETED, Intent.ACTION_TIMEZONE_CHANGED, Intent.ACTION_TIME_CHANGED)
     }
 }

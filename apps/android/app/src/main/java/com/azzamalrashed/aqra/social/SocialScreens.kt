@@ -82,6 +82,7 @@ import com.azzamalrashed.aqra.ui.components.AqraSegmented
 import com.azzamalrashed.aqra.ui.components.BrandButton
 import com.azzamalrashed.aqra.ui.components.ChipButton
 import com.azzamalrashed.aqra.ui.components.IconTile
+import com.azzamalrashed.aqra.ui.components.FactsText
 import com.azzamalrashed.aqra.ui.components.ProblemLine
 import com.azzamalrashed.aqra.ui.components.TwoLineHeadline
 import com.azzamalrashed.aqra.ui.components.pressScale
@@ -92,7 +93,6 @@ import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.formatDay
 import com.azzamalrashed.aqra.ui.util.formatNumber
-import com.azzamalrashed.aqra.ui.util.factSeparator
 import kotlinx.coroutines.launch
 
 @Composable
@@ -181,6 +181,8 @@ private fun FriendsScreen(app: AqraApp) {
     val scope = rememberCoroutineScope()
     var invite by remember { mutableStateOf<FriendInvite?>(null) }
     var making by remember { mutableStateOf(false) }
+    /** Why the code couldn't be made: offline, or refused. */
+    var inviteProblem by remember { mutableStateOf<Problem?>(null) }
     var code by remember { mutableStateOf("") }
     var accepting by remember { mutableStateOf<String?>(null) }
     var removing by remember { mutableStateOf<Pair<String, String>?>(null) }
@@ -222,10 +224,19 @@ private fun FriendsScreen(app: AqraApp) {
                     leading = { Icon(Icons.Rounded.QrCode, null, tint = Color.White, modifier = Modifier.size(14.dp)) }) {
                     scope.launch {
                         making = true
-                        invite = runCatching { social.createInvite(account.publicName.orEmpty()) }.getOrNull()
-                        making = false
+                        inviteProblem = null
+                        try {
+                            invite = social.createInvite(account.publicName.orEmpty())
+                        } catch (cancelled: kotlinx.coroutines.CancellationException) {
+                            throw cancelled
+                        } catch (error: Exception) {
+                            inviteProblem = AccountStore.problem(error)
+                        } finally {
+                            making = false
+                        }
                     }
                 }
+                inviteProblem?.let { ProblemLine(it, Modifier.padding(top = 8.dp)) }
             }
         }
 
@@ -357,7 +368,7 @@ private fun CompetitionScreen(app: AqraApp, competition: Competition, onClose: (
         Column(Modifier.padding(top = 8.dp), verticalArrangement = Arrangement.spacedBy(4.dp)) {
             Text(live.title, style = aqraStyle(26f, Weight.heavy, Palette.ink))
             val until = if (live.isRunning()) stringResource(R.string.until_s, formatDay(live.endsAt.toInstant())) else stringResource(R.string.ended)
-            Text(live.metric.title() + factSeparator() + until, style = aqraStyle(13f, Weight.semibold, Palette.brand))
+            FactsText(live.metric.title(), until, aqraStyle(13f, Weight.semibold, Palette.brand))
             if (live.kind == Competition.Kind.TEACHER) {
                 Text(stringResource(R.string.scored_from_the_pages_s_hears_clean_in_tasmee, live.ownerName), style = aqraStyle(12f, Weight.medium, Palette.inkSoft))
             }

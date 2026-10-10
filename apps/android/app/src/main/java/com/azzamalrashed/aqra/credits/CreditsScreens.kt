@@ -40,6 +40,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
+import com.azzamalrashed.aqra.core.Features
 import com.azzamalrashed.aqra.account.SignInButtons
 import com.azzamalrashed.aqra.tasmee.juzSummary
 import com.azzamalrashed.aqra.quran.MushafStore
@@ -242,8 +243,11 @@ fun BidSheet(app: AqraApp, store: MushafStore, session: TasmeeSession, onDismiss
                     }
                 }
             }
-            Text(stringResource(R.string.buy_credits), style = aqraStyle(15f, Weight.semibold, Palette.brand), textAlign = TextAlign.Center,
-                modifier = Modifier.fillMaxWidth().pressable { buying = true }.padding(6.dp))
+            // Offered once credits can be bought on Android (Features.BUY_CREDITS); until then the link led to "not yet".
+            if (Features.BUY_CREDITS) {
+                Text(stringResource(R.string.buy_credits), style = aqraStyle(15f, Weight.semibold, Palette.brand), textAlign = TextAlign.Center,
+                    modifier = Modifier.fillMaxWidth().pressable { buying = true }.padding(6.dp))
+            }
             Text(stringResource(R.string.your_bid_holds_its_credits_if_someone_outbids_you_they), style = aqraStyle(12f, Weight.medium, Palette.inkSoft))
         }
     }

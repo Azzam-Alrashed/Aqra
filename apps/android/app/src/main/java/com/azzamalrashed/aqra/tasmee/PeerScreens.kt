@@ -200,7 +200,7 @@ fun HearFriendScreen(app: AqraApp, store: MushafStore, initialCode: String?, onC
 
     val found = request
     if (found != null) {
-        TasmeeMarkingScreen(app, store, found.studentName ?: stringResource(R.string.a_friend), found.startPage ?: 1, onClose = onClose) { result ->
+        TasmeeMarkingScreen(app, store, found.studentName ?: stringResource(R.string.a_friend), found.startPage ?: 1, draftKey = "peer-${found.id}", onClose = onClose) { result ->
             tasmee.recordPeerTasmee(found, app.account.publicName, result.pages, result.stumbles, result.mistakes)
         }
         return

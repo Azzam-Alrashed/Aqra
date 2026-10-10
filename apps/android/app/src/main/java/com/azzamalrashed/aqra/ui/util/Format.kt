@@ -11,6 +11,7 @@ import java.text.NumberFormat
 import java.time.Instant
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
+import java.time.format.DecimalStyle
 import java.time.format.FormatStyle
 import java.util.Date
 import java.util.Locale
@@ -52,15 +53,28 @@ fun hijriToday(locale: Locale = Locale.getDefault()): String {
     return format.format(calendar)
 }
 
+/**
+ * java.time writes Western digits whatever the language unless told the locale's digits: Arabic-Indic in Arabic, as
+ * the rest of the app (and the device) writes its numbers.
+ */
+private fun DateTimeFormatter.inLocale(locale: Locale): DateTimeFormatter =
+    withLocale(locale).withDecimalStyle(DecimalStyle.of(locale)).withZone(ZoneId.systemDefault())
+
 /** A session's time: «الأربعاء ٨ أكتوبر، ٨:٠٠ م». */
 fun formatWhen(instant: Instant, locale: Locale = Locale.getDefault()): String {
     val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "EEEEdMMMMjmm")
-    return DateTimeFormatter.ofPattern(pattern, locale).withZone(ZoneId.systemDefault()).format(instant)
+    return DateTimeFormatter.ofPattern(pattern, locale).inLocale(locale).format(instant)
+}
+
+/** A day and month: «١٤ أكتوبر». */
+fun formatDayMonth(instant: Instant, locale: Locale = Locale.getDefault()): String {
+    val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "dMMMM")
+    return DateTimeFormatter.ofPattern(pattern, locale).inLocale(locale).format(instant)
 }
 
 /** A day's date, short: «٧ أكتوبر ٢٠٢٦». */
 fun formatDay(instant: Instant, locale: Locale = Locale.getDefault()): String =
-    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).withLocale(locale).withZone(ZoneId.systemDefault()).format(instant)
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.MEDIUM).inLocale(locale).format(instant)
 
 /** A time of day, as the device writes it. */
 fun formatTime(hour: Int, minute: Int, locale: Locale = Locale.getDefault()): String {
@@ -112,12 +126,12 @@ fun firstWeekday(locale: Locale = Locale.getDefault()): Int = android.icu.util.C
 
 /** A day and month, long: «٨ أكتوبر ٢٠٢٦». */
 fun formatLongDay(instant: Instant, locale: Locale = Locale.getDefault()): String =
-    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).withLocale(locale).withZone(ZoneId.systemDefault()).format(instant)
+    DateTimeFormatter.ofLocalizedDate(FormatStyle.LONG).inLocale(locale).format(instant)
 
 /** A moment with its time: «٨ أكتوبر، ٨:٠٠ م». */
 fun formatDayTime(instant: Instant, locale: Locale = Locale.getDefault()): String {
     val pattern = android.text.format.DateFormat.getBestDateTimePattern(locale, "dMMMjmm")
-    return DateTimeFormatter.ofPattern(pattern, locale).withZone(ZoneId.systemDefault()).format(instant)
+    return DateTimeFormatter.ofPattern(pattern, locale).inLocale(locale).format(instant)
 }
 
 /** How far away, ahead or behind, in words that sit in a sentence: «خلال ساعتين», "in 2 hours". */

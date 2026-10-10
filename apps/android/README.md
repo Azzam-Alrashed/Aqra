@@ -13,21 +13,38 @@ between the two.
   accounts turned off. Google sign-in needs the signing key's SHA-1 in the Firebase project; Apple sign-in uses
   Firebase's web flow and needs the Apple provider's Services ID.
 
-## Building and testing
+## Builds
 
 ```
-./gradlew -PuseFirebaseEmulator :app:testDebugUnitTest :app:assembleDebug   # tests, and a debug build for the local emulators
-./gradlew -PuseFirebaseEmulator :app:installDebug                           # install it on the running AVD
-./gradlew :app:assembleRelease                                               # the release build, in a Gradle run of its own
+./gradlew :app:testDebugUnitTest :app:assembleDebug     # tests, and a debug APK that talks to the local emulators
+./gradlew -Paqra.production :app:assembleDebug          # a debug APK that talks to the real project (rarely wanted)
+./gradlew :app:bundleRelease                            # the Play bundle: its own Gradle run, always
 ```
 
-`-PuseFirebaseEmulator` makes a debug build talk only to the local emulators (`npm run emulators` in `backend/`,
-project `demo-aqra`), reached from the Android emulator at 10.0.2.2. Video calls there also need a local LiveKit
-server (`livekit-server --dev`, see backend/README.md); the app reaches it at 10.0.2.2 as well.
+**Which Firebase project a build talks to.** A debug build talks to the local emulators (`npm run emulators` in
+`backend/`, project `demo-aqra`), reached from the Android emulator at 10.0.2.2, unless it's built with
+`-Paqra.production` (or `-PuseFirebaseEmulator=false`). `-PuseFirebaseEmulator` still works and means the same as the
+default. Video calls against the emulators also need a local LiveKit server (`livekit-server --dev`, see
+backend/README.md), reached at 10.0.2.2 as well. After an emulator build, Arabic with Arabic-Indic digits:
+`adb -s <serial> shell cmd locale set-app-locales com.azzamalrashed.aqra --locales ar-SA`.
 
-**A debug build without the flag talks to the production project** as soon as `google-services.json` is present:
-build that way only when production is what you mean. Never put the release task in the same Gradle run as the flag:
-the flag leaves the google-services plugin out, so that release would ship with accounts off.
+A release always talks to the real project. The google-services plugin works per project, not per variant, so one
+Gradle run can't build an emulator debug APK and a release: asking for both fails at once, and the release is its own
+run. Before it compiles, `checkReleaseConfig` stops a release that would ship wrong:
+- without `app/google-services.json` (accounts would be off). A CI runner has none, so its release is a
+  compile-and-shrink check and says so with `-Paqra.ciRelease` or the variable `AQRA_CI_RELEASE=1`;
+- with `-PuseFirebaseEmulator`.
+
+Each upload to Play needs a higher version code: `-Paqra.versionCode=N -Paqra.versionName=x.y.z` on the release run
+(the defaults are in `app/build.gradle.kts`). The R8 mapping of a release is `app/build/outputs/mapping/release/mapping.txt`.
+
+**Signing the release.** The upload key lives outside git. Copy `keystore.properties.example` to
+`keystore.properties` (gitignored, beside it) and fill in the keystore the owner made with `keytool`; the release is
+then signed with it. Without the file the release builds unsigned, which Play refuses but a compile check doesn't need.
+
+**Size.** The bundle is split by ABI, screen density and language, so Play sends each phone only its own native code
+(ONNX Runtime and LiveKit are most of the app). `assembleRelease` makes the universal APK with every ABI, about four
+times what a phone downloads; use it for the emulator, never to judge the size.
 
 The Mushaf is drawn by the app's own font reader (WOFF2, TrueType, COLR/CPAL, GPOS kerning, and the Unicode bidi
 algorithm for the text fonts). On a Mac, the tests compare it with CoreText, the engine the iOS app draws with:
@@ -48,7 +65,12 @@ headers and every ayah's words in Hafs Smart against those tables (they're skipp
 
 ## Not on Android yet
 
-- Buying credits: the server verifies App Store purchases only. The wallet, bidding and earnings work.
+`apps/PARITY.md` lists every behavior beside the iOS app's. Hidden until they work (`core/Features.kt`):
+
+- Buying credits: the server verifies App Store purchases only. The wallet, bidding and earnings work; the «buy
+  credits» link in the bid sheet is hidden.
+- Sign in with Apple: it goes through Firebase's web flow, which needs the Apple provider's Services ID in the Firebase
+  project. Its button is hidden; Google sign-in works.
 
 ## Google Play Data safety (draft, not submitted)
 
@@ -68,7 +90,7 @@ The answers for Play Console's Data safety form, matching `docs/privacy.html` an
 | Financial info: Purchase history | Credit packs bought (Google Play Billing, once added) | Yes |
 | Financial info: Other financial info | A teacher's earnings from booked seats and the payouts recorded; no bank details | Yes |
 | Photos and videos: Photos | Copies of a teacher's ijazah | Yes |
-| App activity: Other user-generated content | Memorization progress and the revision backup (from the first launch), tasmee' records, competitions, a teacher's notes | No |
+| App activity: Other user-generated content | Memorization progress and the revision backup (from the first launch), tasmee' records, competitions, a teacher's notes, reports of other users (with an optional note) | No |
 
 - **Not collected:** location, contacts, messages, health, web history, device or other IDs, crash logs or
   diagnostics. Audio: «سمّع بصوتك» hears the microphone with a speech model on the device and never sends or keeps

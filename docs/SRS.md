@@ -577,7 +577,7 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | NTF-01 | Server events (outbid, seat won, refund, session cancelled, application status, peer/teacher record) are written to the user's inbox and shown in-app. | S | ✅ | P |
-| NTF-02 | Local notifications for the daily wird, the new portion on study days and booked sessions; never more than one a day for the wird. On iOS the wird's are dated, two weeks ahead, and set again as the app is used; on Android the reminder checks when it goes off. | S | ✅ | E |
+| NTF-02 | Local notifications for the daily wird, the new portion on study days and booked sessions; never more than one a day for the wird. On iOS the wird's are dated, two weeks ahead, and set again as the app is used; on Android one alarm, allowed while the device dozes, is set again on every launch and resume, after a restart, and when the clock or time zone changes, and the reminder checks when it goes off. | S | ✅ | E |
 | NTF-03 | Push notifications for inbox events once an APNs key is configured. | C | ⛔ DEP-08 | P |
 
 #### 3.2.24 Administration (ADM)

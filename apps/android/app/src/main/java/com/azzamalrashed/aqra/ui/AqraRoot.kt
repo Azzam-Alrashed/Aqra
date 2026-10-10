@@ -28,6 +28,7 @@ import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateListOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.runtime.staticCompositionLocalOf
@@ -91,8 +92,8 @@ sealed interface FullScreen {
 }
 
 /** Opens and closes the full-screen views, from anywhere in the tabs. */
-class Overlays {
-    var current by mutableStateOf<FullScreen?>(null)
+class Overlays(initial: FullScreen? = null) {
+    var current by mutableStateOf(initial)
         private set
 
     fun open(screen: FullScreen) {
@@ -101,6 +102,31 @@ class Overlays {
 
     fun close() {
         current = null
+    }
+
+    companion object {
+        /**
+         * The view open when the process was killed comes back with the app: the Mushaf, the wird or the portion, whose
+         * own drafts are saved the same way. A custom view holds code, so it doesn't.
+         */
+        val Saver = listSaver<Overlays, Any>(
+            save = { overlays ->
+                when (val screen = overlays.current) {
+                    is FullScreen.Mushaf -> listOf("mushaf", screen.marking)
+                    is FullScreen.Wird -> listOf("wird", screen.page, screen.outside)
+                    is FullScreen.Memorize -> listOf("memorize") + screen.portion
+                    else -> emptyList()
+                }
+            },
+            restore = { saved ->
+                Overlays(when (saved.firstOrNull()) {
+                    "mushaf" -> FullScreen.Mushaf(saved[1] as Boolean)
+                    "wird" -> FullScreen.Wird(saved[1] as Int, saved[2] as Boolean)
+                    "memorize" -> FullScreen.Memorize(saved.drop(1).map { it as Int })
+                    else -> null
+                })
+            },
+        )
     }
 }
 
@@ -224,7 +250,7 @@ private fun MushafRoot(app: AqraApp) {
 /** The app after setup: the home, tasmee', progress and account tabs, under the app's own floating tab bar. */
 @Composable
 private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
-    val overlays = remember { Overlays() }
+    val overlays = rememberSaveable(saver = Overlays.Saver) { Overlays() }
     val router = app.router
     val navigators = remember { AppTab.entries.associateWith { Navigator() } }
 

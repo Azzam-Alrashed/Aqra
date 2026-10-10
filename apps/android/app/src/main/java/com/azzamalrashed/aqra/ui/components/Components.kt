@@ -73,6 +73,7 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.account.Problem
+import com.azzamalrashed.aqra.ui.util.factSeparator
 import com.azzamalrashed.aqra.ui.theme.MushafStyle
 import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.ui.theme.Weight
@@ -333,6 +334,18 @@ fun ChipButton(title: String, filled: Boolean, modifier: Modifier = Modifier, en
         leading?.invoke()
         Text(title, style = aqraStyle(13f, Weight.bold, if (filled) Color.White else Palette.brand), maxLines = 1)
     }
+}
+
+/**
+ * Two facts on one line, with the separator between them («·», or «،» in Arabic). TalkBack reads the facts with a
+ * pause between them, never the separator (VoiceOver read the dot aloud: «al-Fatiha, dot, page 1»).
+ */
+@Composable
+fun FactsText(first: String, second: String, style: TextStyle, modifier: Modifier = Modifier, maxLines: Int = Int.MAX_VALUE) {
+    Text(
+        first + factSeparator() + second, style = style, maxLines = maxLines, overflow = TextOverflow.Ellipsis,
+        modifier = modifier.semantics { contentDescription = "$first, $second" },
+    )
 }
 
 /** What went wrong, in one calm line. */

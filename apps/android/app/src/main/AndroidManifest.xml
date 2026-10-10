@@ -1,5 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
     <uses-permission android:name="android.permission.INTERNET" />
     <!-- A video tasmee's call, and following a revision recited aloud (on the device, never recorded). -->
@@ -10,6 +11,9 @@
     <uses-feature android:name="android.hardware.camera" android:required="false" />
     <uses-feature android:name="android.hardware.camera.front" android:required="false" />
     <uses-feature android:name="android.hardware.microphone" android:required="false" />
+    <!-- LiveKit can share the screen; Aqra never does, so its media-projection service and permission (which Play asks
+         to justify) are left out of the app. -->
+    <uses-permission android:name="android.permission.FOREGROUND_SERVICE_MEDIA_PROJECTION" tools:node="remove" />
 
     <application
         android:name=".AqraApplication"
@@ -18,6 +22,10 @@
         android:label="@string/app_name"
         android:supportsRtl="true"
         android:theme="@style/Theme.Aqra">
+
+        <service
+            android:name="io.livekit.android.room.track.screencapture.ScreenCaptureService"
+            tools:node="remove" />
 
         <!-- One instance: an Aqra link opened from outside reaches the app already open (onNewIntent). -->
         <activity
@@ -39,11 +47,14 @@
             </intent-filter>
         </activity>
 
+        <!-- Set again after a restart, and when the clock or the time zone changes: the alarm means a time of day. -->
         <receiver
             android:name=".account.DailyReminderReceiver"
             android:exported="false">
             <intent-filter>
                 <action android:name="android.intent.action.BOOT_COMPLETED" />
+                <action android:name="android.intent.action.TIMEZONE_CHANGED" />
+                <action android:name="android.intent.action.TIME_SET" />
             </intent-filter>
         </receiver>
 

@@ -30,6 +30,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -50,6 +51,7 @@ import androidx.compose.ui.unit.LayoutDirection
 import androidx.compose.ui.unit.dp
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
+import com.azzamalrashed.aqra.account.Confirm
 import com.azzamalrashed.aqra.mushaf.MemorizeFocus
 import com.azzamalrashed.aqra.mushaf.MushafBarIcon
 import com.azzamalrashed.aqra.mushaf.MushafColorsMenu
@@ -79,8 +81,10 @@ import com.azzamalrashed.aqra.ui.util.formatNumber
 fun MemorizeScreen(app: AqraApp, store: MushafStore, portion: List<Int>, onClose: () -> Unit) {
     val style = MushafStyle.current()
     val haptics = LocalHapticFeedback.current
-    val focus = remember(portion) { MemorizeFocus(portion) }
-    var repetitions by remember { mutableIntStateOf(0) }
+    // What's hidden, chosen and counted outlives the process (a call may end it in the background).
+    val focus = rememberSaveable(portion, saver = MemorizeFocus.saver(portion)) { MemorizeFocus(portion) }
+    var repetitions by rememberSaveable { mutableIntStateOf(0) }
+    var confirmingLeave by rememberSaveable { mutableStateOf(false) }
     /** The portion's pages, in Mushaf order. */
     val pages = remember(portion) {
         val pages = HashSet<Int>()
@@ -96,7 +100,12 @@ fun MemorizeScreen(app: AqraApp, store: MushafStore, portion: List<Int>, onClose
     LaunchedEffect(focus.hidden) { haptics.performHapticFeedback(HapticFeedbackType.SegmentTick) }
 
     SystemBars(visible = true, lightIcons = style.dark)
-    BackHandler(onBack = onClose)
+    // Closing records nothing; once the student has started (repeating, hiding, choosing), it asks first.
+    val hasProgress = repetitions > 0 || focus.hidden.isNotEmpty() || focus.choosingEnd
+    fun leave() {
+        if (hasProgress) confirmingLeave = true else onClose()
+    }
+    BackHandler(onBack = ::leave)
 
     fun record(memorized: List<Int>) {
         app.plan.record(portion, memorized, store, app.memorization, app.revision)
@@ -107,7 +116,7 @@ fun MemorizeScreen(app: AqraApp, store: MushafStore, portion: List<Int>, onClose
     val options = MushafPageOptions(app.prefs.tajweed.value, topics = false, memorization = app.memorization, focus = focus)
     Column(Modifier.fillMaxSize().background(style.paper).statusBarsPadding().navigationBarsPadding()) {
         MushafTopBar(store, pages[pager.currentPage.coerceIn(0, pages.lastIndex)], style,
-            leading = { FloatingCapsule(style) { MushafBarIcon(Icons.Rounded.Close, stringResource(R.string.close), style, onClose) } },
+            leading = { FloatingCapsule(style) { MushafBarIcon(Icons.Rounded.Close, stringResource(R.string.close), style, ::leave) } },
             trailing = { FloatingCapsule(style) { MushafColorsMenu(app, style) } })
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
             HorizontalPager(pager, Modifier.weight(1f).fillMaxWidth().padding(vertical = 6.dp), key = { pages[it] }) { index ->
@@ -153,6 +162,10 @@ fun MemorizeScreen(app: AqraApp, store: MushafStore, portion: List<Int>, onClose
                 }
             }
         }
+    }
+    if (confirmingLeave) {
+        Confirm(stringResource(R.string.leave_without_recording_q), "", stringResource(R.string.leave),
+            onDismiss = { confirmingLeave = false }, cancel = stringResource(R.string.stay), onConfirm = onClose)
     }
 }
 
