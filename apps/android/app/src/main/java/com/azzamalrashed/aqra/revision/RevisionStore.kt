@@ -37,6 +37,11 @@ data class ReviewPolicy(
     val sheikhWeight: Double = 1.5,
     /** A peer's tasmee' sits between self-revision and a sheikh's. Provisional. */
     val peerWeight: Double = 1.25,
+    /**
+     * سبقي, the near lane: this many of the pages most recently memorized in Aqra come back every day, beside the daily
+     * amount, until newer pages take their place. Provisional, see docs/REVISION.md.
+     */
+    val nearLanePages: Int = 20,
 ) {
     companion object {
         val STANDARD = ReviewPolicy()
@@ -74,6 +79,8 @@ data class PlanItem(val page: Int, val kind: Kind = Kind.ROTATION, val done: Boo
     enum class Kind {
         /** It was stumbled on recently and comes back to be made firm. */
         @SerialName("followUp") FOLLOW_UP,
+        /** سبقي: memorized in Aqra lately, it comes back every day. */
+        @SerialName("near") NEAR,
         /** Its turn has come in the rotation through everything memorized. */
         @SerialName("rotation") ROTATION,
     }
@@ -237,9 +244,9 @@ class RevisionStore(
 
     /**
      * Makes today's plan if there isn't one for today yet (or if the one there was empty), and drops pages that are
-     * no longer memorized from it.
+     * no longer memorized from it. [nearPages] is the near lane (سبقي), from [nearLanePages].
      */
-    fun refreshPlan(memorizedPages: List<Int>, now: Moment = Moment.now()) {
+    fun refreshPlan(memorizedPages: List<Int>, now: Moment = Moment.now(), nearPages: List<Int> = emptyList()) {
         val day = today(now)
         val memorized = memorizedPages.toSet()
         val current = plan
@@ -253,25 +260,55 @@ class RevisionStore(
         }
 
         val amount = effectiveDailyPages(memorizedPages.size)
-        // Pages due for follow-up come first, the most overdue first; at least one rotation page always follows.
+        // Pages due for follow-up come first, the most overdue first, up to half the daily amount: the rotation always has
+        // the other half, so it keeps moving through everything memorized.
         val due = followUps.entries
             .filter { it.value.due <= day && it.key in memorized }
             .sortedWith(compareBy({ it.value.due }, { it.key }))
-            .take(maxOf(amount - 1, 1))
+            .take(maxOf(amount / 2, 1))
             .map { PlanItem(it.key, PlanItem.Kind.FOLLOW_UP) }
+        val taken = due.map { it.page }.toMutableSet()
+
+        // Then the near lane, in Mushaf order: what was memorized lately, every day, beside the daily amount.
+        val near = nearPages.filter { it in memorized && it !in taken }.sorted().map { PlanItem(it, PlanItem.Kind.NEAR) }
+        taken += near.map { it.page }
 
         // Then the rotation, from where it stopped, wrapping round to the start of what's memorized.
         val ordered = memorizedPages.sorted()
         val start = ordered.indexOfFirst { it >= rotationCursor }.let { if (it < 0) 0 else it }
         val wrapped = if (ordered.isEmpty()) emptyList() else ordered.subList(start, ordered.size) + ordered.subList(0, start)
-        val taken = due.map { it.page }.toSet()
         val rotation = wrapped
             .filter { it !in taken }
             .take(maxOf(amount - due.size, 1))
             .map { PlanItem(it, PlanItem.Kind.ROTATION) }
 
-        plan = DayPlan(day, due + rotation)
+        plan = DayPlan(day, due + near + rotation)
         save()
+    }
+
+    /** سبقي: the pages most recently memorized in Aqra, before today, up to the policy's number, in Mushaf order. */
+    fun nearLanePages(store: MushafStore, memorization: MemorizationStore, now: Moment = Moment.now()): List<Int> {
+        if (policy.nearLanePages <= 0) return emptyList()
+        val today = today(now)
+        val ayahs = memorization.ayahs
+        val learned = (1..MushafStore.PAGE_COUNT).mapNotNull { page ->
+            val latest = store.page(page).ayahs.mapNotNull { ayahs[it]?.learnedAt }.maxOrNull()
+            if (latest != null && CalendarDay.of(latest, zone) < today) page to latest else null
+        }
+        return learned.sortedWith(compareByDescending<Pair<Int, Moment>> { it.second }.thenByDescending { it.first })
+            .take(policy.nearLanePages).map { it.first }.sorted()
+    }
+
+    /**
+     * How many days the rotation takes to go through everything memorized outside the near lane, at today's pace: the
+     * rotation pages of today's plan (the daily amount until there is one).
+     */
+    fun cycleDays(memorizedPages: Int, nearPages: Int = 0, now: Moment = Moment.now()): Int {
+        val amount = effectiveDailyPages(memorizedPages)
+        val current = plan
+        val perDay = if (current != null && current.day == today(now)) current.items.count { it.kind == PlanItem.Kind.ROTATION } else amount
+        val pool = maxOf(memorizedPages - nearPages, 0)
+        return maxOf(ceil(pool.toDouble() / maxOf(perDay, 1)).toInt(), 1)
     }
 
     // MARK: - Recording

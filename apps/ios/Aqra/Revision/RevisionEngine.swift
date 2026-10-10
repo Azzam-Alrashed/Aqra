@@ -21,6 +21,9 @@ struct ReviewPolicy: Codable, Hashable, Sendable {
     var sheikhWeight = 1.5
     /// A peer's tasmee' sits between self-revision and a sheikh's. Provisional, see docs/REVISION.md.
     var peerWeight = 1.25
+    /// سبقي, the near lane: this many of the pages most recently memorized in Aqra come back every day, beside the
+    /// daily amount, until newer pages take their place. Provisional, see docs/REVISION.md.
+    var nearLanePages = 20
 
     static let standard = ReviewPolicy()
 
@@ -137,6 +140,8 @@ struct PlanItem: Codable, Hashable, Identifiable {
     enum Kind: String, Codable {
         /// It was stumbled on recently and comes back to be made firm.
         case followUp
+        /// سبقي: memorized in Aqra lately, it comes back every day.
+        case near
         /// Its turn has come in the rotation through everything memorized.
         case rotation
     }
@@ -353,7 +358,8 @@ final class RevisionStore {
 
     /// Makes today's plan if there isn't one for today yet (or if the one there was empty), and drops pages that
     /// are no longer memorized from it.
-    func refreshPlan(memorizedPages: [Int], now: Date = .now) {
+    /// - Parameter nearPages: the near lane (سبقي), from `nearLanePages(in:memorization:now:)`.
+    func refreshPlan(memorizedPages: [Int], nearPages: [Int] = [], now: Date = .now) {
         let day = today(now)
         let memorized = Set(memorizedPages)
         if var plan, plan.day == day, !plan.items.isEmpty {
@@ -367,25 +373,52 @@ final class RevisionStore {
         }
 
         let amount = effectiveDailyPages(memorizedPages: memorizedPages.count)
-        // Pages due for follow-up come first, the most overdue first; at least one rotation page always follows.
+        // Pages due for follow-up come first, the most overdue first, up to half the daily amount: the rotation always
+        // has the other half, so it keeps moving through everything memorized.
         let due = followUps
             .filter { $0.value.due <= day && memorized.contains($0.key) }
             .sorted { ($0.value.due.number, $0.key) < ($1.value.due.number, $1.key) }
-            .prefix(max(amount - 1, 1))
+            .prefix(max(amount / 2, 1))
             .map { PlanItem(page: $0.key, kind: .followUp) }
+        var taken = Set(due.map(\.page))
+
+        // Then the near lane, in Mushaf order: what was memorized lately, every day, beside the daily amount.
+        let near = nearPages.filter { memorized.contains($0) && !taken.contains($0) }.sorted()
+            .map { PlanItem(page: $0, kind: .near) }
+        taken.formUnion(near.map(\.page))
 
         // Then the rotation, from where it stopped, wrapping round to the start of what's memorized.
         let ordered = memorizedPages.sorted()
         let start = ordered.firstIndex { $0 >= rotationCursor } ?? 0
         let wrapped = ordered.isEmpty ? [] : Array(ordered[start...] + ordered[..<start])
-        let taken = Set(due.map(\.page))
         let rotation = wrapped
             .filter { !taken.contains($0) }
             .prefix(max(amount - due.count, 1))
             .map { PlanItem(page: $0, kind: .rotation) }
 
-        plan = DayPlan(day: day, items: due + rotation)
+        plan = DayPlan(day: day, items: due + near + rotation)
         save()
+    }
+
+    /// سبقي: the pages most recently memorized in Aqra, before today, up to the policy's number, in Mushaf order.
+    func nearLanePages(in store: MushafStore, memorization: MemorizationStore, now: Date = .now) -> [Int] {
+        guard policy.nearLanePages > 0 else { return [] }
+        let today = today(now)
+        var learned: [(page: Int, at: Date)] = []
+        for page in 1...MushafStore.pageCount {
+            let latest = store.page(page).ayahs.compactMap { memorization.memory(ofAyah: $0)?.learnedAt }.max()
+            if let latest, CalendarDay(latest, in: calendar) < today { learned.append((page, latest)) }
+        }
+        return learned.sorted { ($0.at, $0.page) > ($1.at, $1.page) }.prefix(policy.nearLanePages).map(\.page).sorted()
+    }
+
+    /// How many days the rotation takes to go through everything memorized outside the near lane, at today's pace:
+    /// the rotation pages of today's plan (the daily amount until there is one).
+    func cycleDays(memorizedPages: Int, nearPages: Int = 0, now: Date = .now) -> Int {
+        let amount = effectiveDailyPages(memorizedPages: memorizedPages)
+        let perDay = plan.flatMap { $0.day == today(now) ? $0.items.filter { $0.kind == .rotation }.count : nil } ?? amount
+        let pool = max(memorizedPages - nearPages, 0)
+        return max(Int((Double(pool) / Double(max(perDay, 1))).rounded(.up)), 1)
     }
 
     // MARK: - Recording

@@ -217,22 +217,25 @@ private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
     // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes; a challenge
     // may have ended while it was away.
     val count = app.memorization.count
-    LaunchedEffect(count) { app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization)) }
+    fun refreshPlan() = app.revision.refreshPlan(
+        RevisionStore.memorizedPages(store, app.memorization), nearPages = app.revision.nearLanePages(store, app.memorization),
+    )
+    LaunchedEffect(count) { refreshPlan() }
     LifecycleEventEffect(Lifecycle.Event.ON_RESUME) {
-        app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization))
+        refreshPlan()
         app.rewards.checkChallenges(app.revision, app.plan)
         // Back in the foreground: what another device wrote to the account meanwhile is merged in.
         app.scope.launch { app.sync.syncIfChanged() }
     }
     // The account's copy merged in (another device revised): today's plan follows.
     val lastMerge = app.sync.lastMerge
-    LaunchedEffect(lastMerge) { if (lastMerge != null) app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization)) }
+    LaunchedEffect(lastMerge) { if (lastMerge != null) refreshPlan() }
     // A new day while the app is open (midnight, or another time zone, or the clock set): today's plan follows.
     val dayContext = LocalContext.current
     DisposableEffect(Unit) {
         val receiver = object : BroadcastReceiver() {
             override fun onReceive(context: Context, intent: Intent) {
-                app.revision.refreshPlan(RevisionStore.memorizedPages(store, app.memorization))
+                refreshPlan()
             }
         }
         val changes = IntentFilter().apply {

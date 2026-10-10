@@ -177,6 +177,48 @@ struct JourneyTests {
         #expect(abs(after - before) < 0.000_001)
     }
 
+    // MARK: - The near lane (سبقي)
+
+    /// The pages memorized in Aqra lately (not today's) come back every day beside the daily amount, the newest up to
+    /// the policy's number; the rotation leaves them out and still gets its share.
+    @Test func theNearLaneComesBackDailyBesideTheAmount() throws {
+        let store = try store()
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.mark(0...200, memorized: true)
+        // Pages 30 to 33 memorized in Aqra over the last four days, page 34 today.
+        for (offset, page) in [30, 31, 32, 33, 34].enumerated() {
+            memorization.mark(store.page(page).ayahs, memorized: false)
+            memorization.learn(store.page(page).ayahs, at: day(offset - 4), stability: 2)
+        }
+        var policy = ReviewPolicy.standard
+        policy.nearLanePages = 3
+        let revision = RevisionStore(fileURL: nil, policy: policy, calendar: calendar)
+        revision.setDailyPages(4)
+        let near = revision.nearLanePages(in: store, memorization: memorization, now: day(0))
+        #expect(near == [31, 32, 33])
+        let pages = RevisionStore.memorizedPages(in: store, memorization: memorization)
+        revision.refreshPlan(memorizedPages: pages, nearPages: near, now: day(0))
+        let plan = try #require(revision.plan)
+        #expect(plan.items.filter { $0.kind == .near }.map(\.page) == [31, 32, 33])
+        #expect(plan.items.filter { $0.kind == .rotation }.map(\.page) == [1, 2, 3, 4])
+        // The rotation's cycle leaves the near lane out: the other pages, four a day.
+        #expect(revision.cycleDays(memorizedPages: pages.count, nearPages: 3, now: day(0)) == Int((Double(pages.count - 3) / 4).rounded(.up)))
+    }
+
+    /// However many pages are due for follow-up, the rotation keeps at least half the daily amount.
+    @Test func followUpsLeaveTheRotationAtLeastHalf() {
+        let memorization = MemorizationStore(fileURL: nil)
+        let revision = RevisionStore(fileURL: nil, calendar: calendar)
+        revision.setDailyPages(4)
+        for page in 10...15 {
+            revision.record(page: page, ayahs: [], stumbles: [page], source: .app, memorization: memorization, now: day(-1))
+        }
+        revision.refreshPlan(memorizedPages: Array(1...20), now: day(0))
+        #expect(revision.plan?.items.map(\.kind) == [.followUp, .followUp, .rotation, .rotation])
+        #expect(revision.plan?.items.map(\.page) == [10, 11, 1, 2])
+        #expect(revision.cycleDays(memorizedPages: 20, now: day(0)) == 10)
+    }
+
     // MARK: - The same schedule on both platforms
 
     /// shared/fixtures/schedule-parity.json, read by this test and by the Android app's ScheduleParityTest.
@@ -218,7 +260,8 @@ struct JourneyTests {
         revision.apply(fixture.revision)
         let plan = PlanStore(fileURL: nil, calendar: zoned)
         plan.apply(fixture.plan)
-        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization), now: fixture.now)
+        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization),
+                             nearPages: revision.nearLanePages(in: store, memorization: memorization, now: fixture.now), now: fixture.now)
         var portion: [Int] = []
         if case .due(let ayahs) = plan.today(memorization: memorization, store: store, now: fixture.now) { portion = ayahs }
         let outcome = ParityFixture.Outcome(

@@ -55,9 +55,9 @@ class ScheduleParityTest {
         revision.apply(fixture.revision)
         val plan = PlanStore(file = null, zone = zone)
         plan.apply(fixture.plan)
-        revision.refreshPlan(RevisionStore.memorizedPages(store, memorization), fixture.now)
+        revision.refreshPlan(RevisionStore.memorizedPages(store, memorization), fixture.now, revision.nearLanePages(store, memorization, fixture.now))
         val portion = (plan.today(memorization, store, fixture.now) as? TodayPortion.Due)?.ayahs.orEmpty()
-        val kinds = mapOf(PlanItem.Kind.FOLLOW_UP to "followUp", PlanItem.Kind.ROTATION to "rotation")
+        val kinds = mapOf(PlanItem.Kind.FOLLOW_UP to "followUp", PlanItem.Kind.NEAR to "near", PlanItem.Kind.ROTATION to "rotation")
         val outcome = Outcome(
             plan = revision.plan?.items?.map { "${it.page}:${kinds[it.kind]}" }.orEmpty(),
             strengths = fixture.strengthAyahs.associate { it.toString() to (memorization.strength(it, fixture.now) ?: -1.0) },

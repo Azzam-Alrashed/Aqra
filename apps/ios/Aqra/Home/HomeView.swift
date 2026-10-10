@@ -98,7 +98,8 @@ struct AppTabView: View {
     }
 
     private func refreshPlan() {
-        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization))
+        revision.refreshPlan(memorizedPages: RevisionStore.memorizedPages(in: store, memorization: memorization),
+                             nearPages: revision.nearLanePages(in: store, memorization: memorization))
     }
 
     private func dayChanged() {
@@ -483,7 +484,8 @@ struct HomeView: View {
     }
 
     private var cycleLine: Text {
-        Text("A full revision every \(DailyAmountView.cycleDays(memorizedPages: memorizedPageCount, amount: dailyPages)) days")
+        // The rotation's own cycle: what's memorized outside the near lane, at the rotation pages of today's plan.
+        Text("A full revision every \(revision.cycleDays(memorizedPages: memorizedPageCount, nearPages: revision.plan?.items.filter { $0.kind == .near }.count ?? 0)) days")
     }
 
     /// ١ Revise: today's wird, started or carried on; a tick once it's done.
