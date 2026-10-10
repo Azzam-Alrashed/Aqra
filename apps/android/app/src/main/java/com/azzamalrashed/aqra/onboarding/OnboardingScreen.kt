@@ -509,8 +509,10 @@ private fun ManzilCard(progress: Float) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
                 IconTile("🪜", Palette.lavender)
                 Column(verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                    Text("المنزلة ١٢", style = aqraStyle(16f, Weight.heavy, Palette.ink))
-                    Text("٣٤ آية إلى التالية", style = aqraStyle(11f, Weight.semibold, Palette.inkSoft))
+                    // A stage of the ten, as تقدّمي shows it: the منازل are the stairs, not a numbered rank. Like the
+                    // page's other cards, an illustration in Arabic.
+                    Text("المرحلة ٤ من ١٠", style = aqraStyle(16f, Weight.heavy, Palette.ink))
+                    Text("الأجزاء ١٠–١٢", style = aqraStyle(11f, Weight.semibold, Palette.inkSoft))
                 }
             }
             Box(Modifier.width(132.dp).height(7.dp).background(Palette.lavender, CircleShape)) {
@@ -597,7 +599,7 @@ private fun StartPage(active: Boolean, onBegin: () -> Unit) {
     }) { scale ->
         OnboardingHeadline(
             stringResource(R.string.everything_is_ready), stringResource(R.string.begin_your_journey),
-            stringResource(R.string.your_progress_is_saved_on_your_device_and_you_can), scale, copyIn,
+            stringResource(R.string.your_progress_is_kept_on_your_device_and_backed_up), scale, copyIn,
         )
     }
 }

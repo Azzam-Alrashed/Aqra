@@ -202,10 +202,12 @@ private struct ManzilCard: View {
                 HStack(spacing: 10) {
                     IconTile(icon: "🪜", tint: Palette.lavender)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(verbatim: "المنزلة ١٢")
+                        // A stage of the ten, as تقدّمي shows it: the منازل are the stairs, not a numbered rank. Like
+                        // the page's other cards, an illustration in Arabic.
+                        Text(verbatim: "المرحلة ٤ من ١٠")
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(Palette.ink)
-                        Text(verbatim: "٣٤ آية إلى التالية")
+                        Text(verbatim: "الأجزاء ١٠–١٢")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Palette.inkSoft)
                     }

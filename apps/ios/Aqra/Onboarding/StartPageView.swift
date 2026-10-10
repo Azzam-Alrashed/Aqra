@@ -43,7 +43,7 @@ struct StartPageView: View {
                 OnboardingHeadline(
                     first: "Everything is ready,",
                     second: "begin your journey.",
-                    detail: "Your progress is saved on your device, and you can link it to your account anytime.",
+                    detail: "Your progress is kept on your device and backed up; link it to your account anytime.",
                     scale: scale, visible: copyIn
                 )
             },

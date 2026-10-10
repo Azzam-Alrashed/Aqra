@@ -1426,10 +1426,10 @@
     <string name="your_plan_stages_and_rewards_are_in_progress">Your plan, stages and rewards are in Progress</string>
     <!-- Your progress -->
     <string name="your_progress">Your progress</string>
-    <!-- Your progress is only on this device until you sign in. -->
-    <string name="your_progress_is_only_on_this_device_until_you_sign">Your progress is only on this device until you sign in.</string>
-    <!-- Your progress is saved on your device, and you can link it to your account anytime. -->
-    <string name="your_progress_is_saved_on_your_device_and_you_can">Your progress is saved on your device, and you can link it to your account anytime.</string>
+    <!-- Your progress is backed up to a temporary account. Sign in to keep it on all your devices. -->
+    <string name="your_progress_is_backed_up_to_a_temporary_account_sign">Your progress is backed up to a temporary account. Sign in to keep it on all your devices.</string>
+    <!-- Your progress is kept on your device and backed up; link it to your account anytime. -->
+    <string name="your_progress_is_kept_on_your_device_and_backed_up">Your progress is kept on your device and backed up; link it to your account anytime.</string>
     <!-- Your progress stays in your account, and this device starts afresh. Sign in again to bring it back. -->
     <string name="your_progress_stays_in_your_account_and_this_device_starts">Your progress stays in your account, and this device starts afresh. Sign in again to bring it back.</string>
     <!-- Your revision today -->
