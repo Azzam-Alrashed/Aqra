@@ -191,7 +191,7 @@ struct StageDetailView: View {
         .scrollIndicators(.hidden)
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .toolbar {
             ToolbarItem(placement: .cancellationAction) {
                 Button("Close") { dismiss() }
@@ -348,7 +348,7 @@ struct StageTestView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .sensoryFeedback(trigger: chosen) { _, chosen in
             guard let chosen, questions.indices.contains(index) else { return nil }
             return chosen == questions[index].answer ? .success : .error

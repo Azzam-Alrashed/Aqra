@@ -53,7 +53,7 @@ struct MyProgressView: View {
         .background(Palette.surface.ignoresSafeArea())
         .fadesUnderStatusBar()
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .sheet(isPresented: $editingPlan) { PlanEditorView(store: store) { _ in } }
         .sheet(isPresented: $editingMemorization) {
             MemorizationSetupView(store: store, isSheet: true) { _ in editingMemorization = false }

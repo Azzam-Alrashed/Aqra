@@ -123,13 +123,19 @@ struct FriendCode: Identifiable {
 struct FriendsView: View {
     @Environment(SocialStore.self) private var social
     @Environment(AccountStore.self) private var account
+    @Environment(SafetyStore.self) private var safety
     @Environment(\.dismiss) private var dismiss
     @State private var invite: FriendInvite?
     @State private var making = false
     @State private var code = ""
     @State private var accepting: FriendCode?
     @State private var removing: (uid: String, name: String)?
+    @State private var reporting: PersonRef?
+    @State private var blocking: PersonRef?
     @State private var problem: AccountStore.Problem?
+
+    /// The friends, but any this student blocked.
+    private var friends: [(uid: String, name: String)] { social.friends.filter { !safety.isBlocked($0.uid) } }
 
     var body: some View {
         ScrollView {
@@ -211,24 +217,25 @@ struct FriendsView: View {
                     }
                 }
 
-                if !social.friends.isEmpty {
+                if !friends.isEmpty {
                     AqraSectionTitle(title: "Your friends").padding(.top, 6)
                     AqraCard(padding: 0, radius: 24) {
                         VStack(spacing: 0) {
-                            ForEach(Array(social.friends.enumerated()), id: \.element.uid) { index, friend in
+                            ForEach(Array(friends.enumerated()), id: \.element.uid) { index, friend in
                                 if index > 0 { AqraRowDivider() }
                                 AqraRow(icon: "🙂", tint: Palette.sky, title: Text(verbatim: friend.name.isEmpty ? "—" : friend.name)) {
-                                    Button {
-                                        removing = friend
+                                    Menu {
+                                        Button {
+                                            removing = friend
+                                        } label: {
+                                            Label("Remove friend", systemImage: "person.fill.xmark")
+                                        }
+                                        PersonActions(person: PersonRef(uid: friend.uid, name: friend.name, context: .friend),
+                                                      reporting: $reporting, blocking: $blocking)
                                     } label: {
-                                        Image(systemName: "person.fill.xmark")
-                                            .font(.system(size: 13, weight: .bold))
-                                            .foregroundStyle(Palette.inkSoft)
-                                            .frame(width: 30, height: 30)
-                                            .background(Palette.lavender, in: Circle())
+                                        PersonMenuLabel()
                                     }
-                                    .buttonStyle(.plain)
-                                    .accessibilityLabel(Text("Remove"))
+                                    .keepsDrawnSize(CGSize(width: 30, height: 30))
                                 }
                             }
                         }
@@ -244,9 +251,11 @@ struct FriendsView: View {
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDragIndicator(.visible)
         .sheet(item: $accepting) { code in AcceptFriendView(code: code.id) }
+        // A friend blocked stops being a friend.
+        .reportsAndBlocks($reporting, $blocking) { person in social.remove(friendUid: person.uid) }
         .alert("Remove this friend?", isPresented: Binding(get: { removing != nil }, set: { if !$0 { removing = nil } })) {
             Button("Remove", role: .destructive) {
                 if let removing { social.remove(friendUid: removing.uid) }
@@ -322,7 +331,7 @@ struct AcceptFriendView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDetents([.medium])
         .sensoryFeedback(.success, trigger: done) { _, done in done }
         .task {
@@ -376,10 +385,13 @@ struct CompetitionView: View {
 
     @Environment(SocialStore.self) private var social
     @Environment(AccountStore.self) private var account
+    @Environment(SafetyStore.self) private var safety
     @Environment(\.dismiss) private var dismiss
     @State private var members: [CompetitionMember] = []
     @State private var parts: [KhatmahPart] = []
     @State private var confirmingLeave = false
+    @State private var reporting: PersonRef?
+    @State private var blocking: PersonRef?
 
     private var live: Competition { social.competitions.first { $0.id == competition.id } ?? competition }
     private var uid: String? { account.profile?.uid }
@@ -437,7 +449,7 @@ struct CompetitionView: View {
         .scrollIndicators(.hidden)
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDragIndicator(.visible)
         .task {
             if competition.kind == .khatmah {
@@ -446,6 +458,7 @@ struct CompetitionView: View {
                 for await members in social.members(of: competition) { self.members = members }
             }
         }
+        .reportsAndBlocks($reporting, $blocking)
         .alert("Leave this competition?", isPresented: $confirmingLeave) {
             Button("Leave", role: .destructive) {
                 social.leave(live)
@@ -472,9 +485,16 @@ struct CompetitionView: View {
                         Text(verbatim: entry.rank <= 3 ? ["🥇", "🥈", "🥉"][entry.rank - 1] : entry.rank.formatted())
                             .aqraFont(size: entry.rank <= 3 ? 22 : 16, weight: .heavy)
                             .frame(width: 38)
-                        Text(verbatim: entry.member.name.isEmpty ? "—" : entry.member.name)
-                            .font(.system(size: 16, weight: entry.member.id == uid ? .heavy : .semibold))
-                            .foregroundStyle(entry.member.id == uid ? Palette.brand : Palette.ink)
+                        // Someone blocked keeps their place, without their name.
+                        Group {
+                            if safety.isBlocked(entry.member.id) {
+                                Text("Blocked person").foregroundStyle(Palette.inkSoft)
+                            } else {
+                                Text(verbatim: entry.member.name.isEmpty ? "—" : entry.member.name)
+                                    .foregroundStyle(entry.member.id == uid ? Palette.brand : Palette.ink)
+                            }
+                        }
+                        .font(.system(size: 16, weight: entry.member.id == uid ? .heavy : .semibold))
                         Spacer()
                         Text(verbatim: entry.member.score.formatted())
                             .aqraFont(size: 17, weight: .heavy, monospacedDigit: true)
@@ -482,6 +502,14 @@ struct CompetitionView: View {
                     }
                     .padding(14)
                     .background(entry.member.id == uid ? Palette.lavender.opacity(0.5) : .clear)
+                    .contentShape(Rectangle())
+                    .contextMenu {
+                        if entry.member.id != uid {
+                            PersonActions(person: PersonRef(uid: entry.member.id, name: entry.member.name, context: .competition,
+                                                            contextId: live.id),
+                                          reporting: $reporting, blocking: $blocking)
+                        }
+                    }
                 }
             }
         }
@@ -524,7 +552,7 @@ struct CompetitionView: View {
                 Text(verbatim: part.id.formatted())
                     .font(.system(size: 17, weight: .heavy))
                     .foregroundStyle(Palette.ink)
-                Text(verbatim: part.done ? "✓" : String(part.claimedName.prefix(6)))
+                Text(verbatim: part.done ? "✓" : part.claimedBy.map(safety.isBlocked) == true ? "—" : String(part.claimedName.prefix(6)))
                     .font(.system(size: 10, weight: .bold))
                     .foregroundStyle(mine ? Palette.brand : Palette.inkSoft)
                     .lineLimit(1)
@@ -539,6 +567,10 @@ struct CompetitionView: View {
         .contextMenu {
             if mine && !part.done {
                 Button("Give it back") { social.release(part, in: live) }
+            }
+            if let other = part.claimedBy, other != uid {
+                PersonActions(person: PersonRef(uid: other, name: part.claimedName, context: .competition, contextId: live.id),
+                              reporting: $reporting, blocking: $blocking)
             }
         }
         .accessibilityLabel(Text("Juz' \(part.id)"))
@@ -669,7 +701,7 @@ struct NewCompetitionView: View {
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDragIndicator(.visible)
         .onAppear { kind = kinds.first ?? .friends }
         .animation(.snappy, value: kind)

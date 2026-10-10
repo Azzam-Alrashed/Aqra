@@ -55,6 +55,11 @@ class Preferences(context: Context) {
         get() = prefs.getString("reminders.sessions", null)
         set(value) = prefs.edit { if (value == null) remove("reminders.sessions") else putString("reminders.sessions", value) }
 
+    /** The people blocked on this device, as JSON (see SafetyStore). */
+    var blocked: String?
+        get() = prefs.getString("safety.blocked", null)
+        set(value) = prefs.edit { if (value == null) remove("safety.blocked") else putString("safety.blocked", value) }
+
     /** The tasmee' records already applied on this install, so none is applied twice while its mark is on its way. */
     var appliedTasmee: List<String>
         get() = prefs.getString("tasmee.applied", null)?.split('\n')?.filter { it.isNotEmpty() }.orEmpty()

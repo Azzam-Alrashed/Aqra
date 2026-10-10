@@ -62,7 +62,7 @@ struct WalletView: View {
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDragIndicator(.visible)
         .task { await wallet.loadProducts() }
     }
@@ -303,7 +303,7 @@ struct BidSheet: View {
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDragIndicator(.visible)
         .animation(.snappy, value: amount)
         .animation(.snappy, value: myBid)
@@ -424,7 +424,7 @@ struct EarningsView: View {
         .scrollIndicators(.hidden)
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDragIndicator(.visible)
     }
 

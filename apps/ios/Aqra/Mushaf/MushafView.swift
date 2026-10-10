@@ -390,7 +390,9 @@ struct MushafView: View {
                             .foregroundStyle(MushafStyle.barAccent)
                             .frame(width: 32, height: 32)
                             .background(MushafStyle.barAccentFill, in: Circle())
+                            .tapTarget(drawn: CGSize(width: 32, height: 32))
                     }
+                    .keepsDrawnSize(CGSize(width: 32, height: 32))
                     .accessibilityLabel(Text("Close"))
                 }
                 .environment(\.layoutDirection, layoutDirection)
@@ -621,6 +623,7 @@ struct MushafRootView: View {
         .environment(account.social)
         .environment(account.wallet)
         .environment(account.inbox)
+        .environment(account.safety)
         .environment(router)
         // After signing out, setup starts from «ماذا تحفظ؟» again.
         .onChange(of: hasDeclared) {
@@ -704,7 +707,7 @@ struct MushafRootView: View {
         case .success(let store):
             AppTabView(store: store, startsMarking: startsMarking)
         case .failure(let error):
-            ContentUnavailableView("The Mushaf couldn't be loaded", systemImage: "book.closed", description: Text(verbatim: "\(error)"))
+            ContentUnavailableView("The Mushaf couldn't be loaded", systemImage: "book.closed", description: Text(verbatim: error.localizedDescription))
         case nil:
             // Only after onboarding: the Mushaf is still loading, for a moment, before the setup.
             OnboardingPalette.surface.ignoresSafeArea()

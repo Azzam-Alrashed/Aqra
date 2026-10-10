@@ -58,6 +58,11 @@ targets:
       path: Aqra/Aqra.entitlements
       properties:
         com.apple.developer.applesignin: [Default]
+    preBuildScripts:
+      # A Release build fails without the Firebase config or the 604 page fonts, instead of shipping without them.
+      - name: Check Release inputs
+        path: scripts/check-release-inputs.sh
+        basedOnDependencyAnalysis: false
     settings:
       base:
         PRODUCT_BUNDLE_IDENTIFIER: com.azzamalrashed.aqra
@@ -90,6 +95,17 @@ targets:
     settings:
       base:
         GENERATE_INFOPLIST_FILE: YES
+  # Drives the installed app against the Firebase emulators and runs Xcode's accessibility audit on its screens.
+  # Its own scheme, so `xcodebuild test -scheme Aqra` stays the unit tests alone.
+  AqraUITests:
+    type: bundle.ui-testing
+    platform: iOS
+    sources: [AqraUITests]
+    dependencies:
+      - target: Aqra
+    settings:
+      base:
+        GENERATE_INFOPLIST_FILE: YES
 schemes:
   Aqra:
     build:
@@ -104,3 +120,10 @@ schemes:
       storeKitConfiguration: Credits.storekit
     test:
       targets: [AqraTests]
+  AqraUITests:
+    build:
+      targets:
+        Aqra: all
+        AqraUITests: [test]
+    test:
+      targets: [AqraUITests]

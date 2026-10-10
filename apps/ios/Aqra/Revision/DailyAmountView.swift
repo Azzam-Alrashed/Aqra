@@ -62,7 +62,7 @@ struct DailyAmountView: View {
         }
         .fontDesign(.rounded)
         .background(Palette.surface.ignoresSafeArea())
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .sensoryFeedback(.selection, trigger: amount)
     }
 

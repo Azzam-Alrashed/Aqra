@@ -145,6 +145,25 @@ service cloud.firestore {
     }
 
     // The server's policy (config/policy): everyone signed in reads it; administrators change it.
+    // A report of someone's name, words or conduct (App Review guideline 1.2), by anyone signed in: written once,
+    // dated by the server, and read only by the team, through `npm run admin -- reports` or the console.
+    match /reports/{id} {
+      allow create: if signedIn()
+        && hasKeys(['reporter', 'subject', 'context', 'reason', 'createdAt'], ['subjectName', 'contextId', 'note'])
+        && request.resource.data.reporter == request.auth.uid
+        && request.resource.data.subject is string
+        && request.resource.data.subject.size() > 0 && request.resource.data.subject.size() <= 128
+        && request.resource.data.subject != request.auth.uid
+        && request.resource.data.context in ['teacher', 'student', 'call', 'friend', 'competition']
+        && request.resource.data.reason in ['inappropriate', 'abuse', 'spam', 'other']
+        && request.resource.data.createdAt == request.time
+        && request.resource.data.get('subjectName', '') is string && request.resource.data.get('subjectName', '').size() <= 100
+        && request.resource.data.get('contextId', '') is string && request.resource.data.get('contextId', '').size() <= 128
+        && request.resource.data.get('note', '') is string && request.resource.data.get('note', '').size() <= 1000;
+      allow read: if isAdmin();
+      allow update, delete: if false;
+    }
+
     match /config/{document} {
       allow read: if signedIn();
       allow write: if isAdmin();

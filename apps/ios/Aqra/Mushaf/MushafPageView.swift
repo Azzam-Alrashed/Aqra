@@ -237,19 +237,23 @@ extension EnvironmentValues {
 }
 
 extension View {
-    /// Keeps the system's light or dark mode in reach of the screens below, whatever they set for themselves.
+    /// Keeps the system's light or dark mode in reach of the screens below, whatever they prefer for themselves.
+    /// It's read from the window scene, which the screens' own `preferredColorScheme` never changes.
     func readsSystemColorScheme() -> some View { modifier(SystemColorSchemeReader()) }
 
     /// The Mushaf follows the system's light or dark mode, while the app's own screens around it stay light
-    /// (docs/SRS.md A-23): they set a light color scheme that the Mushaf, opened from them, would otherwise inherit.
+    /// (docs/SRS.md A-23). Those screens prefer a light scheme for their whole presentation, so the Mushaf, opened
+    /// over them, states its own preference: the system's.
     func followsSystemColorScheme() -> some View { modifier(SystemColorScheme()) }
 }
 
 private struct SystemColorSchemeReader: ViewModifier {
-    @Environment(\.colorScheme) private var scheme
+    @State private var scheme: ColorScheme = .light
 
     func body(content: Content) -> some View {
-        content.environment(\.systemColorScheme, scheme)
+        content
+            .environment(\.systemColorScheme, scheme)
+            .background { SystemAppearanceObserver(scheme: $scheme).frame(width: 0, height: 0).accessibilityHidden(true) }
     }
 }
 
@@ -257,7 +261,47 @@ private struct SystemColorScheme: ViewModifier {
     @Environment(\.systemColorScheme) private var scheme
 
     func body(content: Content) -> some View {
-        content.environment(\.colorScheme, scheme)
+        content.preferredColorScheme(scheme)
+    }
+}
+
+/// Watches the window scene's light or dark mode: the system's setting, untouched by any screen's own preference.
+private struct SystemAppearanceObserver: UIViewRepresentable {
+    @Binding var scheme: ColorScheme
+
+    func makeUIView(context: Context) -> ObserverView {
+        ObserverView { scheme = $0 }
+    }
+
+    func updateUIView(_ view: ObserverView, context: Context) {
+        view.onChange = { scheme = $0 }
+    }
+
+    final class ObserverView: UIView {
+        var onChange: (ColorScheme) -> Void
+        private var registration: (any UITraitChangeRegistration)?
+
+        init(onChange: @escaping (ColorScheme) -> Void) {
+            self.onChange = onChange
+            super.init(frame: .zero)
+            isUserInteractionEnabled = false
+        }
+
+        @available(*, unavailable)
+        required init?(coder: NSCoder) { nil }
+
+        override func didMoveToWindow() {
+            super.didMoveToWindow()
+            guard let scene = window?.windowScene else { return }
+            report(scene.traitCollection)
+            registration = scene.registerForTraitChanges([UITraitUserInterfaceStyle.self]) { [weak self] (scene: UIWindowScene, _) in
+                self?.report(scene.traitCollection)
+            }
+        }
+
+        private func report(_ traits: UITraitCollection) {
+            onChange(traits.userInterfaceStyle == .dark ? .dark : .light)
+        }
     }
 }
 

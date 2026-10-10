@@ -96,7 +96,7 @@ struct PeerRequestView: View {
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .animation(.spring(response: 0.45, dampingFraction: 0.8), value: received)
         .sensoryFeedback(.success, trigger: received != nil) { _, arrived in arrived }
         // The code is left to expire rather than deleted on closing: a friend may still be marking.
@@ -244,7 +244,7 @@ struct HearFriendView: View {
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .overlay { if checking { ProgressView().tint(Palette.brand) } }
         .sheet(isPresented: $scanning) {
             QRScanner { text in

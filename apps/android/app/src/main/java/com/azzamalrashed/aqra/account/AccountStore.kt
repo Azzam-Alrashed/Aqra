@@ -60,6 +60,8 @@ class AccountStore(
     val wallet = WalletStore()
     /** Messages from the server and the team. */
     val inbox = InboxStore()
+    /** Reporting someone to the team, and the people blocked on this device. */
+    val safety = SafetyStore({ prefs.blocked }, { prefs.blocked = it })
 
     enum class Provider(val id: String) { APPLE("apple.com"), GOOGLE("google.com") }
 

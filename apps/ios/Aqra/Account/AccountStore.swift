@@ -49,9 +49,13 @@ final class AccountStore {
     @ObservationIgnored let wallet = WalletStore()
     /// Messages from the server and the team.
     @ObservationIgnored let inbox = InboxStore()
+    /// Reporting someone to the team, and the people blocked on this device.
+    @ObservationIgnored let safety = SafetyStore()
     @ObservationIgnored private let apple = AppleSignIn()
     @ObservationIgnored private var listener: AuthStateDidChangeListenerHandle?
     @ObservationIgnored private var userListener: (any ListenerRegistration)?
+    @ObservationIgnored private var anonymousSignIn: Task<Void, Never>?
+    @ObservationIgnored private var foregroundObserver: (any NSObjectProtocol)?
 
     init(sync: CloudSync, tasmee: TasmeeStore, social: SocialStore) {
         self.sync = sync
@@ -76,6 +80,21 @@ final class AccountStore {
         false
         #endif
     }
+
+    #if DEBUG
+    /// UI tests start from a fresh install, against the emulators only (AqraUITests): with `-ResetForUITest`, no
+    /// settings, no progress and no account are left from an earlier run. Before any store reads its file.
+    static func resetForUITests() {
+        guard usesEmulator, ProcessInfo.processInfo.arguments.contains("-ResetForUITest") else { return }
+        if let domain = Bundle.main.bundleIdentifier { UserDefaults.standard.removePersistentDomain(forName: domain) }
+        if let folder = FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first {
+            for name in ["memorization.json", "revision.json", "plan.json", "rewards.json", "assessments.json", "reading.json"] {
+                try? FileManager.default.removeItem(at: folder.appendingPathComponent(name))
+            }
+        }
+        try? Auth.auth().signOut()
+    }
+    #endif
 
     /// Configures Firebase from `Firebase/GoogleService-Info.plist` in the bundle, unless it's missing or this is
     /// a unit-test run (tests never touch the network).
@@ -128,7 +147,35 @@ final class AccountStore {
                         self.social.attach(uid: user.uid)
                     }
                 } else {
-                    Auth.auth().signInAnonymously { _, _ in }
+                    self.signInAnonymously()
+                }
+            }
+        }
+    }
+
+    /// Signs in anonymously, and keeps trying when it fails: a first launch with no connection would otherwise leave
+    /// the install with no account, and so no backup, until it's reinstalled. The tries are spaced out, and one more
+    /// is made whenever the app comes back to the foreground.
+    private func signInAnonymously() {
+        anonymousSignIn?.cancel()
+        anonymousSignIn = Task {
+            var attempt = 0
+            while !Task.isCancelled, Auth.auth().currentUser == nil {
+                do {
+                    _ = try await Auth.auth().signInAnonymously()
+                    return
+                } catch {
+                    // Nothing is shown: the student asked for nothing, and the next try is on its way.
+                    attempt += 1
+                    try? await Task.sleep(for: AnonymousSignInRetry.delay(afterAttempt: attempt))
+                }
+            }
+        }
+        if foregroundObserver == nil {
+            foregroundObserver = NotificationCenter.default.addObserver(forName: UIApplication.didBecomeActiveNotification, object: nil, queue: .main) { [weak self] _ in
+                MainActor.assumeIsolated {
+                    guard let self, Self.isAvailable, Auth.auth().currentUser == nil else { return }
+                    self.signInAnonymously()
                 }
             }
         }
@@ -432,5 +479,18 @@ extension UIApplication {
         var top = activeWindow?.rootViewController
         while let presented = top?.presentedViewController { top = presented }
         return top
+    }
+}
+
+/// How the anonymous sign-in is retried after a failure: soon at first, then further apart, never more than a
+/// minute, so a phone that was offline at its first launch gets its account within a minute of coming online.
+enum AnonymousSignInRetry {
+    static let first: Duration = .seconds(5)
+    static let longest: Duration = .seconds(60)
+
+    /// The wait before the next try, after `attempt` failed tries: 5 s, 10 s, 20 s, 40 s, then a minute each.
+    static func delay(afterAttempt attempt: Int) -> Duration {
+        let doublings = max(0, min(attempt - 1, 10))
+        return min(first * (1 << doublings), longest)
     }
 }

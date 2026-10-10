@@ -9,6 +9,7 @@ struct TasmeeView: View {
     @Environment(AccountStore.self) private var account
     @Environment(WalletStore.self) private var wallet
     @Environment(AppRouter.self) private var router
+    @Environment(SafetyStore.self) private var safety
     @State private var creatingSession = false
     @State private var editingProfile = false
     @State private var cancelling: Booking?
@@ -72,7 +73,7 @@ struct TasmeeView: View {
         }
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .task { await tasmee.loadTeachers() }
         .sheet(isPresented: $creatingSession) { SessionEditor(session: nil) }
         .sheet(isPresented: $editingProfile) { TeacherProfileEditor() }
@@ -238,14 +239,20 @@ struct TasmeeView: View {
     }
 
     private func bookingButton(_ booking: Booking, cancelled: Bool) -> some View {
-        Button(cancelled ? "Remove" : "Cancel booking") { cancelling = booking }
-            .aqraFont(size: 13, weight: .bold)
-            .foregroundStyle(Palette.brand)
-            .padding(.horizontal, 10)
-            .padding(.vertical, 3)
-            .frame(minHeight: 28)
-            .background(Palette.lavender, in: Capsule())
-            .buttonStyle(.plain)
+        Button {
+            cancelling = booking
+        } label: {
+            Text(cancelled ? "Remove" : "Cancel booking")
+                .aqraFont(size: 13, weight: .bold)
+                .foregroundStyle(Palette.brand)
+                .padding(.horizontal, 10)
+                .padding(.vertical, 3)
+                .frame(minHeight: 28)
+                .background(Palette.lavender, in: Capsule())
+                .tapTarget(drawn: CGSize(width: TapTarget.minimum, height: 28))
+        }
+        .buttonStyle(.plain)
+        .keepsDrawnSize(CGSize(width: TapTarget.minimum, height: 28))
     }
 
     private func bookingCard(_ booking: Booking) -> some View {
@@ -308,9 +315,12 @@ struct TasmeeView: View {
 
     // MARK: - Teachers
 
+    /// The teachers to book with, but those this student blocked.
+    private var teachers: [Teacher] { tasmee.teachers.filter { !safety.isBlocked($0.id) } }
+
     private var teachersCard: some View {
         Group {
-            if tasmee.teachers.isEmpty {
+            if teachers.isEmpty {
                 AqraCard(padding: 14, radius: 24) {
                     HStack(spacing: 12) {
                         if tasmee.isLoadingTeachers || (!tasmee.teachersLoaded && tasmee.problem == nil) {
@@ -320,6 +330,9 @@ struct TasmeeView: View {
                             // Not «no teachers»: the list couldn't be had (offline, or the account not ready yet).
                             IconTile(icon: "📡", tint: Palette.sky, size: 40)
                             Text("Teachers can't be loaded right now. Check your connection.")
+                        } else if !tasmee.teachers.isEmpty {
+                            IconTile(icon: "✋", tint: Palette.rose, size: 40)
+                            Text("The teachers you blocked are hidden.")
                         } else {
                             IconTile(icon: "🕌", tint: Palette.lavender, size: 40)
                             Text("No teachers have joined yet.")
@@ -332,7 +345,7 @@ struct TasmeeView: View {
             } else {
                 AqraCard(padding: 0, radius: 24) {
                     VStack(spacing: 0) {
-                        ForEach(Array(tasmee.teachers.enumerated()), id: \.element.id) { index, teacher in
+                        ForEach(Array(teachers.enumerated()), id: \.element.id) { index, teacher in
                             if index > 0 { AqraRowDivider() }
                             NavigationLink(value: teacher) {
                                 AqraRow(icon: "🎓", tint: Palette.mint, title: Text(verbatim: teacher.name),

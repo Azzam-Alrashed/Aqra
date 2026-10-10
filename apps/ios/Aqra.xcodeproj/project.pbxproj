@@ -50,12 +50,17 @@
 		6FFE2E633793A9CA2FEB2E0E /* TasmeeTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 03ED14CD4BB8B9B8644FD2B0 /* TasmeeTests.swift */; };
 		713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */; };
 		75EE792121870EAEABB89FC6 /* TasmeeMarkingView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 414A25F3C7AF647D6428B30A /* TasmeeMarkingView.swift */; };
+		795877A543F68CB3134582FA /* ProofreadingPackTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = E49BF4CC84864C1B42BA2690 /* ProofreadingPackTests.swift */; };
 		79F13CFB3B69CE6A44861EA4 /* RecitationText.swift in Sources */ = {isa = PBXBuildFile; fileRef = FC0F3B401FC9237818D9C98A /* RecitationText.swift */; };
+		7BE942CA114F7FB2EE4755FB /* ReviewReadinessTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4D0D5C4589A41643760DFEAE /* ReviewReadinessTests.swift */; };
 		8076ABAE11B163C198E3B107 /* CloudSync.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3C21E66BA2ADEDC31C27EEEC /* CloudSync.swift */; };
+		87182507F4CAD761C0953B00 /* Diagnostics.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4EAEFDA0E53E32BC77CD2764 /* Diagnostics.swift */; };
+11CD8091172025E80C07E22B /* Safety.swift in Sources */ = {isa = PBXBuildFile; fileRef = 3A8C05F8C356BF43AF90625E /* Safety.swift */; };
 		85D741A46264F87DDAF09E16 /* TasmeeView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4288922B6CCEBBA76B78C434 /* TasmeeView.swift */; };
 		888F6411183E9009D8609F12 /* TasmeeStore.swift in Sources */ = {isa = PBXBuildFile; fileRef = 4588AD4BCB9330A3B5F875AC /* TasmeeStore.swift */; };
 		8CF39089CE8EE76FBDE98BEB /* InboxView.swift in Sources */ = {isa = PBXBuildFile; fileRef = C492CBD47B6B282BB3A31FE6 /* InboxView.swift */; };
 		916DEA5DC95A5438E364AEDB /* MemorizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = EA10A8241619208EBC8A9E56 /* MemorizationTests.swift */; };
+		9369404047D4F5EA33B4608A /* LocalizationTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = AD393E462A27A9A8093818A9 /* LocalizationTests.swift */; };
 		95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */ = {isa = PBXBuildFile; fileRef = 0CB3948E085F254CF36BF182 /* Color+Hex.swift */; };
 		9B6609EC32D686618171D356 /* FeaturesPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = D44E6BE584D0B5057F1DD97B /* FeaturesPageView.swift */; };
 		9D6D88E273E4885187DC9823 /* AqraLogo.swift in Sources */ = {isa = PBXBuildFile; fileRef = 708045EEA73D597E66035897 /* AqraLogo.swift */; };
@@ -74,6 +79,7 @@
 		BEF60535CD6663B1A29EEFBC /* RecitationModel.swift in Sources */ = {isa = PBXBuildFile; fileRef = B3F0B842CFD39549235FADBD /* RecitationModel.swift */; };
 		BF159EA2BDB21AC60E486049 /* CloudSyncTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = DE2931FF3F4AD637603D71BD /* CloudSyncTests.swift */; };
 		C07E4DA1A47CB3F5AD4F1A84 /* Assets.xcassets in Resources */ = {isa = PBXBuildFile; fileRef = 99C540650E9663B5B728582A /* Assets.xcassets */; };
+		C0CFEFDB27119C8A7DE984F5 /* AccessibilityAuditTests.swift in Sources */ = {isa = PBXBuildFile; fileRef = BFC674D8A8013F5AF33B7E9B /* AccessibilityAuditTests.swift */; };
 		C16323C2C97487946E94EDF4 /* ManazilPageView.swift in Sources */ = {isa = PBXBuildFile; fileRef = 269D7A05341BF4E1FF805A3A /* ManazilPageView.swift */; };
 		C367E709A040189141DC730C /* StageViews.swift in Sources */ = {isa = PBXBuildFile; fileRef = A9BFF882A84556422BB47BD5 /* StageViews.swift */; };
 		C663F5D1650842FFBC6DB5A1 /* PrivacyInfo.xcprivacy in Resources */ = {isa = PBXBuildFile; fileRef = 5EF4219FE33D695A359F7938 /* PrivacyInfo.xcprivacy */; };
@@ -104,6 +110,13 @@
 /* End PBXBuildFile section */
 
 /* Begin PBXContainerItemProxy section */
+		8F2B01DF84B7BFC754821AAD /* PBXContainerItemProxy */ = {
+			isa = PBXContainerItemProxy;
+			containerPortal = BC83DFA1FB5EA24449CB035C /* Project object */;
+			proxyType = 1;
+			remoteGlobalIDString = 9A7857D210E571C3443F915D;
+			remoteInfo = Aqra;
+		};
 		BA6CB602024FE9D50AC578CE /* PBXContainerItemProxy */ = {
 			isa = PBXContainerItemProxy;
 			containerPortal = BC83DFA1FB5EA24449CB035C /* Project object */;
@@ -138,6 +151,8 @@
 		3A4939431832F1F695BCB2C7 /* Curriculum.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Curriculum.swift; sourceTree = "<group>"; };
 		3B6432468BBF0A2EFA7D57F0 /* MyProgressView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MyProgressView.swift; sourceTree = "<group>"; };
 		3C21E66BA2ADEDC31C27EEEC /* CloudSync.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSync.swift; sourceTree = "<group>"; };
+		4EAEFDA0E53E32BC77CD2764 /* Diagnostics.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Diagnostics.swift; sourceTree = "<group>"; };
+		3A8C05F8C356BF43AF90625E /* Safety.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = Safety.swift; sourceTree = "<group>"; };
 		3DF83E6EACD34C51D60CD605 /* AqraComponents.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraComponents.swift; sourceTree = "<group>"; };
 		3FE3F2D61EC9BBD984FDA824 /* AccountStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccountStore.swift; sourceTree = "<group>"; };
 		414A25F3C7AF647D6428B30A /* TasmeeMarkingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasmeeMarkingView.swift; sourceTree = "<group>"; };
@@ -146,6 +161,7 @@
 		4588AD4BCB9330A3B5F875AC /* TasmeeStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasmeeStore.swift; sourceTree = "<group>"; };
 		4971E9222377B2D0AE1D25DD /* AqraApp.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AqraApp.swift; sourceTree = "<group>"; };
 		4A47588193D1079299865C4E /* PlanEditorView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanEditorView.swift; sourceTree = "<group>"; };
+		4D0D5C4589A41643760DFEAE /* ReviewReadinessTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ReviewReadinessTests.swift; sourceTree = "<group>"; };
 		4D9E19C71ED5865DBDE8BC22 /* OnboardingView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = OnboardingView.swift; sourceTree = "<group>"; };
 		503C66BC7439A6C4B288563B /* RecitationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecitationTests.swift; sourceTree = "<group>"; };
 		535BA1416084DEBC5F4513BD /* LaunchSplash.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LaunchSplash.swift; sourceTree = "<group>"; };
@@ -175,10 +191,13 @@
 		9FBAA9E53852AC40FE94CFA3 /* PeerViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PeerViews.swift; sourceTree = "<group>"; };
 		A7F5B4789655C1D71286EDA5 /* MushafPageView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = MushafPageView.swift; sourceTree = "<group>"; };
 		A9BFF882A84556422BB47BD5 /* StageViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = StageViews.swift; sourceTree = "<group>"; };
+		AD2A50384316C2F62F29DFB2 /* AqraUITests.xctest */ = {isa = PBXFileReference; includeInIndex = 0; lastKnownFileType = wrapper.cfbundle; path = AqraUITests.xctest; sourceTree = BUILT_PRODUCTS_DIR; };
+		AD393E462A27A9A8093818A9 /* LocalizationTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = LocalizationTests.swift; sourceTree = "<group>"; };
 		B3F0B842CFD39549235FADBD /* RecitationModel.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RecitationModel.swift; sourceTree = "<group>"; };
 		B9A647374FEC5EB2D769276F /* WelcomeSnapshotTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WelcomeSnapshotTests.swift; sourceTree = "<group>"; };
 		BA5A24D8953593FFD67072E8 /* PlanViews.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = PlanViews.swift; sourceTree = "<group>"; };
 		BB8E4CE05AAE7610FFBF0BC9 /* WalletStore.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = WalletStore.swift; sourceTree = "<group>"; };
+		BFC674D8A8013F5AF33B7E9B /* AccessibilityAuditTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AccessibilityAuditTests.swift; sourceTree = "<group>"; };
 		C03FFBBE60EB3AC1DA597F5D /* InfoPlist.xcstrings */ = {isa = PBXFileReference; lastKnownFileType = text.json.xcstrings; path = InfoPlist.xcstrings; sourceTree = "<group>"; };
 		C27910445AF7EA6D08D14CAF /* CloudBackup.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudBackup.swift; sourceTree = "<group>"; };
 		C28A3B81A1BC17ACB9783FBB /* AppIconRenderTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppIconRenderTests.swift; sourceTree = "<group>"; };
@@ -196,6 +215,7 @@
 		DE2931FF3F4AD637603D71BD /* CloudSyncTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = CloudSyncTests.swift; sourceTree = "<group>"; };
 		DEA31034F55834A1B13C900A /* AppRouter.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = AppRouter.swift; sourceTree = "<group>"; };
 		E3B68B0A48A1816211271B2B /* ManazilStairs.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ManazilStairs.swift; sourceTree = "<group>"; };
+		E49BF4CC84864C1B42BA2690 /* ProofreadingPackTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = ProofreadingPackTests.swift; sourceTree = "<group>"; };
 		E65E7F1942F97EBB0B2D6507 /* TeacherApplication.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TeacherApplication.swift; sourceTree = "<group>"; };
 		E7BE8C32420D5CB314CBF888 /* TasmeeHistoryView.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = TasmeeHistoryView.swift; sourceTree = "<group>"; };
 		E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */ = {isa = PBXFileReference; lastKnownFileType = sourcecode.swift; path = RevisionTests.swift; sourceTree = "<group>"; };
@@ -267,6 +287,7 @@
 				AE92FC988321CE55CA9CF8C2 /* Aqra */,
 				28E1913F081F6C788EE5B202 /* Aqra */,
 				BCA97CDCE4BDA45886DF3282 /* AqraTests */,
+				96171A67437D30528DDFF54B /* AqraUITests */,
 				7CB4E00B6ED4E140218F3DEE /* Products */,
 			);
 			sourceTree = "<group>";
@@ -315,6 +336,7 @@
 			children = (
 				197C7240EA806A2E4643B0F4 /* Aqra.app */,
 				C3D8F702F0E08B9E7214A07A /* AqraTests.xctest */,
+				AD2A50384316C2F62F29DFB2 /* AqraUITests.xctest */,
 			);
 			name = Products;
 			sourceTree = "<group>";
@@ -365,6 +387,8 @@
 				6E0CDDC46CD40B3AA873605C /* AccountView.swift */,
 				C27910445AF7EA6D08D14CAF /* CloudBackup.swift */,
 				3C21E66BA2ADEDC31C27EEEC /* CloudSync.swift */,
+				4EAEFDA0E53E32BC77CD2764 /* Diagnostics.swift */,
+				3A8C05F8C356BF43AF90625E /* Safety.swift */,
 				F963062115C6877B1AA1CE65 /* InboxStore.swift */,
 				C492CBD47B6B282BB3A31FE6 /* InboxView.swift */,
 				CB8C65BE3F2EEA4C8597403A /* Journey.swift */,
@@ -379,6 +403,14 @@
 				5D81E6FBDB58FBFAFF3DF0FA /* RewardViews.swift */,
 			);
 			path = Rewards;
+			sourceTree = "<group>";
+		};
+		96171A67437D30528DDFF54B /* AqraUITests */ = {
+			isa = PBXGroup;
+			children = (
+				BFC674D8A8013F5AF33B7E9B /* AccessibilityAuditTests.swift */,
+			);
+			path = AqraUITests;
 			sourceTree = "<group>";
 		};
 		9C8F178663BAA7E3C4CCCF64 /* Resources */ = {
@@ -428,9 +460,12 @@
 				56CD0BB276F5EA7EB97D8B91 /* AqraTests.swift */,
 				DE2931FF3F4AD637603D71BD /* CloudSyncTests.swift */,
 				951585A6E1740996615236BA /* JourneyTests.swift */,
+				AD393E462A27A9A8093818A9 /* LocalizationTests.swift */,
 				EA10A8241619208EBC8A9E56 /* MemorizationTests.swift */,
 				264B91E0A6D7B8CE0289DA26 /* MushafTests.swift */,
+				E49BF4CC84864C1B42BA2690 /* ProofreadingPackTests.swift */,
 				503C66BC7439A6C4B288563B /* RecitationTests.swift */,
+				4D0D5C4589A41643760DFEAE /* ReviewReadinessTests.swift */,
 				E8F25DAAACE4C5CFB707CE78 /* RevisionTests.swift */,
 				5F0FEB648DEA1EB151C40C01 /* SocialTests.swift */,
 				03ED14CD4BB8B9B8644FD2B0 /* TasmeeTests.swift */,
@@ -510,10 +545,29 @@
 /* End PBXGroup section */
 
 /* Begin PBXNativeTarget section */
+		6408D375148818A347F95BDE /* AqraUITests */ = {
+			isa = PBXNativeTarget;
+			buildConfigurationList = 8864719A93D9FE957B335928 /* Build configuration list for PBXNativeTarget "AqraUITests" */;
+			buildPhases = (
+				B0AA3A8EAF8EF7F393AC5E1A /* Sources */,
+			);
+			buildRules = (
+			);
+			dependencies = (
+				08A6A5ED8267C1BF4B85CF27 /* PBXTargetDependency */,
+			);
+			name = AqraUITests;
+			packageProductDependencies = (
+			);
+			productName = AqraUITests;
+			productReference = AD2A50384316C2F62F29DFB2 /* AqraUITests.xctest */;
+			productType = "com.apple.product-type.bundle.ui-testing";
+		};
 		9A7857D210E571C3443F915D /* Aqra */ = {
 			isa = PBXNativeTarget;
 			buildConfigurationList = 0A4BF97CDE395093D734BE92 /* Build configuration list for PBXNativeTarget "Aqra" */;
 			buildPhases = (
+				3C5DAE19B24B2FFF02D57365 /* Check Release inputs */,
 				5BF1156314629D3D56A322D4 /* Sources */,
 				850011ED9220721A2776F2A3 /* Resources */,
 				F42DDBAF0F2F0C54385387A6 /* Frameworks */,
@@ -563,6 +617,9 @@
 				BuildIndependentTargetsInParallel = YES;
 				LastUpgradeCheck = 1430;
 				TargetAttributes = {
+					6408D375148818A347F95BDE = {
+						TestTargetID = 9A7857D210E571C3443F915D;
+					};
 					9A7857D210E571C3443F915D = {
 						DevelopmentTeam = 6QYT6GJB4Z;
 					};
@@ -591,6 +648,7 @@
 			targets = (
 				9A7857D210E571C3443F915D /* Aqra */,
 				FBF6C26A5859078BAA307C00 /* AqraTests */,
+				6408D375148818A347F95BDE /* AqraUITests */,
 			);
 		};
 /* End PBXProject section */
@@ -614,6 +672,28 @@
 		};
 /* End PBXResourcesBuildPhase section */
 
+/* Begin PBXShellScriptBuildPhase section */
+		3C5DAE19B24B2FFF02D57365 /* Check Release inputs */ = {
+			isa = PBXShellScriptBuildPhase;
+			alwaysOutOfDate = 1;
+			buildActionMask = 2147483647;
+			files = (
+			);
+			inputFileListPaths = (
+			);
+			inputPaths = (
+			);
+			name = "Check Release inputs";
+			outputFileListPaths = (
+			);
+			outputPaths = (
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+			shellPath = /bin/sh;
+			shellScript = "#!/bin/bash\n# Release builds must carry what isn't in git: the Firebase config and the 604 Mushaf page fonts. Without this\n# check a Release build without them ships silently, with accounts off and a Mushaf that can't load.\n# Debug builds pass, so tests and worktrees without the config keep working. Runs as an Xcode build phase.\nset -u\n[ \"${CONFIGURATION:-}\" = \"Release\" ] || exit 0\n\nstatus=0\nplist=\"$SRCROOT/Firebase/GoogleService-Info.plist\"\nif [ ! -f \"$plist\" ]; then\n  echo \"error: Firebase/GoogleService-Info.plist is missing. A Release build ships with accounts and backup off. Restore it with scripts/fetch-firebase-config.sh.\" >&2\n  status=1\nfi\n\nfonts=\"$SRCROOT/../../shared/quran/qcf4\"\nmanifest=\"$SRCROOT/../../shared/quran/qcf4.sha256\"\ncount=$(find \"$fonts\" -maxdepth 1 -name 'p*.woff2' 2>/dev/null | wc -l | tr -d ' ')\nif [ \"$count\" != \"604\" ]; then\n  echo \"error: shared/quran/qcf4 has $count of the 604 Mushaf page fonts. Restore them with scripts/fetch-mushaf-fonts.sh.\" >&2\n  status=1\nelif ! (cd \"$fonts\" && shasum -a 256 -c --quiet \"$manifest\" >/dev/null 2>&1); then\n  echo \"error: shared/quran/qcf4 doesn't match shared/quran/qcf4.sha256. Restore the fonts with scripts/fetch-mushaf-fonts.sh.\" >&2\n  status=1\nfi\nexit $status\n";
+		};
+/* End PBXShellScriptBuildPhase section */
+
 /* Begin PBXSourcesBuildPhase section */
 		291EC13A1AB13F1D6B68596A /* Sources */ = {
 			isa = PBXSourcesBuildPhase;
@@ -623,9 +703,12 @@
 				713B52865F26FA7537FE23C0 /* AqraTests.swift in Sources */,
 				BF159EA2BDB21AC60E486049 /* CloudSyncTests.swift in Sources */,
 				D1532B8C85C494E67336552E /* JourneyTests.swift in Sources */,
+				9369404047D4F5EA33B4608A /* LocalizationTests.swift in Sources */,
 				916DEA5DC95A5438E364AEDB /* MemorizationTests.swift in Sources */,
 				1C5F4BA3851DEFBE3DEFC906 /* MushafTests.swift in Sources */,
+				795877A543F68CB3134582FA /* ProofreadingPackTests.swift in Sources */,
 				F9ED3406E49A78CB7DCCA5C3 /* RecitationTests.swift in Sources */,
+				7BE942CA114F7FB2EE4755FB /* ReviewReadinessTests.swift in Sources */,
 				E4D2E9755861CE6A0FBE2A8E /* RevisionTests.swift in Sources */,
 				31E52971F91F85D004B6744E /* SocialTests.swift in Sources */,
 				6FFE2E633793A9CA2FEB2E0E /* TasmeeTests.swift in Sources */,
@@ -649,6 +732,8 @@
 				DDA79F6E3E69BAB3DC2025FF /* AyahText.swift in Sources */,
 				1B89FE71BD1F0E2488ABECD1 /* CloudBackup.swift in Sources */,
 				8076ABAE11B163C198E3B107 /* CloudSync.swift in Sources */,
+				87182507F4CAD761C0953B00 /* Diagnostics.swift in Sources */,
+				11CD8091172025E80C07E22B /* Safety.swift in Sources */,
 				95B0B124A68EFA0645040A2F /* Color+Hex.swift in Sources */,
 				EDCA145DBF67E7211CEEDB6A /* CreditsViews.swift in Sources */,
 				5D154F8AE9BF108A657B5C64 /* Curriculum.swift in Sources */,
@@ -707,9 +792,22 @@
 			);
 			runOnlyForDeploymentPostprocessing = 0;
 		};
+		B0AA3A8EAF8EF7F393AC5E1A /* Sources */ = {
+			isa = PBXSourcesBuildPhase;
+			buildActionMask = 2147483647;
+			files = (
+				C0CFEFDB27119C8A7DE984F5 /* AccessibilityAuditTests.swift in Sources */,
+			);
+			runOnlyForDeploymentPostprocessing = 0;
+		};
 /* End PBXSourcesBuildPhase section */
 
 /* Begin PBXTargetDependency section */
+		08A6A5ED8267C1BF4B85CF27 /* PBXTargetDependency */ = {
+			isa = PBXTargetDependency;
+			target = 9A7857D210E571C3443F915D /* Aqra */;
+			targetProxy = 8F2B01DF84B7BFC754821AAD /* PBXContainerItemProxy */;
+		};
 		8386045BE5BBC14C2DAB8DFC /* PBXTargetDependency */ = {
 			isa = PBXTargetDependency;
 			target = 9A7857D210E571C3443F915D /* Aqra */;
@@ -830,6 +928,40 @@
 				TEST_HOST = "$(BUILT_PRODUCTS_DIR)/Aqra.app/Aqra";
 			};
 			name = Debug;
+		};
+		8846CB25128B6BC1EAB3A03B /* Debug */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.AqraUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Aqra;
+			};
+			name = Debug;
+		};
+		93FEF33C02E5B40ACA41136F /* Release */ = {
+			isa = XCBuildConfiguration;
+			buildSettings = {
+				BUNDLE_LOADER = "$(TEST_HOST)";
+				GENERATE_INFOPLIST_FILE = YES;
+				LD_RUNPATH_SEARCH_PATHS = (
+					"$(inherited)",
+					"@executable_path/Frameworks",
+					"@loader_path/Frameworks",
+				);
+				PRODUCT_BUNDLE_IDENTIFIER = com.azzamalrashed.AqraUITests;
+				SDKROOT = iphoneos;
+				TARGETED_DEVICE_FAMILY = "1,2";
+				TEST_TARGET_NAME = Aqra;
+			};
+			name = Release;
 		};
 		CDDE51CB095366C113CF3ABF /* Release */ = {
 			isa = XCBuildConfiguration;
@@ -954,6 +1086,15 @@
 			buildConfigurations = (
 				583796930DBB0988EE3C885A /* Debug */,
 				EFCBD58C1EB85AC1DEB02615 /* Release */,
+			);
+			defaultConfigurationIsVisible = 0;
+			defaultConfigurationName = Debug;
+		};
+		8864719A93D9FE957B335928 /* Build configuration list for PBXNativeTarget "AqraUITests" */ = {
+			isa = XCConfigurationList;
+			buildConfigurations = (
+				8846CB25128B6BC1EAB3A03B /* Debug */,
+				93FEF33C02E5B40ACA41136F /* Release */,
 			);
 			defaultConfigurationIsVisible = 0;
 			defaultConfigurationName = Debug;

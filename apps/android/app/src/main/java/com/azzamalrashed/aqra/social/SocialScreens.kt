@@ -62,7 +62,12 @@ import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.account.AccountStore
 import com.azzamalrashed.aqra.account.AqraTextField
 import com.azzamalrashed.aqra.account.Confirm
+import com.azzamalrashed.aqra.account.BlockConfirm
+import com.azzamalrashed.aqra.account.PersonMenu
+import com.azzamalrashed.aqra.account.PersonRef
+import com.azzamalrashed.aqra.account.PersonReport
 import com.azzamalrashed.aqra.account.Problem
+import com.azzamalrashed.aqra.account.ReportSheet
 import com.azzamalrashed.aqra.account.SignInButtons
 import com.azzamalrashed.aqra.quran.MushafStore
 import com.azzamalrashed.aqra.tasmee.PeerRequest
@@ -233,17 +238,20 @@ private fun FriendsScreen(app: AqraApp) {
             }
         }
 
-        val friends = social.friends
+        // The friends, but any this student blocked.
+        val friends = social.friends.filterNot { account.safety.isBlocked(it.first) }
         if (friends.isNotEmpty()) {
             AqraSectionTitle(stringResource(R.string.your_friends), Modifier.padding(top = 6.dp))
             AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
                 friends.forEachIndexed { index, friend ->
                     if (index > 0) AqraRowDivider()
-                    val label = stringResource(R.string.remove)
                     AqraRow("🙂", Palette.sky, friend.second.ifEmpty { "—" }) {
-                        Box(Modifier.size(30.dp).background(Palette.lavender, CircleShape).pressable { removing = friend }
-                            .semantics { contentDescription = label }, contentAlignment = Alignment.Center) {
-                            Icon(Icons.Rounded.PersonRemove, null, tint = Palette.inkSoft, modifier = Modifier.size(16.dp))
+                        // A friend blocked stops being a friend.
+                        PersonMenu(app, PersonRef(friend.first, friend.second, PersonReport.Context.FRIEND), onBlock = { social.remove(it.uid) }) { close ->
+                            DropdownMenuItem(text = { Text(stringResource(R.string.remove_friend), style = aqraStyle(15f, Weight.semibold)) }, onClick = {
+                                close()
+                                removing = friend
+                            })
                         }
                     }
                 }
@@ -354,7 +362,7 @@ private fun CompetitionScreen(app: AqraApp, competition: Competition, onClose: (
                 Text(stringResource(R.string.scored_from_the_pages_s_hears_clean_in_tasmee, live.ownerName), style = aqraStyle(12f, Weight.medium, Palette.inkSoft))
             }
         }
-        if (live.kind == Competition.Kind.KHATMAH) Khatmah(app, live, parts, uid) else Standings(live, members, uid)
+        if (live.kind == Competition.Kind.KHATMAH) Khatmah(app, live, parts, uid) else Standings(app, live, members, uid)
         Row(Modifier.padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(16.dp)) {
             if (live.ownerUid == uid && live.isRunning()) {
                 Text(stringResource(R.string.end_it_now), style = aqraStyle(14f, Weight.bold, Palette.brand), modifier = Modifier.pressable { social.end(live) }.padding(4.dp))
@@ -374,7 +382,7 @@ private fun CompetitionScreen(app: AqraApp, competition: Competition, onClose: (
 }
 
 @Composable
-private fun Standings(competition: Competition, members: List<CompetitionMember>, uid: String?) {
+private fun Standings(app: AqraApp, competition: Competition, members: List<CompetitionMember>, uid: String?) {
     AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
         val ranked = CompetitionMember.ranked(members.filter { it.id in competition.memberUids })
         if (ranked.isEmpty()) {
@@ -390,9 +398,13 @@ private fun Standings(competition: Competition, members: List<CompetitionMember>
                     Text(if (rank <= 3) listOf("🥇", "🥈", "🥉")[rank - 1] else formatNumber(rank),
                         style = aqraStyle(if (rank <= 3) 22f else 16f, Weight.heavy, Palette.ink))
                 }
-                Text(member.name.ifEmpty { "—" }, style = aqraStyle(16f, if (me) Weight.heavy else Weight.semibold, if (me) Palette.brand else Palette.ink),
+                // Someone blocked keeps their place, without their name.
+                val blocked = app.account.safety.isBlocked(member.id)
+                Text(if (blocked) stringResource(R.string.blocked_person) else member.name.ifEmpty { "—" },
+                    style = aqraStyle(16f, if (me) Weight.heavy else Weight.semibold, if (me) Palette.brand else if (blocked) Palette.inkSoft else Palette.ink),
                     modifier = Modifier.weight(1f))
                 Text(formatNumber(member.score), style = aqraStyle(17f, Weight.heavy, Palette.ink))
+                if (!me) PersonMenu(app, PersonRef(member.id, member.name, PersonReport.Context.COMPETITION, competition.id))
             }
         }
     }
@@ -426,6 +438,10 @@ private fun PartTile(app: AqraApp, competition: Competition, part: KhatmahPart, 
     val (top, _) = StepFaces.forJuz(part.id)
     val shape = RoundedCornerShape(14.dp)
     var menu by remember { mutableStateOf(false) }
+    // Someone else's part: report them, or block them, from a long press.
+    val other = part.claimedBy?.takeIf { it != uid }?.let { PersonRef(it, part.claimedName, PersonReport.Context.COMPETITION, competition.id) }
+    var reporting by remember { mutableStateOf(false) }
+    var blocking by remember { mutableStateOf(false) }
     val interaction = remember { MutableInteractionSource() }
     val label = stringResource(R.string.juz_n, part.id)
     Box(modifier) {
@@ -434,7 +450,7 @@ private fun PartTile(app: AqraApp, competition: Competition, part: KhatmahPart, 
                 .background(if (part.done) top else if (part.claimedBy == null) Color.White else top.copy(alpha = 0.35f))
                 .border(if (mine) 2.dp else 1.dp, if (mine) Palette.brand else Palette.lavender, shape)
                 .combinedClickable(interaction, indication = null,
-                    onLongClick = { if (mine && !part.done) menu = true },
+                    onLongClick = { if ((mine && !part.done) || other != null) menu = true },
                     onClick = {
                         if (uid == null) return@combinedClickable
                         if (part.claimedBy == null) social.claim(part, competition, app.account.publicName.orEmpty())
@@ -444,12 +460,28 @@ private fun PartTile(app: AqraApp, competition: Competition, part: KhatmahPart, 
             horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.Center,
         ) {
             Text(formatNumber(part.id), style = aqraStyle(17f, Weight.heavy, Palette.ink))
-            Text(if (part.done) "✓" else part.claimedName.take(6), style = aqraStyle(10f, Weight.bold, if (mine) Palette.brand else Palette.inkSoft), maxLines = 1)
+            val hidden = part.claimedBy?.let(app.account.safety::isBlocked) == true
+            Text(if (part.done) "✓" else if (hidden) "—" else part.claimedName.take(6), style = aqraStyle(10f, Weight.bold, if (mine) Palette.brand else Palette.inkSoft), maxLines = 1)
         }
         DropdownMenu(menu, onDismissRequest = { menu = false }) {
-            DropdownMenuItem(text = { Text(stringResource(R.string.give_it_back), style = aqraStyle(15f, Weight.semibold)) },
-                onClick = { menu = false; social.release(part, competition) })
+            if (mine && !part.done) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.give_it_back), style = aqraStyle(15f, Weight.semibold)) },
+                    onClick = { menu = false; social.release(part, competition) })
+            }
+            if (other != null) {
+                DropdownMenuItem(text = { Text(stringResource(R.string.report), style = aqraStyle(15f, Weight.semibold)) },
+                    onClick = { menu = false; reporting = true })
+                if (app.account.safety.isBlocked(other.uid)) {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.unblock), style = aqraStyle(15f, Weight.semibold)) },
+                        onClick = { menu = false; app.account.safety.unblock(other.uid) })
+                } else {
+                    DropdownMenuItem(text = { Text(stringResource(R.string.block), style = aqraStyle(15f, Weight.semibold, Palette.danger)) },
+                        onClick = { menu = false; blocking = true })
+                }
+            }
         }
+        if (reporting && other != null) ReportSheet(app, other) { reporting = false }
+        if (blocking && other != null) BlockConfirm(app, other, onDismiss = { blocking = false })
     }
 }
 

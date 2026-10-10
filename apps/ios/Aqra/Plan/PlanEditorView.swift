@@ -56,11 +56,17 @@ struct PlanEditorView: View {
                         .padding(.vertical, 12)
                         .frame(maxWidth: .infinity, alignment: .leading)
                 }
-                Button("Not now") { finish(nil) }
-                    .font(.system(size: 15, weight: .semibold))
-                    .foregroundStyle(Palette.inkSoft)
-                    .padding(.horizontal, 20)
-                    .padding(.vertical, 10)
+                Button {
+                    finish(nil)
+                } label: {
+                    Text("Not now")
+                        .font(.system(size: 15, weight: .semibold))
+                        .foregroundStyle(Palette.inkSoft)
+                        .padding(.horizontal, 20)
+                        .padding(.vertical, 10)
+                        .tapTarget(drawn: CGSize(width: TapTarget.minimum, height: 38))
+                }
+                .keepsDrawnSize(CGSize(width: TapTarget.minimum, height: 38))
             } else {
                 Button { dismiss() } label: {
                     Image(systemName: "xmark")
@@ -69,8 +75,10 @@ struct PlanEditorView: View {
                         .frame(width: 36, height: 36)
                         .background(.white, in: Circle())
                         .shadow(color: Palette.shadow.opacity(0.10), radius: 8, y: 4)
+                        .tapTarget(drawn: CGSize(width: 36, height: 36))
                 }
                 .buttonStyle(AqraPressStyle())
+                .keepsDrawnSize(CGSize(width: 36, height: 36))
                 .accessibilityLabel(Text("Close"))
                 .padding(.horizontal, 18)
                 .padding(.vertical, 12)
@@ -78,7 +86,7 @@ struct PlanEditorView: View {
         }
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .sensoryFeedback(.selection, trigger: draft)
         .onAppear(perform: prepare)
         .alert("Stop your plan?", isPresented: $confirmingStop) {

@@ -62,7 +62,7 @@ struct MushafIndexView: View {
         .fontDesign(.rounded)
         .tint(Palette.brand)
         .environment(\.layoutDirection, .rightToLeft)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDetents([.medium, .large])
     }
 

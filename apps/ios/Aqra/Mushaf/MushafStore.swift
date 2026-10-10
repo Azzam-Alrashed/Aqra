@@ -48,11 +48,12 @@ final class MushafStore: Sendable {
     static let pageCount = 604
     static let ayahCount = 6236
 
-    enum LoadError: Error, CustomStringConvertible {
+    enum LoadError: Error, CustomStringConvertible, LocalizedError {
         case missingResource(String)
         case missingPageFonts(found: Int)
         case database(String)
 
+        /// For the log and the developer: what's missing and how to restore it.
         var description: String {
             switch self {
             case .missingResource(let path): "Missing Quran data file: \(path)"
@@ -61,6 +62,20 @@ final class MushafStore: Sendable {
             case .database(let step): "Couldn't read the Mushaf layout (\(step))."
             }
         }
+
+        /// For the student, in their language: this copy of the app is incomplete, and installing it again mends it.
+        var errorDescription: String? {
+            switch self {
+            case .missingResource(let path):
+                String(localized: "This copy of Aqra is missing a Quran data file (\(path)). Please delete the app and install it again.")
+            case .missingPageFonts(let found):
+                String(localized: "This copy of Aqra has only \(found) of its \(Self.pageCount) Mushaf page fonts. Please delete the app and install it again.")
+            case .database(let step):
+                String(localized: "The Mushaf's page layout couldn't be read (\(step)). Please delete the app and install it again.")
+            }
+        }
+
+        private static var pageCount: Int { MushafStore.pageCount }
     }
 
     /// Official Arabic surah names, indexed by surah number.

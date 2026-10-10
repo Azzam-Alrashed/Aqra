@@ -3,7 +3,8 @@ import { readFileSync } from "node:fs";
 import { after, before, beforeEach, describe, test } from "node:test";
 import { assertFails, assertSucceeds, initializeTestEnvironment } from "@firebase/rules-unit-testing";
 import {
-  collection, deleteDoc, doc, getDoc, getDocs, increment, query, setDoc, Timestamp, updateDoc, where, writeBatch,
+  addDoc, collection, deleteDoc, doc, getDoc, getDocs, increment, query, serverTimestamp, setDoc, Timestamp, updateDoc, where,
+  writeBatch,
 } from "firebase/firestore";
 
 let env;
@@ -628,5 +629,34 @@ describe("credits, bids and earnings", () => {
     await assertFails(updateDoc(doc(named("teacher"), "sessions/a1"), { startsAt: inDays(5) }));
     await assertFails(updateDoc(doc(named("teacher"), "sessions/a1"), { auctionSeats: 10 }));
     await assertSucceeds(updateDoc(doc(named("teacher"), "sessions/a1"), { place: "x", status: "cancelled" }));
+  });
+});
+
+describe("reports", () => {
+  const report = (reporter, extra = {}) => ({
+    reporter, subject: "teacher", subjectName: "الشيخ أحمد", context: "teacher", reason: "abuse", note: "",
+    createdAt: serverTimestamp(), ...extra,
+  });
+
+  test("anyone signed in reports someone, anonymous included, and nobody reads it back but the team", async () => {
+    await assertSucceeds(addDoc(collection(named("student"), "reports"), report("student")));
+    const anonymous = await assertSucceeds(addDoc(collection(anon("guest"), "reports"), report("guest", { context: "call", contextId: "s1" })));
+    await assertFails(getDoc(doc(anon("guest"), `reports/${anonymous.id}`)));
+    await assertFails(getDocs(collection(named("student"), "reports")));
+    await assertFails(updateDoc(doc(anon("guest"), `reports/${anonymous.id}`), { note: "x" }));
+    await assertFails(deleteDoc(doc(anon("guest"), `reports/${anonymous.id}`)));
+    await assertSucceeds(getDoc(doc(admin(), `reports/${anonymous.id}`)));
+  });
+
+  test("a report is the reporter's own, about someone else, dated by the server, in bounds", async () => {
+    const db = named("student");
+    await assertFails(addDoc(collection(db, "reports"), report("someone-else")));
+    await assertFails(addDoc(collection(db, "reports"), report("student", { subject: "student" })));
+    await assertFails(addDoc(collection(db, "reports"), report("student", { createdAt: Timestamp.now() })));
+    await assertFails(addDoc(collection(db, "reports"), report("student", { reason: "dislike" })));
+    await assertFails(addDoc(collection(db, "reports"), report("student", { context: "mushaf" })));
+    await assertFails(addDoc(collection(db, "reports"), report("student", { note: "x".repeat(1001) })));
+    await assertFails(addDoc(collection(db, "reports"), report("student", { extra: true })));
+    await assertFails(addDoc(collection(env.unauthenticatedContext().firestore(), "reports"), report("student")));
   });
 });

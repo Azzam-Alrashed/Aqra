@@ -10,6 +10,7 @@ struct TeacherView: View {
     @Environment(TasmeeStore.self) private var tasmee
     @Environment(AccountStore.self) private var account
     @Environment(MemorizationStore.self) private var memorization
+    @Environment(\.dismiss) private var dismiss
     /// Nil while loading.
     @State private var sessions: [TasmeeSession]?
     /// The session being booked or given back.
@@ -19,8 +20,11 @@ struct TeacherView: View {
     /// This student's bids, by session: a student holds a free seat or a bid, not both.
     @State private var myBids: [String: Bid] = [:]
     @State private var choosingFreeSeat: TasmeeSession?
+    @State private var reporting: PersonRef?
+    @State private var blocking: PersonRef?
 
     private var signedIn: Bool { account.profile?.isAnonymous == false }
+    private var person: PersonRef { PersonRef(uid: teacher.id, name: teacher.name, context: .teacher) }
 
     var body: some View {
         ScrollView {
@@ -100,6 +104,19 @@ struct TeacherView: View {
         .background(Palette.surface.ignoresSafeArea())
         .toolbar(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            if account.profile?.uid != teacher.id {
+                ToolbarItem(placement: .topBarTrailing) {
+                    Menu {
+                        PersonActions(person: person, reporting: $reporting, blocking: $blocking)
+                    } label: {
+                        Label("More", systemImage: "ellipsis.circle")
+                    }
+                }
+            }
+        }
+        // A teacher blocked leaves the list, so their page closes too.
+        .reportsAndBlocks($reporting, $blocking) { _ in dismiss() }
         .fontDesign(.rounded)
         .task { await load() }
         .refreshable { await load() }
@@ -272,6 +289,9 @@ struct ChipButtonStyle: ButtonStyle {
                 .background(filled ? OnboardingPalette.brand : OnboardingPalette.lavender, in: Capsule())
                 .opacity(isEnabled ? 1 : 0.45)
                 .scaleEffect(configuration.isPressed ? 0.96 : 1)
+                // A 44-point tap target around the 30-point capsule, with the row's layout unchanged.
+                .tapTarget(drawn: CGSize(width: TapTarget.minimum, height: 30))
+                .keepsDrawnSize(CGSize(width: TapTarget.minimum, height: 30))
         }
     }
 }
@@ -424,7 +444,7 @@ struct SessionEditor: View {
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .animation(.snappy, value: seats)
@@ -524,7 +544,7 @@ struct SessionView: View {
                                 Button {
                                     calling = true
                                 } label: {
-                                    Label(open ? "Start the call" : "The call opens 15 minutes before", systemImage: "video.fill")
+                                    Label { open ? Text("Start the call") : CallModel.waitingLabel(live, at: timeline.date) } icon: { Image(systemName: "video.fill") }
                                         .aqraFont(size: 15, weight: .bold)
                                         .foregroundStyle(open ? .white : Palette.inkSoft)
                                         .frame(maxWidth: .infinity, minHeight: 44)
@@ -700,7 +720,7 @@ struct TeacherProfileEditor: View {
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
         .onAppear {
@@ -734,6 +754,8 @@ struct StudentFileView: View {
     @Environment(TasmeeStore.self) private var tasmee
     @State private var records: [TasmeeRecord] = []
     @State private var notes = ""
+    @State private var reporting: PersonRef?
+    @State private var blocking: PersonRef?
     @FocusState private var editingNotes: Bool
 
     var body: some View {
@@ -794,6 +816,18 @@ struct StudentFileView: View {
         .background(Palette.surface.ignoresSafeArea())
         .toolbar(.visible, for: .navigationBar)
         .navigationBarTitleDisplayMode(.inline)
+        .toolbar {
+            ToolbarItem(placement: .topBarTrailing) {
+                // A teacher reports a student to the team; a student isn't blocked from their teacher's sessions.
+                Menu {
+                    PersonActions(person: PersonRef(uid: student.id, name: student.name, context: .student),
+                                  reporting: $reporting, blocking: $blocking, canBlock: false)
+                } label: {
+                    Label("More", systemImage: "ellipsis.circle")
+                }
+            }
+        }
+        .reportsAndBlocks($reporting, $blocking)
         .fontDesign(.rounded)
         .onAppear { notes = savedNotes }
         .onChange(of: editingNotes) { if !editingNotes { saveNotes() } }
