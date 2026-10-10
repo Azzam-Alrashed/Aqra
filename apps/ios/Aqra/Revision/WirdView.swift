@@ -22,6 +22,8 @@ struct WirdView: View {
     @State private var settingUpListening = false
     /// «تم» with ayat still veiled: whether to count them too is asked once, in the panel.
     @State private var askingRest = false
+    /// The X on a page already under way: leaving loses it, so it's asked first.
+    @State private var confirmingLeave = false
 
     var body: some View {
         GeometryReader { geometry in
@@ -67,6 +69,21 @@ struct WirdView: View {
             ListenSetupSheet {
                 if let session { startListening(session) }
             }
+        }
+        .alert("Leave without recording?", isPresented: $confirmingLeave) {
+            Button("Leave", role: .destructive) { dismiss() }
+            Button("Stay", role: .cancel) {}
+        } message: {
+            Text("This page won't count. The pages you finished before it stay recorded.")
+        }
+    }
+
+    /// The X: straight home from a page not yet begun; from one under way, after asking, since it isn't recorded.
+    private func leave(_ session: RevisionSession) {
+        if session.revealed > 0 || !session.stumbles.isEmpty {
+            confirmingLeave = true
+        } else {
+            finish(session, record: false)
         }
     }
 
@@ -174,15 +191,18 @@ struct WirdView: View {
             VStack(spacing: 12) {
                 HStack(alignment: .center, spacing: 12) {
                     Button {
-                        finish(session, record: false)
+                        leave(session)
                     } label: {
+                        // Read as what it does: "Leave without recording this page" (the catalog's English for the key).
                         Label("Leave revision", systemImage: "xmark")
                             .labelStyle(.iconOnly)
                             .font(.system(size: 15, weight: .heavy))
                             .foregroundStyle(MushafStyle.barAccent)
                             .frame(width: 38, height: 38)
                             .background(MushafStyle.barAccentFill, in: Circle())
+                            .tapTarget(drawn: CGSize(width: 38, height: 38))
                     }
+                    .keepsDrawnSize(CGSize(width: 38, height: 38))
                     VStack(alignment: .leading, spacing: 2) {
                         Text("Page \(session.page)")
                             .font(.system(size: 17, weight: .heavy, design: .rounded))
@@ -237,6 +257,7 @@ struct WirdView: View {
                             .font(.system(size: 14, weight: .bold, design: .rounded))
                             .foregroundStyle(MushafStyle.barAccent)
                             .frame(maxWidth: .infinity, minHeight: 44)
+                            .contentShape(Rectangle())
                     }
                     .buttonStyle(.plain)
                 }

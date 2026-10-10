@@ -220,4 +220,14 @@ closing time, the commission, the credit packs). Everyone signed in reads it; ad
     teacher's competition only `onTasmeeRecorded` does, from the pages that teacher heard clean.
   - `parts/{1…30}`: a khatmah's parts (`claimedBy`, `claimedName`, `done`), claimed and finished by members.
 
+### Reports
+
+- `reports/{id}`: a report of a person to the team (`reporter`, `subject`, `subjectName`, `context` — `teacher`,
+  `student`, `call`, `friend` or `competition` — `contextId`, `reason` — `inappropriate`, `abuse`, `spam` or
+  `other` — an optional `note` of at most 1,000 characters, and `createdAt`, the server's time). Anyone signed in
+  creates one as themselves, about someone else; nobody but an administrator reads it. Read them with
+  `npm run admin -- reports` (open ones; `--all` for every one) and close one with
+  `npm run admin -- resolve-report --id <id> --note "what was done"` (it sets `resolvedAt` and `resolution`).
+  Blocking stays on the device and never reaches the server.
+
 See [docs/VISION.md](../docs/VISION.md).

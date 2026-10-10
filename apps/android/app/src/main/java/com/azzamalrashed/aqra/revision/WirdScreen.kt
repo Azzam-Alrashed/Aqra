@@ -58,6 +58,7 @@ import androidx.core.content.ContextCompat
 import androidx.lifecycle.Lifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import com.azzamalrashed.aqra.AqraApp
+import com.azzamalrashed.aqra.account.Confirm
 import com.azzamalrashed.aqra.R
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.ui.text.SpanStyle
@@ -110,6 +111,8 @@ fun WirdScreen(
     var settingUpListening by remember { mutableStateOf(false) }
     /** «تم» with ayat still veiled: whether to count them too is asked once, in the panel. */
     var askingRest by remember { mutableStateOf(false) }
+    /** The X on a page already under way: leaving loses it, so it's asked first. */
+    var confirmingLeave by remember { mutableStateOf(false) }
 
     fun startListening() {
         val started = RecitationListener(session, store, app.recitationModel)
@@ -144,8 +147,12 @@ fun WirdScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { listener?.pause() }
 
     SystemBars(visible = true, lightIcons = style.dark)
+    /** Straight home from a page not yet begun; from one under way, after asking, since it isn't recorded. */
+    fun leave() {
+        if (session.revealed > 0 || session.stumbles.isNotEmpty()) confirmingLeave = true else onClose()
+    }
     // Leaving goes back home without recording the page.
-    BackHandler(onBack = onClose)
+    BackHandler(onBack = ::leave)
 
     fun show(next: RevisionSession) {
         askingRest = false
@@ -225,8 +232,13 @@ fun WirdScreen(
             LaunchedEffect(session.isComplete) { if (session.isComplete) haptics.performHapticFeedback(HapticFeedbackType.Confirm) }
         } else {
             RevisionBar(session, style, outside, canListen = !outside && !session.isComplete, onListen = ::beginListening,
-                onLeave = onClose, onDone = ::done)
+                onLeave = ::leave, onDone = ::done)
         }
+    }
+    if (confirmingLeave) {
+        Confirm(stringResource(R.string.leave_without_recording_q),
+            stringResource(R.string.this_page_wont_count_the_pages_you_finished_before_it), stringResource(R.string.leave),
+            onDismiss = { confirmingLeave = false }, cancel = stringResource(R.string.stay), onConfirm = onClose)
     }
     if (settingUpListening) {
         ListenSetupSheet(app.recitationModel, onReady = {

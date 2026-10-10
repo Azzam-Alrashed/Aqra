@@ -408,9 +408,14 @@ fun StudentFilePage(app: AqraApp, store: MushafStore, student: StudentFile) {
     }
 
     TabPage(top = 16.dp) {
-        Column(verticalArrangement = Arrangement.spacedBy(4.dp)) {
-            Text(student.name, style = aqraStyle(28f, Weight.heavy, Palette.ink))
-            Text(stringResource(R.string.last_heard_s, formatRelative(student.lastHeardAt.toInstant())), style = aqraStyle(13f, Weight.semibold, Palette.inkSoft))
+        Row(verticalAlignment = Alignment.Top) {
+            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(4.dp)) {
+                Text(student.name, style = aqraStyle(28f, Weight.heavy, Palette.ink))
+                Text(stringResource(R.string.last_heard_s, formatRelative(student.lastHeardAt.toInstant())), style = aqraStyle(13f, Weight.semibold, Palette.inkSoft))
+            }
+            // A teacher reports a student to the team; a student isn't blocked from their teacher's sessions.
+            com.azzamalrashed.aqra.account.PersonMenu(app, com.azzamalrashed.aqra.account.PersonRef(student.id, student.name,
+                com.azzamalrashed.aqra.account.PersonReport.Context.STUDENT), canBlock = false)
         }
         if (records.isNotEmpty()) {
             Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {

@@ -62,7 +62,7 @@ struct AppTabView: View {
         .tint(OnboardingPalette.brand)
         .minimizesTabBarOnScroll()
         .overlay { CelebrationOverlay() }
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
         .task { refreshPlan() }
         .onChange(of: memorization.count) { refreshPlan() }
@@ -219,7 +219,7 @@ struct HomeView: View {
         .fadesUnderStatusBar()
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .onAppear {
             isVisible = true
             // After choosing to mark in the Mushaf, the app opens straight on it, with the home underneath.
@@ -572,6 +572,7 @@ struct HomeView: View {
                     .foregroundStyle(Palette.brand)
             }
             .frame(maxWidth: .infinity, minHeight: 44)
+            .contentShape(Rectangle())
         }
         .buttonStyle(.plain)
     }
@@ -700,8 +701,10 @@ struct HomeView: View {
                             .foregroundStyle(Palette.brand)
                             .frame(width: 28, height: 28)
                             .background(Palette.lavender, in: Circle())
+                            .tapTarget(drawn: CGSize(width: 28, height: 28))
                     }
                     .buttonStyle(.plain)
+                    .keepsDrawnSize(CGSize(width: 28, height: 28))
                     .accessibilityLabel(Text("Close"))
                 }
             }
@@ -857,7 +860,7 @@ struct OutsideRevisionSheet: View {
         }
         .fontDesign(.rounded)
         .background(OnboardingPalette.surface.ignoresSafeArea())
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDetents([.medium, .large])
     }
 }

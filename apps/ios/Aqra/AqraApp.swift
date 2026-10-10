@@ -8,6 +8,10 @@ struct AqraApp: App {
     init() {
         AqraFont.registerBundledFonts()
         AccountStore.configure()
+        #if DEBUG
+        AccountStore.resetForUITests()
+        #endif
+        Diagnostics.shared.start()
     }
 
     var body: some Scene {
@@ -23,6 +27,9 @@ struct AqraApp: App {
                 }
             }
             .environment(launch)
+            // The app's own screens are light (docs/SRS.md A-23), chrome included: the status bar, tab bar, alerts,
+            // menus and pickers. The Mushaf and the revision, opened over them, prefer the system's scheme instead.
+            .preferredColorScheme(.light)
             .readsSystemColorScheme()
             // Text follows the reader's size up to Accessibility 2; past it, the composed screens would come apart.
             .dynamicTypeSize(...DynamicTypeSize.accessibility2)

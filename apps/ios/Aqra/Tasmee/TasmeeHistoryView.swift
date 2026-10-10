@@ -193,7 +193,7 @@ struct TasmeeRecordDetails: View {
         .scrollIndicators(.hidden)
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
     }

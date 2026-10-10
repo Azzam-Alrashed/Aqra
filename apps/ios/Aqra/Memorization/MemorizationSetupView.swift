@@ -82,7 +82,7 @@ struct MemorizationSetupView: View {
         .fontDesign(.rounded)
         .tint(Palette.brand)
         .background(Palette.surface.ignoresSafeArea())
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         // A soft tick for each choice, and a fuller one when the whole Quran is chosen.
         .sensoryFeedback(.selection, trigger: memorization.count)
         .sensoryFeedback(.success, trigger: memorization.count == MushafStore.ayahCount) { _, isAll in isAll }
@@ -486,9 +486,16 @@ struct MemorizationSetupView: View {
             }
             .animation(.snappy, value: memorization.count == 0)
             if !isSheet {
-                Button("Mark pages and ayat in the Mushaf") { onFinish(true) }
-                    .aqraFont(size: 15 * min(scale, 1.15), weight: .semibold)
-                    .foregroundStyle(Palette.brand)
+                Button {
+                    onFinish(true)
+                } label: {
+                    Text("Mark pages and ayat in the Mushaf")
+                        .aqraFont(size: 15 * min(scale, 1.15), weight: .semibold)
+                        .foregroundStyle(Palette.brand)
+                        // A line of text, with a 44-point tap target around it that the layout doesn't see.
+                        .tapTarget(drawn: CGSize(width: TapTarget.minimum, height: 18))
+                }
+                .keepsDrawnSize(CGSize(width: TapTarget.minimum, height: 18))
             }
         }
         .padding(.horizontal, 4)
@@ -620,7 +627,7 @@ struct MemorizationFirmnessView: View {
         }
         .fontDesign(.rounded)
         .background(Palette.surface.ignoresSafeArea())
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .onAppear { if startJuz == 0 { startJuz = juzList.first ?? 1 } }
     }
 

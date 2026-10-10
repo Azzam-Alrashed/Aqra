@@ -115,10 +115,41 @@ struct AqraBackButton: View {
                 .frame(width: 36, height: 36)
                 .background(.white, in: Circle())
                 .shadow(color: OnboardingPalette.shadow.opacity(0.10), radius: 8, y: 4)
+                .tapTarget(drawn: CGSize(width: 36, height: 36))
         }
         .buttonStyle(AqraPressStyle())
+        .keepsDrawnSize(CGSize(width: 36, height: 36))
         .accessibilityLabel(Text("Back"))
     }
+}
+
+/// Grows a button label's tap target to Apple's 44-point minimum without changing how it looks or where it sits:
+/// the label takes the room and the hit area, and the button gives the extra back to the layout.
+struct TapTarget: ViewModifier {
+    /// The side of the smallest tap target, from the Human Interface Guidelines.
+    static let minimum: CGFloat = 44
+    /// What the label draws, so the extra room is known.
+    var drawn: CGSize
+
+    func body(content: Content) -> some View {
+        content
+            .frame(minWidth: Self.minimum, minHeight: Self.minimum)
+            .contentShape(Rectangle())
+    }
+
+    /// The padding that takes the extra room back out of the layout, for the button around the label.
+    var layoutPadding: EdgeInsets {
+        EdgeInsets(top: -max(0, (Self.minimum - drawn.height) / 2), leading: -max(0, (Self.minimum - drawn.width) / 2),
+                   bottom: -max(0, (Self.minimum - drawn.height) / 2), trailing: -max(0, (Self.minimum - drawn.width) / 2))
+    }
+}
+
+extension View {
+    /// On a button's label: a tap target of at least 44 points around something drawn smaller.
+    func tapTarget(drawn: CGSize) -> some View { modifier(TapTarget(drawn: drawn)) }
+
+    /// On the button itself: gives the layout the label's drawn size back, so nothing moves.
+    func keepsDrawnSize(_ drawn: CGSize) -> some View { padding(TapTarget(drawn: drawn).layoutPadding) }
 }
 
 /// A thin line between a card's rows, starting after their icon tiles.

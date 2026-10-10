@@ -30,11 +30,14 @@ import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.CallEnd
+import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Groups
 import androidx.compose.material.icons.rounded.Mic
 import androidx.compose.material.icons.rounded.MicOff
 import androidx.compose.material.icons.rounded.Videocam
 import androidx.compose.material.icons.rounded.VideocamOff
+import androidx.compose.material3.DropdownMenu
+import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
@@ -70,6 +73,9 @@ import androidx.core.view.WindowCompat
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.account.AccountStore
+import com.azzamalrashed.aqra.account.PersonRef
+import com.azzamalrashed.aqra.account.PersonReport
+import com.azzamalrashed.aqra.account.ReportSheet
 import com.azzamalrashed.aqra.account.findActivity
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.quran.MushafStore
@@ -81,6 +87,8 @@ import com.azzamalrashed.aqra.ui.components.softShadow
 import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
+import com.azzamalrashed.aqra.ui.util.formatTime
+import com.azzamalrashed.aqra.ui.util.weekdayWide
 import com.google.firebase.FirebaseNetworkException
 import com.google.firebase.functions.FirebaseFunctionsException
 import io.livekit.android.LiveKit
@@ -97,6 +105,11 @@ import kotlinx.coroutines.launch
 import kotlinx.coroutines.tasks.await
 import livekit.org.webrtc.RendererCommon
 import java.io.IOException
+import java.time.ZoneId
+import java.time.format.DateTimeFormatter
+import java.time.temporal.ChronoUnit
+import java.util.Date
+import java.util.Locale
 
 /**
  * A video session's live call: one LiveKit room per session, joined with a token only the server issues — to the
@@ -108,7 +121,8 @@ class CallModel(context: Context, val sessionId: String) {
         data object Joining : Phase
         data object Joined : Phase
         /** Couldn't join: not yet open, closed, no seat, or no connection. */
-        data class Failed(val problem: CallProblem) : Phase
+        /** [opensAt]: the server's word for when the call opens, when it hasn't yet. */
+        data class Failed(val problem: CallProblem, val opensAt: Moment? = null) : Phase
     }
 
     val room: Room = LiveKit.create(context.applicationContext)
@@ -128,7 +142,10 @@ class CallModel(context: Context, val sessionId: String) {
         /** When a session's call can be joined: from a quarter of an hour before it starts until three hours after. */
         fun isOpen(session: TasmeeSession, at: Moment = Moment.now()): Boolean =
             session.kind == TasmeeSession.Kind.VIDEO && session.status == TasmeeSession.Status.OPEN &&
-                at >= session.startsAt + (-15 * 60.0) && at <= session.startsAt + 3 * 3_600.0
+                at >= opensAt(session) && at <= closesAt(session)
+
+        fun opensAt(session: TasmeeSession): Moment = session.startsAt + (-15 * 60.0)
+        fun closesAt(session: TasmeeSession): Moment = session.startsAt + 3 * 3_600.0
     }
 
     suspend fun join() {
@@ -154,7 +171,7 @@ class CallModel(context: Context, val sessionId: String) {
             throw error
         } catch (error: Exception) {
             android.util.Log.w("Aqra", "Couldn't join the call of $sessionId", error)
-            phase = Phase.Failed(CallProblem.of(error))
+            phase = Phase.Failed(CallProblem.of(error), CallProblem.opensAt(error))
         }
     }
 
@@ -205,8 +222,57 @@ enum class CallProblem {
             is FirebaseNetworkException, is IOException -> OFFLINE
             else -> FAILED
         }
+
+        /** When the server says the call opens, if it said. */
+        fun opensAt(error: Throwable): Moment? =
+            ((error as? FirebaseFunctionsException)?.details as? Map<*, *>)?.get("opensAt")?.let { (it as? Number)?.toLong() }?.let(Moment::ofEpochMillis)
     }
 }
+
+/**
+ * When a call opens, said with its day as well as its time: «تُفتح غدًا الساعة ٨:٤٥ م». A session booked for another
+ * day once showed only «قبل الجلسة بربع ساعة», which left the student waiting by the button. As on iOS.
+ */
+enum class CallOpening {
+    TODAY, TOMORROW, THIS_WEEK, LATER;
+
+    companion object {
+        fun day(opens: Moment, now: Moment, zone: ZoneId = ZoneId.systemDefault()): CallOpening {
+            val days = ChronoUnit.DAYS.between(now.toInstant().atZone(zone).toLocalDate(), opens.toInstant().atZone(zone).toLocalDate())
+            return when {
+                days <= 0 -> TODAY
+                days == 1L -> TOMORROW
+                days <= 6 -> THIS_WEEK
+                else -> LATER
+            }
+        }
+    }
+}
+
+/** «تُفتح اليوم الساعة ٨:٤٥ م», «تُفتح يوم الثلاثاء الساعة ٨:٤٥ م», «تُفتح في ١٤ أكتوبر الساعة ٨:٤٥ م». */
+@Composable
+fun callOpeningLabel(opens: Moment, now: Moment): String {
+    val locale = Locale.getDefault()
+    val local = opens.toInstant().atZone(ZoneId.systemDefault())
+    val time = formatTime(local.hour, local.minute, locale)
+    return when (CallOpening.day(opens, now)) {
+        CallOpening.TODAY -> stringResource(R.string.opens_today_at_s, time)
+        CallOpening.TOMORROW -> stringResource(R.string.opens_tomorrow_at_s, time)
+        CallOpening.THIS_WEEK -> stringResource(R.string.opens_s_at_s, weekdayWide(Date.from(opens.toInstant()), locale), time)
+        CallOpening.LATER -> stringResource(R.string.opens_on_s_at_s,
+            DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(locale, "dMMMM"), locale).format(local), time)
+    }
+}
+
+/** What a call's button says while it can't be joined: when it opens, day and time, or that it has closed. */
+@Composable
+fun callWaitingLabel(session: TasmeeSession, now: Moment): String =
+    if (now > CallModel.closesAt(session)) stringResource(R.string.this_call_has_closed) else callOpeningLabel(CallModel.opensAt(session), now)
+
+/** The rule, then, when the server said, the day and the time it means for this session. */
+@Composable
+private fun CallProblem.message(opensAt: Moment?): String =
+    if (this == CallProblem.NOT_OPEN_YET && opensAt != null) message() + "\n" + callOpeningLabel(opensAt, Moment.now()) else message()
 
 @Composable
 private fun CallProblem.message(): String = stringResource(when (this) {
@@ -256,12 +322,12 @@ fun CallButton(session: TasmeeSession, title: String, modifier: Modifier = Modif
         horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally),
     ) {
         Icon(Icons.Rounded.Videocam, null, tint = color, modifier = Modifier.size(20.dp))
-        Text(if (open) title else stringResource(R.string.the_call_opens_15_minutes_before), style = aqraStyle(15f, Weight.bold, color), maxLines = 1)
+        Text(if (open) title else callWaitingLabel(session, now), style = aqraStyle(15f, Weight.bold, color), maxLines = 1)
     }
 }
 
 /** The student's call, full screen over the tabs. */
-fun studentCall(session: TasmeeSession) = FullScreen.Custom("call-${session.id}") { close -> StudentCallScreen(session, close) }
+fun studentCall(app: AqraApp, session: TasmeeSession) = FullScreen.Custom("call-${session.id}") { close -> StudentCallScreen(app, session, close) }
 
 /** The teacher's call, full screen over the tabs. */
 fun teacherCall(app: AqraApp, store: MushafStore, session: TasmeeSession) =
@@ -293,9 +359,9 @@ private fun Context.isGranted(permission: String) = ContextCompat.checkSelfPermi
 
 /** The student's side of a video tasmee': the teacher large, the others in a strip, their own picture small. */
 @Composable
-private fun StudentCallScreen(session: TasmeeSession, onClose: () -> Unit) {
+private fun StudentCallScreen(app: AqraApp, session: TasmeeSession, onClose: () -> Unit) {
     val call = rememberCall(session.id)
-    CallStage(call, session.teacherName, onLeave = onClose)
+    CallStage(app, call, session.teacherName, onLeave = onClose)
 }
 
 // MARK: - The teacher's call
@@ -312,7 +378,7 @@ private fun TeacherCallScreen(app: AqraApp, store: MushafStore, session: TasmeeS
     LaunchedEffect(session.id) { app.tasmee.seats(session.id).collect { seats = it } }
 
     Box(Modifier.fillMaxSize()) {
-        CallStage(call, stringResource(R.string.your_students), onLeave = onClose, darkBars = hearing == null) {
+        CallStage(app, call, stringResource(R.string.your_students), onLeave = onClose, darkBars = hearing == null) {
             if (seats.isNotEmpty()) {
                 Row(
                     Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()).padding(horizontal = 16.dp),
@@ -350,7 +416,7 @@ private fun TeacherCallScreen(app: AqraApp, store: MushafStore, session: TasmeeS
  * own picture in the corner, and the microphone, camera and leave controls.
  */
 @Composable
-private fun CallStage(call: CallModel, title: String, onLeave: () -> Unit, darkBars: Boolean = true, footer: @Composable () -> Unit = {}) {
+private fun CallStage(app: AqraApp, call: CallModel, title: String, onLeave: () -> Unit, darkBars: Boolean = true, footer: @Composable () -> Unit = {}) {
     val room = call.room
     val context = LocalContext.current
     val scope = rememberCoroutineScope()
@@ -358,6 +424,13 @@ private fun CallStage(call: CallModel, title: String, onLeave: () -> Unit, darkB
     /** The others in the call, the teacher first. */
     val others = remote.values.sortedWith(compareBy<RemoteParticipant> { if (it.identity?.value == call.teacherId) 0 else 1 }.thenBy { it.name.orEmpty() })
     val phase = call.phase
+    /** Everyone else in the call, to report to the team. */
+    val reportable = others.mapNotNull { participant ->
+        participant.identity?.value?.let { PersonRef(it, participant.name.orEmpty(), PersonReport.Context.CALL, call.sessionId) }
+    }
+    var reportMenu by remember { mutableStateOf(false) }
+    var reporting by remember { mutableStateOf<PersonRef?>(null) }
+    reporting?.let { person -> ReportSheet(app, person) { reporting = null } }
 
     BackHandler(onBack = onLeave)
     if (darkBars) LightBarIcons()
@@ -371,6 +444,21 @@ private fun CallStage(call: CallModel, title: String, onLeave: () -> Unit, darkB
                 Box(Modifier.weight(1f)) { Text(title, style = aqraStyle(17f, Weight.heavy, Color.White), maxLines = 1) }
                 Text("${others.size + 1}", style = aqraStyle(13f, Weight.bold, Color.White.copy(alpha = 0.7f)))
                 Icon(Icons.Rounded.Groups, null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                if (reportable.isNotEmpty()) {
+                    val label = stringResource(R.string.report)
+                    Box {
+                        Box(Modifier.size(44.dp).pressable(pressed = 0.9f) { reportMenu = true }.semantics { contentDescription = label },
+                            contentAlignment = Alignment.Center) {
+                            Icon(Icons.Rounded.Flag, null, tint = Color.White.copy(alpha = 0.7f), modifier = Modifier.size(20.dp))
+                        }
+                        DropdownMenu(reportMenu, onDismissRequest = { reportMenu = false }, containerColor = Color.White) {
+                            for (person in reportable) {
+                                DropdownMenuItem(text = { Text(stringResource(R.string.report_s, person.shownName), style = aqraStyle(15f, Weight.semibold)) },
+                                    onClick = { reportMenu = false; reporting = person })
+                            }
+                        }
+                    }
+                }
             }
 
             Box(Modifier.weight(1f).fillMaxWidth()) {
@@ -383,7 +471,7 @@ private fun CallStage(call: CallModel, title: String, onLeave: () -> Unit, darkB
                     is CallModel.Phase.Failed -> Column(Modifier.align(Alignment.Center).padding(24.dp), horizontalAlignment = Alignment.CenterHorizontally,
                         verticalArrangement = Arrangement.spacedBy(14.dp)) {
                         Text("📵", fontSize = 48.sp)
-                        Text(phase.problem.message(), style = aqraStyle(15f, Weight.semibold, Color.White), textAlign = TextAlign.Center)
+                        Text(phase.problem.message(phase.opensAt), style = aqraStyle(15f, Weight.semibold, Color.White), textAlign = TextAlign.Center)
                         ChipButton(stringResource(R.string.try_again), filled = true) { scope.launch { call.join() } }
                     }
                     CallModel.Phase.Joined -> {

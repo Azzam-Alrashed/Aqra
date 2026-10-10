@@ -178,4 +178,5 @@ Aqra works without an account: on first launch it creates an anonymous account, 
 Sign in with Apple or Google (Account tab) ties the backup to the user, and is needed to book a tasmee' session, apply to teach, or buy credits.
 No demo account is needed: sign in with any Apple ID.
 Teachers are vetted by our team (ijazah review and an interview) before they can open sessions.
+Reporting and blocking (guideline 1.2): "…" beside a teacher's name on their page, a friend in Friends, or a competitor in a competition's standings, and the flag at the top of a video call, offer Report and Block. Reports reach our team; blocked people are listed in Account, which also links to Help and contact (the support page) and the privacy policy.
 ```

@@ -16,6 +16,8 @@
 //   payout --teacher <uid> --amount <credits> --reference "..."    record a bank transfer to a teacher
 //   balance --teacher <uid>                                        a teacher's earnings, payouts and balance
 //   policy [--set key=value ...]                                   show or change config/policy
+//   reports [--all]                                                reports of people, newest first (open ones only)
+//   resolve-report --id <id> --note "..."                          mark a report handled, with what was done
 import { applicationDefault, initializeApp } from "firebase-admin/app";
 import { getAuth } from "firebase-admin/auth";
 import { FieldValue, getFirestore, Timestamp } from "firebase-admin/firestore";
@@ -153,6 +155,29 @@ const commands = {
       const e = entry.data();
       console.log(`  ${e.at.toDate().toISOString().slice(0, 16)}  ${e.kind.padEnd(7)} ${String(e.amount).padStart(6)}  ${e.sessionId ?? e.reference ?? ""}`);
     }
+  },
+
+  async reports() {
+    const snapshot = await db.collection("reports").orderBy("createdAt", "desc").limit(100).get();
+    const shown = snapshot.docs.filter((doc) => flags.all || !doc.get("resolvedAt"));
+    if (!shown.length) return console.log(flags.all ? "No reports." : "No open reports.");
+    for (const doc of shown) {
+      const r = doc.data();
+      const when = r.createdAt?.toDate().toISOString().slice(0, 16) ?? "?";
+      console.log(`${doc.id}  ${when}  [${r.reason}] ${r.context}${r.contextId ? ` ${r.contextId}` : ""}${r.resolvedAt ? "  (resolved)" : ""}`);
+      console.log(`    about ${r.subjectName ?? ""} (${r.subject}) · from ${r.reporter}`);
+      if (r.note) console.log(`    "${r.note}"`);
+      if (r.resolution) console.log(`    done: ${r.resolution}`);
+    }
+  },
+
+  async "resolve-report"() {
+    const id = flags.id || fail("Give --id <report id>.");
+    if (!flags.note) fail("Give --note with what was done.");
+    const ref = db.doc(`reports/${id}`);
+    if (!(await ref.get()).exists) fail(`No report ${id}.`);
+    await ref.update({ resolvedAt: Timestamp.now(), resolution: flags.note });
+    console.log(`${id}: resolved.`);
   },
 
   async policy() {

@@ -22,7 +22,13 @@ struct AccountView: View {
     @State private var confirmingDeletion = false
     @State private var confirmingBackupDeletion = false
     @State private var showingWallet = false
+    @State private var showingBlocked = false
     @Environment(WalletStore.self) private var wallet
+    @Environment(SafetyStore.self) private var safety
+
+    /// The site's help page, with how to reach the team, and its privacy policy (docs/support.html, docs/privacy.html).
+    static let helpURL = URL(string: "https://azzam-alrashed.github.io/Aqra/support.html")!
+    static let privacyURL = URL(string: "https://azzam-alrashed.github.io/Aqra/privacy.html")!
 
     var body: some View {
         NavigationStack {
@@ -52,9 +58,9 @@ struct AccountView: View {
                     AqraSectionTitle(title: "Mushaf").padding(.top, 10)
                     AqraCard(padding: 0, radius: 24) {
                         VStack(spacing: 0) {
-                            AqraRow(icon: "🖍️", tint: Palette.rose, title: Text("Tajweed colors")) { toggle($tajweed) }
+                            AqraRow(icon: "🖍️", tint: Palette.rose, title: Text("Tajweed colors")) { toggle("Tajweed colors", $tajweed) }
                             AqraRowDivider()
-                            AqraRow(icon: "🎨", tint: Palette.mint, title: Text("Topic colors")) { toggle($topicColors) }
+                            AqraRow(icon: "🎨", tint: Palette.mint, title: Text("Topic colors")) { toggle("Topic colors", $topicColors) }
                         }
                     }
 
@@ -63,7 +69,7 @@ struct AccountView: View {
                         VStack(spacing: 0) {
                             AqraRow(icon: "🔔", tint: Palette.sky, title: Text("Daily reminder"),
                                     detail: reminderOn ? Text("Every day at \(reminderTime.wrappedValue.formatted(date: .omitted, time: .shortened))") : nil) {
-                                toggle($reminderOn)
+                                toggle("Daily reminder", $reminderOn)
                             }
                             if reminderOn {
                                 AqraRowDivider()
@@ -98,7 +104,7 @@ struct AccountView: View {
                     AqraCard(padding: 0, radius: 24) {
                         VStack(spacing: 0) {
                             AqraRow(icon: "🔔", tint: Palette.butter, title: Text("Sounds"),
-                                    detail: Text("A gentle chime for rewards")) { toggle($soundsOn) }
+                                    detail: Text("A gentle chime for rewards")) { toggle("Sounds", $soundsOn) }
                             AqraRowDivider()
                             Button {
                                 openSettings()
@@ -114,6 +120,36 @@ struct AccountView: View {
                                         detail: Text("The Quran text, fonts and data"))
                             }
                             .buttonStyle(.plain)
+                        }
+                    }
+
+                    AqraSectionTitle(title: "Help").padding(.top, 10)
+                    AqraCard(padding: 0, radius: 24) {
+                        VStack(spacing: 0) {
+                            Button {
+                                openURL(Self.helpURL)
+                            } label: {
+                                AqraRow(icon: "🛟", tint: Palette.sky, title: Text("Help and contact"),
+                                        detail: Text("Questions, problems and reports"))
+                            }
+                            .buttonStyle(.plain)
+                            AqraRowDivider()
+                            Button {
+                                openURL(Self.privacyURL)
+                            } label: {
+                                AqraRow(icon: "🔒", tint: Palette.mint, title: Text("Privacy policy"))
+                            }
+                            .buttonStyle(.plain)
+                            if !safety.blocked.isEmpty {
+                                AqraRowDivider()
+                                Button {
+                                    showingBlocked = true
+                                } label: {
+                                    AqraRow(icon: "✋", tint: Palette.rose, title: Text("Blocked"),
+                                            detail: Text("\(safety.blocked.count) people"))
+                                }
+                                .buttonStyle(.plain)
+                            }
                         }
                     }
 
@@ -174,8 +210,9 @@ struct AccountView: View {
         }
         .fontDesign(.rounded)
         .tint(Palette.brand)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .sheet(isPresented: $showingWallet) { WalletView() }
+        .sheet(isPresented: $showingBlocked) { BlockedPeopleView() }
         .onChange(of: reminderOn) { updateReminder() }
         .onChange(of: reminderMinutes) { updateReminder() }
         .alert("Sign out?", isPresented: $confirmingSignOut) {
@@ -198,8 +235,9 @@ struct AccountView: View {
         }
     }
 
-    private func toggle(_ isOn: Binding<Bool>) -> some View {
-        Toggle("", isOn: isOn)
+    /// The row's switch. Its label is the row's title, hidden from sight and read by VoiceOver.
+    private func toggle(_ title: LocalizedStringKey, _ isOn: Binding<Bool>) -> some View {
+        Toggle(title, isOn: isOn)
             .labelsHidden()
             .tint(Palette.brand)
     }
@@ -544,12 +582,13 @@ struct RestoreAccountSheet: View {
                     .aqraFont(size: 15, weight: .bold)
                     .foregroundStyle(Palette.brand)
                     .frame(minHeight: 44)
+                    .contentShape(Rectangle())
                     .padding(.bottom, 12)
             }
         }
         .fontDesign(.rounded)
         .background(Palette.surface.ignoresSafeArea())
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .interactiveDismissDisabled(stage == .restoring)
         // Signed in: the account's copy is merged in, then the backup confirms it (its first backup time).
         .onChange(of: account.profile?.isAnonymous) {

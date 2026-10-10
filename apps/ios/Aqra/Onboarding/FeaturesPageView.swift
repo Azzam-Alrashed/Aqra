@@ -42,7 +42,8 @@ struct FeaturesPageView: View {
     var body: some View {
         OnboardingPageLayout(
             pageCount: pageCount, currentPage: currentPage, actionsVisible: actionsIn,
-            stage: { stage },
+            // The floating cards are a picture of what the copy says: VoiceOver reads the copy alone.
+            stage: { stage.accessibilityHidden(true) },
             copy: { scale in
                 OnboardingHeadline(
                     first: "Everything that helps your memorization,",
@@ -73,7 +74,7 @@ struct FeaturesPageView: View {
                     .opacity(glowIn ? 1 : 0)
 
                 floating(0, depth: .back, at: CGPoint(x: -112, y: -168), tilt: -8, time: time) {
-                    AqraChip(icon: "⭐️", tint: Palette.butter) { Text(verbatim: "+٥٠ نقطة") }
+                    AqraChip(icon: "⭐️", tint: Palette.butter) { Text("+\(50) points") }
                 }
                 floating(1, depth: .front, at: CGPoint(x: 58, y: -104), tilt: 4, time: time) {
                     StreakCard(days: streakDays)
@@ -85,7 +86,7 @@ struct FeaturesPageView: View {
                     SessionCard()
                 }
                 floating(4, depth: .back, at: CGPoint(x: -98, y: 180), tilt: 3, time: time) {
-                    AqraChip(icon: "✅", tint: Palette.mint) { Text(verbatim: "أتممت الجزء ٣٠") }
+                    AqraChip(icon: "✅", tint: Palette.mint) { Text("Juz' \(30) completed") }
                 }
             }
             // Positions are a fixed composition; each card's contents keep the screen's direction.
@@ -166,11 +167,12 @@ private struct StreakCard: View {
                 HStack(spacing: 10) {
                     IconTile(icon: "🔥", tint: Palette.peach)
                     VStack(alignment: .leading, spacing: 1) {
-                        Text(verbatim: "\(days.formatted(.number.locale(Locale(identifier: "ar@numbers=arab")))) أيام")
+                        // Each count in its own plural form, so the days climb «يوم واحد، يومان، ٣ أيام…», never «١ أيام».
+                        Text("\(days) days")
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(Palette.ink)
                             .contentTransition(.numericText())
-                        Text(verbatim: "سلسلة المراجعة")
+                        Text("Revision streak")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Palette.inkSoft)
                     }
@@ -202,12 +204,11 @@ private struct ManzilCard: View {
                 HStack(spacing: 10) {
                     IconTile(icon: "🪜", tint: Palette.lavender)
                     VStack(alignment: .leading, spacing: 1) {
-                        // A stage of the ten, as تقدّمي shows it: the منازل are the stairs, not a numbered rank. Like
-                        // the page's other cards, an illustration in Arabic.
-                        Text(verbatim: "المرحلة ٤ من ١٠")
+                        // A stage of the ten, as تقدّمي shows it: the منازل are the stairs, not a numbered rank.
+                        Text("Stage \(4) of \(10)")
                             .font(.system(size: 16, weight: .heavy))
                             .foregroundStyle(Palette.ink)
-                        Text(verbatim: "الأجزاء ١٠–١٢")
+                        Text("Juz' \(10)–\(12)")
                             .font(.system(size: 11, weight: .semibold))
                             .foregroundStyle(Palette.inkSoft)
                     }
@@ -226,15 +227,21 @@ private struct ManzilCard: View {
 }
 
 private struct SessionCard: View {
+    /// «٨:٠٠ م» or "8:00 PM", in the reader's own language and numerals.
+    private static var eightInTheEvening: String {
+        let date = Calendar.current.date(bySettingHour: 20, minute: 0, second: 0, of: .now) ?? .now
+        return date.formatted(date: .omitted, time: .shortened)
+    }
+
     var body: some View {
         AqraCard {
             HStack(spacing: 10) {
                 IconTile(icon: "🎙️", tint: Palette.sky)
                 VStack(alignment: .leading, spacing: 1) {
-                    Text(verbatim: "تسميع مع شيخ")
+                    Text("Tasmee' with a sheikh")
                         .font(.system(size: 15, weight: .heavy))
                         .foregroundStyle(Palette.ink)
-                    Text(verbatim: "غدًا" + Separator.arabic + "٨:٠٠ م")
+                    Text("Tomorrow") + Text(verbatim: Separator.facts) + Text(verbatim: Self.eightInTheEvening)
                         .font(.system(size: 11, weight: .semibold))
                         .foregroundStyle(Palette.inkSoft)
                 }

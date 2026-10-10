@@ -13,6 +13,8 @@
     <string name="s_credits">%s credits</string>
     <!-- %@ credits due to you -->
     <string name="s_credits_due_to_you">%s credits due to you</string>
+    <!-- %@ is blocked. You can unblock them in Account. -->
+    <string name="s_is_blocked_you_can_unblock_them_in_account">%s is blocked. You can unblock them in Account.</string>
     <!-- %@ recorded your tasmee\' of %lld pages. -->
     <string name="s_recorded_your_tasmee_of_n_pages">%1$s recorded your tasmee\' of %2$d pages.</string>
     <!-- %@ removed -->
@@ -119,6 +121,11 @@
     <plurals name="n_pages_from_s">
         <item quantity="one">%1$d page from %2$s</item>
         <item quantity="other">%1$d pages from %2$s</item>
+    </plurals>
+    <!-- %lld people -->
+    <plurals name="n_people">
+        <item quantity="one">%d person</item>
+        <item quantity="other">%d people</item>
     </plurals>
     <!-- %lld points -->
     <plurals name="n_points">
@@ -243,6 +250,8 @@
     <string name="a_whole_juz">A whole juz\'</string>
     <!-- About you -->
     <string name="about_you">About you</string>
+    <!-- Abuse or harassment -->
+    <string name="abuse_or_harassment">Abuse or harassment</string>
     <!-- Account -->
     <string name="account">Account</string>
     <!-- Accounts aren\'t set up in this build, so teachers and tasmee\' are off. -->
@@ -263,6 +272,8 @@
     <string name="also_booked">Also booked</string>
     <!-- and rise, ayah by ayah. -->
     <string name="and_rise_ayah_by_ayah">and rise, ayah by ayah.</string>
+    <!-- Anything that helps the team (optional) -->
+    <string name="anything_that_helps_the_team_optional">Anything that helps the team (optional)</string>
     <!-- App -->
     <string name="app">App</string>
     <!-- Approved -->
@@ -271,6 +282,8 @@
     <string name="aqra_cant_use_the_microphone_allow_it_in_settings">Aqra can\'t use the microphone. Allow it in Settings.</string>
     <!-- Aqra shows the Quran exactly as published, from these sources, with thanks. -->
     <string name="aqra_shows_the_quran_exactly_as_published_from_these_sources">Aqra shows the Quran exactly as published, from these sources, with thanks.</string>
+    <!-- Aqra\'s team reads every report. %@ isn\'t told who sent it. -->
+    <string name="aqras_team_reads_every_report_s_isnt_told_who_sent">Aqra\'s team reads every report. %s isn\'t told who sent it.</string>
     <!-- Awaiting a sheikh\'s test -->
     <string name="awaiting_a_sheikhs_test">Awaiting a sheikh\'s test</string>
     <!-- Awaiting a sheikh\'s test: book a tasmee\' and ask for one -->
@@ -323,6 +336,16 @@
     <string name="bidding_has_closed_for_this_session">Bidding has closed for this session.</string>
     <!-- Bids -->
     <string name="bids">Bids</string>
+    <!-- Block -->
+    <string name="block">Block</string>
+    <!-- Block %@ too -->
+    <string name="block_s_too">Block %s too</string>
+    <!-- Block %@? -->
+    <string name="block_s_q">Block %s?</string>
+    <!-- Blocked -->
+    <string name="blocked">Blocked</string>
+    <!-- Blocked person -->
+    <string name="blocked_person">Blocked person</string>
     <!-- Book -->
     <string name="book">Book</string>
     <!-- Book a free seat instead -->
@@ -448,6 +471,8 @@
     <string name="delete_your_account_q">Delete your account?</string>
     <!-- Delete your backup? -->
     <string name="delete_your_backup_q">Delete your backup?</string>
+    <!-- Details -->
+    <string name="details">Details</string>
     <!-- Done -->
     <string name="done">Done</string>
     <!-- Download and begin -->
@@ -558,6 +583,10 @@
     <string name="held_for_a_bid">Held for a bid</string>
     <!-- held for bids -->
     <string name="held_for_bids">held for bids</string>
+    <!-- Help -->
+    <string name="help">Help</string>
+    <!-- Help and contact -->
+    <string name="help_and_contact">Help and contact</string>
     <!-- Hesitated -->
     <string name="hesitated">Hesitated</string>
     <!-- Hide %@ -->
@@ -604,6 +633,8 @@
     <string name="in_person">In person</string>
     <!-- In prayer, or to a friend: it counts in today\'s wird. -->
     <string name="in_prayer_or_to_a_friend_it_counts_in_todays">In prayer, or to a friend: it counts in today\'s wird.</string>
+    <!-- Inappropriate name, words or picture -->
+    <string name="inappropriate_name_words_or_picture">Inappropriate name, words or picture</string>
     <!-- Index -->
     <string name="index">Index</string>
     <!-- Interview -->
@@ -632,6 +663,8 @@
     <string name="juz_s">Juz\' %s</string>
     <!-- Juz\' %lld -->
     <string name="juz_n">Juz\' %d</string>
+    <!-- Juz\' %lld completed -->
+    <string name="juz_n_completed">Juz\' %d completed</string>
     <!-- Juz\' %lld removed -->
     <string name="juz_n_removed">Juz\' %d removed</string>
     <!-- Juz\' %lld–%lld -->
@@ -657,7 +690,7 @@
     <!-- Leave -->
     <string name="leave">Leave</string>
     <!-- Leave revision -->
-    <string name="leave_revision">Leave revision</string>
+    <string name="leave_revision">Leave without recording this page</string>
     <!-- Leave the call -->
     <string name="leave_the_call">Leave the call</string>
     <!-- Leave the test? -->
@@ -731,6 +764,8 @@
     <string name="microphone">Microphone</string>
     <!-- Mistakes allowed per page -->
     <string name="mistakes_allowed_per_page">Mistakes allowed per page</string>
+    <!-- More -->
+    <string name="more">More</string>
     <!-- Mushaf -->
     <string name="mushaf">Mushaf</string>
     <!-- My memorization -->
@@ -770,6 +805,8 @@
     <string name="next_portion_s">Next portion %s</string>
     <!-- No one has booked a seat yet. -->
     <string name="no_one_has_booked_a_seat_yet">No one has booked a seat yet.</string>
+    <!-- No one is blocked. -->
+    <string name="no_one_is_blocked">No one is blocked.</string>
     <!-- No scores yet: they appear as members revise. -->
     <string name="no_scores_yet_they_appear_as_members_revise">No scores yet: they appear as members revise.</string>
     <!-- No sessions scheduled yet. -->
@@ -828,6 +865,14 @@
     <string name="open">Open</string>
     <!-- Open Settings -->
     <string name="open_settings">Open Settings</string>
+    <!-- Opens %@ at %@ -->
+    <string name="opens_s_at_s">Opens %1$s at %2$s</string>
+    <!-- Opens on %@ at %@ -->
+    <string name="opens_on_s_at_s">Opens on %1$s at %2$s</string>
+    <!-- Opens today at %@ -->
+    <string name="opens_today_at_s">Opens today at %s</string>
+    <!-- Opens tomorrow at %@ -->
+    <string name="opens_tomorrow_at_s">Opens tomorrow at %s</string>
     <!-- or mark from one ayah to another with «Select a range» -->
     <string name="or_mark_from_one_ayah_to_another_with_select_a">or mark from one ayah to another with «Select a range»</string>
     <!-- Outbid -->
@@ -878,8 +923,12 @@
     <string name="preparing">Preparing…</string>
     <!-- Press and hold an ayah to mark from it to another -->
     <string name="press_and_hold_an_ayah_to_mark_from_it_to">Press and hold an ayah to mark from it to another</string>
+    <!-- Privacy policy -->
+    <string name="privacy_policy">Privacy policy</string>
     <!-- Progress -->
     <string name="progress">Progress</string>
+    <!-- Questions, problems and reports -->
+    <string name="questions_problems_and_reports">Questions, problems and reports</string>
     <!-- Raise -->
     <string name="raise">Raise</string>
     <!-- Raise my bid -->
@@ -923,6 +972,8 @@
     <string name="remove_s_from_what_youve_memorized_q">Remove %s from what you\'ve memorized?</string>
     <!-- Remove all -->
     <string name="remove_all">Remove all</string>
+    <!-- Remove friend -->
+    <string name="remove_friend">Remove friend</string>
     <!-- Remove juz\' %lld from what you\'ve memorized? -->
     <string name="remove_juz_n_from_what_youve_memorized_q">Remove juz\' %d from what you\'ve memorized?</string>
     <!-- Remove the bookmark -->
@@ -937,6 +988,10 @@
     <string name="remove_this_friend_q">Remove this friend?</string>
     <!-- Repetitions: %lld -->
     <string name="repetitions_n">Repetitions: %d</string>
+    <!-- Report -->
+    <string name="report">Report</string>
+    <!-- Report %@ -->
+    <string name="report_s">Report %s</string>
     <!-- Reported by Ahmad -->
     <string name="reported_by_ahmad">Reported by Ahmad</string>
     <!-- Restore what you memorized and carry on -->
@@ -1025,6 +1080,8 @@
     <string name="select_a_range">Select a range</string>
     <!-- Send application -->
     <string name="send_application">Send application</string>
+    <!-- Send report -->
+    <string name="send_report">Send report</string>
     <!-- Set yourself a challenge -->
     <string name="set_yourself_a_challenge">Set yourself a challenge</string>
     <!-- Share -->
@@ -1055,10 +1112,14 @@
     <string name="sign_out">Sign out</string>
     <!-- Sign out? -->
     <string name="sign_out_q">Sign out?</string>
+    <!-- Something else -->
+    <string name="something_else">Something else</string>
     <!-- Sounds -->
     <string name="sounds">Sounds</string>
     <!-- Sources -->
     <string name="sources">Sources</string>
+    <!-- Spam or a scam -->
+    <string name="spam_or_a_scam">Spam or a scam</string>
     <!-- Stage %lld -->
     <string name="stage_n">Stage %d</string>
     <!-- Stage %lld of %lld -->
@@ -1145,6 +1206,8 @@
     <string name="tasmee_cancelled">Tasmee\' cancelled</string>
     <!-- Tasmee\' with a friend -->
     <string name="tasmee_with_a_friend">Tasmee\' with a friend</string>
+    <!-- Tasmee\' with a sheikh -->
+    <string name="tasmee_with_a_sheikh">Tasmee\' with a sheikh</string>
     <!-- Tasmee\' with a teacher -->
     <string name="tasmee_with_a_teacher">Tasmee\' with a teacher</string>
     <!-- Teach on Aqra -->
@@ -1159,14 +1222,14 @@
     <string name="teachers_on_aqra_hold_an_ijazah_in_the_quran_tell">Teachers on Aqra hold an ijazah in the Quran. Tell us about yours; the team reviews it and then meets you for a short interview.</string>
     <!-- Teachers, friends and those who hear your tasmee\' see this name. -->
     <string name="teachers_friends_and_those_who_hear_your_tasmee_see_this">Teachers, friends and those who hear your tasmee\' see this name.</string>
+    <!-- Thank you -->
+    <string name="thank_you">Thank you</string>
     <!-- That didn\'t work. Please try again. -->
     <string name="that_didnt_work_please_try_again">That didn\'t work. Please try again.</string>
     <!-- The App Store can\'t be reached right now. -->
     <string name="the_app_store_cant_be_reached_right_now">The App Store can\'t be reached right now.</string>
     <!-- The ayat are revealed as you recite -->
     <string name="the_ayat_are_revealed_as_you_recite">The ayat are revealed as you recite</string>
-    <!-- The call opens 15 minutes before -->
-    <string name="the_call_opens_15_minutes_before">The call opens 15 minutes before</string>
     <!-- The call opens a quarter of an hour before the session. -->
     <string name="the_call_opens_a_quarter_of_an_hour_before_the">The call opens a quarter of an hour before the session.</string>
     <!-- The Complex\'s Mushaf page fonts of the 1441H print, with tajweed colors. -->
@@ -1185,6 +1248,8 @@
     <string name="the_mushaf_couldnt_be_loaded">The Mushaf couldn\'t be loaded</string>
     <!-- The Mushaf page layout and the surah headers. -->
     <string name="the_mushaf_page_layout_and_the_surah_headers">The Mushaf page layout and the surah headers.</string>
+    <!-- The Mushaf\'s page layout couldn\'t be read (%@). Please delete the app and install it again. -->
+    <string name="the_mushafs_page_layout_couldnt_be_read_s_please_delete">The Mushaf\'s page layout couldn\'t be read (%s). Please delete the app and install it again.</string>
     <!-- The Quran text and its data, in the riwayah of Hafs. -->
     <string name="the_quran_text_and_its_data_in_the_riwayah_of">The Quran text and its data, in the riwayah of Hafs.</string>
     <!-- The Quran text, fonts and data -->
@@ -1201,6 +1266,10 @@
     <string name="the_students_who_booked_will_see_it_cancelled">The students who booked will see it cancelled.</string>
     <!-- The teacher cancelled this session. -->
     <string name="the_teacher_cancelled_this_session">The teacher cancelled this session.</string>
+    <!-- The teachers you blocked are hidden. -->
+    <string name="the_teachers_you_blocked_are_hidden">The teachers you blocked are hidden.</string>
+    <!-- The team will look into it. -->
+    <string name="the_team_will_look_into_it">The team will look into it.</string>
     <!-- The team will review your application and your ijazah. -->
     <string name="the_team_will_review_your_application_and_your_ijazah">The team will review your application and your ijazah.</string>
     <!-- The test opens once every ayah of the stage is memorized. -->
@@ -1235,6 +1304,12 @@
     <string name="this_code_isnt_valid_or_it_has_expired">This code isn\'t valid, or it has expired.</string>
     <!-- This code isn\'t valid, or it has expired. Ask your friend for a new one. -->
     <string name="this_code_isnt_valid_or_it_has_expired_ask_your">This code isn\'t valid, or it has expired. Ask your friend for a new one.</string>
+    <!-- This copy of Aqra has only %lld of its %lld Mushaf page fonts. Please delete the app and install it again. -->
+    <string name="this_copy_of_aqra_has_only_n_of_its_n">This copy of Aqra has only %1$d of its %2$d Mushaf page fonts. Please delete the app and install it again.</string>
+    <!-- This copy of Aqra is missing a Quran data file (%@). Please delete the app and install it again. -->
+    <string name="this_copy_of_aqra_is_missing_a_quran_data_file">This copy of Aqra is missing a Quran data file (%s). Please delete the app and install it again.</string>
+    <!-- This page won\'t count. The pages you finished before it stay recorded. -->
+    <string name="this_page_wont_count_the_pages_you_finished_before_it">This page won\'t count. The pages you finished before it stay recorded.</string>
     <!-- This week\'s challenges -->
     <string name="this_weeks_challenges">This week\'s challenges</string>
     <!-- Time -->
@@ -1257,6 +1332,8 @@
     <string name="todays_wird_is_done_may_allah_bless_you">Today\'s wird is done, may Allah bless you</string>
     <!-- Together -->
     <string name="together">Together</string>
+    <!-- Tomorrow -->
+    <string name="tomorrow">Tomorrow</string>
     <!-- Topic colors -->
     <string name="topic_colors">Topic colors</string>
     <!-- Translation: Jami\' at-Tirmidhi 2914, Darussalam -->
@@ -1265,6 +1342,8 @@
     <string name="try_again">Try again</string>
     <!-- Two weeks -->
     <string name="two_weeks">Two weeks</string>
+    <!-- Unblock -->
+    <string name="unblock">Unblock</string>
     <!-- Undo -->
     <string name="undo">Undo</string>
     <!-- Unmark %@ -->
@@ -1301,6 +1380,8 @@
     <string name="welcome_back">Welcome back</string>
     <!-- Welcome! Your sessions appear in the Tasmee\' tab. -->
     <string name="welcome_your_sessions_appear_in_the_tasmee_tab">Welcome! Your sessions appear in the Tasmee\' tab.</string>
+    <!-- What happened? -->
+    <string name="what_happened_q">What happened?</string>
     <!-- What have you memorized -->
     <string name="what_have_you_memorized">What have you memorized</string>
     <!-- What kind of mistake? -->
@@ -1361,6 +1442,8 @@
     <string name="you_can_take_the_test_again_s">You can take the test again %s</string>
     <!-- You can undo it for a few seconds. -->
     <string name="you_can_undo_it_for_a_few_seconds">You can undo it for a few seconds.</string>
+    <!-- You don\'t see their sessions, their names or their scores. -->
+    <string name="you_dont_see_their_sessions_their_names_or_their_scores">You don\'t see their sessions, their names or their scores.</string>
     <!-- You finished page %lld -->
     <string name="you_finished_page_n">You finished page %d</string>
     <!-- You need %lld more credits. -->
@@ -1387,6 +1470,10 @@
     <string name="you_won_a_seat_in_s_s_session">You won a seat in %s\'s session.</string>
     <!-- You won\'t declare it again, and nothing you recorded is erased. -->
     <string name="you_wont_declare_it_again_and_nothing_you_recorded_is">You won\'t declare it again, and nothing you recorded is erased.</string>
+    <!-- You won\'t see their sessions, their name or their scores. -->
+    <string name="you_wont_see_their_sessions_their_name_or_their_scores">You won\'t see their sessions, their name or their scores.</string>
+    <!-- You won\'t see their sessions, their name or their scores. You can unblock them in Account. -->
+    <string name="you_wont_see_their_sessions_their_name_or_their_scores_2">You won\'t see their sessions, their name or their scores. You can unblock them in Account.</string>
     <!-- You\'ll finish, God willing, -->
     <string name="youll_finish_god_willing">You\'ll finish, God willing,</string>
     <!-- You\'re friends now -->

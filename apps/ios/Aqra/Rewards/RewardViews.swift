@@ -195,7 +195,9 @@ struct RewardsSection: View {
                         .foregroundStyle(Palette.brand)
                         .frame(width: 30, height: 30)
                         .background(Palette.lavender, in: Circle())
+                        .tapTarget(drawn: CGSize(width: 30, height: 30))
                 }
+                .keepsDrawnSize(CGSize(width: 30, height: 30))
                 .accessibilityLabel(Text("New challenge"))
             }
             .padding(.top, 6)
@@ -307,7 +309,7 @@ struct ChallengePicker: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDetents([.medium, .large])
         .presentationDragIndicator(.visible)
     }

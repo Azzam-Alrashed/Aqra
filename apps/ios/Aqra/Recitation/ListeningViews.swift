@@ -200,7 +200,7 @@ struct ListenSetupSheet: View {
         .padding(.horizontal, 24)
         .padding(.bottom, 12)
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .background(Color.white.ignoresSafeArea())
         .presentationDetents([.large])
         .onChange(of: model.state, initial: true) {

@@ -32,6 +32,9 @@ import androidx.compose.ui.unit.dp
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.account.AccountStore
+import com.azzamalrashed.aqra.account.PersonMenu
+import com.azzamalrashed.aqra.account.PersonRef
+import com.azzamalrashed.aqra.account.PersonReport
 import com.azzamalrashed.aqra.account.Confirm
 import com.azzamalrashed.aqra.account.Problem
 import com.azzamalrashed.aqra.quran.MushafStore
@@ -98,7 +101,8 @@ fun TasmeeScreen(app: AqraApp, store: MushafStore, navigator: Navigator) {
     }
     NavigatorHost(navigator, root = { TasmeeHome(app, store, navigator) }) { destination ->
         when (destination) {
-            is TasmeeDestination.TeacherPage -> TeacherPage(app, store, destination.teacher)
+            // A teacher blocked leaves the list, so their page closes too.
+            is TasmeeDestination.TeacherPage -> TeacherPage(app, store, destination.teacher, onBlocked = navigator::pop)
             is TasmeeDestination.SessionPage -> SessionPage(app, store, destination.session, navigator)
             is TasmeeDestination.StudentPage -> StudentFilePage(app, store, destination.student)
             TasmeeDestination.History -> HistoryPage(app, store)
@@ -322,7 +326,7 @@ private fun BookingCard(app: AqraApp, booking: Booking) {
         }
         if (booking.kind == TasmeeSession.Kind.VIDEO && live != null && !cancelled) {
             Spacer(Modifier.height(12.dp))
-            CallButton(live, stringResource(R.string.join_the_call)) { overlays.open(studentCall(live)) }
+            CallButton(live, stringResource(R.string.join_the_call)) { overlays.open(studentCall(app, live)) }
         }
         problem?.let { ProblemLine(it, Modifier.padding(top = 12.dp)) }
     }
@@ -332,7 +336,9 @@ private fun BookingCard(app: AqraApp, booking: Booking) {
 @Composable
 private fun TeachersCard(app: AqraApp, navigator: Navigator) {
     val tasmee = app.tasmee
-    if (tasmee.teachers.isEmpty()) {
+    // The teachers to book with, but those this student blocked.
+    val teachers = tasmee.teachers.filterNot { app.account.safety.isBlocked(it.id) }
+    if (teachers.isEmpty()) {
         AqraCard(Modifier.fillMaxWidth(), padding = 14.dp, radius = 24.dp) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 if (tasmee.isLoadingTeachers || (!tasmee.teachersLoaded && tasmee.problem == null)) {
@@ -342,6 +348,9 @@ private fun TeachersCard(app: AqraApp, navigator: Navigator) {
                     // Not «no teachers»: the list couldn't be had (offline, or the account not ready yet).
                     IconTile("📡", Palette.sky, size = 40.dp)
                     Text(stringResource(R.string.teachers_cant_be_loaded_right_now_check_your_connection), style = aqraStyle(14f, Weight.medium, Palette.inkSoft))
+                } else if (tasmee.teachers.isNotEmpty()) {
+                    IconTile("✋", Palette.rose, size = 40.dp)
+                    Text(stringResource(R.string.the_teachers_you_blocked_are_hidden), style = aqraStyle(14f, Weight.medium, Palette.inkSoft))
                 } else {
                     IconTile("🕌", Palette.lavender, size = 40.dp)
                     Text(stringResource(R.string.no_teachers_have_joined_yet), style = aqraStyle(14f, Weight.medium, Palette.inkSoft))
@@ -350,7 +359,7 @@ private fun TeachersCard(app: AqraApp, navigator: Navigator) {
         }
     } else {
         AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
-            tasmee.teachers.forEachIndexed { index, teacher ->
+            teachers.forEachIndexed { index, teacher ->
                 if (index > 0) AqraRowDivider()
                 AqraRow("🎓", Palette.mint, teacher.name, Modifier.pressable(pressed = 1f) { navigator.push(TasmeeDestination.TeacherPage(teacher)) }, detail = teacher.about(factSeparator()))
             }
@@ -363,7 +372,7 @@ private fun TeachersCard(app: AqraApp, navigator: Navigator) {
 
 /** A teacher's profile and the sessions they hold; a signed-in student books a seat here. */
 @Composable
-private fun TeacherPage(app: AqraApp, store: MushafStore, teacher: Teacher) {
+private fun TeacherPage(app: AqraApp, store: MushafStore, teacher: Teacher, onBlocked: () -> Unit) {
     val tasmee = app.tasmee
     val account = app.account
     val signedIn = account.profile?.isAnonymous == false
@@ -422,10 +431,13 @@ private fun TeacherPage(app: AqraApp, store: MushafStore, teacher: Teacher) {
         AqraCard(Modifier.fillMaxWidth(), padding = 14.dp, radius = 24.dp) {
             Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconTile("🎓", Palette.mint, size = 48.dp)
-                Column(verticalArrangement = Arrangement.spacedBy(3.dp)) {
+                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(3.dp)) {
                     Text(teacher.name, style = aqraStyle(22f, Weight.heavy, Palette.ink))
                     if (teacher.city.isNotEmpty()) Text(teacher.city, style = aqraStyle(13f, Weight.bold, Palette.brand))
                     if (teacher.line.isNotEmpty()) Text(teacher.line, style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
+                }
+                if (account.profile?.uid != teacher.id) {
+                    PersonMenu(app, PersonRef(teacher.id, teacher.name, PersonReport.Context.TEACHER), onBlock = { onBlocked() })
                 }
             }
         }

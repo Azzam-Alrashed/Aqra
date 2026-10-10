@@ -55,6 +55,22 @@ struct WelcomeSnapshotTests {
         }
     }
 
+    /// Onboarding page 3 in English: its sample cards in English too, with no Arabic left in them.
+    @Test func renderFeaturesInEnglish() throws {
+        guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }
+        AqraFont.registerBundledFonts()
+        for (name, size) in Self.sizes.prefix(1) {
+            let features = FeaturesPageView(pageCount: 4, currentPage: 2, isActive: false, startsComplete: true, onContinue: {})
+                .frame(width: size.width, height: size.height)
+                .environment(\.locale, Locale(identifier: "en"))
+                .environment(\.layoutDirection, .leftToRight)
+            let renderer = ImageRenderer(content: features)
+            renderer.scale = 2
+            let data = try #require(renderer.uiImage?.pngData())
+            try data.write(to: URL(fileURLWithPath: directory).appendingPathComponent("features-en-\(name).png"))
+        }
+    }
+
     /// The منازل stairs of the home and «ماذا تحفظ؟»: none climbed, a quarter, and all ten.
     @Test func renderManazilStairs() throws {
         guard let directory = ProcessInfo.processInfo.environment["AQRA_SNAPSHOT_OUT"] else { return }

@@ -73,7 +73,7 @@ struct OnboardingPageLayout<Stage: View, Copy: View, Buttons: View>: View {
         }
         .fontDesign(.rounded)
         .background(OnboardingPalette.surface.ignoresSafeArea())
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
     }
 
     private func fittedStage(maxScale: CGFloat) -> some View {
@@ -124,7 +124,8 @@ struct OnboardingHeadline: View {
                 second.foregroundStyle(OnboardingPalette.brand)
             }
             .aqraFont(size: 31 * scale, weight: .heavy)
-            .lineLimit(1)
+            // A line too long for a small phone wraps before it shrinks, and is never cut short.
+            .lineLimit(2)
             .minimumScaleFactor(0.7)
             detail
                 .aqraFont(size: 16 * scale, weight: .medium)

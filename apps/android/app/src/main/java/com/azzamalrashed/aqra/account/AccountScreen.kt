@@ -113,6 +113,7 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
     var pickingTime by remember { mutableStateOf(false) }
     var notificationsDenied by remember { mutableStateOf(false) }
     var showingWallet by remember { mutableStateOf(false) }
+    var showingBlocked by remember { mutableStateOf(false) }
     var reminderOn by app.prefs.reminderOn
     val reminderMinutes by app.prefs.reminderMinutes
 
@@ -192,6 +193,19 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
                 detail = stringResource(R.string.the_quran_text_fonts_and_data))
         }
 
+        AqraSectionTitle(stringResource(R.string.help), Modifier.padding(top = 10.dp))
+        AqraCard(Modifier.fillMaxWidth(), padding = 0.dp, radius = 24.dp) {
+            AqraRow("🛟", Palette.sky, stringResource(R.string.help_and_contact), Modifier.pressable(pressed = 1f) { openSite(context, HELP_URL) },
+                detail = stringResource(R.string.questions_problems_and_reports))
+            AqraRowDivider()
+            AqraRow("🔒", Palette.mint, stringResource(R.string.privacy_policy), Modifier.pressable(pressed = 1f) { openSite(context, PRIVACY_URL) })
+            if (account.safety.blocked.isNotEmpty()) {
+                AqraRowDivider()
+                AqraRow("✋", Palette.rose, stringResource(R.string.blocked), Modifier.pressable(pressed = 1f) { showingBlocked = true },
+                    detail = blockedCount(account.safety.blocked.size))
+            }
+        }
+
         if (account.profile?.isAnonymous == false) {
             AqraCard(Modifier.fillMaxWidth().padding(top = 10.dp).fade(if (account.isWorking) 0.6f else 1f), padding = 0.dp, radius = 24.dp) {
                 AqraRow("🚪", Palette.lavender, stringResource(R.string.sign_out), Modifier.pressable(enabled = !account.isWorking, pressed = 1f) { confirmingSignOut = true }) {}
@@ -232,6 +246,7 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
         ) { context.findActivity()?.let { activity -> scope.launch { account.deleteAccount(activity) } } }
     }
     if (showingWallet) AqraSheet(onDismiss = { showingWallet = false }) { WalletScreen(app) }
+    if (showingBlocked) BlockedPeopleSheet(app) { showingBlocked = false }
     if (pickingTime) {
         ReminderTimeDialog(reminderMinutes, onDismiss = { pickingTime = false }) { minutes ->
             app.prefs.reminderMinutes.value = minutes
@@ -242,7 +257,7 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
 }
 
 @Composable
-private fun AqraSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
+fun AqraSwitch(checked: Boolean, onChange: (Boolean) -> Unit) {
     Switch(checked, onChange, colors = SwitchDefaults.colors(checkedTrackColor = Palette.brand, uncheckedTrackColor = Palette.lavender,
         uncheckedThumbColor = Color.White, uncheckedBorderColor = Palette.lavender))
 }
@@ -487,3 +502,11 @@ private fun Source(icon: String, tint: Color, name: String, detail: String) {
     }
 }
 
+/** The site's help page, with how to reach the team, and its privacy policy (docs/support.html, docs/privacy.html). */
+const val HELP_URL = "https://azzam-alrashed.github.io/Aqra/support.html"
+const val PRIVACY_URL = "https://azzam-alrashed.github.io/Aqra/privacy.html"
+
+/** Opens a page of the site in the browser. */
+fun openSite(context: android.content.Context, url: String) {
+    runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(url))) }
+}

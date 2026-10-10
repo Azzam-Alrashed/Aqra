@@ -26,8 +26,10 @@ struct InboxButton: View {
                             .transition(.scale)
                     }
                 }
+                .tapTarget(drawn: CGSize(width: 38, height: 38))
         }
         .buttonStyle(AqraPressStyle())
+        .keepsDrawnSize(CGSize(width: 38, height: 38))
         .accessibilityLabel(Text("Messages"))
         .accessibilityValue(inbox.unread > 0 ? Text("\(inbox.unread) unread") : Text(verbatim: ""))
         .animation(.spring(response: 0.4, dampingFraction: 0.7), value: inbox.unread)
@@ -75,7 +77,7 @@ struct InboxView: View {
         .scrollIndicators(.hidden)
         .background(Palette.surface.ignoresSafeArea())
         .fontDesign(.rounded)
-        .environment(\.colorScheme, .light)
+        .preferredColorScheme(.light)
         .presentationDragIndicator(.visible)
         .onDisappear { inbox.markAllRead() }
     }

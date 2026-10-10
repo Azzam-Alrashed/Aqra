@@ -388,6 +388,7 @@ opens on the setup or the home.
 | REV-14 | سبقي, the near lane: the pages most recently memorized in Aqra (before today, up to 20, a policy number) come back every day beside the daily amount. Home and «خطتي» show the rotation's real cycle: what's memorized outside the near lane, at the rotation pages of today's plan. | S | ✅ | R, P |
 | REV-15 | «تم» on a page with ayat still veiled asks once «احسب الباقي مراجَعًا؟»: the whole page counts, or only the ayat revealed. | M | ✅ | R |
 | REV-16 | A revision or tasmee' dated later than now (a clock running ahead) counts from now, on the device and in the account's merge; the rules accept a tasmee' record only within a day of the server's time, with at most 604 pages and 6,236 stumbles. | M | ✅ | R |
+| REV-17 | The revision's X goes straight home from a page not yet begun; from a page with ayat revealed or stumbles marked it asks first, since that page isn't recorded (pages finished before it stay recorded). Android's back does the same. | M | ✅ | P |
 
 #### 3.2.6 Home (HOME)
 
@@ -473,11 +474,11 @@ opens on the setup or the home.
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| VID-01 | A video session has one LiveKit room; the teacher and the students holding a seat may join from 15 minutes before it starts until 3 hours after. | M | ✅ | V |
+| VID-01 | A video session has one LiveKit room; the teacher and the students holding a seat may join from 15 minutes before it starts until 3 hours after. Until then the call's button says when it opens, with the day: today, tomorrow, the weekday within a week, or the date («تُفتح غدًا الساعة ٨:٤٥ م»); after, that the call has closed. | M | ✅ | V |
 | VID-02 | Room tokens are issued only by a Cloud Function after verifying the caller is the session's teacher or holds a seat in it, the session is open and the time is within the window; tokens expire. | M | ✅ | V |
 | VID-03 | The student's call screen shows the teacher large and the student's own preview small, with microphone, camera and leave controls. | M | 🟡 built; the media is untested on real devices | V |
 | VID-04 | The teacher's marking screen shows the reciting student's video in a floating tile over the Mushaf, with the same marking as in person. | M | 🟡 built; the media is untested on real devices | V |
-| VID-05 | Audio continues if the camera is off; the call reconnects after a network drop. | S | 🟡 built; untested on real devices | P |
+| VID-05 | Audio continues if the camera is off, and a camera turned off shows the person's initial, never its last frame; the call reconnects after a network drop. | S | 🟡 built; untested on real devices | P |
 | VID-06 | LiveKit credentials are server secrets, never shipped in the app. | M | ✅ | V |
 
 #### 3.2.14 Peer tasmee' (PEER)
@@ -586,6 +587,18 @@ opens on the setup or the home.
 | ADM-01 | Administrators are users with the `admin` custom claim, granted by a script with service credentials. | M | ✅ | E |
 | ADM-02 | Admin tools: list applications, move one to interview, approve (creating the vetted teacher) or reject with a note; record a payout; edit the server policy (`config/policy`). | M | ✅ | E |
 | ADM-03 | A teacher's vetting can be revoked (vetted false), which hides them and stops new sessions. | S | ✅ | P |
+| ADM-04 | Reports of people are listed newest first and marked resolved with what was done (`npm run admin -- reports`, `resolve-report`). | M | ✅ | E |
+
+#### 3.2.24a Safety: reporting and blocking (SAF)
+
+App Review guideline 1.2 asks an app where people see each other's names and video for a way to report them and to
+block them, and a published contact. Teachers are vetted before they appear (TCH), which is the filter.
+
+| ID | Requirement | Pri | Status | Src |
+|---|---|---|---|---|
+| SAF-01 | Anyone signed in (anonymous included) reports a person to the team: a teacher from their page, anyone in a call from the call's flag, a friend from their row, a competitor from the standings or their khatmah part, a student from the teacher's file on them. A report has a reason (inappropriate name, words or picture; abuse or harassment; spam or a scam; something else), an optional note of at most 1,000 characters, and the place it came from; the server dates it. The person isn't told, and nobody but an administrator reads it. | M | ✅ | E |
+| SAF-02 | Blocking is kept on the device: a blocked teacher leaves the list of teachers (and their page closes), a blocked friend stops being a friend and leaves the list, and a blocked competitor keeps their place in the standings without their name. Blocking is offered from the same menus as reporting, and with a report; teachers report students but don't block them. | M | ✅ | E |
+| SAF-03 | Account lists the people blocked, each with «إلغاء الحظر», and links to the site's help page (how to reach the team) and privacy policy. | M | ✅ | E |
 
 #### 3.2.25 Website (WEB)
 
@@ -625,7 +638,7 @@ opens on the setup or the home.
 | `rewards.json` | Points, events, achievements, challenges. |
 | `assessments.json` | In-app test results and sheikh's stage tests applied. |
 | `reading.json` | The reader's ribbon: its page, when it was placed, and when it last changed. |
-| UserDefaults | Onboarding seen, declared, last page, toggles, reminder, sounds, snoozes, dismissed suggestions, applied record ids. |
+| UserDefaults | Onboarding seen, declared, last page, toggles, reminder, sounds, snoozes, dismissed suggestions, applied record ids, the people blocked (`safety.blocked`). |
 
 #### In Firestore
 
@@ -645,6 +658,7 @@ opens on the setup or the home.
 | `wallets/{uid}` (+ `ledger/{id}`), `purchases/{transactionId}` | functions | owner |
 | `teacherBalances/{uid}` (+ `entries/{id}`) | functions, admin | the teacher, admin |
 | `config/policy` | admin | signed in |
+| `reports/{id}` | anyone signed in, once, as themselves | admin |
 
 #### In Cloud Storage
 
@@ -671,8 +685,9 @@ opens on the setup or the home.
 | ATT-05 | Privacy | A teacher never reads a student's progress; anonymous users are never shown by name; data deletable in-app; data stays in one region, Belgium (`europe-west1`, CON-08), the nearest region Google allowed this project. | ✅ |
 | ATT-06 | Maintainability | Policies in one place; features in their own folders; every store has tests. | ✅ |
 | ATT-07 | Portability | Platform-neutral data formats (ayah numbers, JSON snapshots, Firestore schema) documented here. | ✅ |
-| ATT-08 | Accessibility | VoiceOver and TalkBack labels and actions; Dynamic Type up to Accessibility 2 on iOS (the Mushaf's own chrome and composed pictures keep their sizes), font scaling on Android; Reduce Motion; text contrast at WCAG AA (the soft grey is #6C6383). | ✅ |
+| ATT-08 | Accessibility | VoiceOver and TalkBack labels and actions, every switch named; tap targets of at least 44 points on iOS; Dynamic Type up to Accessibility 2 on iOS (the Mushaf's own chrome and composed pictures keep their sizes), font scaling on Android; Reduce Motion; text contrast at WCAG AA (the soft grey is #6C6383). | ✅ |
 | ATT-09 | Localizability | No user-facing string outside the catalog; architecture ready for Urdu, Indonesian, Turkish, French. | ✅ |
+| ATT-10 | Diagnosability | Crashes and hangs reach the developer through Apple's and Google Play's own reports (from users who share them); on iOS, MetricKit's diagnostics are also kept on the phone (the newest 20, in Application Support/Diagnostics) and logged, sent nowhere. No crash service is added, so no data leaves the one region (CON-08). | ✅ |
 
 ### 3.7 Policies
 

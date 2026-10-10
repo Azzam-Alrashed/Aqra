@@ -29,8 +29,15 @@ final class CallModel {
 
     /// When a session's call can be joined: from a quarter of an hour before it starts until three hours after.
     static func isOpen(_ session: TasmeeSession, at date: Date = .now) -> Bool {
-        session.kind == .video && session.status == .open
-            && date >= session.startsAt.addingTimeInterval(-15 * 60) && date <= session.startsAt.addingTimeInterval(3 * 3_600)
+        session.kind == .video && session.status == .open && date >= opensAt(session) && date <= closesAt(session)
+    }
+
+    static func opensAt(_ session: TasmeeSession) -> Date { session.startsAt.addingTimeInterval(-15 * 60) }
+    static func closesAt(_ session: TasmeeSession) -> Date { session.startsAt.addingTimeInterval(3 * 3_600) }
+
+    /// What a call's button says while it can't be joined: when it opens, day and time, or that it has closed.
+    static func waitingLabel(_ session: TasmeeSession, at date: Date) -> Text {
+        date > closesAt(session) ? Text("This call has closed.") : CallOpening.label(opens: opensAt(session), now: date)
     }
 
     func join() async {
@@ -73,7 +80,9 @@ final class CallModel {
 
 /// Why a call couldn't be joined, in words the student understands.
 enum CallProblem: Equatable {
-    case notOpenYet, closed, noSeat, offline, failed
+    /// The server's word for when it opens, when it gave one.
+    case notOpenYet(opensAt: Date?)
+    case closed, noSeat, offline, failed
 
     init(_ error: Error) {
         let error = error as NSError
@@ -85,20 +94,54 @@ enum CallProblem: Equatable {
         case .failedPrecondition:
             // The server says when the call opens if it hasn't yet.
             let details = error.userInfo[FunctionsErrorDetailsKey] as? [String: Any]
-            self = details?["opensAt"] != nil ? .notOpenYet : .closed
+            if let opensAt = details?["opensAt"] {
+                self = .notOpenYet(opensAt: (opensAt as? NSNumber).map { Date(timeIntervalSince1970: $0.doubleValue / 1000) })
+            } else {
+                self = .closed
+            }
         case .permissionDenied, .notFound: self = .noSeat
         case .unavailable, .deadlineExceeded: self = .offline
         default: self = .failed
         }
     }
 
-    var message: LocalizedStringKey {
+    var message: Text {
         switch self {
-        case .notOpenYet: "The call opens a quarter of an hour before the session."
-        case .closed: "This call has closed."
-        case .noSeat: "Only students with a seat join this call."
-        case .offline: "You need an internet connection for this."
-        case .failed: "That didn't work. Please try again."
+        case .notOpenYet(let opensAt):
+            // The rule, then the day and the time it means for this session.
+            let rule = Text("The call opens a quarter of an hour before the session.")
+            return opensAt.map { rule + Text(verbatim: "\n") + CallOpening.label(opens: $0, now: .now) } ?? rule
+        case .closed: return Text("This call has closed.")
+        case .noSeat: return Text("Only students with a seat join this call.")
+        case .offline: return Text("You need an internet connection for this.")
+        case .failed: return Text("That didn't work. Please try again.")
+        }
+    }
+}
+
+/// When a call opens, said with its day as well as its time: «تُفتح غدًا الساعة ٨:٤٥ م». A session booked for another
+/// day once showed only «قبل الجلسة بربع ساعة», which left the student waiting by the button.
+enum CallOpening: Equatable {
+    case today, tomorrow, thisWeek, later
+
+    static func day(of opens: Date, from now: Date, calendar: Calendar = .current) -> CallOpening {
+        let days = calendar.dateComponents([.day], from: calendar.startOfDay(for: now), to: calendar.startOfDay(for: opens)).day ?? 0
+        switch days {
+        case ...0: return .today
+        case 1: return .tomorrow
+        case 2...6: return .thisWeek
+        default: return .later
+        }
+    }
+
+    /// «تُفتح اليوم الساعة ٨:٤٥ م», «تُفتح يوم الثلاثاء الساعة ٨:٤٥ م», «تُفتح في ١٤ أكتوبر الساعة ٨:٤٥ م».
+    static func label(opens: Date, now: Date) -> Text {
+        let time = opens.formatted(date: .omitted, time: .shortened)
+        switch day(of: opens, from: now) {
+        case .today: return Text("Opens today at \(time)")
+        case .tomorrow: return Text("Opens tomorrow at \(time)")
+        case .thisWeek: return Text("Opens \(opens.formatted(.dateTime.weekday(.wide))) at \(time)")
+        case .later: return Text("Opens on \(opens.formatted(.dateTime.day().month(.wide))) at \(time)")
         }
     }
 }
@@ -117,7 +160,7 @@ struct JoinCallButton: View {
             Button {
                 joining = true
             } label: {
-                Label(open ? "Join the call" : "The call opens 15 minutes before", systemImage: "video.fill")
+                Label { open ? Text("Join the call") : CallModel.waitingLabel(session, at: timeline.date) } icon: { Image(systemName: "video.fill") }
                     .font(.system(size: 15, weight: .bold))
                     .foregroundStyle(open ? .white : OnboardingPalette.inkSoft)
                     .frame(maxWidth: .infinity, minHeight: 44)
@@ -234,6 +277,8 @@ private struct CallStage<Footer: View>: View {
     var title: Text
     var onLeave: () -> Void
     @ViewBuilder var footer: Footer
+    @State private var reporting: PersonRef?
+    @State private var blocking: PersonRef?
 
     init(call: CallModel, room: Room, title: Text, onLeave: @escaping () -> Void, @ViewBuilder footer: () -> Footer = { EmptyView() }) {
         self.call = call
@@ -241,6 +286,13 @@ private struct CallStage<Footer: View>: View {
         self.title = title
         self.onLeave = onLeave
         self.footer = footer()
+    }
+
+    /// Everyone else in the call, to report.
+    private var reportable: [PersonRef] {
+        others.compactMap { participant in
+            participant.identity.map { PersonRef(uid: $0.stringValue, name: participant.name ?? "", context: .call, contextId: call.sessionId) }
+        }
     }
 
     /// The others in the call, the teacher first.
@@ -265,6 +317,26 @@ private struct CallStage<Footer: View>: View {
                         .font(.system(size: 13, weight: .bold, design: .rounded).monospacedDigit())
                         .foregroundStyle(.white.opacity(0.7))
                     Image(systemName: "person.2.fill").foregroundStyle(.white.opacity(0.7))
+                    // Reporting anyone else in the call to the team.
+                    if !reportable.isEmpty {
+                        Menu {
+                            ForEach(reportable) { person in
+                                Button {
+                                    reporting = person
+                                } label: {
+                                    Label("Report \(person.shownName)", systemImage: "flag")
+                                }
+                            }
+                        } label: {
+                            Image(systemName: "flag")
+                                .font(.system(size: 15, weight: .bold))
+                                .foregroundStyle(.white.opacity(0.7))
+                                .frame(width: TapTarget.minimum, height: TapTarget.minimum)
+                                .contentShape(Rectangle())
+                        }
+                        .padding(.vertical, -10)
+                        .accessibilityLabel(Text("Report"))
+                    }
                 }
                 .padding(.horizontal, 20)
                 .padding(.top, 8)
@@ -279,7 +351,7 @@ private struct CallStage<Footer: View>: View {
                     case .failed(let problem):
                         VStack(spacing: 14) {
                             Text(verbatim: "📵").font(.system(size: 48))
-                            Text(problem.message)
+                            problem.message
                                 .font(.system(size: 15, weight: .semibold, design: .rounded))
                                 .foregroundStyle(.white)
                                 .multilineTextAlignment(.center)
@@ -348,8 +420,9 @@ private struct CallStage<Footer: View>: View {
                 .padding(.bottom, 12)
             }
         }
-        .environment(\.colorScheme, .dark)
+        .preferredColorScheme(.dark)
         .statusBarHidden(false)
+        .reportsAndBlocks($reporting, $blocking)
     }
 
     private func control(_ symbol: String, label: Text, active: Bool, action: @escaping () -> Void) -> some View {
@@ -394,11 +467,7 @@ struct ParticipantTile: View {
                 ObservedParticipant(participant: shown, name: name)
             } else {
                 VStack(spacing: 6) {
-                    Text(verbatim: String((name ?? "").prefix(1)))
-                        .font(.system(size: 28, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.white)
-                        .frame(width: 56, height: 56)
-                        .background(OnboardingPalette.brand, in: Circle())
+                    CallInitial(name: name ?? "")
                     Text("Not in the call")
                         .font(.system(size: 11, weight: .semibold, design: .rounded))
                         .foregroundStyle(.white.opacity(0.7))
@@ -415,23 +484,21 @@ private struct ObservedParticipant: View {
 
     var body: some View {
         ZStack(alignment: .bottomLeading) {
-            if let track = participant.firstCameraVideoTrack {
-                SwiftUIVideoView(track, layoutMode: .fill)
+            // The camera's publication is watched on its own: turning a camera off mutes its track, a change on
+            // the publication rather than on the participant, and a video view left in place keeps its last frame.
+            if let camera = participant.firstCameraPublication {
+                ObservedCamera(publication: camera, name: shownName)
             } else {
-                VStack(spacing: 6) {
-                    Text(verbatim: String((name ?? participant.name ?? "").prefix(1)))
-                        .font(.system(size: 28, weight: .heavy, design: .rounded))
-                        .foregroundStyle(.white)
-                        .frame(width: 56, height: 56)
-                        .background(OnboardingPalette.brand, in: Circle())
-                }
-                .frame(maxWidth: .infinity, maxHeight: .infinity)
+                CallInitial(name: shownName)
+                    .frame(maxWidth: .infinity, maxHeight: .infinity)
             }
             HStack(spacing: 4) {
-                if !participant.isMicrophoneEnabled() {
-                    Image(systemName: "mic.slash.fill").font(.system(size: 10, weight: .bold))
+                if let microphone = participant.firstAudioPublication {
+                    ObservedMicrophoneBadge(publication: microphone)
+                } else {
+                    MicrophoneOffBadge()
                 }
-                Text(verbatim: name ?? participant.name ?? "")
+                Text(verbatim: shownName)
                     .font(.system(size: 12, weight: .bold, design: .rounded))
                     .lineLimit(1)
             }
@@ -441,6 +508,64 @@ private struct ObservedParticipant: View {
             .background(.black.opacity(0.35), in: Capsule())
             .padding(8)
         }
+    }
+
+    private var shownName: String { name ?? participant.name ?? "" }
+}
+
+/// What a tile shows for someone else's camera: their video only while the camera is on and its track has
+/// arrived, their initial otherwise, so a camera turned off never leaves its last frame on screen (Android does the
+/// same in `ParticipantView`).
+enum RemoteCameraTile: Equatable {
+    case video, initial
+
+    static func shown(isMuted: Bool, isSubscribed: Bool, hasVideoTrack: Bool) -> RemoteCameraTile {
+        !isMuted && isSubscribed && hasVideoTrack ? .video : .initial
+    }
+}
+
+/// Someone else's camera, redrawn as its track is muted and unmuted.
+private struct ObservedCamera: View {
+    @ObservedObject var publication: TrackPublication
+    var name: String
+
+    var body: some View {
+        let track = publication.track as? VideoTrack
+        if let track, RemoteCameraTile.shown(isMuted: publication.isMuted, isSubscribed: publication.isSubscribed,
+                                             hasVideoTrack: true) == .video {
+            SwiftUIVideoView(track, layoutMode: .fill)
+        } else {
+            CallInitial(name: name)
+                .frame(maxWidth: .infinity, maxHeight: .infinity)
+        }
+    }
+}
+
+/// The crossed microphone beside a name, redrawn as the microphone is muted and unmuted.
+private struct ObservedMicrophoneBadge: View {
+    @ObservedObject var publication: TrackPublication
+
+    var body: some View {
+        if publication.isMuted { MicrophoneOffBadge() }
+    }
+}
+
+private struct MicrophoneOffBadge: View {
+    var body: some View {
+        Image(systemName: "mic.slash.fill").font(.system(size: 10, weight: .bold))
+    }
+}
+
+/// A person's initial in a brand circle, shown in place of their camera.
+private struct CallInitial: View {
+    var name: String
+
+    var body: some View {
+        Text(verbatim: String(name.prefix(1)))
+            .font(.system(size: 28, weight: .heavy, design: .rounded))
+            .foregroundStyle(.white)
+            .frame(width: 56, height: 56)
+            .background(OnboardingPalette.brand, in: Circle())
     }
 }
 
