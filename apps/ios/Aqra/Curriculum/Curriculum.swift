@@ -93,6 +93,10 @@ struct StageStatus: Hashable {
     }
 
     var meetsAll: Bool { Requirement.allCases.allSatisfy(isMet) }
+    /// Everything is met but the sheikh's test: the stage waits for one («ينتظر اختبار شيخ»).
+    var awaitsSheikh: Bool {
+        policy.sheikhTestRequired && !sheikhPassed && [Requirement.memorized, .mastered, .test].allSatisfy(isMet)
+    }
     var isPassed: Bool { passedAt != nil }
     /// The in-app test can be taken once the stage is memorized, and not again too soon after failing.
     func canTakeTest(at date: Date = .now) -> Bool {
@@ -184,7 +188,7 @@ final class AssessmentStore {
         var passed: Bool
     }
 
-    let policy: StagePolicy
+    private(set) var policy: StagePolicy
     private(set) var results: [TestResult] = []
     private(set) var sheikhTests: [SheikhTest] = []
     /// Each stage passed, and when.
@@ -198,6 +202,12 @@ final class AssessmentStore {
     static var defaultURL: URL? {
         FileManager.default.urls(for: .applicationSupportDirectory, in: .userDomainMask).first?
             .appendingPathComponent("assessments.json")
+    }
+
+    /// The server's word on the sheikh's test (see `TasmeeStore.sheikhTestRequired`).
+    func setSheikhTestRequired(_ required: Bool) {
+        guard policy.sheikhTestRequired != required else { return }
+        policy.sheikhTestRequired = required
     }
 
     init(fileURL: URL? = AssessmentStore.defaultURL, policy: StagePolicy = .standard) {

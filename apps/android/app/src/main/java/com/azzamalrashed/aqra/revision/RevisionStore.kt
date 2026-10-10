@@ -21,8 +21,12 @@ import kotlin.math.ceil
  * See docs/REVISION.md; the iOS app keeps the same values.
  */
 data class ReviewPolicy(
-    /** The half-life, in days, given to ayat the student declares they already know. */
+    /** The half-life, in days, given to ayat the student declares they already know: «متوسط», the default. */
     val declaredStability: Double = 14.0,
+    /** The half-life of a declared juz' the student calls «متين»: revised regularly, without stumbling. */
+    val firmStability: Double = 30.0,
+    /** The half-life of a declared juz' the student says «يحتاج مراجعة». */
+    val weakStability: Double = 5.0,
     /** How much a clean revision multiplies the half-life, when it comes after the memory has had time to slip. */
     val growth: Double = 2.5,
     /** What a stumble multiplies the half-life by. */
@@ -43,6 +47,16 @@ data class ReviewPolicy(
      */
     val nearLanePages: Int = 20,
 ) {
+    /** How firm a declared juz' is, as the student says at setup. */
+    enum class Firmness { FIRM, MIDDLING, WEAK }
+
+    /** The starting half-life for ayat declared at a firmness. */
+    fun stability(firmness: Firmness): Double = when (firmness) {
+        Firmness.FIRM -> firmStability
+        Firmness.MIDDLING -> declaredStability
+        Firmness.WEAK -> weakStability
+    }
+
     companion object {
         val STANDARD = ReviewPolicy()
 
@@ -237,6 +251,16 @@ class RevisionStore(
 
     fun setDailyPages(pages: Int) {
         dailyPages = pages.coerceIn(1, 40)
+        save()
+    }
+
+    /**
+     * «أين وصلت في مراجعتك؟»: the rotation continues from this page. Today's plan is made again from it, unless some of it
+     * is already revised.
+     */
+    fun setRotationStart(page: Int) {
+        rotationCursor = page.coerceIn(1, MushafStore.PAGE_COUNT)
+        if (plan?.doneCount == 0) plan = null
         save()
     }
 

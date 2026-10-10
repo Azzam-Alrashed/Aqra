@@ -313,9 +313,13 @@ struct TasmeeView: View {
             if tasmee.teachers.isEmpty {
                 AqraCard(padding: 14, radius: 24) {
                     HStack(spacing: 12) {
-                        if tasmee.isLoadingTeachers {
+                        if tasmee.isLoadingTeachers || (!tasmee.teachersLoaded && tasmee.problem == nil) {
                             ProgressView().tint(Palette.brand)
                             Text("Loading teachers…")
+                        } else if !tasmee.teachersLoaded {
+                            // Not «no teachers»: the list couldn't be had (offline, or the account not ready yet).
+                            IconTile(icon: "📡", tint: Palette.sky, size: 40)
+                            Text("Teachers can't be loaded right now. Check your connection.")
                         } else {
                             IconTile(icon: "🕌", tint: Palette.lavender, size: 40)
                             Text("No teachers have joined yet.")

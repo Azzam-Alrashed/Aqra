@@ -63,6 +63,15 @@ class TasmeeStore(
         private set
     var isLoadingTeachers by mutableStateOf(false)
         private set
+    /** Whether the list of teachers has come from the server: only then does an empty list mean none have joined. */
+    var teachersLoaded by mutableStateOf(false)
+        private set
+    /**
+     * The server's word on whether a stage asks for a sheikh's test (`config/policy.sheikhTestRequired`), so it can be
+     * switched while there are few teachers, without a release; null until read, or when it doesn't say.
+     */
+    var sheikhTestRequired: Boolean? by mutableStateOf(null)
+        private set
     /** Every tasmee' record in the account, newest first: what teachers and peers heard. */
     var history: List<TasmeeRecord> by mutableStateOf(emptyList())
         private set
@@ -138,6 +147,10 @@ class TasmeeStore(
         detach()
         this.uid = uid
         val user = user(uid)
+
+        database.collection("config").document("policy").get().addOnSuccessListener { snapshot ->
+            (snapshot.get("sheikhTestRequired") as? Boolean)?.let { sheikhTestRequired = it }
+        }
 
         listeners += database.collection("teachers").document(uid).addSnapshotListener { snapshot, _ ->
             snapshot ?: return@addSnapshotListener
@@ -256,6 +269,8 @@ class TasmeeStore(
         isLoadingTeachers = teachers.isEmpty()
         try {
             val snapshot = database.collection("teachers").whereEqualTo("vetted", true).get().await()
+            // Offline, Firestore answers from its cache: an empty answer from there says nothing about who has joined.
+            teachersLoaded = !(snapshot.metadata.isFromCache && snapshot.isEmpty)
             teachers = snapshot.documents.mapNotNull { Teacher.from(it.id, dated(it.data)) }.sortedWith(compareBy(String.CASE_INSENSITIVE_ORDER) { it.name })
             problem = null
         } catch (error: Exception) {

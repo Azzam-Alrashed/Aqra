@@ -49,6 +49,7 @@ import com.azzamalrashed.aqra.account.AccountScreen
 import com.azzamalrashed.aqra.account.DailyReminder
 import com.azzamalrashed.aqra.account.SessionReminders
 import com.azzamalrashed.aqra.home.HomeScreen
+import com.azzamalrashed.aqra.memorization.MemorizationFirmnessScreen
 import com.azzamalrashed.aqra.memorization.MemorizationSetupScreen
 import com.azzamalrashed.aqra.mushaf.MushafScreen
 import com.azzamalrashed.aqra.onboarding.OnboardingScreen
@@ -78,8 +79,11 @@ import androidx.core.content.ContextCompat
 /** What opens full screen over the tabs, growing out of the home. */
 sealed interface FullScreen {
     data class Mushaf(val marking: Boolean) : FullScreen
-    /** Today's wird, from one of its pages; or one page revised outside the app, with its stumbles. */
-    data class Wird(val page: Int, val outside: Boolean = false) : FullScreen
+    /**
+     * Today's wird, from one of its pages; or one page revised outside the app, with its stumbles — logged from the
+     * Mushaf, it goes back to the Mushaf when done.
+     */
+    data class Wird(val page: Int, val outside: Boolean = false, val returnsToMushaf: Boolean = false) : FullScreen
     /** Today's new portion, to memorize. */
     data class Memorize(val portion: List<Int>) : FullScreen
     /** Any other full-screen view, such as hearing a student or a friend. */
@@ -131,7 +135,11 @@ private fun MushafRoot(app: AqraApp) {
     // marking cut short (the app was closed during it) goes on to its next steps.
     LaunchedEffect(afterMarking) { if (afterMarking != AFTER_MARKING) startsMarking = false }
     LaunchedEffect(Unit) { if (afterMarking == AFTER_MARKING && !startsMarking) afterMarking = nextAfterMarking(app) }
-    /** «رجوع» on «كم تراجع كل يوم؟»: back to «ماذا تحفظ؟», or to the marking in the Mushaf when that came before. */
+    /** «رجوع» on «كم تراجع كل يوم؟»: back to «كيف حفظك؟». */
+    fun backToFirmness() {
+        if (afterMarking == AFTER_MARKING_AMOUNT) afterMarking = AFTER_MARKING_FIRMNESS else setupStep = 4
+    }
+    /** «رجوع» on «كيف حفظك؟»: back to «ماذا تحفظ؟», or to the marking in the Mushaf when that came before. */
     fun backToMemorized() {
         if (afterMarking.isNotEmpty()) {
             startsMarking = true
@@ -167,6 +175,7 @@ private fun MushafRoot(app: AqraApp) {
             val store = result.getOrThrow()
             AnimatedContent(
                 targetState = when {
+                    afterMarking == AFTER_MARKING_FIRMNESS -> 4
                     afterMarking == AFTER_MARKING_AMOUNT -> 1
                     afterMarking == AFTER_MARKING_PLAN -> 2
                     hasDeclared -> 3
@@ -183,18 +192,23 @@ private fun MushafRoot(app: AqraApp) {
                                 afterMarking = AFTER_MARKING
                                 hasDeclared = true
                             }
-                            // With something memorized, its daily revision first; starting from zero, straight to the plan.
-                            app.memorization.count > 0 -> setupStep = 1
+                            // With something memorized, how firm it is and its daily revision first; starting from zero,
+                            // straight to the plan.
+                            app.memorization.count > 0 -> setupStep = 4
                             else -> setupStep = 2
                         }
                     }
                     1 -> {
                         val pages = RevisionStore.memorizedPages(store, app.memorization).size
-                        DailyAmountScreen(pages, app.revision.effectiveDailyPages(pages), isEditor = false, onBack = ::backToMemorized) { amount ->
+                        DailyAmountScreen(pages, app.revision.effectiveDailyPages(pages), isEditor = false, onBack = ::backToFirmness) { amount ->
                             app.revision.setDailyPages(amount)
                             setupStep = 2
                             if (afterMarking == AFTER_MARKING_AMOUNT) afterMarking = AFTER_MARKING_PLAN
                         }
+                    }
+                    4 -> MemorizationFirmnessScreen(app, store, onBack = ::backToMemorized) {
+                        setupStep = 1
+                        if (afterMarking == AFTER_MARKING_FIRMNESS) afterMarking = AFTER_MARKING_AMOUNT
                     }
                     2 -> PlanEditorScreen(app, store, isSetup = true, onBack = ::backFromPlan) {
                         hasDeclared = true
@@ -230,6 +244,9 @@ private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
     // The account's copy merged in (another device revised): today's plan follows.
     val lastMerge = app.sync.lastMerge
     LaunchedEffect(lastMerge) { if (lastMerge != null) refreshPlan() }
+    // Whether a stage asks for a sheikh's test can be switched on the server.
+    val sheikhTestRequired = app.tasmee.sheikhTestRequired
+    LaunchedEffect(sheikhTestRequired) { sheikhTestRequired?.let(app.assessments::setSheikhTestRequired) }
     // A new day while the app is open (midnight, or another time zone, or the clock set): today's plan follows.
     val dayContext = LocalContext.current
     DisposableEffect(Unit) {
@@ -286,7 +303,9 @@ private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
                 Box(Modifier.fillMaxSize().pointerInput(Unit) { detectTapGestures {} }) {
                     when (val screen = shown) {
                         is FullScreen.Mushaf -> MushafWithSetup(app, store, screen.marking, overlays)
-                        is FullScreen.Wird -> WirdScreen(app, store, screen.page, screen.outside) { overlays.close() }
+                        is FullScreen.Wird -> WirdScreen(app, store, screen.page, screen.outside) {
+                            if (screen.returnsToMushaf) overlays.open(FullScreen.Mushaf(marking = false)) else overlays.close()
+                        }
                         is FullScreen.Memorize -> MemorizeScreen(app, store, screen.portion) { overlays.close() }
                         is FullScreen.Custom -> screen.content { overlays.close() }
                         null -> Unit
@@ -298,11 +317,12 @@ private fun AppTabs(app: AqraApp, store: MushafStore, startsMarking: Boolean) {
 }
 
 private const val AFTER_MARKING = "marking"
+private const val AFTER_MARKING_FIRMNESS = "firmness"
 private const val AFTER_MARKING_AMOUNT = "dailyAmount"
 private const val AFTER_MARKING_PLAN = "plan"
 
-/** The step after the setup's marking: the daily amount when anything is marked, else the plan. */
-private fun nextAfterMarking(app: AqraApp) = if (app.memorization.count > 0) AFTER_MARKING_AMOUNT else AFTER_MARKING_PLAN
+/** The step after the setup's marking: how firm it is (then the daily amount) when anything is marked, else the plan. */
+private fun nextAfterMarking(app: AqraApp) = if (app.memorization.count > 0) AFTER_MARKING_FIRMNESS else AFTER_MARKING_PLAN
 
 /** The Mushaf, with the juz' and surahs sheet its marking bar opens. */
 @Composable

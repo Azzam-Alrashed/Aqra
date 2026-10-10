@@ -24,6 +24,11 @@ final class TasmeeStore {
     /// The vetted teachers, by name.
     private(set) var teachers: [Teacher] = []
     private(set) var isLoadingTeachers = false
+    /// Whether the list of teachers has come from the server: only then does an empty list mean none have joined.
+    private(set) var teachersLoaded = false
+    /// The server's word on whether a stage asks for a sheikh's test (`config/policy.sheikhTestRequired`), so it can
+    /// be switched while there are few teachers, without a release; nil until read, or when it doesn't say.
+    private(set) var sheikhTestRequired: Bool?
     /// Tasmee' records applied to this device since launch, newest first.
     private(set) var recentlyApplied: [TasmeeRecord] = []
     /// Every tasmee' record in the account, newest first: what teachers and peers heard.
@@ -87,6 +92,13 @@ final class TasmeeStore {
         detach()
         self.uid = uid
         let user = user(uid)
+
+        database.collection("config").document("policy").getDocument { [weak self] snapshot, _ in
+            MainActor.assumeIsolated {
+                guard let self, let required = snapshot?.data()?["sheikhTestRequired"] as? Bool else { return }
+                self.sheikhTestRequired = required
+            }
+        }
 
         listeners.append(database.collection("teachers").document(uid).addSnapshotListener { [weak self] snapshot, _ in
             MainActor.assumeIsolated {
@@ -238,6 +250,8 @@ final class TasmeeStore {
         defer { isLoadingTeachers = false }
         do {
             let snapshot = try await database.collection("teachers").whereField("vetted", isEqualTo: true).getDocuments()
+            // Offline, Firestore answers from its cache: an empty answer from there says nothing about who has joined.
+            teachersLoaded = !(snapshot.metadata.isFromCache && snapshot.isEmpty)
             teachers = snapshot.documents
                 .compactMap { Teacher(id: $0.documentID, document: Self.dated($0.data())) }
                 .sorted { $0.name.localizedStandardCompare($1.name) == .orderedAscending }

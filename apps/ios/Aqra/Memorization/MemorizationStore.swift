@@ -177,6 +177,23 @@ final class MemorizationStore {
         }
     }
 
+    /// How firm the student says declared ayat are: their starting half-life follows (see `ReviewPolicy.Firmness`).
+    /// Only ayat declared and never revised or memorized in Aqra change: what's been measured since stays.
+    func setFirmness(_ firmness: ReviewPolicy.Firmness, of declared: some Sequence<Int>, policy: ReviewPolicy = .standard) {
+        let stability = policy.stability(for: firmness)
+        var changed = false
+        for ayah in declared {
+            guard var memory = ayahs[ayah], memory.lastReviewed == nil, memory.learnedAt == nil, memory.stability != stability else { continue }
+            memory.stability = stability
+            ayahs[ayah] = memory
+            changed = true
+        }
+        if changed {
+            scheduleSave()
+            saveNow()
+        }
+    }
+
     /// A teacher heard these ayat in a tasmee': the memorized ones among them are marked verified, except the
     /// stumbled ones, which lose the mark until a teacher hears them clean again.
     func verify(_ heard: some Sequence<Int>, except stumbled: Set<Int> = []) {

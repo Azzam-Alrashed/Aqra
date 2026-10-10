@@ -10,6 +10,7 @@ struct MushafView: View {
 
     @Environment(MemorizationStore.self) private var memorization
     @Environment(ReadingStore.self) private var reading
+    @Environment(RevisionStore.self) private var revision
     @Environment(\.dismiss) private var dismiss
     /// The app's own direction, for the bars' lines of text inside their Mushaf-ordered (right-to-left) layout.
     @Environment(\.layoutDirection) private var layoutDirection
@@ -27,6 +28,10 @@ struct MushafView: View {
     @State private var showingSetup = false
     /// What the ribbon button just did, shown for a moment above the bottom bar.
     @State private var ribbonNotice: RibbonNotice?
+    /// «سجّل مراجعة»: the page whose revision outside today's wird is being logged.
+    @State private var loggingPage: Int?
+    /// That page, revised with stumbles: shown whole to tap them.
+    @State private var stumblesPage: Int?
 
     var body: some View {
         GeometryReader { geometry in
@@ -53,7 +58,10 @@ struct MushafView: View {
                         topBar.transition(.opacity)
                     }
                     Spacer()
-                    if toolbarVisible, marking == nil, let ribbonNotice {
+                    if toolbarVisible, marking == nil, let loggingPage {
+                        logPanel(loggingPage)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    } else if toolbarVisible, marking == nil, let ribbonNotice {
                         ribbonPanel(ribbonNotice)
                             .transition(.move(edge: .bottom).combined(with: .opacity))
                     }
@@ -76,8 +84,12 @@ struct MushafView: View {
         // Swiping down closes the Mushaf, but not while marking, where a stray swipe would lose the place.
         .interactiveDismissDisabled(marking != nil)
         .animation(.easeInOut(duration: 0.2), value: toolbarVisible)
+        .fullScreenCover(isPresented: Binding { stumblesPage != nil } set: { if !$0 { stumblesPage = nil } }) {
+            if let stumblesPage { WirdView(store: store, startPage: stumblesPage, outside: true) }
+        }
         // Swiping to another page hides the toolbar; jumps made from the toolbar keep it open.
         .onChange(of: lastPage) {
+            loggingPage = nil
             if movedByToolbar {
                 movedByToolbar = false
             } else if toolbarVisible && marking == nil {
@@ -297,6 +309,7 @@ struct MushafView: View {
                     sliderPage = nil
                 }
                 .tint(MushafStyle.barAccent)
+                logButton
                 ribbonButton
             }
             .padding(.leading, 4)
@@ -332,6 +345,82 @@ struct MushafView: View {
         .sensoryFeedback(.success, trigger: reading.bookmark?.page)
     }
 
+    // MARK: - Logging a revision of any page
+
+    /// The page's memorized ayat: what a revision of it covers.
+    private func memorizedAyahs(onPage page: Int) -> [Int] {
+        store.page(page).ayahs.filter { memorization.isMemorized($0) }
+    }
+
+    /// «سجّل مراجعة»: a revision of this page (or its juz') outside today's wird, in prayer or to a friend.
+    @ViewBuilder private var logButton: some View {
+        if !memorizedAyahs(onPage: lastPage).isEmpty {
+            Button {
+                withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                    loggingPage = loggingPage == nil ? lastPage : nil
+                    ribbonNotice = nil
+                }
+            } label: {
+                MushafBarIcon("Log a revision", systemImage: loggingPage == nil ? "checkmark.circle" : "checkmark.circle.fill")
+            }
+        }
+    }
+
+    private func logPanel(_ page: Int) -> some View {
+        let juz = store.page(page).juz
+        return FloatingPanel {
+            VStack(spacing: 12) {
+                HStack(spacing: 12) {
+                    IconTile(icon: "✅", tint: OnboardingPalette.mint, size: 38)
+                    VStack(alignment: .leading, spacing: 2) {
+                        Text("Revised this page outside the wird?")
+                            .font(.system(size: 15, weight: .heavy, design: .rounded))
+                            .foregroundStyle(MushafStyle.ink)
+                        Text("\(store.surahNames[store.page(page).surah] ?? ""), page \(page)")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(MushafStyle.chrome)
+                    }
+                    .fixedSize(horizontal: false, vertical: true)
+                    Spacer(minLength: 0)
+                    Button {
+                        withAnimation(.snappy) { loggingPage = nil }
+                    } label: {
+                        Image(systemName: "xmark")
+                            .font(.system(size: 13, weight: .heavy))
+                            .foregroundStyle(MushafStyle.barAccent)
+                            .frame(width: 32, height: 32)
+                            .background(MushafStyle.barAccentFill, in: Circle())
+                    }
+                    .accessibilityLabel(Text("Close"))
+                }
+                .environment(\.layoutDirection, layoutDirection)
+                HStack(spacing: 10) {
+                    Button("No stumbles") {
+                        revision.record(page: page, ayahs: memorizedAyahs(onPage: page), stumbles: [], source: .outside, memorization: memorization)
+                        withAnimation(.snappy) { loggingPage = nil }
+                        show(.logged(pages: 1))
+                    }
+                    .buttonStyle(MarkingButtonStyle(prominent: true))
+                    Button("With stumbles") {
+                        loggingPage = nil
+                        stumblesPage = page
+                    }
+                    .buttonStyle(MarkingButtonStyle())
+                }
+                Button("The whole of juz' \(juz), no stumbles") {
+                    let pages = (1...MushafStore.pageCount).filter { store.page($0).juz == juz && !memorizedAyahs(onPage: $0).isEmpty }
+                    for each in pages {
+                        revision.record(page: each, ayahs: memorizedAyahs(onPage: each), stumbles: [], source: .outside, memorization: memorization)
+                    }
+                    withAnimation(.snappy) { loggingPage = nil }
+                    show(.logged(pages: pages.count))
+                }
+                .buttonStyle(MarkingButtonStyle())
+            }
+        }
+        .sensoryFeedback(.success, trigger: revision.history.count)
+    }
+
     private func show(_ notice: RibbonNotice) {
         withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { ribbonNotice = notice }
     }
@@ -339,7 +428,11 @@ struct MushafView: View {
     private func ribbonPanel(_ notice: RibbonNotice) -> some View {
         FloatingPanel {
             HStack(spacing: 12) {
-                IconTile(icon: "🔖", tint: OnboardingPalette.rose, size: 38)
+                if case .logged = notice {
+                    IconTile(icon: "✅", tint: OnboardingPalette.mint, size: 38)
+                } else {
+                    IconTile(icon: "🔖", tint: OnboardingPalette.rose, size: 38)
+                }
                 VStack(alignment: .leading, spacing: 2) {
                     switch notice {
                     case .placed(let page):
@@ -353,6 +446,13 @@ struct MushafView: View {
                         Text("Bookmark removed")
                             .font(.system(size: 15, weight: .heavy, design: .rounded))
                             .foregroundStyle(MushafStyle.ink)
+                    case .logged(let pages):
+                        Text("Recorded: \(pages) pages revised")
+                            .font(.system(size: 15, weight: .heavy, design: .rounded))
+                            .foregroundStyle(MushafStyle.ink)
+                        Text("They count in your streak and your strength.")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(MushafStyle.chrome)
                     }
                 }
                 .fixedSize(horizontal: false, vertical: true)
@@ -369,10 +469,11 @@ struct MushafView: View {
     }
 }
 
-/// What the ribbon button just did.
+/// What the ribbon button, or logging a revision, just did.
 private enum RibbonNotice: Hashable {
     case placed(page: Int)
     case removed
+    case logged(pages: Int)
 }
 
 /// The ribbon (فاصل) hanging from the top of the page it marks, with the page's number. It lies in the page's header
@@ -448,13 +549,13 @@ struct MushafSpreadView: View {
 /// Where a student who chose to mark what they've memorized in the Mushaf is in setup: marking, then the daily
 /// amount (when they've marked anything), then the plan, as the other path goes. Kept across launches.
 enum SetupAfterMarking: String {
-    case none, marking, dailyAmount, plan
+    case none, marking, firmness, dailyAmount, plan
 
     static let key = "setup.afterMarking"
 
     /// The step after the marking.
     @MainActor static func next(memorization: MemorizationStore) -> Self {
-        memorization.count > 0 ? .dailyAmount : .plan
+        memorization.count > 0 ? .firmness : .plan
     }
 }
 
@@ -479,7 +580,7 @@ struct MushafRootView: View {
     @AppStorage(SetupAfterMarking.key) private var afterMarking = SetupAfterMarking.none
     @Environment(\.scenePhase) private var scenePhase
 
-    private enum SetupStep { case memorized, dailyAmount, plan }
+    private enum SetupStep { case memorized, firmness, dailyAmount, plan }
 
     init() {
         let memorization = MemorizationStore()
@@ -528,6 +629,10 @@ struct MushafRootView: View {
                 afterMarking = .none
             }
         }
+        // Whether a stage asks for a sheikh's test can be switched on the server.
+        .onChange(of: account.tasmee.sheikhTestRequired, initial: true) {
+            if let required = account.tasmee.sheikhTestRequired { assessments.setSheikhTestRequired(required) }
+        }
         // Once the setup's marking is over, the home that comes back doesn't open the Mushaf on its own again.
         .onChange(of: afterMarking) { if afterMarking != .marking { startsMarking = false } }
         .onOpenURL { url in
@@ -567,11 +672,20 @@ struct MushafRootView: View {
              .success(let store) where afterMarking == .dailyAmount:
             let pages = RevisionStore.memorizedPages(in: store, memorization: memorization).count
             DailyAmountView(memorizedPages: pages, initial: revision.effectiveDailyPages(memorizedPages: pages),
-                            onBack: backToMemorized) { amount in
+                            onBack: backToFirmness) { amount in
                 revision.setDailyPages(amount)
                 withAnimation {
                     setupStep = .plan
                     if afterMarking == .dailyAmount { afterMarking = .plan }
+                }
+            }
+            .transition(.move(edge: .leading).combined(with: .opacity))
+        case .success(let store) where !hasDeclared && setupStep == .firmness,
+             .success(let store) where afterMarking == .firmness:
+            MemorizationFirmnessView(store: store, onBack: backToMemorized) {
+                withAnimation {
+                    setupStep = .dailyAmount
+                    if afterMarking == .firmness { afterMarking = .dailyAmount }
                 }
             }
             .transition(.move(edge: .leading).combined(with: .opacity))
@@ -582,8 +696,9 @@ struct MushafRootView: View {
                     afterMarking = .marking
                     withAnimation { hasDeclared = true }
                 } else {
-                    // With something memorized, its daily revision first; starting from zero, straight to the plan.
-                    withAnimation { setupStep = memorization.count > 0 ? .dailyAmount : .plan }
+                    // With something memorized, how firm it is and its daily revision first; starting from zero,
+                    // straight to the plan.
+                    withAnimation { setupStep = memorization.count > 0 ? .firmness : .plan }
                 }
             }
         case .success(let store):
@@ -596,7 +711,14 @@ struct MushafRootView: View {
         }
     }
 
-    /// «رجوع» on «كم تراجع كل يوم؟»: back to «ماذا تحفظ؟», or to the marking in the Mushaf when that came before.
+    /// «رجوع» on «كم تراجع كل يوم؟»: back to «كيف حفظك؟».
+    private func backToFirmness() {
+        withAnimation {
+            if afterMarking == .dailyAmount { afterMarking = .firmness } else { setupStep = .firmness }
+        }
+    }
+
+    /// «رجوع» on «كيف حفظك؟»: back to «ماذا تحفظ؟», or to the marking in the Mushaf when that came before.
     private func backToMemorized() {
         withAnimation {
             if afterMarking != .none {

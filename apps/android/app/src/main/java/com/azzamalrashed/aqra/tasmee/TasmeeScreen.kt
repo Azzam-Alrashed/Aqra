@@ -335,9 +335,13 @@ private fun TeachersCard(app: AqraApp, navigator: Navigator) {
     if (tasmee.teachers.isEmpty()) {
         AqraCard(Modifier.fillMaxWidth(), padding = 14.dp, radius = 24.dp) {
             Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                if (tasmee.isLoadingTeachers) {
+                if (tasmee.isLoadingTeachers || (!tasmee.teachersLoaded && tasmee.problem == null)) {
                     AqraProgress()
                     Text(stringResource(R.string.loading_teachers), style = aqraStyle(14f, Weight.medium, Palette.inkSoft))
+                } else if (!tasmee.teachersLoaded) {
+                    // Not «no teachers»: the list couldn't be had (offline, or the account not ready yet).
+                    IconTile("📡", Palette.sky, size = 40.dp)
+                    Text(stringResource(R.string.teachers_cant_be_loaded_right_now_check_your_connection), style = aqraStyle(14f, Weight.medium, Palette.inkSoft))
                 } else {
                     IconTile("🕌", Palette.lavender, size = 40.dp)
                     Text(stringResource(R.string.no_teachers_have_joined_yet), style = aqraStyle(14f, Weight.medium, Palette.inkSoft))

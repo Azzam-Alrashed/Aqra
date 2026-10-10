@@ -17,6 +17,8 @@
     <string name="s_recorded_your_tasmee_of_n_pages">سجّل %1$s تسميعك؛ عدد الصفحات: %2$d.</string>
     <!-- %@ removed -->
     <string name="s_removed">أُزيلت سورة %s</string>
+    <!-- %@, page %lld -->
+    <string name="s_page_n">%1$s، الصفحة %2$d</string>
     <!-- %lld ayat -->
     <plurals name="n_ayat">
         <item quantity="zero">%d آية</item>
@@ -373,6 +375,10 @@
     <string name="aqra_cant_use_the_microphone_allow_it_in_settings">لا يصل اقرأ إلى الميكروفون. اسمح له من الإعدادات.</string>
     <!-- Aqra shows the Quran exactly as published, from these sources, with thanks. -->
     <string name="aqra_shows_the_quran_exactly_as_published_from_these_sources">يعرض اقرأ القرآن الكريم كما نُشر تمامًا، من هذه المصادر، مع الشكر والتقدير.</string>
+    <!-- Awaiting a sheikh\'s test -->
+    <string name="awaiting_a_sheikhs_test">ينتظر اختبار شيخ</string>
+    <!-- Awaiting a sheikh\'s test: book a tasmee\' and ask for one -->
+    <string name="awaiting_a_sheikhs_test_book_a_tasmee_and_ask_for">ينتظر اختبار شيخ: احجز تسميعًا واطلبه</string>
     <!-- ayah %lld -->
     <string name="ayah_n">الآية %d</string>
     <!-- Ayah %lld -->
@@ -560,6 +566,8 @@
     <string name="due_to_you">المستحق لك</string>
     <!-- each day? -->
     <string name="each_day_q">كل يوم؟</string>
+    <!-- each juz\'? -->
+    <string name="each_juz_q">في كل جزء؟</string>
     <!-- Earned -->
     <string name="earned">محقَّق</string>
     <!-- Edit -->
@@ -592,8 +600,12 @@
     <string name="everything_that_helps_your_memorization">كل ما يُعينك على حفظك</string>
     <!-- fact separator -->
     <string name="fact_separator">"، "</string>
+    <!-- Fair -->
+    <string name="fair">متوسط</string>
     <!-- Finish -->
     <string name="finish">إنهاء</string>
+    <!-- Firm -->
+    <string name="firm">متين</string>
     <!-- First new portion -->
     <string name="first_new_portion">أول مقطع جديد</string>
     <!-- First revision -->
@@ -670,6 +682,8 @@
     <string name="home">الرئيسية</string>
     <!-- Home opens on it, and browsing or marking never moves it. -->
     <string name="home_opens_on_it_and_browsing_or_marking_never_moves">تفتح الرئيسية عليه، ولا يحرّكه التصفّح أو التحديد.</string>
+    <!-- How firm is -->
+    <string name="how_firm_is">كيف حفظك</string>
     <!-- How much will you -->
     <string name="how_much_will_you">كم تراجع</string>
     <!-- How much will you memorize -->
@@ -706,6 +720,8 @@
     <string name="invite_a_friend">ادعُ صديقًا</string>
     <!-- Invite a friend with a code -->
     <string name="invite_a_friend_with_a_code">ادعُ صديقًا برمز</string>
+    <!-- It continues from juz\' %lld -->
+    <string name="it_continues_from_juz_n">تبدأ من الجزء %d</string>
     <!-- It counts as taken: the questions you haven\'t answered count as wrong. -->
     <string name="it_counts_as_taken_the_questions_you_havent_answered_count">يُحسب الاختبار مأخوذًا، وتُحسب الأسئلة التي لم تُجب عنها خاطئة.</string>
     <!-- It\'s been added to your revision. -->
@@ -766,6 +782,8 @@
     <string name="listening">أستمع إليك…</string>
     <!-- Loading teachers… -->
     <string name="loading_teachers">جارٍ تحميل المعلّمين…</string>
+    <!-- Log a revision -->
+    <string name="log_a_revision">سجّل مراجعة</string>
     <!-- Log it -->
     <string name="log_it">سجّلها</string>
     <!-- Log the page -->
@@ -841,6 +859,8 @@
     <string name="name_others_see">الاسم الذي يراه الآخرون</string>
     <!-- Needed prompting -->
     <string name="needed_prompting">احتاج إلى تلقين</string>
+    <!-- Needs revision -->
+    <string name="needs_revision">يحتاج مراجعة</string>
     <!-- New challenge -->
     <string name="new_challenge">تحدٍّ جديد</string>
     <!-- New competition -->
@@ -1002,6 +1022,15 @@
     <string name="recited_to_a_friend">سمّعت لصديق</string>
     <!-- Record tasmee\' -->
     <string name="record_tasmee">سجّل التسميع</string>
+    <!-- Recorded: %lld pages revised -->
+    <plurals name="recorded_n_pages_revised">
+        <item quantity="zero">سُجّلت مراجعة %d صفحة</item>
+        <item quantity="one">سُجّلت مراجعة صفحة واحدة</item>
+        <item quantity="two">سُجّلت مراجعة صفحتين</item>
+        <item quantity="few">سُجّلت مراجعة %d صفحات</item>
+        <item quantity="many">سُجّلت مراجعة %d صفحة</item>
+        <item quantity="other">سُجّلت مراجعة %d صفحة</item>
+    </plurals>
     <!-- Refunded: session cancelled -->
     <string name="refunded_session_cancelled">مستردّة: أُلغيت الجلسة</string>
     <!-- Released -->
@@ -1071,6 +1100,8 @@
     <string name="revised_outside_the_app_with_stumbles">راجعتها خارج التطبيق، مع تعثّرات…</string>
     <!-- Revised outside the app? -->
     <string name="revised_outside_the_app_q">راجعتَ خارج التطبيق؟</string>
+    <!-- Revised this page outside the wird? -->
+    <string name="revised_this_page_outside_the_wird_q">راجعتَ هذه الصفحة خارج الوِرد؟</string>
     <!-- Revising -->
     <string name="revising">مراجعة</string>
     <!-- Revision -->
@@ -1250,6 +1281,8 @@
     <string name="teachers">المعلّمون</string>
     <!-- Teachers are vetted: the team reviews your ijazah, then meets you for an interview. -->
     <string name="teachers_are_vetted_the_team_reviews_your_ijazah_then_meets">يُعتمد المعلّمون بعد التحقق: يراجع الفريق إجازتك، ثم يلتقي بك في مقابلة.</string>
+    <!-- Teachers can\'t be loaded right now. Check your connection. -->
+    <string name="teachers_cant_be_loaded_right_now_check_your_connection">تعذّر تحميل المعلّمين الآن. تحقّق من اتصالك بالإنترنت.</string>
     <!-- Teachers on Aqra hold an ijazah in the Quran. Tell us about yours; the team reviews it and then meets you for a short interview. -->
     <string name="teachers_on_aqra_hold_an_ijazah_in_the_quran_tell">معلّمو اقرأ مُجازون في القرآن الكريم. حدّثنا عن إجازتك؛ يراجعها الفريق ثم يلتقي بك في مقابلة قصيرة.</string>
     <!-- Teachers, friends and those who hear your tasmee\' see this name. -->
@@ -1306,6 +1339,8 @@
     <string name="the_topic_sections_for_now">أقسام المواضيع، مؤقتًا.</string>
     <!-- The typeface of the hadith, under the SIL Open Font License. -->
     <string name="the_typeface_of_the_hadith_under_the_sil_open_font">خط الأحاديث، برخصة SIL للخطوط المفتوحة.</string>
+    <!-- The whole of juz\' %lld, no stumbles -->
+    <string name="the_whole_of_juz_n_no_stumbles">الجزء %d كله، دون تعثّر</string>
     <!-- the whole Quran -->
     <string name="the_whole_quran_2">القرآن كاملًا</string>
     <!-- The whole Quran -->
@@ -1316,6 +1351,8 @@
     <string name="there_isnt_enough_memorized_in_this_stage_for_a_test">لم تحفظ من هذه المرحلة ما يكفي للاختبار بعد.</string>
     <!-- These pages keep slipping -->
     <string name="these_pages_keep_slipping">هذه الصفحات تتفلّت</string>
+    <!-- They count in your streak and your strength. -->
+    <string name="they_count_in_your_streak_and_your_strength">تُحسب في سلسلة مراجعتك وقوّة حفظك.</string>
     <!-- They mark your stumbles on their phone -->
     <string name="they_mark_your_stumbles_on_their_phone">يعلّم تعثّراتك على جواله</string>
     <!-- This account has no memorization yet. -->
@@ -1420,6 +1457,8 @@
     <string name="what_youve_memorized_stays_and_its_revision_goes_on_you">يبقى ما حفظته وتستمر مراجعته، ويمكنك بدء خطة جديدة متى شئت.</string>
     <!-- When -->
     <string name="when">متى</string>
+    <!-- Where are you in your revision? -->
+    <string name="where_are_you_in_your_revision_q">أين وصلت في مراجعتك؟</string>
     <!-- Where will you -->
     <string name="where_will_you">من أين</string>
     <!-- Which ayah comes next? -->
@@ -1585,12 +1624,16 @@
     <string name="your_progress_is_kept_on_your_device_and_backed_up">تقدّمك محفوظ على جهازك ومنسوخ احتياطيًا، وتربطه بحسابك متى شئت.</string>
     <!-- Your progress stays in your account, and this device starts afresh. Sign in again to bring it back. -->
     <string name="your_progress_stays_in_your_account_and_this_device_starts">يبقى تقدّمك في حسابك، ويبدأ هذا الجهاز من جديد. سجّل الدخول مرة أخرى لاستعادته.</string>
+    <!-- Your revision continues from juz\' %lld -->
+    <string name="your_revision_continues_from_juz_n">تستمرّ مراجعتك من الجزء %d</string>
     <!-- Your revision today -->
     <string name="your_revision_today">وِردك اليوم</string>
     <!-- Your seat goes back to the session. -->
     <string name="your_seat_goes_back_to_the_session">يعود مقعدك إلى الجلسة.</string>
     <!-- Your share of each seat won by bidding, after the app\'s commission, in credits. The team pays it by bank transfer. -->
     <string name="your_share_of_each_seat_won_by_bidding_after_the">حصتك من كل مقعد فِيز به بالمزايدة بعد عمولة التطبيق، بالعملات. يحوّلها الفريق إليك بتحويل بنكي.</string>
+    <!-- Your strength starts from it, and grows as you revise -->
+    <string name="your_strength_starts_from_it_and_grows_as_you_revise">منه تبدأ قوّة حفظك، وتزداد كلما راجعت</string>
     <!-- Your students -->
     <string name="your_students">طلابك</string>
     <!-- Your tasmee\' in an hour -->

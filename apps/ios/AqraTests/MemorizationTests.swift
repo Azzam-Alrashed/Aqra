@@ -134,6 +134,21 @@ struct MemorizationStoreTests {
         }
     }
 
+    /// «عدّل حفظك»: unmarking a juz' with history hands back its records, and putting them back restores it exactly.
+    @Test func setupUnmarkingCanBeUndone() {
+        let memorization = MemorizationStore(fileURL: nil)
+        memorization.mark(0...147, memorized: true)
+        memorization.recordRevision(ayahs: 0...20, stumbled: [5], at: .now, policy: .standard)
+        memorization.verify([7, 8])
+        let before = memorization.ayahs
+        let removed = memorization.mark(0...147, memorized: false)
+        #expect(memorization.count == 0 && removed.count == 148)
+        memorization.restore(removed)
+        #expect(Set(memorization.ayahs.keys) == Set(before.keys))
+        #expect(memorization.memory(ofAyah: 5)?.lapses == 1 && memorization.memory(ofAyah: 7)?.verified == true)
+        #expect(memorization.memory(ofAyah: 20)?.stability == before[20]?.stability)
+    }
+
     @Test func undoingAnUnmarkingRestoresTheRecordsExactly() {
         let memorization = MemorizationStore(fileURL: nil)
         let session = MarkingSession(memorization: memorization)

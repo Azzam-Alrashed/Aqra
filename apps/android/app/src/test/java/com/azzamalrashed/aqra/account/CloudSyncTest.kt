@@ -38,6 +38,29 @@ class CloudSyncTest {
         val sync = CloudSync(memorization, revision, journey, scope, store, id, clock = { Moment.ofEpochSeconds(1_900_000_000.0) })
     }
 
+    /**
+     * «لديّ حساب في اقرأ»: a fresh install signing in to an account with progress gets it all back, so the setup can go
+     * straight to Home without declaring anything (the restore sheet's rule: something memorized came back).
+     */
+    @Test
+    fun restoreFirstSkipsDeclaration() = runTest {
+        val account = FakeCloudStore()
+        val old = Device(account, "old", this)
+        old.memorization.replaceAll(mapOf(1 to memory(0, reviewed = 8, stability = 40.0), 2 to memory(0)))
+        old.revision.setDailyPages(5)
+        old.sync.attach("u")
+        old.sync.upload()
+        advanceUntilIdle()
+
+        val fresh = Device(account, "fresh", this)
+        assertEquals(0, fresh.memorization.count)
+        fresh.sync.attach("u")
+        advanceUntilIdle()
+        assertTrue(fresh.memorization.count == 2 && fresh.memorization.memory(1)!!.stability == 40.0)
+        assertEquals(5, fresh.revision.dailyPages)
+        assertTrue(fresh.sync.lastMerge != null)
+    }
+
     @Test
     fun secondDeviceLaunchDoesNotOverwriteANewerAccountCopy() = runTest {
         val account = FakeCloudStore()

@@ -268,6 +268,24 @@ struct CloudSyncTests {
 
     // MARK: - The backup's orchestration, with a fake store
 
+    /// «لديّ حساب في اقرأ»: a fresh install signing in to an account with progress gets it all back, so the setup
+    /// can go straight to Home without declaring anything (the restore sheet's rule: something memorized came back).
+    @Test func restoreFirstSkipsDeclaration() async throws {
+        let account = FakeCloudStore()
+        let old = Device(store: account, id: "old")
+        old.memorization.replaceAll([1: memory(since: 0, reviewed: 8, stability: 40), 2: memory(since: 0)])
+        old.revision.setDailyPages(5)
+        await old.sync.attach(uid: "u")
+        try await old.sync.upload()
+
+        let fresh = Device(store: account, id: "fresh")
+        #expect(fresh.memorization.count == 0)
+        await fresh.sync.attach(uid: "u")
+        #expect(fresh.memorization.count == 2 && fresh.memorization.memory(ofAyah: 1)?.stability == 40)
+        #expect(fresh.revision.dailyPages == 5)
+        #expect(fresh.sync.lastMerge != nil)
+    }
+
     @Test func secondDeviceLaunchDoesNotOverwriteANewerAccountCopy() async throws {
         let account = FakeCloudStore()
         // The tablet has revised page 1's ayah on day 8 and backed it up.

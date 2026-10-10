@@ -198,6 +198,27 @@ class MemorizationStore(
     }
 
     /**
+     * How firm the student says declared ayat are: their starting half-life follows (see [ReviewPolicy.Firmness]). Only
+     * ayat declared and never revised or memorized in Aqra change: what's been measured since stays.
+     */
+    fun setFirmness(firmness: ReviewPolicy.Firmness, declared: Iterable<Int>, policy: ReviewPolicy = ReviewPolicy.STANDARD) {
+        val stability = policy.stability(firmness)
+        val next = ayahs.toMutableMap()
+        var changed = false
+        for (ayah in declared) {
+            val memory = next[ayah] ?: continue
+            if (memory.lastReviewed != null || memory.learnedAt != null || memory.stability == stability) continue
+            next[ayah] = memory.copy(stability = stability)
+            changed = true
+        }
+        if (changed) {
+            ayahs = next
+            scheduleSave()
+            saveNow()
+        }
+    }
+
+    /**
      * A teacher heard these ayat in a tasmee': the memorized ones among them are marked verified, except the
      * stumbled ones, which lose the mark until a teacher hears them clean again.
      */

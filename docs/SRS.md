@@ -328,8 +328,9 @@ opens on the setup or the home.
 |---|---|---|---|---|
 | ONB-01 | Onboarding is shown on first launch only and has four pages: the hadith (Ahmad's wording, «اقرَأ وارقَ» emphasized, «رواه أحمد», the Tirmidhi translation in English), the manazil, the features, and «ابدأ رحلتك». | M | ✅ | V |
 | ONB-02 | There is no sign-in in onboarding's pages; every user starts anonymously (a returning student may sign in from «ماذا تحفظ؟», ONB-03). | M | ✅ | V |
-| ONB-03 | Right after onboarding the student declares what they've memorized («ماذا تحفظ؟»), then chooses a daily revision amount; "I'm just starting" skips both. Choosing to mark it in the Mushaf instead, the daily amount (when anything is marked) and the plan's offer follow the first Done or the Mushaf's closing, even after the app was closed during the marking. Before anything is declared, «لديّ حساب في اقرأ» lets a returning student sign in instead: once a backup newer than the sign-in has arrived, Home opens with their progress; an account with nothing memorized goes back to declaring. | M | ✅ | V |
+| ONB-03 | Right after onboarding the student declares what they've memorized («ماذا تحفظ؟»), then says how firm each juz' is and where their revision stands («كيف حفظك؟», ONB-05), then chooses a daily revision amount; "I'm just starting" skips both. Choosing to mark it in the Mushaf instead, the daily amount (when anything is marked) and the plan's offer follow the first Done or the Mushaf's closing, even after the app was closed during the marking. Before anything is declared, «لديّ حساب في اقرأ» lets a returning student sign in instead: once a backup newer than the sign-in has arrived, Home opens with their progress; an account with nothing memorized goes back to declaring. | M | ✅ | V |
 | ONB-04 | After «ماذا تحفظ؟», a student offers to set up a personal memorization plan (or skips it). | S | ✅ | E |
+| ONB-05 | «كيف حفظك في كل جزء؟»: after declaring (or marking in the Mushaf), each juz' with anything memorized is متين, متوسط or يحتاج مراجعة, starting at a half-life of 30, 14 or 5 days (STR-01); and «أين وصلت في مراجعتك؟» chooses the juz' the rotation continues from, also changeable in «خطتي». | S | ✅ | R, P |
 
 #### 3.2.2 Mushaf (MUS)
 
@@ -360,7 +361,7 @@ opens on the setup or the home.
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| STR-01 | Declared ayat start at the policy's declared half-life (14 days). | M | ✅ | R |
+| STR-01 | Declared ayat start at the policy's declared half-life (14 days, «متوسط»), or 30 days for a juz' the student calls «متين» and 5 for «يحتاج مراجعة» (ONB-05); ayat already revised or memorized in Aqra keep what's been measured. | M | ✅ | R |
 | STR-02 | A clean revision multiplies the half-life by the growth (2.5), reduced by the spacing effect; a declared ayah's first revision counts in full, and an ayah memorized in Aqra is spaced from when it was learned. | M | ✅ | R |
 | STR-03 | A stumble multiplies it by the lapse factor (0.3), at least 1 day, and counts a lapse. | M | ✅ | R |
 | STR-04 | Evidence weights: self 1, peer 1.25 (provisional), sheikh 1.5 (provisional); a stumble is a stumble whoever heard it; the last revision never moves backwards. | M | ✅ | R, P |
@@ -377,7 +378,7 @@ opens on the setup or the home.
 | REV-04 | Missed days don't pile up: the rotation only moves past revised pages. | M | ✅ | R |
 | REV-05 | A stumble brings the page back after 1 day, then 3, then 7 while clean; a clean revision before the page is due doesn't move it on. | M | ✅ | R |
 | REV-06 | In-app revision veils the page's memorized ayat and reveals them one at a time with «الآية التالية»; «تعثّرتُ هنا» reveals the next one marked as a stumble, and a tap on a revealed ayah marks or clears a stumble. «أظهر الصفحة» and «تم» are buttons beside them; «تم» records the page and moves to the next. | M | ✅ | V |
-| REV-07 | A page revised outside the app is logged from «سجّلها» on Home's «اليوم» card: clean, or opened whole to tap its stumbles. | M | ✅ | V |
+| REV-07 | A page revised outside the app is logged from «سجّلها» on Home's «اليوم» card, or any page (or its whole juz') from «سجّل مراجعة» in the Mushaf's bar: clean, or opened whole to tap its stumbles. | M | ✅ | V |
 | REV-08 | The streak counts calendar days in a row with any revision; today not yet revised doesn't break it, and neither does a trip to another time zone or a change of clocks. | M | ✅ | V |
 | REV-09 | A revision outside the app may also record the ayat stumbled on. | C | ✅ | R (open Q2), P |
 | REV-10 | The rotation learns: pages that keep slipping (lapses in recent revisions, or low strength while the rest is strong) are suggested for extra follow-up; the student approves or dismisses each suggestion. | S | ✅ | V (agreed direction), R (open Q3) |
@@ -440,7 +441,7 @@ opens on the setup or the home.
 
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
-| TCH-01 | Vetted teachers are listed by name with city and one line; a teacher's page lists their upcoming sessions. | M | ✅ | V |
+| TCH-01 | Vetted teachers are listed by name with city and one line; a teacher's page lists their upcoming sessions. Until the list has come from the server, the tab says it's loading, or that teachers can't be loaded (offline), rather than that none have joined. | M | ✅ | V |
 | TCH-02 | A signed-in user applies to teach in-app: name, city, one line, riwayah, from whom they hold their ijazah, its chain or details, contact, and an upload of the ijazah (image or PDF, ≤10 MB). | M | ✅ | V |
 | TCH-03 | The application shows its status (submitted, interview, approved, rejected, with the reviewer's note); an applicant can update a submitted application. | M | ✅ | V |
 | TCH-04 | Only an administrator approves: approval creates `teachers/{uid}` with `vetted: true` from the application; nothing in the app can mark itself vetted. | M | ✅ | V |
@@ -681,7 +682,8 @@ Every number below is a default, kept in one place in code, and open to tuning w
 
 | Field | Default | Meaning |
 |---|---|---|
-| declaredStability | 14 d | Half-life of declared ayat. |
+| declaredStability | 14 d | Half-life of declared ayat («متوسط»). |
+| firmStability / weakStability | 30 d / 5 d | Half-life of a declared juz' called «متين» / «يحتاج مراجعة». |
 | growth | 2.5 | Clean-revision multiplier. |
 | lapseFactor | 0.3 | Stumble multiplier. |
 | minStability / maxStability | 1 d / 365 d | Bounds. |
@@ -710,7 +712,7 @@ Every number below is a default, kept in one place in code, and open to tuning w
 | requiredMastered | 80% | Share of the stage mastered. |
 | testQuestions / testPassScore | 10 / 80% | In-app test. |
 | retestCooldown | 24 h | |
-| sheikhTestRequired | true | |
+| sheikhTestRequired | true | Overridden by the server's `config/policy.sheikhTestRequired` when set (`npm run admin -- policy --set sheikhTestRequired=false`); a stage met but for it shows «ينتظر اختبار شيخ». |
 | allowedMistakesPerPage | 1 | Sheikh's test threshold (per page heard), adjustable per test. |
 
 #### RewardPolicy (`Rewards/RewardPolicy.swift`)

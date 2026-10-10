@@ -557,3 +557,120 @@ private struct PressableStyle: ButtonStyle {
 }
 
 private typealias Palette = OnboardingPalette
+
+// MARK: - How firm, and where the revision stands
+
+/// «كيف حفظك في كل جزء؟»: right after «ماذا تحفظ؟», how firm each juz' declared is (its starting half-life, see
+/// `ReviewPolicy.Firmness`), and «أين وصلت في مراجعتك؟», the juz' the rotation continues from.
+struct MemorizationFirmnessView: View {
+    var store: MushafStore
+    var onBack: () -> Void
+    var onDone: () -> Void
+
+    @Environment(MemorizationStore.self) private var memorization
+    @Environment(RevisionStore.self) private var revision
+    @State private var firmness: [Int: ReviewPolicy.Firmness] = [:]
+    @State private var startJuz = 0
+
+    /// The juz' with anything declared, in order.
+    private var juzList: [Int] {
+        (1...30).filter { juz in store.juzAyahs[juz].map { memorization.memorizedCount(in: $0) > 0 } ?? false }
+    }
+
+    var body: some View {
+        VStack(spacing: 0) {
+            VStack(spacing: 4) {
+                VStack(spacing: 0) {
+                    Text("How firm is").foregroundStyle(Palette.ink)
+                    Text("each juz'?").foregroundStyle(Palette.brand)
+                }
+                .aqraFont(size: 28, weight: .heavy)
+                .lineLimit(1)
+                .minimumScaleFactor(0.7)
+                Text("Your strength starts from it, and grows as you revise")
+                    .aqraFont(size: 14, weight: .semibold)
+                    .foregroundStyle(Palette.inkSoft)
+            }
+            .multilineTextAlignment(.center)
+            .padding(.top, 60)
+            ScrollView {
+                VStack(spacing: 10) {
+                    ForEach(juzList, id: \.self) { row($0) }
+                    startCard
+                        .padding(.top, 8)
+                }
+                .padding(.vertical, 14)
+            }
+            .scrollIndicators(.hidden)
+            BrandButton("Continue", metrics: OnboardingButtonMetrics(height: 56, fontSize: 18, compact: false)) {
+                apply()
+                onDone()
+            }
+            .frame(maxWidth: 520)
+            .padding(.top, 6)
+        }
+        .padding(.horizontal, 22)
+        .padding(.bottom, 12)
+        .frame(maxWidth: 560)
+        .frame(maxWidth: .infinity, maxHeight: .infinity)
+        .overlay(alignment: .topLeading) {
+            AqraBackButton(action: onBack)
+                .padding(.horizontal, 18)
+                .padding(.vertical, 12)
+        }
+        .fontDesign(.rounded)
+        .background(Palette.surface.ignoresSafeArea())
+        .environment(\.colorScheme, .light)
+        .onAppear { if startJuz == 0 { startJuz = juzList.first ?? 1 } }
+    }
+
+    private func row(_ juz: Int) -> some View {
+        let face = ManazilStairs.face(forJuz: juz)
+        let choice = Binding { firmness[juz] ?? .middling } set: { firmness[juz] = $0 }
+        return VStack(spacing: 10) {
+            HStack(spacing: 12) {
+                Text(juz.formatted())
+                    .font(.system(size: 14, weight: .bold))
+                    .foregroundStyle(Palette.ink)
+                    .frame(width: 34, height: 34)
+                    .background(face.top, in: Circle())
+                Text("Juz' \(juz)")
+                    .aqraFont(size: 17, weight: .heavy)
+                    .foregroundStyle(Palette.ink)
+                Spacer(minLength: 0)
+            }
+            AqraSegmented(selection: choice, options: [(.firm, "Firm"), (.middling, "Fair"), (.weak, "Needs revision")], scale: 0.84)
+        }
+        .padding(14)
+        .background(.white, in: RoundedRectangle(cornerRadius: 20, style: .continuous))
+        .shadow(color: Palette.shadow.opacity(0.05), radius: 8, y: 4)
+        .accessibilityElement(children: .contain)
+    }
+
+    /// «أين وصلت في مراجعتك؟»: the juz' the rotation continues from.
+    private var startCard: some View {
+        Menu {
+            Picker(selection: $startJuz) {
+                ForEach(juzList, id: \.self) { Text("Juz' \($0)").tag($0) }
+            } label: {
+                EmptyView()
+            }
+        } label: {
+            AqraCard(padding: 0, radius: 20) {
+                AqraRow(icon: "🧭", tint: Palette.sky, title: Text("Where are you in your revision?"),
+                        detail: Text("It continues from juz' \(startJuz)"))
+            }
+        }
+        .buttonStyle(.plain)
+    }
+
+    private func apply() {
+        for juz in juzList {
+            guard let range = store.juzAyahs[juz] else { continue }
+            memorization.setFirmness(firmness[juz] ?? .middling, of: range, policy: revision.policy)
+        }
+        if let page = RevisionStore.memorizedPages(in: store, memorization: memorization).first(where: { store.page($0).juz == startJuz }) {
+            revision.setRotationStart(page: page)
+        }
+    }
+}

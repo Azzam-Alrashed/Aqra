@@ -17,6 +17,8 @@
     <string name="s_recorded_your_tasmee_of_n_pages">%1$s recorded your tasmee\' of %2$d pages.</string>
     <!-- %@ removed -->
     <string name="s_removed">%s removed</string>
+    <!-- %@, page %lld -->
+    <string name="s_page_n">%1$s, page %2$d</string>
     <!-- %lld ayat -->
     <plurals name="n_ayat">
         <item quantity="one">%d ayah</item>
@@ -269,6 +271,10 @@
     <string name="aqra_cant_use_the_microphone_allow_it_in_settings">Aqra can\'t use the microphone. Allow it in Settings.</string>
     <!-- Aqra shows the Quran exactly as published, from these sources, with thanks. -->
     <string name="aqra_shows_the_quran_exactly_as_published_from_these_sources">Aqra shows the Quran exactly as published, from these sources, with thanks.</string>
+    <!-- Awaiting a sheikh\'s test -->
+    <string name="awaiting_a_sheikhs_test">Awaiting a sheikh\'s test</string>
+    <!-- Awaiting a sheikh\'s test: book a tasmee\' and ask for one -->
+    <string name="awaiting_a_sheikhs_test_book_a_tasmee_and_ask_for">Awaiting a sheikh\'s test: book a tasmee\' and ask for one</string>
     <!-- ayah %lld -->
     <string name="ayah_n">ayah %d</string>
     <!-- Ayah %lld -->
@@ -452,6 +458,8 @@
     <string name="due_to_you">Due to you</string>
     <!-- each day? -->
     <string name="each_day_q">each day?</string>
+    <!-- each juz\'? -->
+    <string name="each_juz_q">each juz\'?</string>
     <!-- Earned -->
     <string name="earned">Earned</string>
     <!-- Edit -->
@@ -484,8 +492,12 @@
     <string name="everything_that_helps_your_memorization">Everything that helps your memorization,</string>
     <!-- fact separator -->
     <string name="fact_separator">" · "</string>
+    <!-- Fair -->
+    <string name="fair">Fair</string>
     <!-- Finish -->
     <string name="finish">Finish</string>
+    <!-- Firm -->
+    <string name="firm">Firm</string>
     <!-- First new portion -->
     <string name="first_new_portion">First new portion</string>
     <!-- First revision -->
@@ -562,6 +574,8 @@
     <string name="home">Home</string>
     <!-- Home opens on it, and browsing or marking never moves it. -->
     <string name="home_opens_on_it_and_browsing_or_marking_never_moves">Home opens on it, and browsing or marking never moves it.</string>
+    <!-- How firm is -->
+    <string name="how_firm_is">How firm is</string>
     <!-- How much will you -->
     <string name="how_much_will_you">How much will you</string>
     <!-- How much will you memorize -->
@@ -598,6 +612,8 @@
     <string name="invite_a_friend">Invite a friend</string>
     <!-- Invite a friend with a code -->
     <string name="invite_a_friend_with_a_code">Invite a friend with a code</string>
+    <!-- It continues from juz\' %lld -->
+    <string name="it_continues_from_juz_n">It continues from juz\' %d</string>
     <!-- It counts as taken: the questions you haven\'t answered count as wrong. -->
     <string name="it_counts_as_taken_the_questions_you_havent_answered_count">It counts as taken: the questions you haven\'t answered count as wrong.</string>
     <!-- It\'s been added to your revision. -->
@@ -658,6 +674,8 @@
     <string name="listening">Listening…</string>
     <!-- Loading teachers… -->
     <string name="loading_teachers">Loading teachers…</string>
+    <!-- Log a revision -->
+    <string name="log_a_revision">Log a revision</string>
     <!-- Log it -->
     <string name="log_it">Log it</string>
     <!-- Log the page -->
@@ -729,6 +747,8 @@
     <string name="name_others_see">Name others see</string>
     <!-- Needed prompting -->
     <string name="needed_prompting">Needed prompting</string>
+    <!-- Needs revision -->
+    <string name="needs_revision">Needs revision</string>
     <!-- New challenge -->
     <string name="new_challenge">New challenge</string>
     <!-- New competition -->
@@ -886,6 +906,11 @@
     <string name="recited_to_a_friend">Recited to a friend</string>
     <!-- Record tasmee\' -->
     <string name="record_tasmee">Record tasmee\'</string>
+    <!-- Recorded: %lld pages revised -->
+    <plurals name="recorded_n_pages_revised">
+        <item quantity="one">Recorded: %d page revised</item>
+        <item quantity="other">Recorded: %d pages revised</item>
+    </plurals>
     <!-- Refunded: session cancelled -->
     <string name="refunded_session_cancelled">Refunded: session cancelled</string>
     <!-- Released -->
@@ -951,6 +976,8 @@
     <string name="revised_outside_the_app_with_stumbles">Revised outside the app, with stumbles…</string>
     <!-- Revised outside the app? -->
     <string name="revised_outside_the_app_q">Revised outside the app?</string>
+    <!-- Revised this page outside the wird? -->
+    <string name="revised_this_page_outside_the_wird_q">Revised this page outside the wird?</string>
     <!-- Revising -->
     <string name="revising">Revising</string>
     <!-- Revision -->
@@ -1126,6 +1153,8 @@
     <string name="teachers">Teachers</string>
     <!-- Teachers are vetted: the team reviews your ijazah, then meets you for an interview. -->
     <string name="teachers_are_vetted_the_team_reviews_your_ijazah_then_meets">Teachers are vetted: the team reviews your ijazah, then meets you for an interview.</string>
+    <!-- Teachers can\'t be loaded right now. Check your connection. -->
+    <string name="teachers_cant_be_loaded_right_now_check_your_connection">Teachers can\'t be loaded right now. Check your connection.</string>
     <!-- Teachers on Aqra hold an ijazah in the Quran. Tell us about yours; the team reviews it and then meets you for a short interview. -->
     <string name="teachers_on_aqra_hold_an_ijazah_in_the_quran_tell">Teachers on Aqra hold an ijazah in the Quran. Tell us about yours; the team reviews it and then meets you for a short interview.</string>
     <!-- Teachers, friends and those who hear your tasmee\' see this name. -->
@@ -1182,6 +1211,8 @@
     <string name="the_topic_sections_for_now">The topic sections, for now.</string>
     <!-- The typeface of the hadith, under the SIL Open Font License. -->
     <string name="the_typeface_of_the_hadith_under_the_sil_open_font">The typeface of the hadith, under the SIL Open Font License.</string>
+    <!-- The whole of juz\' %lld, no stumbles -->
+    <string name="the_whole_of_juz_n_no_stumbles">The whole of juz\' %d, no stumbles</string>
     <!-- the whole Quran -->
     <string name="the_whole_quran_2">the whole Quran</string>
     <!-- The whole Quran -->
@@ -1192,6 +1223,8 @@
     <string name="there_isnt_enough_memorized_in_this_stage_for_a_test">There isn\'t enough memorized in this stage for a test yet.</string>
     <!-- These pages keep slipping -->
     <string name="these_pages_keep_slipping">These pages keep slipping</string>
+    <!-- They count in your streak and your strength. -->
+    <string name="they_count_in_your_streak_and_your_strength">They count in your streak and your strength.</string>
     <!-- They mark your stumbles on their phone -->
     <string name="they_mark_your_stumbles_on_their_phone">They mark your stumbles on their phone</string>
     <!-- This account has no memorization yet. -->
@@ -1288,6 +1321,8 @@
     <string name="what_youve_memorized_stays_and_its_revision_goes_on_you">What you\'ve memorized stays, and its revision goes on. You can start a plan again anytime.</string>
     <!-- When -->
     <string name="when">When</string>
+    <!-- Where are you in your revision? -->
+    <string name="where_are_you_in_your_revision_q">Where are you in your revision?</string>
     <!-- Where will you -->
     <string name="where_will_you">Where will you</string>
     <!-- Which ayah comes next? -->
@@ -1442,12 +1477,16 @@
     <string name="your_progress_is_kept_on_your_device_and_backed_up">Your progress is kept on your device and backed up; link it to your account anytime.</string>
     <!-- Your progress stays in your account, and this device starts afresh. Sign in again to bring it back. -->
     <string name="your_progress_stays_in_your_account_and_this_device_starts">Your progress stays in your account, and this device starts afresh. Sign in again to bring it back.</string>
+    <!-- Your revision continues from juz\' %lld -->
+    <string name="your_revision_continues_from_juz_n">Your revision continues from juz\' %d</string>
     <!-- Your revision today -->
     <string name="your_revision_today">Your revision today</string>
     <!-- Your seat goes back to the session. -->
     <string name="your_seat_goes_back_to_the_session">Your seat goes back to the session.</string>
     <!-- Your share of each seat won by bidding, after the app\'s commission, in credits. The team pays it by bank transfer. -->
     <string name="your_share_of_each_seat_won_by_bidding_after_the">Your share of each seat won by bidding, after the app\'s commission, in credits. The team pays it by bank transfer.</string>
+    <!-- Your strength starts from it, and grows as you revise -->
+    <string name="your_strength_starts_from_it_and_grows_as_you_revise">Your strength starts from it, and grows as you revise</string>
     <!-- Your students -->
     <string name="your_students">Your students</string>
     <!-- Your tasmee\' in an hour -->

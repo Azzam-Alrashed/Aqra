@@ -171,6 +171,22 @@ class MemorizationStoreTest {
     /** The records with their dates of memorization set aside: an undo dates them from itself. */
     private fun ignoringSince(ayahs: Map<Int, AyahMemory>) = ayahs.mapValues { (_, memory) -> memory.copy(since = Moment.DISTANT_PAST) }
 
+    /** «عدّل حفظك»: unmarking a juz' with history hands back its records, and putting them back restores it exactly. */
+    @Test
+    fun setupUnmarkingCanBeUndone() {
+        val memorization = MemorizationStore(file = null)
+        memorization.mark(0..147, memorized = true)
+        memorization.recordRevision(0..20, stumbled = setOf(5), at = Moment.now(), policy = ReviewPolicy.STANDARD)
+        memorization.verify(listOf(7, 8))
+        val before = memorization.ayahs
+        val removed = memorization.mark(0..147, memorized = false)
+        assertTrue(memorization.count == 0 && removed.size == 148)
+        memorization.restore(removed)
+        assertEquals(before.keys, memorization.ayahs.keys)
+        assertTrue(memorization.memory(5)?.lapses == 1 && memorization.memory(7)?.verified == true)
+        assertEquals(before[20]?.stability, memorization.memory(20)?.stability)
+    }
+
     @Test
     fun undoingAnUnmarkingRestoresTheRecordsExactly() {
         val memorization = MemorizationStore(file = null)
