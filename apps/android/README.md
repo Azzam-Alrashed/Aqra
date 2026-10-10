@@ -49,3 +49,29 @@ headers and every ayah's words in Hafs Smart against those tables (they're skipp
 ## Not on Android yet
 
 - Buying credits: the server verifies App Store purchases only. The wallet, bidding and earnings work.
+
+## Google Play Data safety (draft, not submitted)
+
+The answers for Play Console's Data safety form, matching `docs/privacy.html` and the iOS privacy labels
+(`apps/ios/AppStore/README.md`). Not submitted: the app isn't on Google Play yet.
+
+- **Does the app collect or share user data?** Collects; shares none. All data is encrypted in transit (TLS), and
+  users can request deletion in the app (Account, Delete account; or Delete my backup without signing in).
+- **Collected, all for app functionality, none optional except where noted, none processed ephemerally:**
+
+| Category: type | What | Optional |
+|---|---|---|
+| Personal info: Name | The sign-in name and the display name shown to teachers and friends; a teacher's application | Yes (sign-in) |
+| Personal info: Email address | Sign in with Google or Apple; a teacher's application may give one | Yes (sign-in) |
+| Personal info: Phone number | A teacher's application may give one | Yes |
+| Personal info: User IDs | The Firebase account (anonymous from the first launch) | No |
+| Financial info: Purchase history | Credit packs bought (Google Play Billing, once added) | Yes |
+| Financial info: Other financial info | A teacher's earnings from booked seats and the payouts recorded; no bank details | Yes |
+| Photos and videos: Photos | Copies of a teacher's ijazah | Yes |
+| App activity: Other user-generated content | Memorization progress and the revision backup (from the first launch), tasmee' records, competitions, a teacher's notes | No |
+
+- **Not collected:** location, contacts, messages, health, web history, device or other IDs, crash logs or
+  diagnostics. Audio: «سمّع بصوتك» hears the microphone with a speech model on the device and never sends or keeps
+  the audio; video tasmee' audio and video go live through LiveKit and aren't stored.
+- **Account deletion URL** (asked by Play): `https://azzam-alrashed.github.io/Aqra/support.html`, which explains the
+  in-app deletion. A dedicated support email (Q9 of the improvement run) is still to be chosen by the owner.
