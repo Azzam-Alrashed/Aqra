@@ -11,10 +11,22 @@ struct MemorizationSetupView: View {
     var onFinish: (_ markInMushaf: Bool) -> Void
 
     @Environment(MemorizationStore.self) private var memorization
+    @Environment(AccountStore.self) private var account: AccountStore?
     @Environment(\.accessibilityReduceMotion) private var reduceMotion
     @Environment(\.layoutDirection) private var direction
 
     @State private var section = SetupSection.juz
+    /// An unmarking that would erase revision history, waiting for the student to confirm it.
+    @State private var pendingRemoval: Removal?
+    /// What the last unmarking removed, kept for a moment so it can be undone.
+    @State private var undo: Undo?
+    @State private var restoring = false
+    @AppStorage("memorization.hasDeclared") private var hasDeclared = false
+
+    /// «لديّ حساب في اقرأ»: offered in setup, before anything is declared, to someone not signed in yet.
+    private var offersRestore: Bool {
+        !isSheet && AccountStore.isAvailable && memorization.count == 0 && account?.profile?.isAnonymous != false
+    }
     /// The stairs' climb as shown; it follows the memorized count with a spring, starting from the bottom.
     @State private var shownClimb = 0.0
     @State private var climbAnimation: Animation?
@@ -37,6 +49,7 @@ struct MemorizationSetupView: View {
                         }
                         .frame(width: min(size.width * 0.42, 460 * scale))
                         VStack(spacing: 14) {
+                            if offersRestore { restoreCard }
                             controls(scale: scale)
                             list(columns: scale > 1 ? 5 : 4, scale: scale)
                         }
@@ -46,6 +59,11 @@ struct MemorizationSetupView: View {
                     VStack(spacing: 14 * scale) {
                         hero(scale: scale)
                             .padding(.top, 12 * scale)
+                        if offersRestore {
+                            restoreCard
+                                .frame(maxWidth: 560)
+                                .transition(.scale(scale: 0.95).combined(with: .opacity))
+                        }
                         controls(scale: scale)
                             .frame(maxWidth: 760)
                         // On iPad all thirty juz' fit without scrolling.
@@ -58,6 +76,8 @@ struct MemorizationSetupView: View {
                 }
             }
             .frame(width: size.width, height: size.height)
+            .overlay(alignment: .bottom) { undoChip }
+            .overlay { confirmation }
         }
         .fontDesign(.rounded)
         .tint(Palette.brand)
@@ -68,6 +88,24 @@ struct MemorizationSetupView: View {
         .sensoryFeedback(.success, trigger: memorization.count == MushafStore.ayahCount) { _, isAll in isAll }
         .onAppear { climb(to: targetClimb, entrance: true) }
         .onChange(of: memorization.count) { climb(to: targetClimb, entrance: false) }
+        .animation(.snappy, value: offersRestore)
+        .sheet(isPresented: $restoring) {
+            RestoreAccountSheet {
+                restoring = false
+                // What they memorized, the daily amount and the plan came back with the account: setup is over.
+                withAnimation { hasDeclared = true }
+            }
+        }
+    }
+
+    private var restoreCard: some View {
+        Button { restoring = true } label: {
+            AqraCard(padding: 0, radius: 22) {
+                AqraRow(icon: "🔑", tint: Palette.sky, title: Text("I have an Aqra account"),
+                        detail: Text("Restore what you memorized and carry on"))
+            }
+        }
+        .buttonStyle(PressableStyle())
     }
 
     // MARK: - Hero
@@ -129,7 +167,7 @@ struct MemorizationSetupView: View {
             GlossyStairs(climb: shownClimb)
                 .animation(climbAnimation, value: shownClimb)
                 .environment(\.layoutDirection, direction)
-                .scaleEffect(0.66 * scale)
+                .scaleEffect((offersRestore ? 0.52 : 0.66) * scale)
                 .offset(x: 6 * mirror * scale)
             if memorization.count > 0 {
                 AqraChip(icon: "🪜", tint: Palette.lavender) {
@@ -148,7 +186,7 @@ struct MemorizationSetupView: View {
         }
         .environment(\.layoutDirection, .leftToRight)
         .animation(.spring(response: 0.5, dampingFraction: 0.7), value: memorization.count > 0)
-        .frame(height: 168 * scale)
+        .frame(height: (offersRestore ? 128 : 168) * scale)
         .frame(maxWidth: .infinity)
         // Behind the stage, so the glow spreads past its edges without widening the screen.
         .background {
@@ -165,7 +203,7 @@ struct MemorizationSetupView: View {
             AqraSegmented(selection: $section, options: [(.juz, "Juz'"), (.surahs, "Surahs")], scale: scale)
             Spacer(minLength: 0)
             Button {
-                memorization.mark(0..<MushafStore.ayahCount, memorized: !isAll)
+                toggle(0...(MushafStore.ayahCount - 1), memorize: !isAll, what: .wholeQuran)
             } label: {
                 HStack(spacing: 6) {
                     StarShape(points: 8, innerRatio: 0.42, cornerRadius: 0.05)
@@ -223,7 +261,7 @@ struct MemorizationSetupView: View {
         let fraction = Double(memorization.memorizedCount(in: range)) / Double(range.count)
         let face = ManazilStairs.face(forJuz: juz)
         return Button {
-            memorization.mark(range, memorized: fraction < 1)
+            toggle(range, memorize: fraction < 1, what: .juz(juz))
         } label: {
             ZStack {
                 GeometryReader { geometry in
@@ -283,7 +321,7 @@ struct MemorizationSetupView: View {
         let juz = (1...30).first { store.juzAyahs[$0]?.contains(range.lowerBound) == true } ?? 1
         let face = ManazilStairs.face(forJuz: juz)
         return Button {
-            memorization.mark(range, memorized: memorized < range.count)
+            toggle(range, memorize: memorized < range.count, what: .surah(store.surahNames[surah] ?? ""))
         } label: {
             HStack(spacing: 14) {
                 Text(surah.formatted())
@@ -316,6 +354,127 @@ struct MemorizationSetupView: View {
         .buttonStyle(PressableStyle())
     }
 
+    // MARK: - Unmarking safely
+
+    /// Marks a juz', a surah or the whole Quran, or unmarks it. Unmarking ayat that carry revision history (strength,
+    /// stumbles, a teacher's mark) asks first; any unmarking can be undone for a few seconds.
+    private func toggle(_ range: ClosedRange<Int>, memorize: Bool, what: Removal.What) {
+        guard !memorize else {
+            withAnimation(.easeInOut(duration: 0.2)) { undo = nil }
+            memorization.mark(range, memorized: true)
+            return
+        }
+        let records = range.compactMap { memorization.memory(ofAyah: $0) }
+        let withHistory = records.filter { $0.lastReviewed != nil || $0.lapses > 0 || $0.verified || $0.learnedAt != nil }
+        if withHistory.isEmpty {
+            remove(range, what: what)
+        } else {
+            withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+                pendingRemoval = Removal(range: range, what: what, count: records.count,
+                                         verified: records.filter(\.verified).count)
+            }
+        }
+    }
+
+    private func remove(_ range: ClosedRange<Int>, what: Removal.What) {
+        let removed = memorization.mark(range, memorized: false)
+        guard !removed.isEmpty else { return }
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) {
+            undo = Undo(records: removed, what: what)
+        }
+    }
+
+    /// «تُزيل الجزء ٢ من حفظك؟»: what goes with the ayat, «إبقاء» as the main choice.
+    @ViewBuilder private var confirmation: some View {
+        if let removal = pendingRemoval {
+            ZStack {
+                Color.black.opacity(0.18)
+                    .ignoresSafeArea()
+                    .onTapGesture { withAnimation(.easeOut(duration: 0.2)) { pendingRemoval = nil } }
+                    .accessibilityHidden(true)
+                AqraCard(padding: 20, radius: 28) {
+                    VStack(spacing: 14) {
+                        IconTile(icon: "🗂️", tint: Palette.rose, size: 52)
+                        removal.title
+                            .aqraFont(size: 20, weight: .heavy)
+                            .foregroundStyle(Palette.ink)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                        removal.detail
+                            .aqraFont(size: 14, weight: .semibold)
+                            .foregroundStyle(Palette.inkSoft)
+                            .multilineTextAlignment(.center)
+                            .fixedSize(horizontal: false, vertical: true)
+                        HStack(spacing: 10) {
+                            Button {
+                                let range = removal.range, what = removal.what
+                                withAnimation(.easeOut(duration: 0.2)) { pendingRemoval = nil }
+                                remove(range, what: what)
+                            } label: {
+                                Text("Remove")
+                                    .aqraFont(size: 15, weight: .bold)
+                                    .foregroundStyle(Color(light: 0x9A3E26, dark: 0x9A3E26))
+                                    .frame(maxWidth: .infinity, minHeight: 46)
+                                    .background(Palette.rose, in: Capsule())
+                            }
+                            .buttonStyle(PressableStyle())
+                            Button("Keep") {
+                                withAnimation(.easeOut(duration: 0.2)) { pendingRemoval = nil }
+                            }
+                            .buttonStyle(BrandButtonStyle(height: 46, fontSize: 15))
+                        }
+                    }
+                }
+                .frame(maxWidth: 420)
+                .padding(.horizontal, 26)
+                .accessibilityAddTraits(.isModal)
+                .transition(.scale(scale: 0.92).combined(with: .opacity))
+            }
+            .transition(.opacity)
+        }
+    }
+
+    /// «أُزيل الجزء ٢» with «تراجع», for a few seconds after an unmarking.
+    @ViewBuilder private var undoChip: some View {
+        if let undo {
+            HStack(spacing: 12) {
+                undo.what.removedText
+                    .aqraFont(size: 14, weight: .bold)
+                    .foregroundStyle(Palette.ink)
+                    .lineLimit(1)
+                    .minimumScaleFactor(0.8)
+                Spacer(minLength: 4)
+                Button {
+                    memorization.restore(undo.records)
+                    withAnimation(.easeOut(duration: 0.2)) { self.undo = nil }
+                } label: {
+                    Label("Undo", systemImage: "arrow.uturn.backward")
+                        .aqraFont(size: 14, weight: .heavy)
+                        .foregroundStyle(.white)
+                        .padding(.horizontal, 14)
+                        .frame(minHeight: 44)
+                        .background(Palette.brand, in: Capsule())
+                }
+                .buttonStyle(PressableStyle())
+            }
+            .padding(.leading, 18)
+            .padding(.trailing, 6)
+            .padding(.vertical, 6)
+            .background(.white, in: Capsule())
+            .shadow(color: Palette.shadow.opacity(0.14), radius: 14, y: 8)
+            .frame(maxWidth: 360)
+            .padding(.horizontal, 30)
+            .padding(.bottom, 110)
+            .transition(.move(edge: .bottom).combined(with: .opacity))
+            .task(id: undo.id) {
+                let id = undo.id
+                try? await Task.sleep(for: .seconds(6))
+                guard !Task.isCancelled, self.undo?.id == id else { return }
+                withAnimation(.easeOut(duration: 0.25)) { self.undo = nil }
+            }
+        }
+    }
+
     // MARK: - Footer
 
     private func footer(scale: CGFloat) -> some View {
@@ -340,6 +499,52 @@ struct MemorizationSetupView: View {
 /// Which list the setup screen shows.
 private enum SetupSection: Hashable {
     case juz, surahs
+}
+
+/// An unmarking of ayat with history, waiting for the student's answer.
+private struct Removal {
+    enum What {
+        case juz(Int)
+        case surah(String)
+        case wholeQuran
+
+        var removedText: Text {
+            switch self {
+            case .juz(let juz): Text("Juz' \(juz) removed")
+            case .surah(let name): Text("\(name) removed")
+            case .wholeQuran: Text("The whole Quran removed")
+            }
+        }
+    }
+
+    var range: ClosedRange<Int>
+    var what: What
+    /// The memorized ayat it would remove, and how many of them a teacher verified.
+    var count: Int
+    var verified: Int
+
+    var title: Text {
+        switch what {
+        case .juz(let juz): Text("Remove juz' \(juz) from what you've memorized?")
+        case .surah(let name): Text("Remove \(name) from what you've memorized?")
+        case .wholeQuran: Text("Remove the whole Quran from what you've memorized?")
+        }
+    }
+
+    var detail: Text {
+        var text = Text("\(count) ayat, with their revision history and strength.")
+        if verified > 0 {
+            text = text + Text(verbatim: " ") + Text("A sheikh verified \(verified) of them.")
+        }
+        return text + Text(verbatim: " ") + Text("You can undo it for a few seconds.")
+    }
+}
+
+/// What an unmarking removed, to put back with «تراجع».
+private struct Undo {
+    let id = UUID()
+    var records: [Int: AyahMemory]
+    var what: Removal.What
 }
 
 /// Tiles, rows and chips shrink a little under the finger.

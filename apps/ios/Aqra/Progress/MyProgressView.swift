@@ -9,6 +9,8 @@ struct MyProgressView: View {
     @Environment(RevisionStore.self) private var revision
     @Environment(PlanStore.self) private var plan
     @State private var editingPlan = false
+    @State private var editingMemorization = false
+    @State private var editingAmount = false
 
     var body: some View {
         ScrollView {
@@ -31,7 +33,7 @@ struct MyProgressView: View {
                     .foregroundStyle(Palette.inkSoft)
                     .fixedSize(horizontal: false, vertical: true)
 
-                AqraSectionTitle(title: "Your plan").padding(.top, 10)
+                AqraSectionTitle(title: "My plan").padding(.top, 10)
                 planCard
 
                 AqraSectionTitle(title: "The stages").padding(.top, 10)
@@ -53,6 +55,12 @@ struct MyProgressView: View {
         .fontDesign(.rounded)
         .environment(\.colorScheme, .light)
         .sheet(isPresented: $editingPlan) { PlanEditorView(store: store) { _ in } }
+        .sheet(isPresented: $editingMemorization) {
+            MemorizationSetupView(store: store, isSheet: true) { _ in editingMemorization = false }
+        }
+        .sheet(isPresented: $editingAmount) {
+            DailyAmountView(memorizedPages: memorizedPageCount, initial: dailyPages, isEditor: true) { revision.setDailyPages($0) }
+        }
     }
 
     // MARK: - Memorized, mastered, verified
@@ -93,22 +101,62 @@ struct MyProgressView: View {
 
     // MARK: - The plan
 
+    /// «خطتي»: what's memorized, how much is revised each day, and the plan for new memorization, each opening its
+    /// editor — in one place.
     private var planCard: some View {
-        Button {
-            editingPlan = true
-        } label: {
-            AqraCard(padding: 0, radius: 24) {
-                if let current = plan.plan {
-                    AqraRow(icon: current.paused ? "⏸️" : "✍️", tint: Palette.butter,
-                            title: PlanFormat.amount(current.dailyLines) + Text(verbatim: Separator.facts) + Text("\(current.studyDays.count) days a week"),
-                            detail: planDetail)
-                } else {
-                    AqraRow(icon: "✍️", tint: Palette.butter, title: Text("Memorize new portions"),
-                            detail: Text("A daily amount, and the date you'd complete the Quran"))
+        AqraCard(padding: 0, radius: 24) {
+            VStack(spacing: 0) {
+                Button {
+                    editingMemorization = true
+                } label: {
+                    AqraRow(icon: "📖", tint: Palette.sky,
+                            title: memorization.count == 0 ? Text("Choose what you've memorized") : Text("Edit what you've memorized"),
+                            detail: memorization.count == 0 ? nil : memorizedSummary)
                 }
+                .buttonStyle(.plain)
+                if memorization.count > 0 {
+                    AqraRowDivider()
+                    Button {
+                        editingAmount = true
+                    } label: {
+                        AqraRow(icon: "🗓️", tint: Palette.peach, title: Text("\(dailyPages) pages a day"),
+                                detail: Text("A full revision every \(DailyAmountView.cycleDays(memorizedPages: memorizedPageCount, amount: dailyPages)) days"))
+                    }
+                    .buttonStyle(.plain)
+                }
+                AqraRowDivider()
+                Button {
+                    editingPlan = true
+                } label: {
+                    if let current = plan.plan {
+                        AqraRow(icon: current.paused ? "⏸️" : "✍️", tint: Palette.butter,
+                                title: PlanFormat.amount(current.dailyLines) + Text(verbatim: Separator.facts) + Text("\(current.studyDays.count) days a week"),
+                                detail: planDetail)
+                    } else {
+                        AqraRow(icon: "✍️", tint: Palette.butter, title: Text("Memorize new portions"),
+                                detail: Text("A daily amount, and the date you'd complete the Quran"))
+                    }
+                }
+                .buttonStyle(.plain)
             }
         }
-        .buttonStyle(AqraPressStyle())
+    }
+
+    private var memorizedPageCount: Int {
+        RevisionStore.memorizedPages(in: store, memorization: memorization).count
+    }
+
+    private var dailyPages: Int {
+        revision.effectiveDailyPages(memorizedPages: memorizedPageCount)
+    }
+
+    /// «٥٦٤ آية، جزء واحد»: the ayat memorized, and the whole juz' among them.
+    private var memorizedSummary: Text {
+        let fullJuz = (1...30).filter { juz in
+            store.juzAyahs[juz].map { memorization.memorizedCount(in: $0) == $0.count } ?? false
+        }.count
+        let ayat = Text("\(memorization.count) ayat")
+        return fullJuz > 0 ? ayat + Text(verbatim: Separator.facts) + Text("\(fullJuz) juz'") : ayat
     }
 
     private var planDetail: Text {

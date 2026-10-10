@@ -330,9 +330,16 @@ class MarkingSession(val memorization: MemorizationStore) {
         private set
     private var rangeMarks = true
 
+    /** «حدّد نطاقًا» was pressed: the next tap starts a range rather than toggling an ayah. */
+    var choosingRangeStart by mutableStateOf(false)
+        private set
+
     fun tap(ayah: Int) {
         val start = rangeStart
-        if (start != null) {
+        if (choosingRangeStart) {
+            choosingRangeStart = false
+            beginRange(ayah)
+        } else if (start != null) {
             // A range that unmarks is one unmarking with its first ayah, unmarked when it began.
             note(memorization.mark(min(start, ayah)..max(start, ayah), memorized = rangeMarks), continuing = !rangeMarks)
             rangeStart = null
@@ -348,8 +355,15 @@ class MarkingSession(val memorization: MemorizationStore) {
         rangeStart = ayah
     }
 
+    /** «حدّد نطاقًا»: the next ayah tapped starts a range, and the one after ends it. */
+    fun chooseRange() {
+        choosingRangeStart = true
+        rangeStart = null
+    }
+
     fun cancelRange() {
         rangeStart = null
+        choosingRangeStart = false
     }
 
     /** Marks every ayah of the given pages, or unmarks them when they're all already marked. */

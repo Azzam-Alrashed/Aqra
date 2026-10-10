@@ -7,6 +7,7 @@ import androidx.compose.runtime.setValue
 import com.azzamalrashed.aqra.account.AccountStore
 import com.azzamalrashed.aqra.account.CloudSync
 import com.azzamalrashed.aqra.account.Journey
+import com.azzamalrashed.aqra.account.ReadingStore
 import com.azzamalrashed.aqra.core.AssetQuranFiles
 import com.azzamalrashed.aqra.core.Preferences
 import com.azzamalrashed.aqra.curriculum.AssessmentStore
@@ -53,7 +54,9 @@ class AqraApp(application: Application) {
     val plan = PlanStore(File(application.filesDir, "plan.json"))
     val rewards = RewardStore(File(application.filesDir, "rewards.json"))
     val assessments = AssessmentStore(File(application.filesDir, "assessments.json"))
-    val journey = Journey(plan, rewards, assessments)
+    /** The reader's ribbon in the Mushaf. */
+    val reading = ReadingStore(File(application.filesDir, "reading.json"))
+    val journey = Journey(plan, rewards, assessments, reading)
     val router = AppRouter()
     val sync = CloudSync(memorization, revision, journey, prefs, scope)
     val tasmee = TasmeeStore(memorization, revision, prefs)

@@ -9,6 +9,7 @@ struct MushafView: View {
     var startsMarking = false
 
     @Environment(MemorizationStore.self) private var memorization
+    @Environment(ReadingStore.self) private var reading
     @Environment(\.dismiss) private var dismiss
     /// The app's own direction, for the bars' lines of text inside their Mushaf-ordered (right-to-left) layout.
     @Environment(\.layoutDirection) private var layoutDirection
@@ -24,6 +25,8 @@ struct MushafView: View {
     /// Marking mode, while the student marks the ayat they've memorized.
     @State private var marking: MarkingSession?
     @State private var showingSetup = false
+    /// What the ribbon button just did, shown for a moment above the bottom bar.
+    @State private var ribbonNotice: RibbonNotice?
 
     var body: some View {
         GeometryReader { geometry in
@@ -50,6 +53,10 @@ struct MushafView: View {
                         topBar.transition(.opacity)
                     }
                     Spacer()
+                    if toolbarVisible, marking == nil, let ribbonNotice {
+                        ribbonPanel(ribbonNotice)
+                            .transition(.move(edge: .bottom).combined(with: .opacity))
+                    }
                     if toolbarVisible {
                         Group {
                             if let marking {
@@ -104,6 +111,9 @@ struct MushafView: View {
         TabView(selection: $lastPage) {
             ForEach(1...MushafStore.pageCount, id: \.self) { number in
                 MushafPageView(page: store.page(number), store: store)
+                    .overlay(alignment: .top) {
+                        if reading.bookmark?.page == number { MushafRibbon(page: number) }
+                    }
                     .tag(number)
             }
         }
@@ -120,7 +130,7 @@ struct MushafView: View {
         )
         return TabView(selection: spread) {
             ForEach(1...(MushafStore.pageCount / 2), id: \.self) { number in
-                MushafSpreadView(spread: number, store: store)
+                MushafSpreadView(spread: number, store: store, bookmark: reading.bookmark?.page)
                     .tag(number)
             }
         }
@@ -148,13 +158,24 @@ struct MushafView: View {
         return FloatingPanel {
             VStack(spacing: 14) {
                 VStack(spacing: 3) {
-                    // While a range waits for its end, the bar says so.
-                    Text(marking.rangeStart == nil ? "Tap the ayat you've memorized" : "Now tap the last ayah of the range")
+                    MushafModeChip(mode: .marking)
+                        .padding(.bottom, 4)
+                    // While a range waits for its first or last ayah, the bar says so.
+                    Group {
+                        if marking.choosingRangeStart {
+                            Text("Tap the first ayah of the range")
+                        } else if marking.rangeStart != nil {
+                            Text("Now tap the last ayah of the range")
+                        } else {
+                            Text("Tap the ayat you've memorized")
+                        }
+                    }
                         .font(.system(size: 17, weight: .heavy, design: .rounded))
                         .foregroundStyle(MushafStyle.ink)
                     if marking.unmarked.isEmpty {
-                        (Text("\(memorization.count) ayat memorized") + Text(verbatim: Separator.facts)
-                            + Text("Press and hold an ayah to mark from it to another"))
+                        (Text("\(memorization.count) ayat memorized")
+                            + (marking.choosingRangeStart || marking.rangeStart != nil ? Text(verbatim: "")
+                               : Text(verbatim: Separator.facts) + Text("or mark from one ayah to another with «Select a range»")))
                         .font(.system(size: 12, weight: .semibold, design: .rounded))
                         .foregroundStyle(MushafStyle.chrome)
                         .lineLimit(1)
@@ -189,10 +210,20 @@ struct MushafView: View {
                     }
                 }
                 .animation(.easeInOut(duration: 0.2), value: marking.rangeStart)
+                .animation(.easeInOut(duration: 0.2), value: marking.choosingRangeStart)
                 .animation(.easeInOut(duration: 0.2), value: marking.unmarked.isEmpty)
                 HStack(spacing: 10) {
+                    let choosing = marking.choosingRangeStart || marking.rangeStart != nil
+                    Button(choosing ? "Cancel the range" : "Select a range") {
+                        withAnimation(.easeInOut(duration: 0.2)) {
+                            if choosing { marking.cancelRange() } else { marking.chooseRange() }
+                        }
+                    }
+                    .buttonStyle(MarkingButtonStyle())
                     Button(pages.count > 1 ? "Both pages" : "Whole page") { marking.toggle(ayahs) }
                         .buttonStyle(MarkingButtonStyle())
+                }
+                HStack(spacing: 10) {
                     Button("Juz' & surahs") { showingSetup = true }
                         .buttonStyle(MarkingButtonStyle())
                     Button("Done") {
@@ -266,9 +297,10 @@ struct MushafView: View {
                     sliderPage = nil
                 }
                 .tint(MushafStyle.barAccent)
+                ribbonButton
             }
             .padding(.leading, 4)
-            .padding(.trailing, 14)
+            .padding(.trailing, 4)
         }
         .frame(maxWidth: 620)
         .padding(.horizontal, 16)
@@ -280,18 +312,133 @@ struct MushafView: View {
     private func arabic(_ number: Int) -> String {
         number.formatted(.number.locale(Locale(identifier: "ar@numbers=arab")))
     }
+
+    // MARK: - The ribbon
+
+    /// «الفاصل هنا»: places the ribbon on the page shown (the right page of a spread), or takes it away from it.
+    private var ribbonButton: some View {
+        let here = reading.bookmark?.page == lastPage
+        return Button {
+            if here {
+                reading.remove()
+                show(.removed)
+            } else {
+                reading.place(on: lastPage)
+                show(.placed(page: lastPage))
+            }
+        } label: {
+            MushafBarIcon(here ? "Remove the bookmark" : "Bookmark here", systemImage: here ? "bookmark.fill" : "bookmark")
+        }
+        .sensoryFeedback(.success, trigger: reading.bookmark?.page)
+    }
+
+    private func show(_ notice: RibbonNotice) {
+        withAnimation(.spring(response: 0.35, dampingFraction: 0.85)) { ribbonNotice = notice }
+    }
+
+    private func ribbonPanel(_ notice: RibbonNotice) -> some View {
+        FloatingPanel {
+            HStack(spacing: 12) {
+                IconTile(icon: "🔖", tint: OnboardingPalette.rose, size: 38)
+                VStack(alignment: .leading, spacing: 2) {
+                    switch notice {
+                    case .placed(let page):
+                        Text("Bookmark placed at \(store.surahNames[store.page(page).surah] ?? ""), page \(page)")
+                            .font(.system(size: 15, weight: .heavy, design: .rounded))
+                            .foregroundStyle(MushafStyle.ink)
+                        Text("Home opens on it, and browsing or marking never moves it.")
+                            .font(.system(size: 12, weight: .semibold, design: .rounded))
+                            .foregroundStyle(MushafStyle.chrome)
+                    case .removed:
+                        Text("Bookmark removed")
+                            .font(.system(size: 15, weight: .heavy, design: .rounded))
+                            .foregroundStyle(MushafStyle.ink)
+                    }
+                }
+                .fixedSize(horizontal: false, vertical: true)
+                Spacer(minLength: 0)
+            }
+            .environment(\.layoutDirection, layoutDirection)
+        }
+        .accessibilityElement(children: .combine)
+        .task(id: notice) {
+            try? await Task.sleep(for: .seconds(3))
+            guard !Task.isCancelled, ribbonNotice == notice else { return }
+            withAnimation(.easeOut(duration: 0.25)) { ribbonNotice = nil }
+        }
+    }
+}
+
+/// What the ribbon button just did.
+private enum RibbonNotice: Hashable {
+    case placed(page: Int)
+    case removed
+}
+
+/// The ribbon (فاصل) hanging from the top of the page it marks, with the page's number. It lies in the page's header
+/// band, beside the juz' label, and ends above the first line, so it never covers a word of the page.
+struct MushafRibbon: View {
+    var page: Int
+
+    var body: some View {
+        GeometryReader { geometry in
+            ribbon(depth: PageMetrics(size: geometry.size).topInset + PageMetrics.chrome)
+        }
+        .allowsHitTesting(false)
+        .accessibilityElement(children: .ignore)
+        .accessibilityLabel(Text("Your bookmark"))
+    }
+
+    private func ribbon(depth: CGFloat) -> some View {
+        HStack {
+            ZStack(alignment: .bottom) {
+                RibbonShape()
+                    .fill(LinearGradient(colors: [OnboardingPalette.brand, OnboardingPalette.brandDeep], startPoint: .top, endPoint: .bottom))
+                    .frame(width: 30, height: depth)
+                    .shadow(color: OnboardingPalette.shadow.opacity(0.25), radius: 6, y: 3)
+                Text(verbatim: page.formatted(.number.locale(Locale(identifier: "ar@numbers=arab"))))
+                    .font(.system(size: 12, weight: .heavy, design: .rounded))
+                    .foregroundStyle(.white)
+                    .minimumScaleFactor(0.6)
+                    .frame(width: 26)
+                    .padding(.bottom, 16)
+            }
+            // Clear of the header's juz' label, and between the top bar's title and its buttons.
+            .padding(.leading, 112)
+            Spacer(minLength: 0)
+        }
+    }
+}
+
+
+/// A ribbon's tail: the bottom edge cut in a notch.
+private struct RibbonShape: Shape {
+    func path(in rect: CGRect) -> Path {
+        var path = Path()
+        path.move(to: CGPoint(x: rect.minX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.minY))
+        path.addLine(to: CGPoint(x: rect.maxX, y: rect.maxY))
+        path.addLine(to: CGPoint(x: rect.midX, y: rect.maxY - 12))
+        path.addLine(to: CGPoint(x: rect.minX, y: rect.maxY))
+        path.closeSubpath()
+        return path
+    }
 }
 
 /// Two facing pages: the odd page on the right and the even page on the left, as in the printed Mushaf.
 struct MushafSpreadView: View {
     var spread: Int
     var store: MushafStore
+    /// The page the reader's ribbon is on, drawn on whichever of the two it is.
+    var bookmark: Int? = nil
 
     var body: some View {
         HStack(spacing: 0) {
             MushafPageView(page: store.page(spread * 2 - 1), store: store)
+                .overlay(alignment: .top) { if bookmark == spread * 2 - 1 { MushafRibbon(page: spread * 2 - 1) } }
             Rectangle().fill(MushafStyle.chrome.opacity(0.18)).frame(width: 1)
             MushafPageView(page: store.page(spread * 2), store: store)
+                .overlay(alignment: .top) { if bookmark == spread * 2 { MushafRibbon(page: spread * 2) } }
         }
         .environment(\.layoutDirection, .rightToLeft)
     }
@@ -318,6 +465,7 @@ struct MushafRootView: View {
     @State private var plan: PlanStore
     @State private var rewards: RewardStore
     @State private var assessments: AssessmentStore
+    @State private var reading: ReadingStore
     /// The account the progress is backed up to.
     @State private var account: AccountStore
     @State private var router = AppRouter()
@@ -338,12 +486,14 @@ struct MushafRootView: View {
         let plan = PlanStore()
         let rewards = RewardStore()
         let assessments = AssessmentStore()
+        let reading = ReadingStore()
         _memorization = State(initialValue: memorization)
         _revision = State(initialValue: revision)
         _plan = State(initialValue: plan)
         _rewards = State(initialValue: rewards)
         _assessments = State(initialValue: assessments)
-        let journey = Journey(plan: plan, rewards: rewards, assessments: assessments)
+        _reading = State(initialValue: reading)
+        let journey = Journey(plan: plan, rewards: rewards, assessments: assessments, reading: reading)
         _account = State(initialValue: AccountStore(sync: CloudSync(memorization: memorization, revision: revision, journey: journey),
                                                     tasmee: TasmeeStore(memorization: memorization, revision: revision),
                                                     social: SocialStore(memorization: memorization, revision: revision)))
@@ -362,6 +512,7 @@ struct MushafRootView: View {
         .environment(plan)
         .environment(rewards)
         .environment(assessments)
+        .environment(reading)
         .environment(account)
         .environment(account.sync)
         .environment(account.tasmee)
@@ -525,6 +676,44 @@ struct MushafTopBar<Leading: View, Trailing: View>: View {
 
     private func arabic(_ number: Int) -> String {
         number.formatted(.number.locale(Locale(identifier: "ar@numbers=arab")))
+    }
+}
+
+/// What a tap on the page does now, said in the panel of each mode: revising, marking or memorizing.
+struct MushafModeChip: View {
+    enum Mode {
+        case revising, marking, memorizing
+    }
+
+    var mode: Mode
+
+    var body: some View {
+        HStack(spacing: 6) {
+            Text(verbatim: icon)
+                .font(.system(size: 13))
+            Group {
+                switch mode {
+                case .revising: Text("Revising")
+                case .marking: Text("Marking what you've memorized")
+                case .memorizing: Text("Memorizing")
+                }
+            }
+            .font(.system(size: 12, weight: .heavy, design: .rounded))
+            .foregroundStyle(MushafStyle.barAccent)
+            .lineLimit(1)
+        }
+        .padding(.horizontal, 10)
+        .frame(minHeight: 26)
+        .background(MushafStyle.barAccentFill, in: Capsule())
+        .accessibilityElement(children: .combine)
+    }
+
+    private var icon: String {
+        switch mode {
+        case .revising: "🧠"
+        case .marking: "✅"
+        case .memorizing: "✍️"
+        }
     }
 }
 

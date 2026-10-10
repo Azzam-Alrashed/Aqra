@@ -15,6 +15,8 @@
     <string name="s_credits_due_to_you">%s عملة مستحقة لك</string>
     <!-- %@ recorded your tasmee\' of %lld pages. -->
     <string name="s_recorded_your_tasmee_of_n_pages">سجّل %1$s تسميعك؛ عدد الصفحات: %2$d.</string>
+    <!-- %@ removed -->
+    <string name="s_removed">أُزيلت سورة %s</string>
     <!-- %lld ayat -->
     <plurals name="n_ayat">
         <item quantity="zero">%d آية</item>
@@ -41,6 +43,15 @@
         <item quantity="few">%d آيات محفوظة</item>
         <item quantity="many">%d آية محفوظة</item>
         <item quantity="other">%d آية محفوظة</item>
+    </plurals>
+    <!-- %lld ayat, with their revision history and strength. -->
+    <plurals name="n_ayat_with_their_revision_history_and_strength">
+        <item quantity="zero">%d آية، معها تاريخ مراجعتها وقوّتها.</item>
+        <item quantity="one">آية واحدة، معها تاريخ مراجعتها وقوّتها.</item>
+        <item quantity="two">آيتان، معهما تاريخ مراجعتهما وقوّتهما.</item>
+        <item quantity="few">%d آيات، معها تاريخ مراجعتها وقوّتها.</item>
+        <item quantity="many">%d آية، معها تاريخ مراجعتها وقوّتها.</item>
+        <item quantity="other">%d آية، معها تاريخ مراجعتها وقوّتها.</item>
     </plurals>
     <!-- %lld credits -->
     <plurals name="n_credits">
@@ -313,6 +324,15 @@
     <string name="a_seat_won_in_your_session">مقعد فِيز به في جلستك</string>
     <!-- A session less than an hour away offers free seats only: there\'s no time to bid. -->
     <string name="a_session_less_than_an_hour_away_offers_free_seats">الجلسة التي تبدأ بعد أقل من ساعة مقاعدها مجانية فقط، فلا وقت للمزايدة.</string>
+    <!-- A sheikh verified %lld of them. -->
+    <plurals name="a_sheikh_verified_n_of_them">
+        <item quantity="zero">لم يوثّق شيخ منها شيئًا.</item>
+        <item quantity="one">منها آية واحدة وثّقها شيخ.</item>
+        <item quantity="two">منها آيتان وثّقهما شيخ.</item>
+        <item quantity="few">منها %d آيات وثّقها شيخ.</item>
+        <item quantity="many">منها %d آية وثّقها شيخ.</item>
+        <item quantity="other">منها %d آية وثّقها شيخ.</item>
+    </plurals>
     <!-- A student -->
     <string name="a_student">طالب</string>
     <!-- a week -->
@@ -405,14 +425,24 @@
     <string name="book_a_free_seat_instead">احجز مقعدًا مجانيًا بدلًا منه</string>
     <!-- Book a free seat instead? -->
     <string name="book_a_free_seat_instead_q">تحجز مقعدًا مجانيًا بدلًا من عرضك؟</string>
+    <!-- Book a session, or recite to a friend with a code -->
+    <string name="book_a_session_or_recite_to_a_friend_with_a">احجز موعدًا، أو سمّع لصديق برمز</string>
     <!-- Book a tasmee\' and ask for a stage test -->
     <string name="book_a_tasmee_and_ask_for_a_stage_test">احجز تسميعًا واطلب اختبار المرحلة</string>
     <!-- Book the free seat -->
     <string name="book_the_free_seat">احجز المقعد المجاني</string>
     <!-- Booked -->
     <string name="booked">محجوز</string>
+    <!-- Bookmark here -->
+    <string name="bookmark_here">الفاصل هنا</string>
+    <!-- Bookmark placed at %@, page %lld -->
+    <string name="bookmark_placed_at_s_page_n">وُضع الفاصل عند %1$s، الصفحة %2$d</string>
+    <!-- Bookmark removed -->
+    <string name="bookmark_removed">أُزيل الفاصل</string>
     <!-- Both pages -->
     <string name="both_pages">الصفحتان</string>
+    <!-- Bringing back what you memorized… -->
+    <string name="bringing_back_what_you_memorized">نُعيد حفظك…</string>
     <!-- Buy credits -->
     <string name="buy_credits">اشترِ عملات</string>
     <!-- Camera -->
@@ -423,20 +453,28 @@
     <string name="cancel_booking">إلغاء الحجز</string>
     <!-- Cancel session -->
     <string name="cancel_session">إلغاء الجلسة</string>
+    <!-- Cancel the range -->
+    <string name="cancel_the_range">ألغِ النطاق</string>
     <!-- Cancel this session? -->
     <string name="cancel_this_session_q">تلغي هذه الجلسة؟</string>
     <!-- Cancel your booking? -->
     <string name="cancel_your_booking_q">تلغي حجزك؟</string>
     <!-- Cancelled by the teacher -->
     <string name="cancelled_by_the_teacher">ألغاها المعلّم</string>
+    <!-- Carry on -->
+    <string name="carry_on">أكمل</string>
     <!-- Challenge met -->
     <string name="challenge_met">تحقّق التحدي</string>
     <!-- Change it -->
     <string name="change_it">عدّله</string>
+    <!-- Choose -->
+    <string name="choose">اختر</string>
     <!-- Choose what you\'ve memorized -->
     <string name="choose_what_youve_memorized">حدّد ما تحفظه</string>
     <!-- Choose what you\'ve memorized to start climbing -->
     <string name="choose_what_youve_memorized_to_start_climbing">اختر ما تحفظه لتبدأ الصعود</string>
+    <!-- Choose what you\'ve memorized, and it will be kept in it. -->
+    <string name="choose_what_youve_memorized_and_it_will_be_kept_in">اختر ما تحفظه، ويُحفظ فيه.</string>
     <!-- City -->
     <string name="city">المدينة</string>
     <!-- Clear error (لحن جلي) -->
@@ -626,14 +664,22 @@
     <string name="holding_a_seat">يحجز مقعدًا</string>
     <!-- Home -->
     <string name="home">الرئيسية</string>
+    <!-- Home opens on it, and browsing or marking never moves it. -->
+    <string name="home_opens_on_it_and_browsing_or_marking_never_moves">تفتح الرئيسية عليه، ولا يحرّكه التصفّح أو التحديد.</string>
     <!-- How much will you -->
     <string name="how_much_will_you">كم تراجع</string>
     <!-- How much will you memorize -->
     <string name="how_much_will_you_memorize">كم تحفظ</string>
+    <!-- I don\'t have an account, start afresh -->
+    <string name="i_dont_have_an_account_start_afresh">ليس لديّ حساب، أبدأ من جديد</string>
+    <!-- I have an Aqra account -->
+    <string name="i_have_an_aqra_account">لديّ حساب في اقرأ</string>
     <!-- I memorized it -->
     <string name="i_memorized_it">حفظته</string>
     <!-- I memorized up to %@ -->
     <string name="i_memorized_up_to_s">حفظت إلى %s</string>
+    <!-- I stumbled here -->
+    <string name="i_stumbled_here">تعثّرتُ هنا</string>
     <!-- I\'m just starting -->
     <string name="im_just_starting">أبدأ من الصفر</string>
     <!-- Ijazah from %@ -->
@@ -646,6 +692,8 @@
     <string name="in_one_place">في مكان واحد</string>
     <!-- In person -->
     <string name="in_person">حضوريًا</string>
+    <!-- In prayer, or to a friend: it counts in today\'s wird. -->
+    <string name="in_prayer_or_to_a_friend_it_counts_in_todays">في الصلاة أو مع صديق: تُحسب في وِرد اليوم.</string>
     <!-- Index -->
     <string name="index">الفهرس</string>
     <!-- Interview -->
@@ -672,10 +720,14 @@
     <string name="juz_s">الأجزاء %s</string>
     <!-- Juz\' %lld -->
     <string name="juz_n">الجزء %d</string>
+    <!-- Juz\' %lld removed -->
+    <string name="juz_n_removed">أُزيل الجزء %d</string>
     <!-- Juz\' %lld–%lld -->
     <string name="juz_n_n">الأجزاء %1$d–%2$d</string>
     <!-- Juz\' &amp; surahs -->
     <string name="juz_surahs">الأجزاء والسور</string>
+    <!-- Keep -->
+    <string name="keep">إبقاء</string>
     <!-- Keep going -->
     <string name="keep_going">تابع الاختبار</string>
     <!-- Keep it -->
@@ -702,12 +754,18 @@
     <string name="leave_this_competition_q">تغادر هذه المسابقة؟</string>
     <!-- Leave without recording? -->
     <string name="leave_without_recording_q">تخرج دون تسجيل؟</string>
+    <!-- Let\'s bring back what you memorized -->
+    <string name="lets_bring_back_what_you_memorized">نسترجع حفظك</string>
     <!-- Listening couldn\'t start. Try again. -->
     <string name="listening_couldnt_start_try_again">تعذّر بدء الاستماع. حاول مرة أخرى.</string>
     <!-- Listening… -->
     <string name="listening">أستمع إليك…</string>
     <!-- Loading teachers… -->
     <string name="loading_teachers">جارٍ تحميل المعلّمين…</string>
+    <!-- Log it -->
+    <string name="log_it">سجّلها</string>
+    <!-- Log the page -->
+    <string name="log_the_page">سجّل الصفحة</string>
     <!-- Lowest bid -->
     <string name="lowest_bid">أدنى عرض</string>
     <!-- Make my code -->
@@ -718,6 +776,8 @@
     <string name="mark_as_heard">علّمها مسموعة</string>
     <!-- Mark pages and ayat in the Mushaf -->
     <string name="mark_pages_and_ayat_in_the_mushaf">حدّد الصفحات والآيات في المصحف</string>
+    <!-- Marking what you\'ve memorized -->
+    <string name="marking_what_youve_memorized">تحديد ما تحفظ</string>
     <!-- Master %lld%% of it -->
     <string name="master_n_of_it">أتقن %d%% منها</string>
     <!-- Mastered -->
@@ -745,12 +805,16 @@
     <string name="memorize_every_ayah_of_it">احفظ كل آياتها</string>
     <!-- Memorize new portions -->
     <string name="memorize_new_portions">احفظ مقاطع جديدة</string>
+    <!-- Memorize today\'s portion -->
+    <string name="memorize_todays_portion">احفظ مقطع اليوم</string>
     <!-- Memorized -->
     <string name="memorized">المحفوظ</string>
     <!-- Memorized %@, mastered %@ -->
     <string name="memorized_s_mastered_s">المحفوظ %1$s، المتقَن %2$s</string>
     <!-- Memorized today -->
     <string name="memorized_today">حفظت اليوم</string>
+    <!-- Memorizing -->
+    <string name="memorizing">حفظ</string>
     <!-- Messages -->
     <string name="messages">الرسائل</string>
     <!-- Microphone -->
@@ -761,6 +825,8 @@
     <string name="mushaf">المصحف</string>
     <!-- My memorization -->
     <string name="my_memorization">حفظي</string>
+    <!-- My plan -->
+    <string name="my_plan">خطتي</string>
     <!-- My sessions -->
     <string name="my_sessions">جلساتي</string>
     <!-- My students -->
@@ -800,6 +866,8 @@
     <string name="no_scores_yet_they_appear_as_members_revise">لا نتائج بعد: تظهر حين يراجع المشاركون.</string>
     <!-- No sessions scheduled yet. -->
     <string name="no_sessions_scheduled_yet">لا جلسات مجدولة بعد.</string>
+    <!-- No stumbles -->
+    <string name="no_stumbles">دون تعثّر</string>
     <!-- No stumbles: the ayat heard are verified -->
     <string name="no_stumbles_the_ayat_heard_are_verified">دون تعثّر: وُثّقت الآيات المسموعة</string>
     <!-- No teachers have joined yet. -->
@@ -828,6 +896,8 @@
     <string name="nothing_new">لا جديد.</string>
     <!-- Nothing recorded yet. -->
     <string name="nothing_recorded_yet">لم يُسجَّل شيء بعد.</string>
+    <!-- Nothing to revise today -->
+    <string name="nothing_to_revise_today">لا مراجعة اليوم</string>
     <!-- Notifications are turned off for Aqra in Settings. -->
     <string name="notifications_are_turned_off_for_aqra_in_settings">الإشعارات متوقفة لتطبيق اقرأ في الإعدادات.</string>
     <!-- Now tap the last ayah of the range -->
@@ -844,8 +914,12 @@
     <string name="only_part_of_it">حفظت جزءًا منه</string>
     <!-- Only students with a seat join this call. -->
     <string name="only_students_with_a_seat_join_this_call">ينضم إلى هذه المكالمة الطلابُ الذين حجزوا مقعدًا فقط.</string>
+    <!-- Open -->
+    <string name="open">افتح</string>
     <!-- Open Settings -->
     <string name="open_settings">افتح الإعدادات</string>
+    <!-- or mark from one ayah to another with «Select a range» -->
+    <string name="or_mark_from_one_ayah_to_another_with_select_a">أو حدّد من آية إلى أخرى بـ«حدّد نطاقًا»</string>
     <!-- Outbid -->
     <string name="outbid">زُويد عليه</string>
     <!-- Page %lld -->
@@ -906,12 +980,18 @@
     <string name="read_it_and_repeat_it_then_tap_an_ayah_to">اقرأه وكرّره، ثم انقر آية لتخفيها وتقرأها من حفظك</string>
     <!-- Recite aloud -->
     <string name="recite_aloud">سمّع بصوتك</string>
+    <!-- Recite aloud instead -->
+    <string name="recite_aloud_instead">سمّع بصوتك بدلًا من ذلك</string>
     <!-- Recite from memory, and Aqra follows along -->
     <string name="recite_from_memory_and_aqra_follows_along">اقرأ من حفظك، ويتابعك اقرأ</string>
+    <!-- Recite the next ayah from memory, then reveal it -->
+    <string name="recite_the_next_ayah_from_memory_then_reveal_it">اقرأ الآية التالية غيبًا، ثم أظهرها</string>
     <!-- Recite the page again -->
     <string name="recite_the_page_again">أعد الصفحة</string>
     <!-- Recite to a friend -->
     <string name="recite_to_a_friend">سمِّع لصديقك</string>
+    <!-- Recite to a sheikh or a friend -->
+    <string name="recite_to_a_sheikh_or_a_friend">سمّع لشيخ أو لصديق</string>
     <!-- Recited to a friend -->
     <string name="recited_to_a_friend">سمّعت لصديق</string>
     <!-- Record tasmee\' -->
@@ -924,20 +1004,32 @@
     <string name="released_outbid">أُعيدت: زايد عليك أحد</string>
     <!-- Remove -->
     <string name="remove">إزالة</string>
+    <!-- Remove %@ from what you\'ve memorized? -->
+    <string name="remove_s_from_what_youve_memorized_q">تُزيل سورة %s من حفظك؟</string>
     <!-- Remove all -->
     <string name="remove_all">إزالة الكل</string>
+    <!-- Remove juz\' %lld from what you\'ve memorized? -->
+    <string name="remove_juz_n_from_what_youve_memorized_q">تُزيل الجزء %d من حفظك؟</string>
+    <!-- Remove the bookmark -->
+    <string name="remove_the_bookmark">أزل الفاصل</string>
     <!-- Remove the challenge -->
     <string name="remove_the_challenge">إزالة التحدي</string>
     <!-- Remove the stumble on %@ -->
     <string name="remove_the_stumble_on_s">إزالة التعثّر في %s</string>
+    <!-- Remove the whole Quran from what you\'ve memorized? -->
+    <string name="remove_the_whole_quran_from_what_youve_memorized_q">تُزيل القرآن كاملًا من حفظك؟</string>
     <!-- Remove this friend? -->
     <string name="remove_this_friend_q">تزيل هذا الصديق؟</string>
     <!-- Repetitions: %lld -->
     <string name="repetitions_n">التكرار: %d</string>
     <!-- Reported by Ahmad -->
     <string name="reported_by_ahmad">رواه أحمد</string>
+    <!-- Restore what you memorized and carry on -->
+    <string name="restore_what_you_memorized_and_carry_on">استرجع حفظك وتابع من حيث توقّفت</string>
     <!-- Resume -->
     <string name="resume">استئناف</string>
+    <!-- Resume it from your plan -->
+    <string name="resume_it_from_your_plan">استأنفها من خطتك</string>
     <!-- Reveal the next ayah -->
     <string name="reveal_the_next_ayah">كشف الآية التالية</string>
     <!-- Reversed: session cancelled -->
@@ -957,14 +1049,22 @@
     <string name="revise_every_day_for_a_week">راجع كل يوم لمدة أسبوع</string>
     <!-- Revise every day, and climb your stations in Aqra. -->
     <string name="revise_every_day_and_climb_your_stations_in_aqra">راجِع كل يوم، وارتقِ في منازلك على اقرأ.</string>
+    <!-- Revise today\'s wird -->
+    <string name="revise_todays_wird">راجع وِرد اليوم</string>
     <!-- Revised -->
     <string name="revised">تمّت مراجعتها</string>
+    <!-- Revised a page outside the app? -->
+    <string name="revised_a_page_outside_the_app_q">راجعتَ صفحة خارج التطبيق؟</string>
     <!-- Revised a page outside the app? Press and hold it. -->
     <string name="revised_a_page_outside_the_app_q_press_and_hold">راجعت صفحة خارج التطبيق؟ اضغط عليها مطوّلًا.</string>
     <!-- Revised outside the app -->
     <string name="revised_outside_the_app">راجعتها خارج التطبيق</string>
     <!-- Revised outside the app, with stumbles… -->
     <string name="revised_outside_the_app_with_stumbles">راجعتها خارج التطبيق، مع تعثّرات…</string>
+    <!-- Revised outside the app? -->
+    <string name="revised_outside_the_app_q">راجعتَ خارج التطبيق؟</string>
+    <!-- Revising -->
+    <string name="revising">مراجعة</string>
     <!-- Revision -->
     <string name="revision">المراجعة</string>
     <!-- Revision goes on every day. -->
@@ -1010,6 +1110,8 @@
     <string name="seats_left_n">المقاعد المتبقية: %d</string>
     <!-- See the result -->
     <string name="see_the_result">النتيجة</string>
+    <!-- Select a range -->
+    <string name="select_a_range">حدّد نطاقًا</string>
     <!-- Send application -->
     <string name="send_application">أرسل الطلب</string>
     <!-- Set yourself a challenge -->
@@ -1036,6 +1138,8 @@
     <string name="sign_in_to_buy_credits">سجّل الدخول لتشتري عملات</string>
     <!-- Sign in to the emulator -->
     <string name="sign_in_to_the_emulator">تسجيل الدخول إلى المحاكي</string>
+    <!-- Sign in with the account you used before: what you memorized, its strength and your streak come back as you left them. -->
+    <string name="sign_in_with_the_account_you_used_before_what_you">سجّل الدخول بالحساب الذي استعملته من قبل، فيعود حفظك وقوّته وسلسلة مراجعتك كما تركتها.</string>
     <!-- Sign out -->
     <string name="sign_out">تسجيل الخروج</string>
     <!-- Sign out? -->
@@ -1112,10 +1216,14 @@
     <string name="tap_an_ayah_the_student_stumbled_on_press_and_hold">انقر الآية التي تعثّر فيها الطالب، واضغط عليها مطوّلًا لتحدّد نوع الخطأ، وعلّم كل صفحة سمعتها.</string>
     <!-- Tap an ayah to mark a stumble or take it back -->
     <string name="tap_an_ayah_to_mark_a_stumble_or_take_it">اضغط على آية لتعليم تعثّر أو إلغائه</string>
+    <!-- Tap an ayah to mark or clear a stumble, then Done -->
+    <string name="tap_an_ayah_to_mark_or_clear_a_stumble_then">اضغط آيةً لتسجّل تعثّرًا أو تمحوه، ثم «تم»</string>
     <!-- Tap the ayat you stumbled on when you revised this page -->
     <string name="tap_the_ayat_you_stumbled_on_when_you_revised_this">انقر الآيات التي تعثّرت فيها حين راجعت هذه الصفحة</string>
     <!-- Tap the ayat you\'ve memorized -->
     <string name="tap_the_ayat_youve_memorized">اضغط على الآيات التي تحفظها</string>
+    <!-- Tap the first ayah of the range -->
+    <string name="tap_the_first_ayah_of_the_range">اضغط أول آية في النطاق</string>
     <!-- Tap the last ayah you memorized -->
     <string name="tap_the_last_ayah_you_memorized">انقر آخر آية حفظتها</string>
     <!-- Tap to reveal the next ayah, and tap a revealed ayah if you stumbled on it -->
@@ -1194,12 +1302,16 @@
     <string name="the_whole_quran_2">القرآن كاملًا</string>
     <!-- The whole Quran -->
     <string name="the_whole_quran">القرآن كاملًا</string>
+    <!-- The whole Quran removed -->
+    <string name="the_whole_quran_removed">أُزيل القرآن كاملًا</string>
     <!-- There isn\'t enough memorized in this stage for a test yet. -->
     <string name="there_isnt_enough_memorized_in_this_stage_for_a_test">لم تحفظ من هذه المرحلة ما يكفي للاختبار بعد.</string>
     <!-- These pages keep slipping -->
     <string name="these_pages_keep_slipping">هذه الصفحات تتفلّت</string>
     <!-- They mark your stumbles on their phone -->
     <string name="they_mark_your_stumbles_on_their_phone">يعلّم تعثّراتك على جواله</string>
+    <!-- This account has no memorization yet. -->
+    <string name="this_account_has_no_memorization_yet">لا حفظ في هذا الحساب بعد.</string>
     <!-- This call has closed. -->
     <string name="this_call_has_closed">انتهت هذه المكالمة.</string>
     <!-- This code isn\'t valid, or it has expired. -->
@@ -1214,6 +1326,8 @@
     <string name="to_compete_with">لتتنافسوا</string>
     <!-- To pass this stage -->
     <string name="to_pass_this_stage">لتجتاز هذه المرحلة</string>
+    <!-- Today -->
+    <string name="today">اليوم</string>
     <!-- Today\'s new portion -->
     <string name="todays_new_portion">مقطع اليوم الجديد</string>
     <!-- Today\'s pages -->
@@ -1222,6 +1336,8 @@
     <string name="todays_revision">وِرد اليوم</string>
     <!-- Today\'s revision is done -->
     <string name="todays_revision_is_done">أتممت وِرد اليوم</string>
+    <!-- Today\'s wird is done, may Allah bless you -->
+    <string name="todays_wird_is_done_may_allah_bless_you">وِرد اليوم تمّ، بارك الله فيك</string>
     <!-- Together -->
     <string name="together">مع الآخرين</string>
     <!-- Topic colors -->
@@ -1272,6 +1388,8 @@
     <string name="waiting_for_your_students">في انتظار طلابك…</string>
     <!-- We\'ll be in touch for your interview -->
     <string name="well_be_in_touch_for_your_interview">سنتواصل معك لترتيب المقابلة</string>
+    <!-- Welcome back -->
+    <string name="welcome_back">أهلًا بعودتك</string>
     <!-- Welcome! Your sessions appear in the Tasmee\' tab. -->
     <string name="welcome_your_sessions_appear_in_the_tasmee_tab">أهلًا بك! تظهر جلساتك في تبويب التسميع.</string>
     <!-- What have you memorized -->
@@ -1314,6 +1432,8 @@
     <string name="with_a_friend">مع صديق</string>
     <!-- With a teacher -->
     <string name="with_a_teacher">مع معلّم</string>
+    <!-- With stumbles -->
+    <string name="with_stumbles">بتعثّر</string>
     <!-- With the code your friend shows you -->
     <string name="with_the_code_your_friend_shows_you">بالرمز الذي يريك إياه صديقك</string>
     <!-- with today\'s portion -->
@@ -1326,6 +1446,8 @@
     <string name="won_a_seat">فاز بمقعد</string>
     <!-- You can take the test again %@ -->
     <string name="you_can_take_the_test_again_s">يمكنك إعادة الاختبار %s</string>
+    <!-- You can undo it for a few seconds. -->
+    <string name="you_can_undo_it_for_a_few_seconds">يمكنك التراجع خلال لحظات.</string>
     <!-- You finished page %lld -->
     <string name="you_finished_page_n">أتممت الصفحة %d</string>
     <!-- You need %lld more credits. -->
@@ -1341,6 +1463,15 @@
     <string name="you_need_an_internet_connection_for_this">تحتاج إلى اتصال بالإنترنت لذلك.</string>
     <!-- You passed the stage\'s test -->
     <string name="you_passed_the_stages_test">اجتزت اختبار المرحلة</string>
+    <!-- You revised %lld pages -->
+    <plurals name="you_revised_n_pages">
+        <item quantity="zero">راجعتَ %d صفحة</item>
+        <item quantity="one">راجعتَ صفحة واحدة</item>
+        <item quantity="two">راجعتَ صفحتين</item>
+        <item quantity="few">راجعتَ %d صفحات</item>
+        <item quantity="many">راجعتَ %d صفحة</item>
+        <item quantity="other">راجعتَ %d صفحة</item>
+    </plurals>
     <!-- You were outbid -->
     <string name="you_were_outbid">زايد عليك أحد</string>
     <!-- You were outbid in %@\'s session. Your %lld credits are back. -->
@@ -1349,6 +1480,8 @@
     <string name="you_won_a_seat">فزت بمقعد</string>
     <!-- You won a seat in %@\'s session. -->
     <string name="you_won_a_seat_in_s_s_session">فزت بمقعد في جلسة %s.</string>
+    <!-- You won\'t declare it again, and nothing you recorded is erased. -->
+    <string name="you_wont_declare_it_again_and_nothing_you_recorded_is">لن تُعيد تحديد ما تحفظ، ولا يُمحى شيء مما سجّلته.</string>
     <!-- You\'ll finish, God willing, -->
     <string name="youll_finish_god_willing">ستختم بإذن الله</string>
     <!-- You\'re friends now -->
@@ -1389,6 +1522,12 @@
     <string name="your_bid_of_n_holds_a_seat">عرضك (%d) يحجز مقعدًا</string>
     <!-- Your bid was released -->
     <string name="your_bid_was_released">أُعيد عرضك</string>
+    <!-- Your bookmark -->
+    <string name="your_bookmark">الفاصل</string>
+    <!-- Your daily revision starts from it -->
+    <string name="your_daily_revision_starts_from_it">منه تبدأ مراجعتك اليومية</string>
+    <!-- Your day\'s steps, in order -->
+    <string name="your_days_steps_in_order">خطوات يومك، بالترتيب</string>
     <!-- Your details -->
     <string name="your_details">بياناتك</string>
     <!-- Your earnings -->
@@ -1426,6 +1565,8 @@
     <string name="your_pages_for_today_are_waiting_for_you">صفحات وِردك اليوم في انتظارك.</string>
     <!-- Your plan -->
     <string name="your_plan">خطتك</string>
+    <!-- Your plan, stages and rewards are in Progress -->
+    <string name="your_plan_stages_and_rewards_are_in_progress">خطتك ومراحلك ومكافآتك في «تقدّمي»</string>
     <!-- Your progress -->
     <string name="your_progress">تقدّمك</string>
     <!-- Your progress is only on this device until you sign in. -->
@@ -1444,6 +1585,8 @@
     <string name="your_students">طلابك</string>
     <!-- Your tasmee\' in an hour -->
     <string name="your_tasmee_in_an_hour">تسميعك بعد ساعة</string>
+    <!-- Your tasmee\' with %@ -->
+    <string name="your_tasmee_with_s">تسميعك مع %s</string>
     <!-- Your teacher heard %lld pages -->
     <plurals name="your_teacher_heard_n_pages">
         <item quantity="zero">سمع معلّمك %d صفحة</item>

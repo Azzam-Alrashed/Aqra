@@ -17,9 +17,7 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
-import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
-import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.offset
 import androidx.compose.foundation.layout.padding
@@ -32,21 +30,19 @@ import androidx.compose.foundation.pager.rememberPagerState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.automirrored.rounded.MenuBook
 import androidx.compose.material.icons.rounded.Add
 import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Close
 import androidx.compose.material.icons.rounded.Remove
-import androidx.compose.material.icons.rounded.Tune
 import androidx.compose.material3.Icon
 import androidx.compose.material3.Text
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
-import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
-import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.CornerRadius
@@ -87,12 +83,9 @@ import com.azzamalrashed.aqra.ui.art.LeftToRight
 import com.azzamalrashed.aqra.ui.art.Manazil
 import com.azzamalrashed.aqra.ui.art.juzFace
 import com.azzamalrashed.aqra.ui.components.AqraBackButton
-import com.azzamalrashed.aqra.ui.components.AqraCard
-import com.azzamalrashed.aqra.ui.components.AqraChevron
 import com.azzamalrashed.aqra.ui.components.AqraChip
 import com.azzamalrashed.aqra.ui.components.ChipText
 import com.azzamalrashed.aqra.ui.components.FittedText
-import com.azzamalrashed.aqra.ui.components.IconTile
 import com.azzamalrashed.aqra.ui.components.pressable
 import com.azzamalrashed.aqra.ui.components.softShadow
 import com.azzamalrashed.aqra.ui.iosSpring
@@ -109,7 +102,6 @@ import com.azzamalrashed.aqra.ui.util.weekdayName
 import com.azzamalrashed.aqra.ui.util.ARABIC_SEPARATOR
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.launch
-import java.time.ZoneId
 import kotlin.math.PI
 import kotlin.math.cos
 import kotlin.math.sin
@@ -519,88 +511,4 @@ private fun FinishPage(
 private fun inMonth(date: Moment): String {
     val month = PlanFormat.month(date)
     return if (month.startsWith("ذو ")) "ذي " + month.removePrefix("ذو ") else month
-}
-
-// MARK: - Today's portion on the home
-
-/**
- * Today's new memorization on the home: the portion and «احفظ», done for today, or a day of rest — with the date the
- * plan leads to. Without a plan, an invitation to make one.
- */
-@Composable
-fun PortionCard(app: AqraApp, store: MushafStore, onMemorize: (List<Int>) -> Unit, onEditPlan: () -> Unit) {
-    val plan = app.plan
-    AqraCard(Modifier.fillMaxWidth(), animated = true, padding = 14.dp, radius = 24.dp) {
-        val today = plan.today(app.memorization, store)
-        when {
-            plan.plan == null -> Row(Modifier.fillMaxWidth().pressable(pressed = 0.98f, onClick = onEditPlan),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconTile("✍️", Palette.butter, size = 40.dp)
-                Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                    Text(stringResource(R.string.memorize_new_portions), style = aqraStyle(16f, Weight.heavy, Palette.ink))
-                    Text(stringResource(R.string.a_daily_amount_and_the_date_youd_complete_the_quran), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
-                }
-                AqraChevron()
-            }
-            today == null -> Row(Modifier.fillMaxWidth().pressable(pressed = 0.98f, onClick = onEditPlan),
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-                IconTile("⏸️", Palette.lavender, size = 40.dp)
-                Text(stringResource(R.string.your_memorization_plan_is_paused), style = aqraStyle(15f, Weight.heavy, Palette.ink), modifier = Modifier.weight(1f))
-                AqraChevron()
-            }
-            else -> PortionContent(app, store, today, onMemorize, onEditPlan)
-        }
-    }
-}
-
-@Composable
-private fun PortionContent(app: AqraApp, store: MushafStore, today: TodayPortion, onMemorize: (List<Int>) -> Unit, onEditPlan: () -> Unit) {
-    val (icon, tint) = when (today) {
-        is TodayPortion.Due -> "✍️" to Palette.butter
-        is TodayPortion.Done -> "✅" to Palette.mint
-        is TodayPortion.RestDay -> "🌙" to Palette.lavender
-        TodayPortion.Complete -> "⭐️" to Palette.butter
-    }
-    val title = when (today) {
-        is TodayPortion.Due -> stringResource(R.string.todays_new_portion)
-        is TodayPortion.Done -> stringResource(R.string.memorized_today)
-        is TodayPortion.RestDay -> stringResource(R.string.a_rest_day_from_new_memorization)
-        TodayPortion.Complete -> stringResource(R.string.every_ayah_is_memorized)
-    }
-    val detail = when (today) {
-        is TodayPortion.Due -> PlanFormat.portion(today.ayahs, store)
-        is TodayPortion.Done -> PlanFormat.portion(today.portion.memorized, store)
-        is TodayPortion.RestDay -> stringResource(R.string.next_portion_s, weekdayName(today.next.weekday(ZoneId.systemDefault()), narrow = false))
-        TodayPortion.Complete -> stringResource(R.string.may_allah_bless_you)
-    }
-    Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-        Row(verticalAlignment = Alignment.Top, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
-            IconTile(icon, tint, size = 40.dp)
-            Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
-                Text(title, style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
-                Text(detail, style = aqraStyle(16f, Weight.heavy, Palette.ink), maxLines = 2)
-            }
-            val label = stringResource(R.string.your_plan)
-            Box(
-                Modifier.size(30.dp).background(Palette.lavender, CircleShape).pressable(onClick = onEditPlan).semantics { contentDescription = label },
-                contentAlignment = Alignment.Center,
-            ) {
-                Icon(Icons.Rounded.Tune, null, tint = Palette.brand, modifier = Modifier.size(16.dp))
-            }
-        }
-        if (today is TodayPortion.Due) {
-            Row(
-                Modifier.fillMaxWidth().heightIn(min = 46.dp).background(Brush.verticalGradient(Palette.brandGradient), CircleShape)
-                    .pressable(pressed = 0.96f) { onMemorize(today.ayahs) },
-                verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,
-            ) {
-                Icon(Icons.AutoMirrored.Rounded.MenuBook, null, tint = Color.White, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.size(8.dp))
-                Text(stringResource(R.string.memorize), style = aqraStyle(16f, Weight.bold, Color.White))
-            }
-        }
-        app.plan.completionDate(app.memorization, store)?.let { date ->
-            Text(stringResource(R.string.your_expected_completion_god_willing_s, PlanFormat.month(date)), style = aqraStyle(12f, Weight.bold, Palette.brand))
-        }
-    }
 }

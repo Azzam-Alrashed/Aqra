@@ -77,23 +77,19 @@ The system tab bar (Liquid Glass, minimizing as the content scrolls) holds ال�
 
 The home answers «وش علي اليوم؟». It shows:
 - **The stage:** the منازل stairs (ten glossy steps of three juz' each) inside glowing rings, with chips for the share of the Quran memorized and the memorization's strength, and the revision streak and a bell for messages above.
-- **Today's wird:** a headline with the pages left and the length of a full revision, and one button to start.
-- **Today's new portion:** from the personal plan, with «احفظ» and the expected completion date (or an invitation to make a plan).
-- **The current stage:** how much of it is memorized and mastered; it opens the stage.
+- **«اليوم»:** the day's steps in order, each with its own button: revise today's wird (with the pages left and the length of a full revision), memorize today's portion from the personal plan (or an invitation to make one), and recite to a sheikh or a friend (the next tasmee' booked, or that its teacher cancelled it). A count shows how many are done, and «سجّلها» logs a page revised outside the app, clean or with stumbles.
 - **Pages that keep slipping,** suggested for extra follow-up, to take or dismiss.
-- **The Mushaf:** a miniature of the page last read, which opens it.
-- **Today's pages:** each page as a tile in its juz's color; tap to revise it, press and hold if it was revised outside the app (clean, or with stumbles).
-- **What's memorized and the daily amount,** each opening its editor.
+- **The Mushaf:** a miniature of the page at the reader's ribbon, or of the page last read, which opens it.
 
-The home also shows what a teacher or a friend just heard (applied to the progress), the next tasmee' booked (or that its teacher cancelled it), leading to the التسميع tab, and, after the first revision, a calm invitation to sign in.
+The home also shows what a teacher or a friend just heard (applied to the progress), leading to the التسميع tab. The plan, the stages and the rewards are in تقدّمي, and a line at the bottom of the home leads there.
 
 ### Progress (تقدّمي)
 
-The share of the Quran memorized, beside the shares mastered and verified (kept apart, as Etqan asks); the revision streak over the last seven days, a few numbers, and every juz' at a glance: how much of it is memorized and how strong. Below: the personal plan, the ten stages, the rewards (points, achievements and the week's challenges), and «مع الآخرين» (friends and competitions).
+The share of the Quran memorized, beside the shares mastered and verified (kept apart, as Etqan asks); the revision streak over the last seven days, a few numbers, and every juz' at a glance: how much of it is memorized and how strong. Below: «خطتي» (what's memorized, the daily amount and the personal plan, each opening its editor), the ten stages, the rewards (points, achievements and the week's challenges), and «مع الآخرين» (friends and competitions).
 
 ### Account (حسابي)
 
-The account the progress is backed up to and the name others see, credits, the Mushaf's colors, a daily reminder, sounds, the app's language, and the sources Aqra is built on, credited as their terms ask. What's memorized and the daily amount are edited from the home only.
+The account the progress is backed up to and the name others see, credits, the Mushaf's colors, a daily reminder, sounds, the app's language, and the sources Aqra is built on, credited as their terms ask. What's memorized and the daily amount are edited from «خطتي» in تقدّمي.
 
 ### Tasmee' (التسميع)
 
@@ -107,15 +103,16 @@ The record lands in the student's account, and the **student's app applies it**:
 
 ### Mushaf
 
-The Mushaf is where the student reads and marks what they have memorized. It opens on the last page read, and its top bar leads back home. Its bars float over the page as white capsules in the app's colors, so the paper stays the Mushaf's own.
+The Mushaf is where the student reads and marks what they have memorized. It opens on the last page read, and its top bar leads back home. The reader can place a ribbon (الفاصل) on a page from its bottom bar; browsing, revising and marking never move it, and Home's Mushaf card opens on it. Its bars float over the page as white capsules in the app's colors, so the paper stays the Mushaf's own.
 
 - **Memorized ayat are colored.** Each ayah takes the color of its topic section, as in a printed thematic Mushaf, drawn as a soft highlight behind its words. The color is faint when the ayah is newly memorized, fuller as it grows strong, and fades when revision is overdue. Unmemorized ayat stay plain paper.
 - **Tajweed colors** on the letters, with their own toggle.
-- **Marking mode** marks pages and ayat as memorized directly on the page.
+- **Marking mode** marks pages and ayat as memorized directly on the page, an ayah at a tap or a range with «حدّد نطاقًا». Removing ayat that carry revisions, stumbles or a teacher's mark asks first, and any removal can be undone for a few seconds.
+- **Each panel names its mode** (marking, revising, memorizing), so the student always knows what a tap will do.
 
 ### Today's wird
 
-The wird goes through its pages one after another, each held still with its memorized ayat veiled and revealed one at a time, or, with «سمّع بصوتك», revealed word by word as the student recites them aloud, then returns home when it's done.
+The wird goes through its pages one after another, each held still with its memorized ayat veiled and revealed one at a time («الآية التالية», with «تعثّرتُ هنا», «أظهر الصفحة» and «تم» as buttons beside it), or, with «سمّع بصوتك», revealed word by word as the student recites them aloud, then returns home when it's done.
 
 ## The personal plan
 
@@ -130,7 +127,7 @@ The ten stairs are Etqan's ten stages of three juz' each. Each shows how much of
 ### Where the student starts
 
 The student **declares** what they already know, by juz', by surah, by page, and ayah by ayah, with a "whole Quran" shortcut:
-- juz' and surahs on the «ماذا تحفظ؟» screen right after onboarding;
+- juz' and surahs on the «ماذا تحفظ؟» screen right after onboarding (where a returning student can choose «لديّ حساب في اقرأ» and restore their account instead);
 - pages and ayat in the Mushaf's marking mode.
 
 A tasmee' with a teacher **confirms** it: the ayat heard clean get a "verified" mark, and a stumble before the teacher takes it away until the ayah is heard clean again. A tasmee' never marks new ayat as memorized: the student owns the map.

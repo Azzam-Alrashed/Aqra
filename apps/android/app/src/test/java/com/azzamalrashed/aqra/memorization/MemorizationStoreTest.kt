@@ -111,6 +111,23 @@ class MemorizationStoreTest {
         assertEquals(0, memorization.memorizedCount(10..14))
     }
 
+    /** «حدّد نطاقًا»: the next tap starts a range, the one after ends it; cancelling goes back to single taps. */
+    @Test
+    fun aRangeCanBeChosenWithAButton() {
+        val memorization = MemorizationStore(file = null)
+        val session = MarkingSession(memorization)
+        session.chooseRange()
+        assertTrue(session.choosingRangeStart && session.rangeStart == null)
+        session.tap(40)
+        assertTrue(!session.choosingRangeStart && session.rangeStart == 40 && memorization.isMemorized(40))
+        session.tap(44)
+        assertTrue(session.rangeStart == null && memorization.memorizedCount(40..44) == 5)
+        session.chooseRange()
+        session.cancelRange()
+        session.tap(50)
+        assertTrue(memorization.isMemorized(50) && session.rangeStart == null && memorization.count == 6)
+    }
+
     @Test
     fun undoingAnUnmarkingRestoresTheRecordsExactly() {
         val memorization = MemorizationStore(file = null)

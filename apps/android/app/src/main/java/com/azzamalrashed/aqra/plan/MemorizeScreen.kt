@@ -53,6 +53,8 @@ import com.azzamalrashed.aqra.R
 import com.azzamalrashed.aqra.mushaf.MemorizeFocus
 import com.azzamalrashed.aqra.mushaf.MushafBarIcon
 import com.azzamalrashed.aqra.mushaf.MushafColorsMenu
+import com.azzamalrashed.aqra.mushaf.MushafMode
+import com.azzamalrashed.aqra.mushaf.MushafModeChip
 import com.azzamalrashed.aqra.mushaf.MushafPageOptions
 import com.azzamalrashed.aqra.mushaf.MushafPageView
 import com.azzamalrashed.aqra.mushaf.MushafTopBar
@@ -115,6 +117,7 @@ fun MemorizeScreen(app: AqraApp, store: MushafStore, portion: List<Int>, onClose
         CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
             FloatingPanel(style) {
                 Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(2.dp)) {
+                    MushafModeChip(MushafMode.MEMORIZING, style, Modifier.padding(bottom = 4.dp))
                     FittedText(PlanFormat.portion(portion, store), aqraStyle(17f, Weight.heavy, style.ink), minScale = 0.7f)
                     Text(
                         stringResource(if (focus.choosingEnd) R.string.tap_the_last_ayah_you_memorized else R.string.read_it_and_repeat_it_then_tap_an_ayah_to),

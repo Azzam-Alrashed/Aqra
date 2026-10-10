@@ -44,49 +44,6 @@ struct ProgressBars: View {
     }
 }
 
-// MARK: - The current stage on the home
-
-/// The stage the student is in: how much of it is memorized and mastered; it opens the stage.
-struct StageCard: View {
-    var store: MushafStore
-    var stage: Int
-    var onOpen: () -> Void
-
-    @Environment(MemorizationStore.self) private var memorization
-    @Environment(AssessmentStore.self) private var assessments
-
-    var body: some View {
-        let status = assessments.status(of: stage, store: store, memorization: memorization)
-        Button(action: onOpen) {
-            AqraCard(padding: 14, radius: 24) {
-                VStack(alignment: .leading, spacing: 10) {
-                    HStack(spacing: 12) {
-                        IconTile(icon: status.isPassed ? "🏅" : "🪜", tint: Palette.lavender, size: 40)
-                        VStack(alignment: .leading, spacing: 2) {
-                            Text("Stage \(stage) of \(Curriculum.stageCount)")
-                                .aqraFont(size: 16, weight: .heavy)
-                                .foregroundStyle(Palette.ink)
-                            StageFormat.juz(of: stage)
-                                .aqraFont(size: 12, weight: .semibold)
-                                .foregroundStyle(Palette.inkSoft)
-                        }
-                        Spacer(minLength: 4)
-                        Text(verbatim: status.progress.memorizedShare.formatted(.percent.precision(.fractionLength(0))))
-                            .aqraFont(size: 13, weight: .bold, monospacedDigit: true)
-                            .foregroundStyle(Palette.brand)
-                            .padding(.horizontal, 10)
-                            .padding(.vertical, 3)
-                            .frame(minHeight: 28)
-                            .background(Palette.lavender, in: Capsule())
-                    }
-                    ProgressBars(memorized: status.progress.memorizedShare, mastered: status.progress.masteredShare)
-                }
-            }
-        }
-        .buttonStyle(AqraPressStyle())
-    }
-}
-
 // MARK: - Every stage
 
 /// The ten stages, each with how much is memorized and mastered, and whether it's passed.

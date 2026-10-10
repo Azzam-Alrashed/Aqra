@@ -405,6 +405,15 @@ final class RevisionSession {
         revealedPosition = 0
     }
 
+    /// «تعثّرتُ هنا»: the student stumbled reciting the next ayah from memory. It's revealed, marked as a stumble.
+    func stumbleOnNext() {
+        guard !isComplete else { return }
+        let ayah = ayahs[revealed]
+        revealNext()
+        stumbles.insert(ayah)
+        cleared.remove(ayah)
+    }
+
     func revealAll() {
         revealed = ayahs.count
         revealedPosition = 0
