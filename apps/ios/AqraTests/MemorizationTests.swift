@@ -89,6 +89,51 @@ struct MemorizationStoreTests {
         #expect(memorization.isMemorized(50) && session.rangeStart == nil && memorization.count == 6)
     }
 
+    /// A file written by an earlier version (version 2, before unmarking was remembered) still loads whole.
+    @Test func anOlderMemorizationFileStillLoads() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("memorization-\(UUID().uuidString).json")
+        let old = """
+        {"version":2,"ayahs":[{"ayah":5,"memory":{"stability":21.5,"lastReviewed":821692800,"lapses":1,"verified":true,"since":800000000}},\
+        {"ayah":6,"memory":{"since":800000000}}]}
+        """
+        try Data(old.utf8).write(to: url)
+        let memorization = MemorizationStore(fileURL: url)
+        #expect(!memorization.loadFailed && memorization.count == 2 && memorization.removed.isEmpty)
+        let memory = try #require(memorization.memory(ofAyah: 5))
+        #expect(memory.stability == 21.5 && memory.verified && memory.lapses == 1 && memory.lastReviewed == Date(timeIntervalSinceReferenceDate: 821_692_800))
+        #expect(memorization.memory(ofAyah: 6)?.stability == ReviewPolicy.standard.declaredStability)
+    }
+
+    @Test func unmarkingLeavesATombstoneUntilTheAyahIsMarkedAgain() throws {
+        let url = FileManager.default.temporaryDirectory.appendingPathComponent("memorization-\(UUID().uuidString).json")
+        let memorization = MemorizationStore(fileURL: url)
+        memorization.mark([1, 2, 3], memorized: true)
+        memorization.mark([2], memorized: false)
+        #expect(memorization.removed.keys.sorted() == [2] && memorization.memory.removed.count == 1)
+        memorization.saveNow()
+        // The tombstone is kept with the file, so a merge after a relaunch still knows.
+        let reloaded = MemorizationStore(fileURL: url)
+        #expect(reloaded.removed.keys.sorted() == [2] && reloaded.count == 2)
+        // Marking it again, or learning it as a new portion, takes the tombstone away.
+        reloaded.mark([2], memorized: true)
+        #expect(reloaded.removed.isEmpty)
+        reloaded.mark([3], memorized: false)
+        reloaded.learn([3], stability: 2)
+        #expect(reloaded.removed.isEmpty && reloaded.count == 3)
+        // A merge with the account keeps what the account unmarked too.
+        reloaded.replaceAll(CloudBackup.Memory(ayahs: [1: AyahMemory(since: .now)], removed: [9: .now]))
+        #expect(reloaded.count == 1 && reloaded.removed.keys.sorted() == [9])
+    }
+
+    /// The records with their dates of memorization set aside: an undo dates them from itself.
+    private func ignoringSince(_ ayahs: [Int: AyahMemory]) -> [Int: AyahMemory] {
+        ayahs.mapValues { memory in
+            var memory = memory
+            memory.since = .distantPast
+            return memory
+        }
+    }
+
     @Test func undoingAnUnmarkingRestoresTheRecordsExactly() {
         let memorization = MemorizationStore(fileURL: nil)
         let session = MarkingSession(memorization: memorization)
@@ -102,11 +147,13 @@ struct MemorizationStoreTests {
         #expect(session.unmarked.isEmpty)
         session.tap(30)
 
-        // A tap: the ayah comes back with its revisions, stumble and teacher's mark.
+        // A tap: the ayah comes back with its revisions, stumble and teacher's mark, dated from the undo (so
+        // that, across devices, the unmarking is seen to come before it).
         session.tap(22)
         #expect(session.unmarked.count == 1 && !memorization.isMemorized(22))
         session.undo()
-        #expect(memorization.ayahs == before && session.unmarked.isEmpty)
+        #expect(ignoringSince(memorization.ayahs) == ignoringSince(before) && session.unmarked.isEmpty)
+        #expect(memorization.memory(ofAyah: 22)!.since >= before[22]!.since && memorization.removed[22] == nil)
 
         // A range that unmarks counts its first ayah, unmarked when the range began.
         session.beginRange(at: 21)
@@ -114,13 +161,13 @@ struct MemorizationStoreTests {
         session.tap(24)
         #expect(session.unmarked.count == 4 && memorization.memorizedCount(in: 20...29) == 6)
         session.undo()
-        #expect(memorization.ayahs == before)
+        #expect(ignoringSince(memorization.ayahs) == ignoringSince(before))
 
         // A whole page.
         session.toggle(20...29)
         #expect(session.unmarked.count == 10 && memorization.count == 0)
         session.undo()
-        #expect(memorization.ayahs == before)
+        #expect(ignoringSince(memorization.ayahs) == ignoringSince(before))
 
         // The undo expires, but an earlier unmarking's timer doesn't take a later one's.
         session.tap(25)

@@ -303,6 +303,25 @@ final class PlanStore {
 
         static let empty = Snapshot()
 
+        init(plan: MemorizationPlan? = nil, portions: [Portion] = [], history: [PlanChange] = [], updatedAt: Date = .distantPast) {
+            self.plan = plan
+            self.portions = portions
+            self.history = history
+            self.updatedAt = updatedAt
+        }
+
+        // The account's copy may come from the Android app or a newer version: a key missing, unknown or
+        // unreadable never loses the rest.
+        private enum CodingKeys: String, CodingKey { case plan, portions, history, updatedAt }
+
+        init(from decoder: Decoder) throws {
+            let container = try decoder.container(keyedBy: CodingKeys.self)
+            plan = container.decodeOrNil(MemorizationPlan.self, forKey: .plan)
+            portions = container.decodeLossy([Portion].self, forKey: .portions)
+            history = container.decodeLossy([PlanChange].self, forKey: .history)
+            updatedAt = container.decodeOr(Date.self, forKey: .updatedAt, .distantPast)
+        }
+
         /// Both copies as one: the plan most recently changed, and the portions and history of both.
         static func merge(_ local: Snapshot, _ remote: Snapshot) -> Snapshot {
             var merged = remote.updatedAt >= local.updatedAt ? remote : local

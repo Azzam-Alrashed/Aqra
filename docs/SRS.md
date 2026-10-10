@@ -415,8 +415,8 @@ opens on the setup or the home.
 |---|---|---|---|---|
 | ACC-01 | Every install signs in anonymously; progress is backed up to that account from day one. | M | ✅ | V |
 | ACC-02 | Sign in with Apple or Google links to the anonymous account; if the sign-in already belongs to another account, that account is used and the device's progress merged into it. | M | ✅ | V |
-| ACC-03 | Backup: memorization in 25 blocks of 256 ayat and the revision record as JSON; only changed blocks are written, two seconds after a change; Firestore queues writes offline. | M | ✅ | V |
-| ACC-04 | Merge: union of memorized ayat (newer revision wins, verified kept from either), revision record per CloudBackup rules. | M | ✅ | V |
+| ACC-03 | Backup: memorization in 25 blocks of 256 ayat and the revision record as JSON; two seconds after a change only the rows that changed are written, merged into their block, so two devices writing one block don't overwrite each other; the days revised are also kept as arrays only ever added to. An ayah unmarked leaves a tombstone row, so no device brings it back. Nothing is written before the account's copy has been merged in the session. | M | ✅ | V |
+| ACC-04 | Merge, on every attach and whenever the app comes back after another device wrote (one read of `users/{uid}.lastWriter` tells): union of memorized ayat (the record revised later wins; a never-revised declaration loses to any revised copy; the memorization keeps its earliest date; a teacher's mark holds unless the other copy stumbled after it), follow-ups page by page, the days revised and the history of both, per `CloudBackup`. | M | ✅ | V |
 | ACC-05 | Sign-out uploads first (fails safely when offline), then clears the device and returns to «ماذا تحفظ؟». | M | ✅ | V |
 | ACC-06 | Account deletion deletes the backup, bookings (seats given back) and tasmee' records, revokes Apple's token, deletes the user; the device's progress stays. A student who hasn't signed in deletes their anonymous backup the same way ("Delete my backup"); the device then backs up afresh to a new anonymous account. | M | ✅ | A, V |
 | ACC-07 | Sign-in is required before booking, bidding, buying credits, joining video, adding friends or applying to teach. | M | ✅ | V |
@@ -661,7 +661,7 @@ opens on the setup or the home.
 | ID | Attribute | Requirement | Status |
 |---|---|---|---|
 | ATT-01 | Integrity (sacred text) | Tests fail the build if any Quran file, the page fonts' manifest, the hadith or its translation changes, or if the layout diverges from the official data. | ✅ |
-| ATT-02 | Reliability | Writes to the device are atomic; a crash never loses more than the last 300 ms of marking. Backups retry; restores merge, never overwrite blindly. | ✅ |
+| ATT-02 | Reliability | Writes to the device are atomic; a crash never loses more than the last 300 ms of marking. Backups retry; restores merge, never overwrite blindly; a progress file that can't be read is set aside (never replaced by an empty one) and the account's copy restored; a record with numbers no app could have written is skipped, never crashes a screen. | ✅ |
 | ATT-03 | Availability | All personal features work offline; online features explain when the connection is needed. | ✅ |
 | ATT-04 | Security | Least-privilege rules; credits, bids, tokens and vetting only through server code; secrets never in the app. | ✅
 | ATT-05 | Privacy | A teacher never reads a student's progress; anonymous users are never shown by name; data deletable in-app; data stays in one region, Belgium (`europe-west1`, CON-08), the nearest region Google allowed this project. | ✅ |

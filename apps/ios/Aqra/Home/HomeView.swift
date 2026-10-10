@@ -37,6 +37,7 @@ struct AppTabView: View {
     @Environment(RewardStore.self) private var rewards
     @Environment(TasmeeStore.self) private var tasmee
     @Environment(AppRouter.self) private var router
+    @Environment(CloudSync.self) private var sync
     @Environment(\.scenePhase) private var scenePhase
     @AppStorage("reminder.on") private var reminderOn = false
     @AppStorage("reminder.minutes") private var reminderMinutes = 5 * 60 + 30
@@ -64,6 +65,8 @@ struct AppTabView: View {
         // Today's plan is made (or kept) whenever the app comes back and whenever what's memorized changes.
         .task { refreshPlan() }
         .onChange(of: memorization.count) { refreshPlan() }
+        // The account's copy merged in (another device revised): today's plan follows.
+        .onChange(of: sync.lastMerge) { refreshPlan() }
         .onChange(of: scenePhase) {
             if scenePhase == .active {
                 refreshPlan()
