@@ -68,7 +68,7 @@ struct ListeningPanel: View {
                     }
                     .buttonStyle(MarkingButtonStyle())
                 case .failed(.model):
-                    Button("Try again") { Task { await listener.start() } }
+                    Button("Try again") { listener.start() }
                         .buttonStyle(MarkingButtonStyle())
                 }
                 Button("Done", action: onDone)
@@ -108,15 +108,31 @@ struct ListeningSummary: View {
                     if session.stumbles.isEmpty {
                         Text("Every ayah without a stumble")
                     } else {
-                        Text("\(session.stumbles.count) stumbles")
+                        // Only what's recorded: the student's own marks and the heard stumbles they kept.
+                        Text("\(session.recordedStumbles.count) stumbles")
                     }
                 }
                 .font(.system(size: 13, weight: .semibold, design: .rounded))
                 .foregroundStyle(MushafStyle.chrome)
             }
-            if !session.stumbles.isEmpty {
-                FlowChips(items: session.ayahs.filter(session.stumbles.contains)) { ayah in
+            let marked = session.ayahs.filter { session.stumbles.contains($0) && !session.heard.contains($0) }
+            if !marked.isEmpty {
+                FlowChips(items: marked) { ayah in
                     chip(for: ayah)
+                }
+            }
+            // The stumbles the listener heard are suggestions until listening is tried with real voices: each is
+            // recorded only if the student keeps it (docs/SRS.md REV-18).
+            let heard = session.ayahs.filter(session.heard.contains)
+            if !heard.isEmpty {
+                VStack(spacing: 6) {
+                    Text("Aqra heard these. Keep the ones that were stumbles.")
+                        .font(.system(size: 12, weight: .semibold, design: .rounded))
+                        .foregroundStyle(MushafStyle.chrome)
+                        .multilineTextAlignment(.center)
+                    FlowChips(items: heard) { ayah in
+                        heardChip(for: ayah)
+                    }
                 }
             }
             HStack(spacing: 10) {
@@ -141,19 +157,41 @@ struct ListeningSummary: View {
         .frame(maxWidth: .infinity)
     }
 
-    /// «الآية ٤ · خطأ في الحفظ»
-    private func chip(for ayah: Int) -> some View {
+    /// A stumble the listener heard: tapped, it's kept (and recorded with the page) or let go again.
+    private func heardChip(for ayah: Int) -> some View {
+        let kept = !session.suggested.contains(ayah)
+        return Button {
+            withAnimation(.snappy) { session.keepHeard(ayah, !kept) }
+        } label: {
+            chip(for: ayah, filled: kept, icon: kept ? "checkmark" : "plus")
+                .frame(minHeight: TapTarget.minimum)
+                .contentShape(Rectangle())
+        }
+        .buttonStyle(.plain)
+        .accessibilityValue(kept ? Text("Kept") : Text("Not kept"))
+        .accessibilityHint(Text("Keeps it as a stumble, or lets it go"))
+    }
+
+    /// «الآية ٤ · خطأ في الحفظ»; a heard one not kept yet is drawn as an outline, with a plus.
+    private func chip(for ayah: Int, filled: Bool = true, icon: String? = nil) -> some View {
         let number = store.reference(ofAyah: ayah).ayah
         let kinds = MistakeType.allCases.filter { session.stumbleKinds[ayah]?.contains($0) ?? false }
         let prompted = kinds == [.prompting]
         var label = Text("Ayah \(number)")
         for kind in kinds { label = label + Text(verbatim: Separator.facts) + Text(kind.title) }
-        return label
-            .font(.system(size: 12, weight: .bold, design: .rounded))
-            .foregroundStyle(prompted ? Color(light: 0x7A5A12, dark: 0xF3DE98) : Color(light: 0x9A3E26, dark: 0xF6C9B8))
-            .padding(.horizontal, 10)
-            .frame(height: 28)
-            .background((prompted ? MushafStyle.prompt : MushafStyle.stumble).opacity(0.7), in: Capsule())
+        let tint = prompted ? MushafStyle.prompt : MushafStyle.stumble
+        return HStack(spacing: 5) {
+            if let icon {
+                Image(systemName: icon).font(.system(size: 10, weight: .heavy))
+            }
+            label
+        }
+        .font(.system(size: 12, weight: .bold, design: .rounded))
+        .foregroundStyle(prompted ? Color(light: 0x7A5A12, dark: 0xF3DE98) : Color(light: 0x9A3E26, dark: 0xF6C9B8))
+        .padding(.horizontal, 10)
+        .frame(height: 28)
+        .background(tint.opacity(filled ? 0.7 : 0.15), in: Capsule())
+        .overlay(Capsule().strokeBorder(tint.opacity(filled ? 0 : 0.8), lineWidth: 1))
     }
 }
 
@@ -235,10 +273,14 @@ struct ListenSetupSheet: View {
             case .installing:
                 ProgressView()
                 Text("Preparing…")
-            case .failed:
+            case .failed(.space):
+                Text("Not enough free space on this device for the download.")
+            case .failed(.corrupt):
+                Text("The download was damaged. Try again.")
+            case .failed(.download):
                 Text("The download didn't finish. Try again.")
             case .absent, .ready:
-                Text("A one-time download · \(size)")
+                Text("A one-time download of \(size). Wi-Fi is best.")
             }
         }
         .font(.system(size: 13, weight: .semibold, design: .rounded).monospacedDigit())
@@ -247,9 +289,9 @@ struct ListenSetupSheet: View {
         .frame(maxWidth: .infinity)
         .background(Color(light: 0xF6F1E7, dark: 0xF6F1E7), in: RoundedRectangle(cornerRadius: 16, style: .continuous))
         .padding(.bottom, 14)
-        BrandButton(model.state == .failed ? "Try again" : "Download and begin",
+        BrandButton(isFailed ? "Try again" : "Download and begin",
                     metrics: OnboardingButtonMetrics(height: 56, fontSize: 18, compact: false)) {
-            Task { await model.download() }
+            model.download()
         }
         .disabled(isBusy)
         .opacity(isBusy ? 0.5 : 1)
@@ -260,6 +302,11 @@ struct ListenSetupSheet: View {
         case .downloading, .installing: true
         default: false
         }
+    }
+
+    private var isFailed: Bool {
+        if case .failed = model.state { return true }
+        return false
     }
 }
 

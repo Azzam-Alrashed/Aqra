@@ -423,6 +423,8 @@ private struct CallStage<Footer: View>: View {
         .preferredColorScheme(.dark)
         .statusBarHidden(false)
         .reportsAndBlocks($reporting, $blocking)
+        // The screen stays on through the call, as it would in any call.
+        .keepsScreenAwake(call.phase == .joined)
     }
 
     private func control(_ symbol: String, label: Text, active: Bool, action: @escaping () -> Void) -> some View {

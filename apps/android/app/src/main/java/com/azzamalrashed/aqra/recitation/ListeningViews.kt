@@ -12,12 +12,14 @@ import androidx.compose.animation.fadeOut
 import androidx.compose.animation.scaleIn
 import androidx.compose.animation.scaleOut
 import androidx.compose.foundation.background
+import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ColumnScope
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxWidth
@@ -29,6 +31,8 @@ import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Add
+import androidx.compose.material.icons.rounded.Check
 import androidx.compose.material.icons.rounded.Flag
 import androidx.compose.material.icons.rounded.Lightbulb
 import androidx.compose.material.icons.rounded.Lock
@@ -51,6 +55,7 @@ import androidx.compose.ui.res.pluralStringResource
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
+import androidx.compose.ui.semantics.stateDescription
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.azzamalrashed.aqra.R
@@ -133,23 +138,35 @@ fun ColumnScope.ListeningPanel(listener: RecitationListener, session: RevisionSe
 fun ColumnScope.ListeningSummary(session: RevisionSession, store: MushafStore, style: MushafStyle, hasNextPage: Boolean, onAgain: () -> Unit, onNext: () -> Unit) {
     Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(3.dp)) {
         Text(stringResource(R.string.you_finished_page_n, session.page), style = aqraStyle(18f, Weight.heavy, style.ink))
+        // Only what's recorded: the student's own marks and the heard stumbles they kept.
+        val recorded = session.recordedStumbles.size
         Text(
             if (session.stumbles.isEmpty()) stringResource(R.string.every_ayah_without_a_stumble)
-            else pluralStringResource(R.plurals.n_stumbles, session.stumbles.size, session.stumbles.size),
+            else pluralStringResource(R.plurals.n_stumbles, recorded, recorded),
             style = aqraStyle(13f, Weight.semibold, style.chrome),
         )
     }
-    if (session.stumbles.isNotEmpty()) {
+    val marked = session.ayahs.filter { it in session.stumbles && it !in session.heard }
+    if (marked.isNotEmpty()) {
         FlowRow(Modifier.fillMaxWidth().padding(top = 12.dp), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
             verticalArrangement = Arrangement.spacedBy(6.dp)) {
-            for (ayah in session.ayahs.filter { it in session.stumbles }) {
-                val kinds = MistakeType.entries.filter { it in session.stumbleKinds[ayah].orEmpty() }
-                val prompted = kinds == listOf(MistakeType.PROMPTING)
-                val label = (listOf(stringResource(R.string.ayah_n_2, store.reference(ayah).second)) + kinds.map { mistakeTitle(it) }).joinToString(factSeparator())
-                Box(Modifier.height(28.dp).background((if (prompted) style.prompt else style.stumble).copy(alpha = 0.7f), CircleShape)
-                    .padding(horizontal = 10.dp), contentAlignment = Alignment.Center) {
-                    Text(label, style = aqraStyle(12f, Weight.bold, if (prompted) style.promptText else style.stumbleText))
-                }
+            for (ayah in marked) StumbleChip(session, store, style, ayah)
+        }
+    }
+    // The stumbles the listener heard are suggestions until listening is tried with real voices: each is recorded only
+    // if the student keeps it (docs/SRS.md REV-18).
+    val heard = session.ayahs.filter { it in session.heard }
+    if (heard.isNotEmpty()) {
+        Text(stringResource(R.string.aqra_heard_these_keep_the_ones_that_were_stumbles), style = aqraStyle(12f, Weight.semibold, style.chrome),
+            textAlign = TextAlign.Center, modifier = Modifier.fillMaxWidth().padding(top = 12.dp))
+        FlowRow(Modifier.fillMaxWidth().padding(top = 6.dp), horizontalArrangement = Arrangement.spacedBy(6.dp, Alignment.CenterHorizontally),
+            verticalArrangement = Arrangement.spacedBy(6.dp)) {
+            for (ayah in heard) {
+                val kept = ayah !in session.suggested
+                val value = stringResource(if (kept) R.string.kept else R.string.not_kept)
+                StumbleChip(session, store, style, ayah, filled = kept, icon = if (kept) Icons.Rounded.Check else Icons.Rounded.Add,
+                    modifier = Modifier.heightIn(min = 44.dp).pressable(pressed = 0.96f) { session.keepHeard(ayah, !kept) }
+                        .semantics { stateDescription = value })
             }
         }
     }
@@ -200,12 +217,16 @@ fun ListenSetupSheet(model: RecitationModel, onReady: () -> Unit, onDismiss: () 
                         LinearProgressIndicator(color = Palette.brand, trackColor = Palette.lavender, modifier = Modifier.fillMaxWidth())
                         Text(stringResource(R.string.preparing), style = text)
                     }
-                    RecitationModel.State.Failed -> Text(stringResource(R.string.the_download_didnt_finish_try_again), style = text)
-                    else -> Text(stringResource(R.string.a_one_time_download_s, Formatter.formatShortFileSize(context, RecitationModel.DOWNLOAD_SIZE)), style = text)
+                    is RecitationModel.State.Failed -> Text(stringResource(when (state.reason) {
+                        RecitationModel.Failure.SPACE -> R.string.not_enough_free_space_on_this_device_for_the_download
+                        RecitationModel.Failure.CORRUPT -> R.string.the_download_was_damaged_try_again
+                        RecitationModel.Failure.DOWNLOAD -> R.string.the_download_didnt_finish_try_again
+                    }), style = text)
+                    else -> Text(stringResource(R.string.a_one_time_download_of_s_wi_fi_is_best, Formatter.formatShortFileSize(context, RecitationModel.DOWNLOAD_SIZE)), style = text)
                 }
             }
             val busy = state is RecitationModel.State.Downloading || state == RecitationModel.State.Installing
-            BrandButton(stringResource(if (state == RecitationModel.State.Failed) R.string.try_again else R.string.download_and_begin),
+            BrandButton(stringResource(if (state is RecitationModel.State.Failed) R.string.try_again else R.string.download_and_begin),
                 Modifier.fillMaxWidth().padding(top = 14.dp), enabled = !busy) { model.download() }
             Text(stringResource(R.string.not_now), style = aqraStyle(15f, Weight.semibold, Palette.inkSoft),
                 modifier = Modifier.padding(vertical = 12.dp).pressable(onClick = onDismiss))
@@ -250,5 +271,26 @@ private fun LevelMeter(level: Double, modifier: Modifier = Modifier) {
 fun StumbleCount(count: Int, style: MushafStyle) {
     Box(Modifier.height(30.dp).background(style.stumble.copy(alpha = 0.6f), CircleShape).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
         Text(pluralStringResource(R.plurals.n_stumbles, count, count), style = aqraStyle(13f, Weight.bold, style.stumbleText))
+    }
+}
+
+/** «الآية ٤، خطأ في الحفظ»; a heard one not kept yet is drawn as an outline, with a plus. */
+@Composable
+private fun StumbleChip(session: RevisionSession, store: MushafStore, style: MushafStyle, ayah: Int, modifier: Modifier = Modifier,
+                        filled: Boolean = true, icon: androidx.compose.ui.graphics.vector.ImageVector? = null) {
+    val kinds = MistakeType.entries.filter { it in session.stumbleKinds[ayah].orEmpty() }
+    val prompted = kinds == listOf(MistakeType.PROMPTING)
+    val label = (listOf(stringResource(R.string.ayah_n_2, store.reference(ayah).second)) + kinds.map { mistakeTitle(it) }).joinToString(factSeparator())
+    val tint = if (prompted) style.prompt else style.stumble
+    val textColor = if (prompted) style.promptText else style.stumbleText
+    Box(modifier, contentAlignment = Alignment.Center) {
+        Row(
+            Modifier.height(28.dp).background(tint.copy(alpha = if (filled) 0.7f else 0.15f), CircleShape)
+                .border(1.dp, tint.copy(alpha = if (filled) 0f else 0.8f), CircleShape).padding(horizontal = 10.dp),
+            verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(5.dp),
+        ) {
+            if (icon != null) Icon(icon, null, tint = textColor, modifier = Modifier.size(12.dp))
+            Text(label, style = aqraStyle(12f, Weight.bold, textColor))
+        }
     }
 }

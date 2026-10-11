@@ -15,6 +15,8 @@
     <string name="s_credits_due_to_you">%s credits due to you</string>
     <!-- %@ is blocked. You can unblock them in Account. -->
     <string name="s_is_blocked_you_can_unblock_them_in_account">%s is blocked. You can unblock them in Account.</string>
+    <!-- %@ on this device -->
+    <string name="s_on_this_device">%s on this device</string>
     <!-- %@ recorded your tasmee\' of %lld pages. -->
     <string name="s_recorded_your_tasmee_of_n_pages">%1$s recorded your tasmee\' of %2$d pages.</string>
     <!-- %@ removed -->
@@ -212,8 +214,8 @@
     <string name="a_month">A month</string>
     <!-- A new achievement -->
     <string name="a_new_achievement">A new achievement</string>
-    <!-- A one-time download · %@ -->
-    <string name="a_one_time_download_s">A one-time download · %s</string>
+    <!-- A one-time download of %@. Wi-Fi is best. -->
+    <string name="a_one_time_download_of_s_wi_fi_is_best">A one-time download of %s. Wi-Fi is best.</string>
     <!-- A payout of %lld credits was sent to you. -->
     <plurals name="a_payout_of_n_credits_was_sent_to_you">
         <item quantity="one">A payout of %d credit was sent to you.</item>
@@ -280,6 +282,8 @@
     <string name="approved">Approved</string>
     <!-- Aqra can\'t use the microphone. Allow it in Settings. -->
     <string name="aqra_cant_use_the_microphone_allow_it_in_settings">Aqra can\'t use the microphone. Allow it in Settings.</string>
+    <!-- Aqra heard these. Keep the ones that were stumbles. -->
+    <string name="aqra_heard_these_keep_the_ones_that_were_stumbles">Aqra heard these. Keep the ones that were stumbles.</string>
     <!-- Aqra shows the Quran exactly as published, from these sources, with thanks. -->
     <string name="aqra_shows_the_quran_exactly_as_published_from_these_sources">Aqra shows the Quran exactly as published, from these sources, with thanks.</string>
     <!-- Aqra\'s team reads every report. %@ isn\'t told who sent it. -->
@@ -467,6 +471,8 @@
     <string name="delete_account">Delete account</string>
     <!-- Delete my backup -->
     <string name="delete_my_backup">Delete my backup</string>
+    <!-- Delete the listening model? -->
+    <string name="delete_the_listening_model_q">Delete the listening model?</string>
     <!-- Delete your account? -->
     <string name="delete_your_account_q">Delete your account?</string>
     <!-- Delete your backup? -->
@@ -679,6 +685,10 @@
     <string name="keep_it">Keep it</string>
     <!-- Keep my bid -->
     <string name="keep_my_bid">Keep my bid</string>
+    <!-- Keeps it as a stumble, or lets it go -->
+    <string name="keeps_it_as_a_stumble_or_lets_it_go">Keeps it as a stumble, or lets it go</string>
+    <!-- Kept -->
+    <string name="kept">Kept</string>
     <!-- King Fahd Glorious Quran Printing Complex -->
     <string name="king_fahd_glorious_quran_printing_complex">King Fahd Glorious Quran Printing Complex</string>
     <!-- Language -->
@@ -703,6 +713,8 @@
     <string name="lets_bring_back_what_you_memorized">Let\'s bring back what you memorized</string>
     <!-- Listening couldn\'t start. Try again. -->
     <string name="listening_couldnt_start_try_again">Listening couldn\'t start. Try again.</string>
+    <!-- Listening model -->
+    <string name="listening_model">Listening model</string>
     <!-- Listening… -->
     <string name="listening">Listening…</string>
     <!-- Loading teachers… -->
@@ -821,8 +833,12 @@
     <string name="not_a_mistake">Not a mistake</string>
     <!-- Not a test -->
     <string name="not_a_test">Not a test</string>
+    <!-- Not enough free space on this device for the download. -->
+    <string name="not_enough_free_space_on_this_device_for_the_download">Not enough free space on this device for the download.</string>
     <!-- Not in the call -->
     <string name="not_in_the_call">Not in the call</string>
+    <!-- Not kept -->
+    <string name="not_kept">Not kept</string>
     <!-- Not listening -->
     <string name="not_listening">Not listening</string>
     <!-- Not now -->
@@ -953,6 +969,8 @@
     <string name="recite_to_a_sheikh_or_a_friend">Recite to a sheikh or a friend</string>
     <!-- Recited to a friend -->
     <string name="recited_to_a_friend">Recited to a friend</string>
+    <!-- Reciting aloud downloads it again the next time. -->
+    <string name="reciting_aloud_downloads_it_again_the_next_time">Reciting aloud downloads it again the next time.</string>
     <!-- Record tasmee\' -->
     <string name="record_tasmee">Record tasmee\'</string>
     <!-- Recorded: %lld pages revised -->
@@ -1246,6 +1264,8 @@
     <string name="the_copy_of_your_progress_kept_online_is_deleted_for">The copy of your progress kept online is deleted for good. The progress on this device stays, and is backed up afresh from now on.</string>
     <!-- The download didn\'t finish. Try again. -->
     <string name="the_download_didnt_finish_try_again">The download didn\'t finish. Try again.</string>
+    <!-- The download was damaged. Try again. -->
+    <string name="the_download_was_damaged_try_again">The download was damaged. Try again.</string>
     <!-- The file couldn\'t be uploaded. Check your connection, or try a smaller file. -->
     <string name="the_file_couldnt_be_uploaded_check_your_connection_or_try">The file couldn\'t be uploaded. Check your connection, or try a smaller file.</string>
     <!-- The fuller a juz\', the more of it you\'ve memorized; the deeper its color, the stronger. -->

@@ -77,6 +77,17 @@
         }
       }
     },
+    "%@ on this device" : {
+      "comment" : "Account: the speech model that follows a revision recited aloud. Under the row's title: the space it takes, e.g. \"142 MB\".",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "%@ على هذا الجهاز"
+          }
+        }
+      }
+    },
     "%@ recorded your tasmee' of %lld pages." : {
       "localizations" : {
         "ar" : {
@@ -1837,16 +1848,6 @@
         }
       }
     },
-    "A one-time download · %@" : {
-      "localizations" : {
-        "ar" : {
-          "stringUnit" : {
-            "state" : "translated",
-            "value" : "تنزيل لمرة واحدة · %@"
-          }
-        }
-      }
-    },
     "A session less than an hour away offers free seats only: there's no time to bid." : {
       "comment" : "In a new session's editor, when the start chosen is less than an hour away: auctioned seats are off.",
       "localizations" : {
@@ -2876,6 +2877,17 @@
         }
       }
     },
+    "A one-time download of %@. Wi-Fi is best." : {
+      "comment" : "Recite aloud's first-run sheet: the speech model's download size (e.g. \"134 MB\"), and that Wi-Fi is better for it.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "تنزيل لمرة واحدة بحجم %@، ويُفضَّل عبر الواي فاي."
+          }
+        }
+      }
+    },
     "A payout of %lld credits was sent to you." : {
       "localizations" : {
         "ar" : {
@@ -3250,6 +3262,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "مقبول"
+          }
+        }
+      }
+    },
+    "Aqra heard these. Keep the ones that were stumbles." : {
+      "comment" : "Recite aloud, the page's summary: stumbles the listener heard are suggestions until the student keeps them. Above the chips of heard stumbles.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "سمعها اقرأ، فأبقِ منها ما كان تعثّرًا."
           }
         }
       }
@@ -4159,6 +4182,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "حذف الحساب"
+          }
+        }
+      }
+    },
+    "Delete the listening model?" : {
+      "comment" : "Account: the speech model that follows a revision recited aloud. Alert title before deleting it.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "أتحذف نموذج الاستماع؟"
           }
         }
       }
@@ -5150,6 +5184,28 @@
         }
       }
     },
+    "Keeps it as a stumble, or lets it go" : {
+      "comment" : "Recite aloud, the page's summary: stumbles the listener heard are suggestions until the student keeps them. VoiceOver hint of a heard stumble's chip.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُبقيه تعثّرًا، أو يتركه"
+          }
+        }
+      }
+    },
+    "Kept" : {
+      "comment" : "Recite aloud, the page's summary: stumbles the listener heard are suggestions until the student keeps them. VoiceOver value of a heard stumble that will be recorded.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُحسب"
+          }
+        }
+      }
+    },
     "King Fahd Glorious Quran Printing Complex" : {
       "localizations" : {
         "ar" : {
@@ -5253,6 +5309,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "نسترجع حفظك"
+          }
+        }
+      }
+    },
+    "Listening model" : {
+      "comment" : "Account: the speech model that follows a revision recited aloud. Row title.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "نموذج الاستماع"
           }
         }
       }
@@ -5930,12 +5997,33 @@
         }
       }
     },
+    "Not enough free space on this device for the download." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا تكفي المساحة الخالية في الجهاز للتنزيل."
+          }
+        }
+      }
+    },
     "Not in the call" : {
       "localizations" : {
         "ar" : {
           "stringUnit" : {
             "state" : "translated",
             "value" : "ليس في المكالمة"
+          }
+        }
+      }
+    },
+    "Not kept" : {
+      "comment" : "Recite aloud, the page's summary: stumbles the listener heard are suggestions until the student keeps them. VoiceOver value of a heard stumble that won't be recorded.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "لا يُحسب"
           }
         }
       }
@@ -6533,6 +6621,17 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "سمّعت لصديق"
+          }
+        }
+      }
+    },
+    "Reciting aloud downloads it again the next time." : {
+      "comment" : "Account: the speech model that follows a revision recited aloud. Alert message before deleting it.",
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يُنزَّل من جديد في المرة القادمة التي تسمّع فيها بصوتك."
           }
         }
       }
@@ -8054,6 +8153,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "خطوط صفحات المصحف من المجمع، طبعة ١٤٤١هـ، بألوان التجويد."
+          }
+        }
+      }
+    },
+    "The download was damaged. Try again." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "وصل التنزيل تالفًا. حاول مرة أخرى."
           }
         }
       }

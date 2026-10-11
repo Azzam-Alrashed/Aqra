@@ -23,6 +23,9 @@ struct AccountView: View {
     @State private var confirmingBackupDeletion = false
     @State private var showingWallet = false
     @State private var showingBlocked = false
+    /// What the listening model takes on the device; 0 when it isn't there.
+    @State private var modelSpace: Int64 = 0
+    @State private var confirmingModelRemoval = false
     @Environment(WalletStore.self) private var wallet
     @Environment(SafetyStore.self) private var safety
 
@@ -85,6 +88,15 @@ struct AccountView: View {
                                 .padding(.leading, 50)
                                 .padding(.vertical, 10)
                                 .transition(.opacity)
+                            }
+                            // «نموذج الاستماع»: once it's on the device, what it takes, and deleting it.
+                            if modelSpace > 0 {
+                                AqraRowDivider()
+                                AqraRow(icon: "🎙️", tint: Palette.lavender, title: Text("Listening model"),
+                                        detail: Text("\(modelSpace.formatted(.byteCount(style: .file))) on this device")) {
+                                    Button("Delete") { confirmingModelRemoval = true }
+                                        .buttonStyle(ChipButtonStyle(filled: false))
+                                }
                             }
                         }
                     }
@@ -213,6 +225,18 @@ struct AccountView: View {
         .preferredColorScheme(.light)
         .sheet(isPresented: $showingWallet) { WalletView() }
         .sheet(isPresented: $showingBlocked) { BlockedPeopleView() }
+        .task { modelSpace = RecitationModel.usedSpace() }
+        .alert("Delete the listening model?", isPresented: $confirmingModelRemoval) {
+            Button("Delete", role: .destructive) {
+                Task {
+                    await RecitationModel.shared.remove()
+                    withAnimation(.snappy) { modelSpace = RecitationModel.usedSpace() }
+                }
+            }
+            Button("Cancel", role: .cancel) {}
+        } message: {
+            Text("Reciting aloud downloads it again the next time.")
+        }
         .onChange(of: reminderOn) { updateReminder() }
         .onChange(of: reminderMinutes) { updateReminder() }
         .alert("Sign out?", isPresented: $confirmingSignOut) {

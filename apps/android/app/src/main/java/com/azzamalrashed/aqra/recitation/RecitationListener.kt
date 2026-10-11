@@ -19,6 +19,7 @@ import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.min
 import kotlin.math.sqrt
+import kotlinx.coroutines.CancellationException
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.Job
@@ -37,8 +38,26 @@ import kotlinx.coroutines.withContext
  * A stretch still being recited is heard every second or so, to reveal its words as they come; once the reciter pauses,
  * it's heard whole and settled. Nothing is recorded or kept. The same rules as the iOS app's listener.
  */
-class RecitationListener(session: RevisionSession, private val store: MushafStore, private val model: RecitationModel) {
+class RecitationListener internal constructor(
+    session: RevisionSession,
+    private val store: MushafStore,
+    /** Where the audio comes from: the microphone, or a recording in the tests. */
+    private val audio: () -> AudioSource,
+    /** The model as the listener uses it; the tests give a fake. */
+    private val hearing: Hearing,
+) {
+    /** The listener the app uses: the microphone, and the model on the device. */
+    constructor(session: RevisionSession, store: MushafStore, model: RecitationModel) :
+        this(session, store, { AudioSource.create() }, ModelHearing(model))
+
     enum class Phase { PREPARING, LISTENING, PAUSED, FAILED_MICROPHONE, FAILED_MODEL }
+
+    /** The model as the listener uses it: loaded, then asked what a stretch of audio says. */
+    interface Hearing {
+        val isLoaded: Boolean
+        suspend fun load()
+        suspend fun transcribe(samples: FloatArray): String
+    }
 
     var phase by mutableStateOf(Phase.PREPARING)
         private set
@@ -52,6 +71,8 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
     private val scope = CoroutineScope(SupervisorJob() + Dispatchers.Main.immediate)
     private var source: AudioSource? = null
     private var loop: Job? = null
+    /** Loading the model before the microphone goes on; cancelled by a pause or a stop in the meantime. */
+    private var starting: Job? = null
 
     // Splitting the audio at pauses.
     private var leftover = FloatArray(0)
@@ -60,6 +81,8 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
     private var silentRun = 0
     private val preroll = Samples()
     private var stretch: Samples? = null
+    /** How loud each frame of the current stretch was, in dB, to cut a long stretch at its quietest moment. */
+    private val levels = Samples()
     private var lastPartial = 0
     private var partial: FloatArray? = null
     // Hearing stretches, one at a time: settled ones in order, a stretch still being recited when there's time.
@@ -76,18 +99,24 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
     /** A stretch to settle, with the pause before it, unless a prompt broke that pause. */
     private class Stretch(val samples: FloatArray, val pauseBefore: Long)
 
-    /** Loads the model and starts listening; the microphone permission is asked for before. */
+    /**
+     * Loads the model and starts listening; the microphone permission is asked for before. A pause or a stop while
+     * the model loads leaves the microphone off.
+     */
     fun start() {
+        starting?.cancel()
         phase = Phase.PREPARING
-        scope.launch {
+        starting = scope.launch {
             try {
-                withContext(Dispatchers.Default) { shared(model) }
+                hearing.load()
+            } catch (cancelled: CancellationException) {
+                throw cancelled
             } catch (error: Throwable) {
                 android.util.Log.w("Aqra", "Recitation model couldn't load", error)
                 phase = Phase.FAILED_MODEL
                 return@launch
             }
-            resume()
+            if (isActive) beginAudio()
         }
     }
 
@@ -97,20 +126,22 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
     }
 
     fun pause() {
-        if (phase != Phase.LISTENING) return
-        source?.stop()
-        source = null
-        loop?.cancel()
-        loop = null
-        // What was being recited is heard all the same.
-        closeStretch()
-        level = 0.0
+        starting?.cancel()
+        starting = null
+        if (phase != Phase.LISTENING && phase != Phase.PREPARING) return
+        stopAudio()
         phase = Phase.PAUSED
     }
 
     fun resume() {
+        if (source != null || starting?.isActive == true) return
+        if (hearing.isLoaded) beginAudio() else start()
+    }
+
+    /** Turns the microphone on and follows what it hears. */
+    private fun beginAudio() {
         if (source != null) return
-        val audio = AudioSource.create()
+        val audio = audio()
         try {
             audio.start()
         } catch (error: Exception) {
@@ -130,6 +161,16 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
         }
     }
 
+    /** Turns the microphone off; what was being recited is heard all the same. */
+    private fun stopAudio() {
+        source?.stop()
+        source = null
+        loop?.cancel()
+        loop = null
+        closeStretch()
+        level = 0.0
+    }
+
     /** Follows another page's revision (the next of today's wird, or the same page again). */
     fun follow(session: RevisionSession) {
         this.session = session
@@ -139,6 +180,7 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
         stretch = null
         partial = null
         preroll.clear()
+        levels.clear()
         leftover = FloatArray(0)
         voicedRun = 0
         silentRun = 0
@@ -200,10 +242,14 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
         val current = stretch
         if (current != null) {
             current.add(samples, from, FRAME)
+            levels.add(decibels)
             silentRun = if (voiced) 0 else silentRun + 1
-            if (silentRun >= 17 || current.size >= RATE * 24) {
-                // Half a second of quiet ends a stretch, and the model hears 30 s at most.
+            if (silentRun >= 17) {
+                // Half a second of quiet ends a stretch.
                 closeStretch()
+            } else if (current.size >= RATE * LONGEST_STRETCH) {
+                // The model hears 30 s at most: a long ayah is cut at the quietest moment of its last seconds.
+                splitStretch()
             } else if (hearsWhileReciting && current.size - lastPartial >= RATE * 6 / 5 && current.size >= RATE * 4 / 5) {
                 lastPartial = current.size
                 partial = current.toArray()
@@ -232,9 +278,31 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
         val current = stretch ?: return
         stretch = null
         partial = null
+        levels.clear()
         voicedRun = 0
         settling.addLast(Stretch(current.toArray(), pauseBefore))
         pauseBefore = 0
+        hearNext()
+    }
+
+    /**
+     * Cuts the stretch being recited at the quietest frame of its last [SPLIT_WINDOW] seconds — a breath between
+     * words, so no word is cut in two — and settles what came before it. The rest carries on as the stretch being
+     * recited, so an ayah longer than the model's window is heard in two parts and followed across them.
+     */
+    private fun splitStretch() {
+        val current = stretch ?: return
+        val frames = levels.size
+        var quietest = max(1, frames - SPLIT_WINDOW * RATE / FRAME)
+        for (frame in quietest + 1 until frames) if (levels[frame] < levels[quietest]) quietest = frame
+        // The stretch began with a preroll before its first frame.
+        val cut = current.size - frames * FRAME + quietest * FRAME
+        settling.addLast(Stretch(current.take(cut), pauseBefore))
+        current.dropFirst(cut)
+        levels.dropFirst(quietest)
+        pauseBefore = 0
+        lastPartial = max(0, lastPartial - cut)
+        partial = null
         hearNext()
     }
 
@@ -257,7 +325,14 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
         val generation = generation
         scope.launch {
             val started = System.currentTimeMillis()
-            val text = runCatching { withContext(Dispatchers.Default) { shared(model).transcribe(samples) } }.getOrDefault("")
+            val text = try {
+                hearing.transcribe(samples)
+            } catch (cancelled: CancellationException) {
+                throw cancelled
+            } catch (error: Throwable) {
+                android.util.Log.w("Aqra", "The model couldn't hear a stretch", error)
+                ""
+            }
             lastHearing = System.currentTimeMillis() - started
             busy = false
             if (generation != this@RecitationListener.generation) return@launch
@@ -308,6 +383,10 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
         const val PROMPT_BETWEEN_AYAT = 7_000L
         /** A model that takes longer than this to hear a stretch only hears it once it's settled. */
         private const val SLOW_HEARING = 1_500L
+        /** Seconds of recitation a stretch grows to before it's cut; the model's window is 30 s. */
+        const val LONGEST_STRETCH = 24
+        /** The last seconds of a long stretch, searched for the quietest frame to cut at. */
+        const val SPLIT_WINDOW = 6
 
         /** One transcriber for the app: the model is loaded once and kept while the app runs. */
         @Volatile private var transcriber: RecitationTranscriber? = null
@@ -315,6 +394,18 @@ class RecitationListener(session: RevisionSession, private val store: MushafStor
         @Synchronized
         fun shared(model: RecitationModel): RecitationTranscriber =
             transcriber ?: RecitationTranscriber(model.folder).also { transcriber = it }
+    }
+
+    /** The real model, shared by every listener, loaded and run off the main thread. */
+    private class ModelHearing(private val model: RecitationModel) : Hearing {
+        override val isLoaded: Boolean get() = transcriber != null
+
+        override suspend fun load() {
+            withContext(Dispatchers.Default) { shared(model) }
+        }
+
+        override suspend fun transcribe(samples: FloatArray): String =
+            withContext(Dispatchers.Default) { shared(model).transcribe(samples) }
     }
 }
 
@@ -330,11 +421,29 @@ private class Samples {
         size += count
     }
 
+    fun add(value: Float) {
+        if (size == data.size) data = data.copyOf(data.size * 2)
+        data[size] = value
+        size += 1
+    }
+
+    operator fun get(index: Int): Float = data[index]
+
     /** Keeps only the last [count] samples. */
     fun keepLast(count: Int) {
         if (size <= count) return
         System.arraycopy(data, size - count, data, 0, count)
         size = count
+    }
+
+    /** The first [count] samples. */
+    fun take(count: Int): FloatArray = data.copyOf(min(count, size))
+
+    /** Removes the first [count] samples. */
+    fun dropFirst(count: Int) {
+        val kept = max(0, size - count)
+        System.arraycopy(data, size - kept, data, 0, kept)
+        size = kept
     }
 
     fun clear() {

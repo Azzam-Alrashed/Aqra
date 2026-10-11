@@ -42,6 +42,7 @@ import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.Text
 import androidx.compose.material3.rememberModalBottomSheetState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.unit.IntOffset
@@ -51,6 +52,7 @@ import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
 import androidx.compose.ui.platform.LocalHapticFeedback
+import androidx.compose.ui.platform.LocalView
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.semantics.Role
 import androidx.compose.ui.semantics.selected
@@ -173,5 +175,18 @@ fun AqraSheet(onDismiss: () -> Unit, fullHeight: Boolean = true, content: @Compo
         contentWindowInsets = { WindowInsets(0) },
     ) {
         Column((if (fullHeight) Modifier.fillMaxHeight(0.96f) else Modifier).imePadding(), content = content)
+    }
+}
+
+/**
+ * Keeps the screen from sleeping while this is in the composition: through a call, and while Aqra listens to a
+ * revision, the student doesn't touch the screen for minutes at a time.
+ */
+@Composable
+fun KeepScreenOn() {
+    val view = LocalView.current
+    DisposableEffect(view) {
+        view.keepScreenOn = true
+        onDispose { view.keepScreenOn = false }
     }
 }

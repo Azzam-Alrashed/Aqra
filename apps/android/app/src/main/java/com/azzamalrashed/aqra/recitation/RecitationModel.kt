@@ -7,20 +7,22 @@ import android.content.Context
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.setValue
+import java.io.ByteArrayInputStream
+import java.io.Closeable
 import java.io.File
+import java.io.FileOutputStream
+import java.io.IOException
+import java.io.InputStream
 import java.net.HttpURLConnection
 import java.net.URL
 import java.nio.ByteBuffer
 import java.nio.ByteOrder
 import java.nio.FloatBuffer
 import java.nio.LongBuffer
+import java.security.MessageDigest
 import java.util.zip.ZipInputStream
-import kotlin.math.PI
-import kotlin.math.cos
-import kotlin.math.log10
 import kotlin.math.max
 import kotlin.math.min
-import kotlin.math.sin
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
@@ -31,25 +33,42 @@ import kotlinx.coroutines.withContext
  * (`tarteel-ai/whisper-base-ar-quran`, Apache-2.0), exported to ONNX and quantized to 8 bits, run by ONNX Runtime.
  *
  * It's downloaded once, as a zip of the model folder, kept on the device outside its backups, and run on the device:
- * the student's voice never leaves it and isn't kept.
+ * the student's voice never leaves it and isn't kept. A download that stops carries on where it was; the archive is
+ * checked against its checksum before it's unpacked; a model that isn't whole isn't installed.
  */
-class RecitationModel(private val context: Context, private val scope: CoroutineScope) {
+class RecitationModel(context: Context, private val scope: CoroutineScope) {
     sealed interface State {
         data object Absent : State
         data class Downloading(val fraction: Double) : State
         data object Installing : State
         data object Ready : State
-        data object Failed : State
+        data class Failed(val reason: Failure) : State
     }
 
-    var state: State by mutableStateOf(if (isInstalled) State.Ready else State.Absent)
+    /** Why the model isn't on the device. */
+    enum class Failure {
+        /** There isn't room for the archive and the unpacked model. */
+        SPACE,
+        /** The download didn't finish; it carries on next time. */
+        DOWNLOAD,
+        /** The archive didn't match its checksum, or didn't hold the model. */
+        CORRUPT,
+    }
+
+    private val files = RecitationModelFiles(File(context.noBackupFilesDir, "recitation"), context.cacheDir)
+
+    var state: State by mutableStateOf(if (files.isInstalled) State.Ready else State.Absent)
         private set
 
     /** filesDir's no-backup folder: recitation/<version>. */
-    val folder: File get() = File(context.noBackupFilesDir, "recitation/$VERSION")
+    val folder: File get() = files.folder
 
-    val isInstalled: Boolean
-        get() = listOf("encoder.onnx", "decoder.onnx", "mel_filters.bin", "tokens.txt").all { File(folder, it).exists() }
+    val isInstalled: Boolean get() = files.isInstalled
+
+    init {
+        // Old versions and the leftovers of an install that didn't finish go.
+        scope.launch(Dispatchers.IO) { runCatching { files.cleanUp() } }
+    }
 
     /** Downloads and installs the model, reporting progress in [state]. */
     fun download() {
@@ -58,49 +77,190 @@ class RecitationModel(private val context: Context, private val scope: Coroutine
             return
         }
         if (state is State.Downloading || state == State.Installing) return
-        state = State.Downloading(0.0)
+        state = State.Downloading(files.fractionDownloaded())
         scope.launch {
             state = try {
-                withContext(Dispatchers.IO) { fetchAndInstall() }
+                withContext(Dispatchers.IO) {
+                    files.requireFreeSpace()
+                    files.download(HttpFetcher(DOWNLOAD_URL)) { fraction ->
+                        scope.launch(Dispatchers.Main.immediate) { if (state is State.Downloading) state = State.Downloading(fraction) }
+                    }
+                    withContext(Dispatchers.Main) { state = State.Installing }
+                    files.install()
+                }
                 State.Ready
+            } catch (problem: RecitationModelFiles.Problem) {
+                android.util.Log.w("Aqra", "Recitation model: ${problem.message}")
+                State.Failed(problem.failure)
             } catch (error: Exception) {
                 android.util.Log.w("Aqra", "Recitation model download failed: $error", error)
-                State.Failed
+                State.Failed(Failure.DOWNLOAD)
             }
         }
     }
 
-    private suspend fun fetchAndInstall() {
-        val parent = folder.parentFile!!.apply { mkdirs() }
-        val archive = File(context.cacheDir, "$VERSION.zip")
-        val connection = URL(DOWNLOAD_URL).openConnection() as HttpURLConnection
-        try {
-            if (connection.responseCode != 200) error("HTTP ${connection.responseCode}")
-            val total = connection.contentLengthLong.takeIf { it > 0 } ?: DOWNLOAD_SIZE
-            connection.inputStream.use { input ->
-                archive.outputStream().use { output ->
-                    val buffer = ByteArray(1 shl 16)
-                    var written = 0L
-                    var reported = 0L
-                    while (true) {
-                        val count = input.read(buffer)
-                        if (count < 0) break
-                        output.write(buffer, 0, count)
-                        written += count
-                        if (written - reported > 512 * 1024) {
-                            reported = written
-                            val fraction = min(written.toDouble() / total, 1.0)
-                            withContext(Dispatchers.Main) { state = State.Downloading(fraction) }
-                        }
+    /** What the model, and anything a download left, take on the device. */
+    fun usedSpace(): Long = files.usedSpace()
+
+    /**
+     * «نموذج الاستماع» in حسابي, «احذف»: the model goes from the device with anything a download left, and reciting aloud
+     * downloads it again when it's next used. Not while a download or an install is under way; a listener holding the
+     * model keeps its own copy in memory until it closes.
+     */
+    fun remove() {
+        if (state is State.Downloading || state == State.Installing) return
+        files.removeAll()
+        state = State.Absent
+    }
+
+    companion object {
+        /** The version installed; a new one goes in a folder of its own. */
+        const val VERSION = "whisper-base-ar-quran-1-onnx"
+        /** Where the archive is downloaded from: the project's storage bucket (backend/README.md). */
+        const val DOWNLOAD_URL =
+            "https://firebasestorage.googleapis.com/v0/b/aqra-quran.firebasestorage.app/o/models%2Frecitation%2F$VERSION.zip?alt=media"
+        /** The archive's size, shown before downloading it. */
+        const val DOWNLOAD_SIZE = 67_272_417L
+        /** The archive's SHA-256 (backend/README.md): a download that doesn't match isn't installed. */
+        const val CHECKSUM = "25f67e1ea6369c553db0319a0bdb02ecfed6c6ebe42c1accc20763e9cb33b3f1"
+        /** What the unpacked model takes on the device (measured: 100,584 KiB), for the free-space check. */
+        const val INSTALLED_SIZE = 103_000_000L
+    }
+}
+
+/**
+ * The model's files on the device, and the steps that put them there: a download that carries on where it stopped,
+ * the archive's checksum, and an install that's either whole or not there. Plain files, so the tests can run it.
+ */
+class RecitationModelFiles(
+    /** The folder the versions live in (`recitation/` in the no-backup files). */
+    private val root: File,
+    /** Where the archive is downloaded (the cache; Android may clear it, and the download then starts over). */
+    private val cache: File,
+    private val version: String = RecitationModel.VERSION,
+    private val checksum: String = RecitationModel.CHECKSUM,
+    private val downloadSize: Long = RecitationModel.DOWNLOAD_SIZE,
+    private val installedSize: Long = RecitationModel.INSTALLED_SIZE,
+) {
+    /** Why the model couldn't be had. */
+    class Problem(val failure: RecitationModel.Failure, message: String) : IOException(message)
+
+    /** What a download gives: the response's status, its length, and its body. */
+    interface Fetcher {
+        /** Opens the archive from byte [from] onwards (an HTTP Range request when it isn't 0). */
+        fun open(from: Long): Response
+    }
+
+    class Response(
+        val status: Int,
+        val contentLength: Long,
+        contentRange: String?,
+        val stream: InputStream,
+        private val onClose: () -> Unit = {},
+    ) : Closeable {
+        /** The whole file's length from `Content-Range: bytes a-b/total`, when the server says. */
+        val totalLength: Long? = contentRange?.substringAfter('/', "")?.trim()?.toLongOrNull()
+
+        override fun close() {
+            stream.close()
+            onClose()
+        }
+    }
+
+    val folder: File get() = File(root, version)
+
+    /** The archive, as far as it's downloaded. */
+    val archive: File get() = File(cache, "recitation-$version.zip")
+
+    /** How much of the archive is downloaded already, from 0 to 1: a download carries on from there. */
+    fun fractionDownloaded(): Double = min(archive.length().toDouble() / downloadSize, 1.0)
+
+    /** Whether the model is whole: every file it runs from is there, with something in it. */
+    val isInstalled: Boolean
+        get() = REQUIRED.all { File(folder, it).let { file -> file.isFile && file.length() > 0 } }
+
+    /** What the model and the archive take, in bytes. */
+    fun usedSpace(): Long = root.walkTopDown().filter { it.isFile }.sumOf { it.length() } + archive.length()
+
+    /** Everything: every version, and the archive a download left. */
+    fun removeAll() {
+        root.deleteRecursively()
+        archive.delete()
+    }
+
+    /** Removes other versions, installs that didn't finish, and other versions' archives. */
+    fun cleanUp() {
+        root.listFiles()?.forEach { if (it.name != version) it.deleteRecursively() }
+        cache.listFiles()?.forEach {
+            if (it.name.startsWith("recitation-") && it.name.endsWith(".zip") && it.name != archive.name) it.delete()
+        }
+    }
+
+    /** Stops before a download that wouldn't fit: the rest of the archive, the unpacked model, and room to spare. */
+    fun requireFreeSpace() {
+        root.mkdirs()
+        cache.mkdirs()
+        val needed = max(0, downloadSize - archive.length()) + installedSize + MARGIN
+        val free = min(root.usableSpace, cache.usableSpace)
+        if (free < needed) throw Problem(RecitationModel.Failure.SPACE, "$free bytes free, $needed needed")
+    }
+
+    /**
+     * Downloads the archive, carrying on from what's already here with a Range request; [progress] is given the
+     * fraction downloaded as it goes. An archive that stops short is kept for next time.
+     */
+    fun download(fetch: Fetcher, progress: (Double) -> Unit = {}) {
+        cache.mkdirs()
+        var have = archive.length()
+        // Whole, as far as its size says; the checksum has the last word.
+        if (have >= downloadSize) return
+        fetch.open(have).use { response ->
+            val append: Boolean
+            val total: Long
+            when (response.status) {
+                206 -> {
+                    append = true
+                    total = response.totalLength ?: downloadSize
+                }
+                200 -> {
+                    // The server gave the whole file (it doesn't do ranges, or nothing was here): start over.
+                    append = false
+                    have = 0
+                    total = response.contentLength.takeIf { it > 0 } ?: downloadSize
+                }
+                // Nothing past what's here: the archive is as long as the server's. Its checksum decides.
+                416 -> if (have > 0) return else throw Problem(RecitationModel.Failure.DOWNLOAD, "HTTP 416")
+                else -> throw Problem(RecitationModel.Failure.DOWNLOAD, "HTTP ${response.status}")
+            }
+            FileOutputStream(archive, append).use { output ->
+                val buffer = ByteArray(1 shl 16)
+                var written = have
+                var reported = have
+                while (true) {
+                    val count = response.stream.read(buffer)
+                    if (count < 0) break
+                    output.write(buffer, 0, count)
+                    written += count
+                    if (written - reported >= 512 * 1024) {
+                        reported = written
+                        progress(min(written.toDouble() / total, 1.0))
                     }
                 }
             }
-        } finally {
-            connection.disconnect()
         }
-        withContext(Dispatchers.Main) { state = State.Installing }
-        // Unpacked into a fresh folder, then put in place, so a half-installed model is never used.
-        val staging = File(parent, "$VERSION.partial").apply { deleteRecursively(); mkdirs() }
+    }
+
+    /**
+     * Checks the archive against its checksum and unpacks it into a fresh folder, then puts it in place, so a
+     * half-installed model is never used; a model that isn't whole is removed again.
+     */
+    fun install() {
+        if (sha256(archive) != checksum) {
+            archive.delete()
+            throw Problem(RecitationModel.Failure.CORRUPT, "The archive doesn't match its checksum")
+        }
+        root.mkdirs()
+        val staging = File(root, "$version.partial").apply { deleteRecursively(); mkdirs() }
         try {
             ZipInputStream(archive.inputStream().buffered()).use { zip ->
                 while (true) {
@@ -112,28 +272,57 @@ class RecitationModel(private val context: Context, private val scope: Coroutine
                 }
             }
             folder.deleteRecursively()
-            if (!staging.renameTo(folder)) error("Couldn't put the model in place")
+            if (!staging.renameTo(folder)) throw IOException("Couldn't put the model in place")
+            if (!isInstalled) {
+                folder.deleteRecursively()
+                throw Problem(RecitationModel.Failure.CORRUPT, "The archive doesn't hold the model")
+            }
         } finally {
-            archive.delete()
             staging.deleteRecursively()
+            archive.delete()
         }
     }
 
     companion object {
-        /** The version installed; a new one goes in a folder of its own. */
-        const val VERSION = "whisper-base-ar-quran-1-onnx"
-        /** Where the archive is downloaded from: the project's storage bucket (backend/README.md). */
-        const val DOWNLOAD_URL =
-            "https://firebasestorage.googleapis.com/v0/b/aqra-quran.firebasestorage.app/o/models%2Frecitation%2F$VERSION.zip?alt=media"
-        /** The archive's size, shown before downloading it. */
-        const val DOWNLOAD_SIZE = 67_272_417L
+        private val REQUIRED = listOf("encoder.onnx", "decoder.onnx", "mel_filters.bin", "tokens.txt")
+        /** Room to spare beyond the archive and the model. */
+        private const val MARGIN = 50L shl 20
+
+        /** The file's SHA-256, in lowercase hex. */
+        fun sha256(file: File): String {
+            val digest = MessageDigest.getInstance("SHA-256")
+            file.inputStream().use { input ->
+                val buffer = ByteArray(1 shl 16)
+                while (true) {
+                    val count = input.read(buffer)
+                    if (count < 0) break
+                    digest.update(buffer, 0, count)
+                }
+            }
+            return digest.digest().joinToString("") { "%02x".format(it) }
+        }
+    }
+}
+
+/** The archive over HTTP, from a byte onwards when the download was begun before. */
+class HttpFetcher(private val url: String) : RecitationModelFiles.Fetcher {
+    override fun open(from: Long): RecitationModelFiles.Response {
+        val connection = URL(url).openConnection() as HttpURLConnection
+        connection.connectTimeout = 15_000
+        connection.readTimeout = 30_000
+        if (from > 0) connection.setRequestProperty("Range", "bytes=$from-")
+        val status = connection.responseCode
+        val stream = if (status in 200..299) connection.inputStream else connection.errorStream ?: ByteArrayInputStream(ByteArray(0))
+        return RecitationModelFiles.Response(status, connection.contentLengthLong, connection.getHeaderField("Content-Range"), stream) {
+            connection.disconnect()
+        }
     }
 }
 
 /**
  * Runs the model: 16 kHz mono audio in, the words it heard out, one stretch at a time. The log-mel features are
- * Whisper's own (30 s, a 400-sample Hann window every 160 samples, 80 mel bands), the decoding is greedy in Arabic
- * without timestamps, and the words come back from the model's byte-level tokens.
+ * Whisper's own ([WhisperFeatures]), the decoding is greedy in Arabic without timestamps, and the words come back
+ * from the model's byte-level tokens.
  */
 class RecitationTranscriber(folder: File) : AutoCloseable {
     private val environment = OrtEnvironment.getEnvironment()
@@ -145,16 +334,17 @@ class RecitationTranscriber(folder: File) : AutoCloseable {
     private val decoder = environment.createSession(File(folder, "decoder.onnx").path, options)
     private val pastNames = decoder.inputNames.filter { it.startsWith("past_key_values.") }
     /** The mel filter bank, [201][80] row by row. */
-    private val filters: FloatArray = File(folder, "mel_filters.bin").readBytes().let { bytes ->
+    private val features = WhisperFeatures(File(folder, "mel_filters.bin").readBytes().let { bytes ->
         val floats = FloatArray(bytes.size / 4)
         ByteBuffer.wrap(bytes).order(ByteOrder.LITTLE_ENDIAN).asFloatBuffer().get(floats)
         floats
-    }
+    })
     private val tokens: List<String> = File(folder, "tokens.txt").readLines()
 
     fun transcribe(samples: FloatArray): String {
-        val features = logMel(samples)
-        OnnxTensor.createTensor(environment, FloatBuffer.wrap(features), longArrayOf(1, MELS.toLong(), FRAMES.toLong())).use { input ->
+        val mel = features.logMel(samples)
+        val shape = longArrayOf(1, WhisperFeatures.MELS.toLong(), WhisperFeatures.FRAMES.toLong())
+        OnnxTensor.createTensor(environment, FloatBuffer.wrap(mel), shape).use { input ->
             encoder.run(mapOf("input_features" to input)).use { encoded ->
                 val hidden = encoded[0] as OnnxTensor
                 return decode(hidden)
@@ -211,50 +401,6 @@ class RecitationTranscriber(folder: File) : AutoCloseable {
         return detokenize(out)
     }
 
-    /** Whisper's log-mel features, [80][3000], for up to 30 s of audio (the rest is silence). */
-    private fun logMel(samples: FloatArray): FloatArray {
-        val length = min(samples.size, SAMPLES)
-        // Centered frames: the audio padded by 200 samples at each end, the start mirrored.
-        fun sample(index: Int): Float {
-            val i = index - N_FFT / 2
-            return when {
-                i < 0 -> if (-i < length) samples[-i] else 0f
-                i < length -> samples[i]
-                else -> 0f
-            }
-        }
-        // Frames past the audio are silent: their power is zero, so only the ones that reach the audio are computed.
-        val heard = min(FRAMES, (length + N_FFT / 2) / HOP + 2)
-        val mel = FloatArray(MELS * FRAMES) { LOG_FLOOR }
-        val frame = FloatArray(N_FFT)
-        val power = FloatArray(BINS)
-        var top = LOG_FLOOR
-        for (f in 0 until heard) {
-            val start = f * HOP
-            for (n in 0 until N_FFT) frame[n] = sample(start + n) * WINDOW[n]
-            for (k in 0 until BINS) {
-                var re = 0f
-                var im = 0f
-                val base = k * N_FFT
-                for (n in 0 until N_FFT) {
-                    re += frame[n] * COS[base + n]
-                    im -= frame[n] * SIN[base + n]
-                }
-                power[k] = re * re + im * im
-            }
-            for (m in 0 until MELS) {
-                var energy = 0f
-                for (k in 0 until BINS) energy += power[k] * filters[k * MELS + m]
-                val value = log10(max(energy, 1e-10f))
-                mel[m * FRAMES + f] = value
-                if (value > top) top = value
-            }
-        }
-        val floor = top - 8f
-        for (i in mel.indices) mel[i] = (max(mel[i], floor) + 4f) / 4f
-        return mel
-    }
-
     /** The model's byte-level tokens back to text. */
     private fun detokenize(ids: List<Int>): String {
         val bytes = java.io.ByteArrayOutputStream()
@@ -272,12 +418,6 @@ class RecitationTranscriber(folder: File) : AutoCloseable {
     }
 
     private companion object {
-        const val SAMPLES = 480_000
-        const val N_FFT = 400
-        const val HOP = 160
-        const val BINS = N_FFT / 2 + 1
-        const val MELS = 80
-        const val FRAMES = 3_000
         const val VOCABULARY = 51_865
         const val END_OF_TEXT = 50_257
         const val START_OF_TRANSCRIPT = 50_258L
@@ -285,11 +425,6 @@ class RecitationTranscriber(folder: File) : AutoCloseable {
         const val TRANSCRIBE = 50_359L
         const val NO_TIMESTAMPS = 50_363L
         const val MAX_TOKENS = 200
-        val LOG_FLOOR = log10(1e-10f)
-
-        val WINDOW = FloatArray(N_FFT) { (0.5 - 0.5 * cos(2 * PI * it / N_FFT)).toFloat() }
-        val COS = FloatArray(BINS * N_FFT) { cos(2 * PI * (it / N_FFT) * (it % N_FFT) / N_FFT).toFloat() }
-        val SIN = FloatArray(BINS * N_FFT) { sin(2 * PI * (it / N_FFT) * (it % N_FFT) / N_FFT).toFloat() }
 
         /** GPT-2's byte-to-character table, inverted: each printable stand-in back to its byte. */
         val BYTE_OF: Map<Char, Int> = run {

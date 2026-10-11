@@ -80,6 +80,7 @@ import com.azzamalrashed.aqra.recitation.ListenSetupSheet
 import com.azzamalrashed.aqra.recitation.ListeningPanel
 import com.azzamalrashed.aqra.recitation.ListeningSummary
 import com.azzamalrashed.aqra.recitation.RecitationListener
+import com.azzamalrashed.aqra.ui.KeepScreenOn
 import com.azzamalrashed.aqra.ui.components.FloatingCapsule
 import com.azzamalrashed.aqra.ui.components.FloatingPanel
 import com.azzamalrashed.aqra.ui.components.MarkingButton
@@ -110,11 +111,23 @@ fun WirdScreen(
     // revealed and the stumbles marked come back as they were.
     val sessionSaver = remember(store) {
         listSaver<RevisionSession, Int>(
-            save = { listOf(it.page, it.revealed) + it.stumbles.sorted() },
+            // The page, how far it's revealed, then each group of marks led by its size: the stumbles, which of them are
+            // still suggestions, and which were heard.
+            save = { session ->
+                listOf(session.page, session.revealed) +
+                    listOf(session.stumbles, session.suggested, session.heard).flatMap { listOf(it.size) + it.sorted() }
+            },
             restore = { saved ->
                 session(saved[0]).apply {
                     repeat(saved[1]) { revealNext() }
-                    saved.drop(2).forEach(::markStumble)
+                    val groups = ArrayList<Set<Int>>()
+                    var at = 2
+                    repeat(3) {
+                        val size = saved.getOrNull(at) ?: 0
+                        groups += saved.subList(minOf(at + 1, saved.size), minOf(at + 1 + size, saved.size)).toSet()
+                        at += 1 + size
+                    }
+                    restoreMarks(groups[0], groups[1], groups[2])
                 }
             },
         )
@@ -183,7 +196,7 @@ fun WirdScreen(
     fun finish(countingRest: Boolean) {
         val current = session
         val ayahs = current.revisedAyahs(countingRest)
-        app.revision.record(current.page, ayahs, current.stumbles.intersect(ayahs.toSet()),
+        app.revision.record(current.page, ayahs, current.recordedStumbles.intersect(ayahs.toSet()),
             if (outside) RevisionRecord.Source.OUTSIDE else RevisionRecord.Source.APP, app.memorization)
         // The page just recorded never comes round again, whichever day's plan it was in.
         val next = if (outside) null else app.revision.plan?.items?.firstOrNull { !it.done && it.page != current.page }
@@ -233,6 +246,8 @@ fun WirdScreen(
                 onRevealed = { askingRest = false; finish(countingRest = false) },
                 onBack = { askingRest = false })
         } else if (following != null && !outside) {
+            // The student recites hands-free for minutes: the screen stays on while Aqra is getting ready or listening.
+            if (following.phase == RecitationListener.Phase.PREPARING || following.phase == RecitationListener.Phase.LISTENING) KeepScreenOn()
             CompositionLocalProvider(LocalLayoutDirection provides LayoutDirection.Rtl) {
                 FloatingPanel(style) {
                     if (session.isComplete) {

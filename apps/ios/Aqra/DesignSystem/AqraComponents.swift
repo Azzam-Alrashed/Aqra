@@ -342,3 +342,47 @@ struct FloatingPanel<Content: View>: View {
             .padding(.bottom, 6)
     }
 }
+
+// MARK: - Keeping the screen awake
+
+/// Holds the screen on while something the student watches without touching the screen is under way: a revision
+/// recited aloud, a call, memorizing. Several views may hold it at once; the screen sleeps again when none does.
+@MainActor
+enum ScreenAwake {
+    private(set) static var holds = 0
+
+    static func hold() {
+        holds += 1
+        UIApplication.shared.isIdleTimerDisabled = true
+    }
+
+    static func release() {
+        holds = max(0, holds - 1)
+        if holds == 0 { UIApplication.shared.isIdleTimerDisabled = false }
+    }
+}
+
+private struct KeepsScreenAwake: ViewModifier {
+    var on: Bool
+    @State private var holding = false
+
+    func body(content: Content) -> some View {
+        content
+            .onAppear { update(on) }
+            .onChange(of: on) { update(on) }
+            .onDisappear { update(false) }
+    }
+
+    private func update(_ wanted: Bool) {
+        guard wanted != holding else { return }
+        holding = wanted
+        if wanted { ScreenAwake.hold() } else { ScreenAwake.release() }
+    }
+}
+
+extension View {
+    /// Keeps the screen from sleeping while `on` and the view is shown; it may sleep again once the view goes.
+    func keepsScreenAwake(_ on: Bool = true) -> some View {
+        modifier(KeepsScreenAwake(on: on))
+    }
+}

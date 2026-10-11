@@ -585,6 +585,11 @@ final class RevisionSession {
     private(set) var stumbles: Set<Int> = []
     /// What kind each stumble was, when the listener could tell.
     private(set) var stumbleKinds: [Int: Set<MistakeType>] = [:]
+    /// The stumbles the listener heard and the student hasn't kept yet (docs/SRS.md REV-18): until listening is tried
+    /// with real voices, they're suggestions, recorded only once the student keeps them in the page's summary.
+    private(set) var suggested: Set<Int> = []
+    /// Every stumble the listener heard, kept or not, for the summary to list.
+    private(set) var heard: Set<Int> = []
     /// Words shown after a long pause (the prompt, تلقين).
     private(set) var prompts: Set<WordRef> = []
 
@@ -607,6 +612,15 @@ final class RevisionSession {
         countingRest ? ayahs : Array(ayahs.prefix(min(revealed, ayahs.count)))
     }
 
+    /// The stumbles recorded: those the student marked, and those heard that they kept.
+    var recordedStumbles: Set<Int> { stumbles.subtracting(suggested) }
+
+    /// Keeps a stumble the listener heard, or lets it go again before the page is recorded.
+    func keepHeard(_ ayah: Int, _ keep: Bool) {
+        guard heard.contains(ayah), stumbles.contains(ayah) else { return }
+        if keep { suggested.remove(ayah) } else { suggested.insert(ayah) }
+    }
+
     /// Whether an ayah is covered by this revision.
     func covers(_ ayah: Int) -> Bool { ayahs.contains(ayah) }
 
@@ -627,7 +641,7 @@ final class RevisionSession {
     /// A tap on a revealed ayah marks or unmarks a stumble on it; any other tap reveals the next ayah.
     func tap(_ ayah: Int?) {
         if let ayah, covers(ayah), !isVeiled(ayah) {
-            if stumbles.contains(ayah) { clearStumble(ayah) } else { stumbles.insert(ayah); cleared.remove(ayah) }
+            if stumbles.contains(ayah) { clearStumble(ayah) } else { stumbles.insert(ayah); suggested.remove(ayah); cleared.remove(ayah) }
         } else {
             revealNext()
         }
@@ -644,6 +658,7 @@ final class RevisionSession {
         let ayah = ayahs[revealed]
         revealNext()
         stumbles.insert(ayah)
+        suggested.remove(ayah)
         cleared.remove(ayah)
     }
 
@@ -671,21 +686,27 @@ final class RevisionSession {
         prompts.insert(word)
     }
 
-    /// Marks an ayah as stumbled on, whatever it was (a listener classifying the stumble).
+    /// Marks an ayah as stumbled on, whatever it was: the student's own mark, recorded as it is.
     func markStumble(_ ayah: Int) {
         guard covers(ayah) else { return }
         stumbles.insert(ayah)
+        suggested.remove(ayah)
     }
 
-    /// Marks an ayah as stumbled on in the ways the listener heard. One the student cleared stays cleared.
+    /// Marks an ayah as stumbled on in the ways the listener heard: a suggestion, unless the student had marked it
+    /// already. One the student cleared stays cleared.
     func markStumble(_ ayah: Int, kinds: Set<MistakeType>) {
         guard covers(ayah), !cleared.contains(ayah), !kinds.isSubset(of: stumbleKinds[ayah] ?? []) else { return }
+        if !stumbles.contains(ayah) { suggested.insert(ayah) }
         stumbles.insert(ayah)
+        heard.insert(ayah)
         stumbleKinds[ayah, default: []].formUnion(kinds)
     }
 
     func clearStumble(_ ayah: Int) {
         stumbles.remove(ayah)
+        suggested.remove(ayah)
+        heard.remove(ayah)
         stumbleKinds[ayah] = nil
         cleared.insert(ayah)
     }

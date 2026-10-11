@@ -2,6 +2,7 @@ import SwiftUI
 
 @main
 struct AqraApp: App {
+    @UIApplicationDelegateAdaptor(AqraAppDelegate.self) private var delegate
     @AppStorage("hasSeenOnboarding") private var hasSeenOnboarding = false
     @State private var launch = LaunchState()
 
@@ -12,6 +13,7 @@ struct AqraApp: App {
         AccountStore.resetForUITests()
         #endif
         Diagnostics.shared.start()
+        RecitationTranscriber.unloadsWhenIdle()
     }
 
     var body: some Scene {
@@ -34,5 +36,17 @@ struct AqraApp: App {
             // Text follows the reader's size up to Accessibility 2; past it, the composed screens would come apart.
             .dynamicTypeSize(...DynamicTypeSize.accessibility2)
         }
+    }
+}
+
+/// The app delegate, for the one thing SwiftUI has no hook for: the speech model's background download, which the
+/// system may relaunch the app to finish (see `RecitationModel`).
+final class AqraAppDelegate: NSObject, UIApplicationDelegate {
+    func application(_ application: UIApplication, handleEventsForBackgroundURLSession identifier: String,
+                     completionHandler: @escaping () -> Void) {
+        guard identifier == RecitationModel.sessionIdentifier else { return }
+        RecitationModel.backgroundEventsHandled = completionHandler
+        // Making the model's session again lets the system hand it the events.
+        _ = RecitationModel.shared
     }
 }

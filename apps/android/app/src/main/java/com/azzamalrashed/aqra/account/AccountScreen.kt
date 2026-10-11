@@ -44,6 +44,7 @@ import androidx.compose.material3.TimePicker
 import androidx.compose.material3.TimePickerDefaults
 import androidx.compose.material3.rememberTimePickerState
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -75,6 +76,7 @@ import com.azzamalrashed.aqra.ui.components.AqraCard
 import com.azzamalrashed.aqra.ui.components.AqraProgress
 import com.azzamalrashed.aqra.ui.components.AqraRow
 import com.azzamalrashed.aqra.ui.components.AqraRowDivider
+import com.azzamalrashed.aqra.ui.components.ChipButton
 import com.azzamalrashed.aqra.ui.components.AqraSectionTitle
 import com.azzamalrashed.aqra.ui.components.IconTile
 import com.azzamalrashed.aqra.ui.components.ProblemLine
@@ -115,6 +117,10 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
     var notificationsDenied by remember { mutableStateOf(false) }
     var showingWallet by remember { mutableStateOf(false) }
     var showingBlocked by remember { mutableStateOf(false) }
+    /** What the listening model takes on the device; 0 when it isn't there. */
+    var modelSpace by remember { mutableStateOf(0L) }
+    var confirmingModelRemoval by remember { mutableStateOf(false) }
+    LaunchedEffect(Unit) { modelSpace = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.IO) { app.recitationModel.usedSpace() } }
     var reminderOn by app.prefs.reminderOn
     val reminderMinutes by app.prefs.reminderMinutes
 
@@ -171,6 +177,14 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
                     Box(Modifier.background(Palette.lavender, CircleShape).padding(horizontal = 12.dp, vertical = 6.dp)) {
                         Text(formatTime(reminderMinutes / 60, reminderMinutes % 60), style = aqraStyle(15f, Weight.bold, Palette.brand))
                     }
+                }
+            }
+            // «نموذج الاستماع»: once it's on the device, what it takes, and deleting it.
+            if (modelSpace > 0) {
+                AqraRowDivider()
+                AqraRow("🎙️", Palette.lavender, stringResource(R.string.listening_model),
+                    detail = stringResource(R.string.s_on_this_device, android.text.format.Formatter.formatShortFileSize(context, modelSpace))) {
+                    ChipButton(stringResource(R.string.delete), filled = false) { confirmingModelRemoval = true }
                 }
             }
         }
@@ -248,6 +262,13 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
     }
     if (showingWallet) AqraSheet(onDismiss = { showingWallet = false }) { WalletScreen(app) }
     if (showingBlocked) BlockedPeopleSheet(app) { showingBlocked = false }
+    if (confirmingModelRemoval) {
+        Confirm(stringResource(R.string.delete_the_listening_model_q), stringResource(R.string.reciting_aloud_downloads_it_again_the_next_time),
+            stringResource(R.string.delete), onDismiss = { confirmingModelRemoval = false }) {
+            app.recitationModel.remove()
+            modelSpace = app.recitationModel.usedSpace()
+        }
+    }
     if (pickingTime) {
         ReminderTimeDialog(reminderMinutes, onDismiss = { pickingTime = false }) { minutes ->
             app.prefs.reminderMinutes.value = minutes
