@@ -337,20 +337,37 @@ class TasmeeStore(
         }.await()
     }
 
-    /** Gives a seat back: removes the seat and this student's copy, and lowers the count (unless the session is gone). */
+    /**
+     * Gives a seat back, through the server: it removes the seat, this student's copy and, for a free seat, the count
+     * (never below zero), and refunds a seat won at auction by the policy — in full when the session is still more
+     * than an hour away, not at all later (docs/SRS.md AUC-09).
+     */
     suspend fun cancelBooking(booking: Booking) {
         val uid = uid ?: return
-        val sessionRef = database.collection("sessions").document(booking.id)
-        val seatRef = sessionRef.collection("seats").document(uid)
-        val bookingRef = user(uid).collection("bookings").document(booking.id)
-        database.runTransaction { transaction ->
-            val session = transaction.get(sessionRef)
-            val seat = transaction.get(seatRef)
-            if (session.exists() && seat.exists()) transaction.update(sessionRef, "booked", FieldValue.increment(-1))
-            if (seat.exists()) transaction.delete(seatRef)
-            transaction.delete(bookingRef)
-            null
-        }.await()
+        giveBack(booking.id, uid)
+    }
+
+    /**
+     * Gives a seat back through the server's `giveBackSeat`; on a server from before it (the function isn't there yet),
+     * the way it used to be done: the seat, the booking and the count in one transaction, a free seat only. As on iOS.
+     */
+    private suspend fun giveBack(sessionId: String, uid: String) {
+        try {
+            AccountStore.functions.getHttpsCallable("giveBackSeat").call(mapOf("sessionId" to sessionId)).await()
+        } catch (error: FirebaseFunctionsException) {
+            if (error.code != FirebaseFunctionsException.Code.NOT_FOUND) throw error
+            val sessionRef = database.collection("sessions").document(sessionId)
+            val seatRef = sessionRef.collection("seats").document(uid)
+            val bookingRef = user(uid).collection("bookings").document(sessionId)
+            database.runTransaction { transaction ->
+                val session = transaction.get(sessionRef)
+                val seat = transaction.get(seatRef)
+                if (session.exists() && seat.exists() && (session.getLong("booked") ?: 0) > 0) transaction.update(sessionRef, "booked", FieldValue.increment(-1))
+                if (seat.exists()) transaction.delete(seatRef)
+                transaction.delete(bookingRef)
+                null
+            }.await()
+        }
     }
 
     // MARK: - A teacher's side
@@ -563,18 +580,9 @@ class TasmeeStore(
      */
     suspend fun deleteAccountData(uid: String) {
         val user = user(uid)
-        // Each booking goes in one write with its seat and the seat count, as the rules require.
-        for (booking in user.collection("bookings").get().await().documents) {
-            val batch = database.batch()
-            val session = database.collection("sessions").document(booking.id)
-            val seat = session.collection("seats").document(uid)
-            if (seat.get().await().exists()) {
-                batch.delete(seat)
-                if (session.get().await().exists()) batch.update(session, "booked", FieldValue.increment(-1))
-            }
-            batch.delete(booking.reference)
-            batch.commit().await()
-        }
+        // Each booking is given back through the server, as from the Tasmee' tab: the seat, the booking and the count
+        // together, and a seat won at auction by the refund policy (the rules refuse the app deleting that one).
+        for (booking in user.collection("bookings").get().await().documents) giveBack(booking.id, uid)
         val references = ArrayList<DocumentReference>()
         references += user.collection("tasmee").get().await().documents.map { it.reference }
         references += user.collection("inbox").get().await().documents.map { it.reference }

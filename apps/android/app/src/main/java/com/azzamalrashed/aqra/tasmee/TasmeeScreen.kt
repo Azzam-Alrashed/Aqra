@@ -288,7 +288,12 @@ private fun BookingRow(app: AqraApp, booking: Booking) {
  */
 @Composable
 private fun GiveBackSeat(app: AqraApp, booking: Booking, scope: CoroutineScope, onDismiss: () -> Unit, onResult: (Problem?) -> Unit) {
-    Confirm(stringResource(R.string.cancel_your_booking_q), stringResource(R.string.your_seat_goes_back_to_the_session), stringResource(R.string.cancel_booking),
+    // A seat won at auction is refunded by the server's policy: in full while the session is more than an hour away,
+    // not at all later (backend/README.md, the seat auction).
+    val message = stringResource(
+        if ((booking.paid ?: 0) > 0) R.string.your_seat_goes_back_to_the_session_the_credits_you else R.string.your_seat_goes_back_to_the_session,
+    )
+    Confirm(stringResource(R.string.cancel_your_booking_q), message, stringResource(R.string.cancel_booking),
         onDismiss = onDismiss, cancel = stringResource(R.string.keep_it)) {
         scope.launch {
             onResult(

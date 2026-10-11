@@ -102,8 +102,14 @@ struct TasmeeView: View {
                 }
             }
             Button("Keep it", role: .cancel) {}
-        } message: { _ in
-            Text("Your seat goes back to the session.")
+        } message: { booking in
+            // A seat won at auction is refunded by the server's policy: in full while the session is more than an
+            // hour away, not at all later (backend/README.md, the seat auction).
+            if (booking.paid ?? 0) > 0 {
+                Text("Your seat goes back to the session. The credits you paid for it come back only if it starts in more than an hour.")
+            } else {
+                Text("Your seat goes back to the session.")
+            }
         }
     }
 

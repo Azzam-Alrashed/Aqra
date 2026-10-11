@@ -214,6 +214,11 @@ struct TasmeeTests {
         #expect(bid?.amount == 4 && bid?.status == .outbid && bid?.memorizedPages == 12)
         #expect(Bid(id: "x", document: ["amount": 1, "status": "maybe"]) == nil)
         #expect(WalletStore.credits(of: "aqra.credits.30") == 30)
+        // The token a purchase carries is the server's too (functions/src/credits.ts accountToken, same vectors in
+        // backend/test): the account that bought the credits is the only one that can redeem them.
+        #expect(WalletStore.accountToken(for: "alice").uuidString.lowercased() == "2bd806c9-7f0e-50af-9a1f-c3328fa763a9")
+        #expect(WalletStore.accountToken(for: "x").uuidString.lowercased() == "2d711642-b726-5044-8162-7ca9fbac32f5")
+        #expect(WalletStore.accountToken(for: "alice") != WalletStore.accountToken(for: "bob"))
         #expect(CreditsFormat.credits(8) == 8.formatted() && CreditsFormat.credits(6.4) == 6.4.formatted(.number.precision(.fractionLength(2))))
     }
 }

@@ -265,8 +265,8 @@ service cloud.firestore {
         && hasKeys(['teacherId', 'teacherName', 'startsAt', 'place', 'seats', 'booked', 'kind', 'status', 'createdAt'],
                    ['auctionSeats', 'minBid', 'biddingClosesAt', 'auctionState'])
         // Auctioned seats, beside the free ones: bidding is still open and closes at least 30 minutes before the
-        // session, which is at least an hour away (the policy's lateBiddingClosesBeforeMinutes and
-        // minAuctionLeadMinutes; docs/SRS.md AUC-04).
+        // session, which is at least an hour away. The 30 and 60 minutes are fixed here and in both apps' session
+        // editors, not in config/policy (docs/SRS.md AUC-04, backend/README.md).
         && (request.resource.data.get('auctionSeats', 0) == 0
           || (request.resource.data.auctionSeats is int && request.resource.data.auctionSeats > 0 && request.resource.data.auctionSeats <= 20
             && request.resource.data.minBid is int && request.resource.data.minBid >= 0
@@ -299,11 +299,18 @@ service cloud.firestore {
           && request.resource.data.booked == resource.data.booked + 1
           && resource.data.booked < resource.data.seats
           && !exists(seat(id, request.auth.uid)) && existsAfter(seat(id, request.auth.uid)))
-        // Cancelling a booking gives the seat back.
+        // Cancelling a booking gives the seat back; the count never drops below zero. (The apps give seats back
+        // through the giveBackSeat function; this keeps an older build's way working for free seats.)
         || (isNamed() && changesOnly(['booked'])
+          && resource.data.booked > 0
           && request.resource.data.booked == resource.data.booked - 1
           && exists(seat(id, request.auth.uid)) && !existsAfter(seat(id, request.auth.uid)));
-      allow delete: if isVettedTeacher() && resource.data.teacherId == request.auth.uid;
+      // Only a session nobody is in: no seat booked, no bid active, no seat won. One with students or bids is
+      // cancelled through its status instead, which releases and refunds them (the functions keep these counts).
+      allow delete: if isVettedTeacher() && resource.data.teacherId == request.auth.uid
+        && resource.data.booked == 0
+        && resource.data.get('auctionBids', 0) == 0
+        && resource.data.get('auctionWon', 0) == 0;
 
       // Bids for auctioned seats: written only by the functions; seen by the bidder and the session's teacher.
       match /bids/{bidderUid} {
@@ -326,8 +333,10 @@ service cloud.firestore {
           && request.resource.data.name is string
           && request.resource.data.memorizedPages is int;
         allow update: if false;
-        // The student or the teacher can give a seat back at any time, so deleting an account always can.
-        allow delete: if isOwner(studentUid) || (signedIn() && session(id).teacherId == request.auth.uid);
+        // The student or the teacher can give a free seat back at any time. A seat won at auction (it carries
+        // `paid`) is given back only through the giveBackSeat function, which applies the refund policy.
+        allow delete: if !('paid' in resource.data)
+          && (isOwner(studentUid) || (signedIn() && session(id).teacherId == request.auth.uid));
       }
     }
   }

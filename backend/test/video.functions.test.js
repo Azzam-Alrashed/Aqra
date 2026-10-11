@@ -3,7 +3,7 @@ import assert from "node:assert/strict";
 import { after, beforeEach, describe, test } from "node:test";
 import { Timestamp } from "firebase-admin/firestore";
 import { TokenVerifier } from "livekit-server-sdk";
-import { adminDb, clearFirestore, client, closeClients, inMinutes, rejects } from "./helpers.js";
+import { adminDb, clearFirestore, client, closeClients, inMinutes, rejects, signedOut } from "./helpers.js";
 
 const verifier = new TokenVerifier("devkey", "secret");
 
@@ -43,15 +43,29 @@ describe("joinCall", () => {
     assert.equal(studentClaims.video.canPublish, true);
     assert.ok(!studentClaims.video.roomAdmin);
     assert.equal(forStudent.teacherId, teacher.uid);
+    // The token lasts the policy's three hours, give or take the call's own time.
+    const lifetime = studentClaims.exp - Math.floor(Date.now() / 1000);
+    assert.ok(lifetime > 3 * 3600 - 60 && lifetime <= 3 * 3600, `token lifetime ${lifetime}s`);
   });
 
-  test("nobody without a seat, and nobody signed out", async () => {
+  test("nobody without a seat", async () => {
     const teacher = await client();
     const stranger = await client();
     await session("s1", teacher.uid);
     await rejects(stranger.call("joinCall", { sessionId: "s1" }), "functions/permission-denied");
     await rejects(stranger.call("joinCall", { sessionId: "missing" }), "functions/not-found");
     await rejects(stranger.call("joinCall", {}), "functions/invalid-argument");
+  });
+
+  test("joinCallRefusesTheSignedOut", async () => {
+    const teacher = await client();
+    await session("s1", teacher.uid);
+    await rejects(signedOut().call("joinCall", { sessionId: "s1" }), "functions/unauthenticated");
+    // Nor does anyone signed out bid, book or give back through the functions.
+    await rejects(signedOut().call("placeBid", { sessionId: "s1", amount: 0 }), "functions/unauthenticated");
+    await rejects(signedOut().call("takeFreeSeat", { sessionId: "s1" }), "functions/unauthenticated");
+    await rejects(signedOut().call("giveBackSeat", { sessionId: "s1" }), "functions/unauthenticated");
+    await rejects(signedOut().call("redeemPurchase", { signedTransaction: "x" }), "functions/unauthenticated");
   });
 
   test("only open video sessions, and only within the call's window", async () => {

@@ -197,6 +197,8 @@ data class Booking(
     val startsAt: Moment,
     val kind: TasmeeSession.Kind = TasmeeSession.Kind.IN_PERSON,
     val place: String,
+    /** The credits paid for a seat won at auction (the server writes it with the booking); null for a free seat. */
+    val paid: Int? = null,
 ) {
     constructor(session: TasmeeSession) : this(session.id, session.teacherId, session.teacherName, session.startsAt, session.kind, session.place)
 
@@ -207,7 +209,7 @@ data class Booking(
             return Booking(
                 id, teacherId, document.string("teacherName").orEmpty(), startsAt,
                 TasmeeSession.Kind.entries.firstOrNull { it.raw == document.string("kind") } ?: TasmeeSession.Kind.IN_PERSON,
-                document.string("place").orEmpty(),
+                document.string("place").orEmpty(), document.int("paid"),
             )
         }
     }

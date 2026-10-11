@@ -121,14 +121,14 @@ fun LedgerList(entries: List<WalletStore.Entry>) {
             if (index > 0) AqraRowDivider()
             val sign = when (entry.kind) {
                 WalletStore.Entry.Kind.PURCHASE, WalletStore.Entry.Kind.RELEASE, WalletStore.Entry.Kind.REFUND, WalletStore.Entry.Kind.SEAT -> "+"
-                WalletStore.Entry.Kind.HOLD, WalletStore.Entry.Kind.SPEND, WalletStore.Entry.Kind.PAYOUT -> "−"
+                WalletStore.Entry.Kind.HOLD, WalletStore.Entry.Kind.SPEND, WalletStore.Entry.Kind.CLAWBACK, WalletStore.Entry.Kind.PAYOUT -> "−"
                 WalletStore.Entry.Kind.REVERSAL -> if (entry.amount < 0) "−" else "+"
             }
             Row(Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp).semantics(mergeDescendants = true) {},
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                 IconTile(ledgerIcon(entry.kind), Palette.lavender, size = 34.dp)
                 Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(1.dp)) {
-                    Text(ledgerTitle(entry.kind), style = aqraStyle(14f, Weight.bold, Palette.ink))
+                    Text(ledgerTitle(entry), style = aqraStyle(14f, Weight.bold, Palette.ink))
                     Text(formatDayTime(entry.at.toInstant()), style = aqraStyle(11f, Weight.semibold, Palette.inkSoft))
                 }
                 // The amount reads left to right with its sign, in every language.
@@ -146,20 +146,22 @@ private fun ledgerIcon(kind: WalletStore.Entry.Kind): String = when (kind) {
     WalletStore.Entry.Kind.RELEASE -> "🔓"
     WalletStore.Entry.Kind.SPEND -> "🎟️"
     WalletStore.Entry.Kind.REFUND, WalletStore.Entry.Kind.REVERSAL -> "↩️"
+    WalletStore.Entry.Kind.CLAWBACK -> "↪️"
     WalletStore.Entry.Kind.SEAT -> "🎓"
     WalletStore.Entry.Kind.PAYOUT -> "🏦"
 }
 
 @Composable
-private fun ledgerTitle(kind: WalletStore.Entry.Kind): String = stringResource(
-    when (kind) {
+private fun ledgerTitle(entry: WalletStore.Entry): String = stringResource(
+    when (entry.kind) {
         WalletStore.Entry.Kind.PURCHASE -> R.string.credits_bought
         WalletStore.Entry.Kind.HOLD -> R.string.held_for_a_bid
         WalletStore.Entry.Kind.RELEASE -> R.string.released_outbid
         WalletStore.Entry.Kind.SPEND -> R.string.a_seat_won
-        WalletStore.Entry.Kind.REFUND -> R.string.refunded_session_cancelled
+        WalletStore.Entry.Kind.REFUND -> if (entry.isForASeatGivenBack) R.string.refunded_seat_given_back else R.string.refunded_session_cancelled
+        WalletStore.Entry.Kind.CLAWBACK -> R.string.taken_back_purchase_refunded
         WalletStore.Entry.Kind.SEAT -> R.string.a_seat_won_in_your_session
-        WalletStore.Entry.Kind.REVERSAL -> R.string.reversed_session_cancelled
+        WalletStore.Entry.Kind.REVERSAL -> if (entry.isForASeatGivenBack) R.string.reversed_seat_given_back else R.string.reversed_session_cancelled
         WalletStore.Entry.Kind.PAYOUT -> R.string.paid_to_you
     },
 )

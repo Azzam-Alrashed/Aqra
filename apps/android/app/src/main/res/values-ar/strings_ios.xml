@@ -1084,6 +1084,8 @@
         <item quantity="many">سُجّلت مراجعة %d صفحة</item>
         <item quantity="other">سُجّلت مراجعة %d صفحة</item>
     </plurals>
+    <!-- Refunded: seat given back -->
+    <string name="refunded_seat_given_back">مستردّة: أُعيد المقعد</string>
     <!-- Refunded: session cancelled -->
     <string name="refunded_session_cancelled">مستردّة: أُلغيت الجلسة</string>
     <!-- Released -->
@@ -1128,6 +1130,8 @@
     <string name="reveal_the_next_ayah">كشف الآية التالية</string>
     <!-- Revealed: %lld of %lld. Did you recite the rest from memory too? -->
     <string name="revealed_n_of_n_did_you_recite_the_rest_from">ظهر %1$d من %2$d. هل قرأتَ الباقي غيبًا أيضًا؟</string>
+    <!-- Reversed: seat given back -->
+    <string name="reversed_seat_given_back">مسترجعة: أُعيد المقعد</string>
     <!-- Reversed: session cancelled -->
     <string name="reversed_session_cancelled">مسترجعة: أُلغيت الجلسة</string>
     <!-- Revise %lld pages -->
@@ -1312,6 +1316,8 @@
     <string name="take_the_stage_test">ادخل اختبار المرحلة</string>
     <!-- Take the test again -->
     <string name="take_the_test_again">أعد الاختبار</string>
+    <!-- Taken back: purchase refunded -->
+    <string name="taken_back_purchase_refunded">مسحوبة: استُردّ ثمن الشراء</string>
     <!-- Tap a free part to take it, and tap yours when you\'ve read it. -->
     <string name="tap_a_free_part_to_take_it_and_tap_yours">انقر جزءًا متاحًا لتأخذه، وانقر جزءك حين تقرؤه.</string>
     <!-- Tap a student to hear them: mark the ayat they stumble on, and the pages you heard. -->
@@ -1726,6 +1732,8 @@
     <string name="your_revision_today">وِردك اليوم</string>
     <!-- Your seat goes back to the session. -->
     <string name="your_seat_goes_back_to_the_session">يعود مقعدك إلى الجلسة.</string>
+    <!-- Your seat goes back to the session. The credits you paid for it come back only if it starts in more than an hour. -->
+    <string name="your_seat_goes_back_to_the_session_the_credits_you">يعود مقعدك إلى الجلسة. وتعود إليك العملات التي دفعتها إذا بقي على موعدها أكثر من ساعة.</string>
     <!-- Your share of each seat won by bidding, after the app\'s commission, in credits. The team pays it by bank transfer. -->
     <string name="your_share_of_each_seat_won_by_bidding_after_the">حصتك من كل مقعد فِيز به بالمزايدة بعد عمولة التطبيق، بالعملات. يحوّلها الفريق إليك بتحويل بنكي.</string>
     <!-- Your strength starts from it, and grows as you revise -->

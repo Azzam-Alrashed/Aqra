@@ -24,11 +24,19 @@ import kotlin.math.roundToLong
  * verified by the server yet, so this app shows the balance and bids with it but doesn't sell credits.
  */
 class WalletStore {
-    data class Entry(val id: String, val kind: Kind, val amount: Double, val at: Moment) {
+    /**
+     * One movement of credits. [reason] says why a refund or reversal was made, when the server says: `sessionCancelled`,
+     * `seatGivenBack`, `removedByTeacher` or `sessionDeleted`; null on older entries (a cancelled session).
+     */
+    data class Entry(val id: String, val kind: Kind, val amount: Double, val at: Moment, val reason: String? = null) {
+        /** [CLAWBACK]: credits taken back because the App Store refunded or revoked the purchase that brought them. */
         enum class Kind(val raw: String) {
-            PURCHASE("purchase"), HOLD("hold"), RELEASE("release"), SPEND("spend"), REFUND("refund"), SEAT("seat"),
-            REVERSAL("reversal"), PAYOUT("payout"),
+            PURCHASE("purchase"), HOLD("hold"), RELEASE("release"), SPEND("spend"), REFUND("refund"), CLAWBACK("clawback"),
+            SEAT("seat"), REVERSAL("reversal"), PAYOUT("payout"),
         }
+
+        /** Whether a refund or reversal came from a seat given back rather than a session cancelled. */
+        val isForASeatGivenBack: Boolean get() = reason == "seatGivenBack" || reason == "removedByTeacher"
     }
 
     var balance by mutableStateOf(0.0)
@@ -98,7 +106,7 @@ class WalletStore {
         val data = dated(document.data)
         val kind = Entry.Kind.entries.firstOrNull { it.raw == data["kind"] } ?: return@mapNotNull null
         val at = data["at"] as? Moment ?: return@mapNotNull null
-        Entry(document.id, kind, (data["amount"] as? Number)?.toDouble() ?: 0.0, at)
+        Entry(document.id, kind, (data["amount"] as? Number)?.toDouble() ?: 0.0, at, data["reason"] as? String)
     }
 
     // MARK: - Bidding
