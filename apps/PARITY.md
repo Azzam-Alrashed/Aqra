@@ -8,7 +8,7 @@ which is the published website.
 Status: ✅ the same · ≈ the same behavior in the platform's own form · ⚠️ a gap or a difference · ❌ not there.
 "Checked" is the last date each row was tried on a device or simulator of both platforms, or verified in code.
 
-Last pass: 2026-10-10 (workstream WS8, Android on an emulator against the Firebase emulators, in Arabic and English).
+Last pass: 2026-10-11 (WS4 and WS6 added after WS8; Android on an emulator against the Firebase emulators, in Arabic and English).
 
 ## Onboarding and setup
 
@@ -49,10 +49,15 @@ Last pass: 2026-10-10 (workstream WS8, Android on an emulator against the Fireba
 |---|---|---|---|
 | Follow-ups first, then the rotation through everything memorized, whole pages in Mushaf order; missed days don't pile up | ✅ | ✅ | `scheduleParityFixture` read by both suites |
 | Veil and reveal ayah by ayah; tap a revealed ayah to mark a stumble; show page; done moves to the next page | ✅ | ✅ | |
-| A page revised outside the app, with its stumbles | ✅ | ✅ | |
+| A page revised outside the app, with its stumbles | ✅ | ✅ | «سجّلها»'s choices sit under the page when they don't fit beside it (WS6), never cut short |
 | Leaving a revision with progress (ayat revealed, or stumbles marked) asks «تخرج دون تسجيل؟» | ✅ | ✅ | WS9 on iOS (the X), WS8 on Android (the X and back). A page logged from outside asks only once stumbles are marked |
 | A revision survives the process being killed in the background | n/a (SwiftUI state lives with the scene) | ✅ | WS8: the page, what's revealed and the stumbles are saved with the activity, and the wird comes back open |
 | «سمّع بصوتك»: on-device speech model follows the recitation, reveals words, marks stumbles and prompts | ✅ WhisperKit (Core ML) | ✅ ONNX Runtime | Same model, exported to ONNX and quantized for Android; the models download from Storage on first use |
+| Heard stumbles are suggestions, recorded only once kept in the page's summary (Q6, REV-18) | ✅ | ✅ | WS4; a pause at a waqf mark isn't told apart yet on either |
+| The screen stays on while listening | ✅ | ✅ | WS4; iOS also through a joined call, the wird, memorizing and a teacher's marking |
+| A call or a change of audio route pauses listening without a stumble | ✅ | ≈ | WS4 on iOS; Android pauses when the app leaves the foreground |
+| The model's download resumes, is checked against its SHA-256, and needs the space first | ✅ background session | ✅ HTTP Range | WS4 |
+| «نموذج الاستماع» in Account: its size, and deleting it | ✅ | ✅ | WS4 |
 | Rotation advice (pages to add or rest) | ✅ | ✅ | |
 
 ## Personal plan and memorizing
@@ -102,6 +107,8 @@ Last pass: 2026-10-10 (workstream WS8, Android on an emulator against the Fireba
 | Behavior | iOS | Android | Notes |
 |---|---|---|---|
 | Wallet, balance, holds; bidding; outbid and won; a teacher's earnings | ✅ | ✅ | |
+| The Credits card shows once it means something: signed in, or a balance or history | ✅ | ✅ | WS6 (PAY-06) |
+| A seat won at auction is given back through the server, refunded by the policy | ✅ | ✅ | WS7; both fall back to the old way until `giveBackSeat` is deployed |
 | Buying credits | ✅ App Store (StoreKit 2) | ❌ | The server verifies App Store purchases only (CON-06). The wallet page explains it; the bid sheet's «buy credits» link is hidden since WS8 (`Features.BUY_CREDITS`) |
 
 ## Account
@@ -149,5 +156,5 @@ Last pass: 2026-10-10 (workstream WS8, Android on an emulator against the Fireba
 | Debug builds talk to the emulators by default | needs `-UseFirebaseEmulator` | ✅ default since WS8 (`-Paqra.production` for the real project) | A plain Android debug build used to talk to production |
 | A release can't ship without its Firebase config or pointed at the emulators | ✅ `check-release-inputs.sh` (WS9, also the 604 fonts) | ✅ `checkReleaseConfig` (WS8) | CI passes `-Paqra.ciRelease` for its compile check |
 | Signing | Xcode team 6QYT6GJB4Z | `keystore.properties` (owner's upload key; ⏸ not created yet) | |
-| Store bundle | archive | `bundleRelease` with ABI, density and language splits | Size per ABI in the WS8 report |
+| Store bundle | archive | `bundleRelease` with ABI, density and language splits | About 121 MB for an arm64 phone (WS8); ONNX Runtime's classes kept by name (WS4, checked in `mapping.txt`) |
 | Store listing | filled in, not submitted | ❌ not on Play | Owner's decision |
