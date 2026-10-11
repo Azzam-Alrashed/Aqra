@@ -74,6 +74,8 @@ struct TasmeeMarkingView<Overlay: View>: View {
         .background(MushafStyle.paper.ignoresSafeArea())
         .followsSystemColorScheme()
         .interactiveDismissDisabled()
+        // The teacher listens to a whole tasmee' with the page open: the screen doesn't go dark in the middle.
+        .keepsScreenAwake()
         .onChange(of: page, initial: true) { prepare(page) }
         .sensoryFeedback(.selection, trigger: page)
         .sensoryFeedback(.impact(weight: .light), trigger: stumbles.count)

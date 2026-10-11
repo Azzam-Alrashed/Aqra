@@ -494,8 +494,33 @@ class RevisionSession(
     /** Words shown after a long pause (the prompt, تلقين). */
     var prompts: Set<WordRef> by mutableStateOf(emptySet())
         private set
+    /**
+     * The stumbles the listener heard and the student hasn't kept yet (docs/SRS.md REV-18): until listening is tried
+     * with real voices, they're suggestions, recorded only once the student keeps them in the page's summary. As on iOS.
+     */
+    var suggested: Set<Int> by mutableStateOf(emptySet())
+        private set
+    /** Every stumble the listener heard, kept or not, for the summary to list. */
+    var heard: Set<Int> by mutableStateOf(emptySet())
+        private set
     /** Ayat whose stumble the student took back: the listener doesn't mark them again. */
     private var cleared: Set<Int> = emptySet()
+
+    /** The stumbles recorded: those the student marked, and those heard that they kept. */
+    val recordedStumbles: Set<Int> get() = stumbles - suggested
+
+    /** The marks as saved with the screen (WirdScreen): what's stumbled on, which of it is a suggestion, what was heard. */
+    fun restoreMarks(stumbles: Set<Int>, suggested: Set<Int>, heard: Set<Int>) {
+        this.stumbles = stumbles.filter(::covers).toSet()
+        this.suggested = suggested intersect this.stumbles
+        this.heard = heard intersect this.stumbles
+    }
+
+    /** Keeps a stumble the listener heard, or lets it go again before the page is recorded. */
+    fun keepHeard(ayah: Int, keep: Boolean) {
+        if (ayah !in heard || ayah !in stumbles) return
+        suggested = if (keep) suggested - ayah else suggested + ayah
+    }
 
     val isComplete: Boolean get() = revealed >= ayahs.size
 
@@ -530,6 +555,7 @@ class RevisionSession(
         if (ayah != null && covers(ayah) && !isVeiled(ayah)) {
             if (ayah in stumbles) clearStumble(ayah) else {
                 stumbles = stumbles + ayah
+                suggested = suggested - ayah
                 cleared = cleared - ayah
             }
         } else {
@@ -548,6 +574,7 @@ class RevisionSession(
         val ayah = ayahs[revealed]
         revealNext()
         stumbles = stumbles + ayah
+        suggested = suggested - ayah
         cleared = cleared - ayah
     }
 
@@ -578,20 +605,29 @@ class RevisionSession(
         if (word !in prompts) prompts = prompts + word
     }
 
-    /** Marks an ayah as stumbled on, whatever it was (a listener classifying the stumble). */
+    /** Marks an ayah as stumbled on, whatever it was: the student's own mark, recorded as it is. */
     fun markStumble(ayah: Int) {
-        if (covers(ayah)) stumbles = stumbles + ayah
+        if (!covers(ayah)) return
+        stumbles = stumbles + ayah
+        suggested = suggested - ayah
     }
 
-    /** Marks an ayah as stumbled on in the ways the listener heard. One the student cleared stays cleared. */
+    /**
+     * Marks an ayah as stumbled on in the ways the listener heard: a suggestion, unless the student had marked it already.
+     * One the student cleared stays cleared.
+     */
     fun markStumble(ayah: Int, kinds: Set<MistakeType>) {
         if (!covers(ayah) || ayah in cleared || stumbleKinds[ayah].orEmpty().containsAll(kinds)) return
+        if (ayah !in stumbles) suggested = suggested + ayah
         stumbles = stumbles + ayah
+        heard = heard + ayah
         stumbleKinds = stumbleKinds + (ayah to (stumbleKinds[ayah].orEmpty() + kinds))
     }
 
     fun clearStumble(ayah: Int) {
         stumbles = stumbles - ayah
+        suggested = suggested - ayah
+        heard = heard - ayah
         stumbleKinds = stumbleKinds - ayah
         cleared = cleared + ayah
     }

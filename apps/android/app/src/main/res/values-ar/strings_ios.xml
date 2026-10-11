@@ -15,6 +15,8 @@
     <string name="s_credits_due_to_you">%s عملة مستحقة لك</string>
     <!-- %@ is blocked. You can unblock them in Account. -->
     <string name="s_is_blocked_you_can_unblock_them_in_account">حُظر %s، ويمكنك إلغاء الحظر من «حسابي».</string>
+    <!-- %@ on this device -->
+    <string name="s_on_this_device">%s على هذا الجهاز</string>
     <!-- %@ recorded your tasmee\' of %lld pages. -->
     <string name="s_recorded_your_tasmee_of_n_pages">سجّل %1$s تسميعك؛ عدد الصفحات: %2$d.</string>
     <!-- %@ removed -->
@@ -312,8 +314,8 @@
     <string name="a_month">شهر</string>
     <!-- A new achievement -->
     <string name="a_new_achievement">إنجاز جديد</string>
-    <!-- A one-time download · %@ -->
-    <string name="a_one_time_download_s">تنزيل لمرة واحدة · %s</string>
+    <!-- A one-time download of %@. Wi-Fi is best. -->
+    <string name="a_one_time_download_of_s_wi_fi_is_best">تنزيل لمرة واحدة بحجم %s، ويُفضَّل عبر الواي فاي.</string>
     <!-- A payout of %lld credits was sent to you. -->
     <plurals name="a_payout_of_n_credits_was_sent_to_you">
         <item quantity="zero">حُوّلت إليك دفعة بقيمة %d عملة.</item>
@@ -388,6 +390,8 @@
     <string name="approved">مقبول</string>
     <!-- Aqra can\'t use the microphone. Allow it in Settings. -->
     <string name="aqra_cant_use_the_microphone_allow_it_in_settings">لا يصل اقرأ إلى الميكروفون. اسمح له من الإعدادات.</string>
+    <!-- Aqra heard these. Keep the ones that were stumbles. -->
+    <string name="aqra_heard_these_keep_the_ones_that_were_stumbles">سمعها اقرأ، فأبقِ منها ما كان تعثّرًا.</string>
     <!-- Aqra shows the Quran exactly as published, from these sources, with thanks. -->
     <string name="aqra_shows_the_quran_exactly_as_published_from_these_sources">يعرض اقرأ القرآن الكريم كما نُشر تمامًا، من هذه المصادر، مع الشكر والتقدير.</string>
     <!-- Aqra\'s team reads every report. %@ isn\'t told who sent it. -->
@@ -579,6 +583,8 @@
     <string name="delete_account">حذف الحساب</string>
     <!-- Delete my backup -->
     <string name="delete_my_backup">حذف نسختي الاحتياطية</string>
+    <!-- Delete the listening model? -->
+    <string name="delete_the_listening_model_q">أتحذف نموذج الاستماع؟</string>
     <!-- Delete your account? -->
     <string name="delete_your_account_q">حذف حسابك؟</string>
     <!-- Delete your backup? -->
@@ -791,6 +797,10 @@
     <string name="keep_it">أبقها</string>
     <!-- Keep my bid -->
     <string name="keep_my_bid">أبقِ عرضي</string>
+    <!-- Keeps it as a stumble, or lets it go -->
+    <string name="keeps_it_as_a_stumble_or_lets_it_go">يُبقيه تعثّرًا، أو يتركه</string>
+    <!-- Kept -->
+    <string name="kept">يُحسب</string>
     <!-- King Fahd Glorious Quran Printing Complex -->
     <string name="king_fahd_glorious_quran_printing_complex">مجمع الملك فهد لطباعة المصحف الشريف</string>
     <!-- Language -->
@@ -815,6 +825,8 @@
     <string name="lets_bring_back_what_you_memorized">نسترجع حفظك</string>
     <!-- Listening couldn\'t start. Try again. -->
     <string name="listening_couldnt_start_try_again">تعذّر بدء الاستماع. حاول مرة أخرى.</string>
+    <!-- Listening model -->
+    <string name="listening_model">نموذج الاستماع</string>
     <!-- Listening… -->
     <string name="listening">أستمع إليك…</string>
     <!-- Loading teachers… -->
@@ -941,8 +953,12 @@
     <string name="not_a_mistake">ليس خطأً</string>
     <!-- Not a test -->
     <string name="not_a_test">ليس اختبارًا</string>
+    <!-- Not enough free space on this device for the download. -->
+    <string name="not_enough_free_space_on_this_device_for_the_download">لا تكفي المساحة الخالية في الجهاز للتنزيل.</string>
     <!-- Not in the call -->
     <string name="not_in_the_call">ليس في المكالمة</string>
+    <!-- Not kept -->
+    <string name="not_kept">لا يُحسب</string>
     <!-- Not listening -->
     <string name="not_listening">الاستماع متوقّف</string>
     <!-- Not now -->
@@ -1073,6 +1089,8 @@
     <string name="recite_to_a_sheikh_or_a_friend">سمّع لشيخ أو لصديق</string>
     <!-- Recited to a friend -->
     <string name="recited_to_a_friend">سمّعت لصديق</string>
+    <!-- Reciting aloud downloads it again the next time. -->
+    <string name="reciting_aloud_downloads_it_again_the_next_time">يُنزَّل من جديد في المرة القادمة التي تسمّع فيها بصوتك.</string>
     <!-- Record tasmee\' -->
     <string name="record_tasmee">سجّل التسميع</string>
     <!-- Recorded: %lld pages revised -->
@@ -1378,6 +1396,8 @@
     <string name="the_copy_of_your_progress_kept_online_is_deleted_for">تُحذف النسخة الاحتياطية من تقدّمك نهائيًا، ويبقى التقدّم المحفوظ على هذا الجهاز، ويُنسخ احتياطيًا من جديد من الآن.</string>
     <!-- The download didn\'t finish. Try again. -->
     <string name="the_download_didnt_finish_try_again">لم يكتمل التنزيل. حاول مرة أخرى.</string>
+    <!-- The download was damaged. Try again. -->
+    <string name="the_download_was_damaged_try_again">وصل التنزيل تالفًا. حاول مرة أخرى.</string>
     <!-- The file couldn\'t be uploaded. Check your connection, or try a smaller file. -->
     <string name="the_file_couldnt_be_uploaded_check_your_connection_or_try">تعذّر رفع الملف. تحقّق من اتصالك، أو جرّب ملفًا أصغر.</string>
     <!-- The fuller a juz\', the more of it you\'ve memorized; the deeper its color, the stronger. -->

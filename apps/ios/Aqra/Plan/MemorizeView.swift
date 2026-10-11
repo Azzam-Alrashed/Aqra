@@ -70,6 +70,8 @@ struct MemorizeView: View {
         .background(MushafStyle.paper.ignoresSafeArea())
         .followsSystemColorScheme()
         .interactiveDismissDisabled()
+        // Reading and repeating a portion takes minutes without a touch: the screen stays on.
+        .keepsScreenAwake()
         .sensoryFeedback(.selection, trigger: page)
         .sensoryFeedback(.impact(weight: .light), trigger: repetitions)
         .sensoryFeedback(.selection, trigger: focus.hidden)

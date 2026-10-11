@@ -79,6 +79,7 @@ import com.azzamalrashed.aqra.account.ReportSheet
 import com.azzamalrashed.aqra.account.findActivity
 import com.azzamalrashed.aqra.core.Moment
 import com.azzamalrashed.aqra.quran.MushafStore
+import com.azzamalrashed.aqra.ui.KeepScreenOn
 import com.azzamalrashed.aqra.ui.FullScreen
 import com.azzamalrashed.aqra.ui.components.AqraProgress
 import com.azzamalrashed.aqra.ui.components.ChipButton
@@ -552,16 +553,6 @@ private fun LightBarIcons() {
             controller?.isAppearanceLightStatusBars = true
             controller?.isAppearanceLightNavigationBars = true
         }
-    }
-}
-
-/** The screen stays on through the call, as it would in any call. */
-@Composable
-private fun KeepScreenOn() {
-    val view = LocalView.current
-    DisposableEffect(view) {
-        view.keepScreenOn = true
-        onDispose { view.keepScreenOn = false }
     }
 }
 

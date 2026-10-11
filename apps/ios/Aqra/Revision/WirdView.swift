@@ -59,9 +59,12 @@ struct WirdView: View {
         .followsSystemColorScheme()
         // A revision under way is never closed by a stray swipe.
         .interactiveDismissDisabled()
+        // A page takes minutes to revise, hands off the screen: it doesn't go dark in the middle.
+        .keepsScreenAwake()
         .onAppear {
             if session == nil { start(startPage) }
         }
+        // Leaving stops the microphone, and a listener still getting ready never turns it on.
         .onDisappear { listener?.pause() }
         // The microphone stops in the background; listening waits to be resumed.
         .onChange(of: scenePhase) { if scenePhase != .active { listener?.pause() } }
@@ -115,7 +118,7 @@ struct WirdView: View {
         let listener = RecitationListener(session: session, store: store)
         self.listener = listener
         listens = true
-        Task { await listener.start() }
+        listener.start()
     }
 
     /// Back to revealing by hand, for this revision and the next.
@@ -148,7 +151,7 @@ struct WirdView: View {
             return
         }
         let ayahs = session.revisedAyahs(countingRest: countingRest)
-        revision.record(page: session.page, ayahs: ayahs, stumbles: session.stumbles.intersection(ayahs),
+        revision.record(page: session.page, ayahs: ayahs, stumbles: session.recordedStumbles.intersection(ayahs),
                         source: outside ? .outside : .app, memorization: memorization)
         // The page just recorded never comes round again, whichever day's plan it was in.
         if !outside, let next = revision.plan?.items.first(where: { !$0.done && $0.page != session.page }) {
