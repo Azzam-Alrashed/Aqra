@@ -44,15 +44,15 @@ struct AccountView: View {
                         .accessibilityAddTraits(.isHeader)
                     AccountCard()
 
-                    if AccountStore.isAvailable {
+                    // Credits once they mean something: bidding needs a signed-in account, so a student who hasn't signed
+                    // in isn't shown a wallet they can't use (docs/SRS.md PAY-06).
+                    if AccountStore.isAvailable, account.profile?.isAnonymous == false || wallet.balance > 0 || !wallet.ledger.isEmpty {
                         Button {
                             showingWallet = true
                         } label: {
                             AqraCard(padding: 0, radius: 24) {
                                 AqraRow(icon: "🪙", tint: Palette.butter, title: Text("Credits"),
-                                        detail: account.profile?.isAnonymous == false
-                                            ? Text("\(CreditsFormat.credits(wallet.balance)) credits")
-                                            : Text("For seats won by bidding"))
+                                        detail: Text("\(CreditsFormat.credits(wallet.balance)) credits"))
                             }
                         }
                         .buttonStyle(AqraPressStyle())

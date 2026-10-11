@@ -552,6 +552,7 @@ opens on the setup or the home.
 | PAY-03 | The wallet (balance, held) and its ledger (purchase, hold, release, spend, refund, clawback) are written only by Cloud Functions; the student sees both. Every bidder has a wallet, so a bidder without one is known to have deleted their account. | M | ✅ | V |
 | PAY-04 | Unfinished transactions are redeemed again at launch. | M | ✅ | A |
 | PAY-05 | An App Store refund or revocation (App Store Server Notifications v2) takes the purchase's credits back once and marks the purchase revoked; the balance may go below zero and the next purchase pays it first. | M | ✅ | V |
+| PAY-06 | Credits appear in Account once they mean something: for a signed-in account (bidding needs one), or once there's a balance or a history; a student who hasn't signed in isn't shown a wallet they can't use. | S | ✅ | P |
 
 #### 3.2.21 Seat auction (AUC)
 

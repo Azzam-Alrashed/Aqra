@@ -545,8 +545,6 @@
     <string name="for_action">For</string>
     <!-- for seats in sessions -->
     <string name="for_seats_in_sessions">for seats in sessions</string>
-    <!-- For seats won by bidding -->
-    <string name="for_seats_won_by_bidding">For seats won by bidding</string>
     <!-- for this week -->
     <string name="for_this_week">for this week</string>
     <!-- Forgot -->
