@@ -6612,6 +6612,16 @@
         }
       }
     },
+    "Refunded: seat given back" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مستردّة: أُعيد المقعد"
+          }
+        }
+      }
+    },
     "Refunded: session cancelled" : {
       "localizations" : {
         "ar" : {
@@ -6820,6 +6830,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "ظهر %lld من %lld. هل قرأتَ الباقي غيبًا أيضًا؟"
+          }
+        }
+      }
+    },
+    "Reversed: seat given back" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسترجعة: أُعيد المقعد"
           }
         }
       }
@@ -7767,6 +7787,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "أعد الاختبار"
+          }
+        }
+      }
+    },
+    "Taken back: purchase refunded" : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "مسحوبة: استُردّ ثمن الشراء"
           }
         }
       }
@@ -9779,6 +9809,16 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "يعود مقعدك إلى الجلسة."
+          }
+        }
+      }
+    },
+    "Your seat goes back to the session. The credits you paid for it come back only if it starts in more than an hour." : {
+      "localizations" : {
+        "ar" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "يعود مقعدك إلى الجلسة. وتعود إليك العملات التي دفعتها إذا بقي على موعدها أكثر من ساعة."
           }
         }
       }

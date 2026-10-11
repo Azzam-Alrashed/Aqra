@@ -455,7 +455,7 @@ opens on the setup or the home.
 |---|---|---|---|---|
 | SES-01 | A vetted teacher creates a session: when (future), in person (place) or by video, free seats (1–30). | M | ✅ | V |
 | SES-02 | A signed-in student books a free seat first come first served: seat, the student's copy and the count in one transaction; never more students than seats. | M | ✅ | V |
-| SES-03 | A student cancels their booking; a teacher cancels a session (students see it cancelled, and the inbox message names its day and time). The Tasmee' tab lists every upcoming booking: the next in full, later ones as rows. | M | ✅ | V |
+| SES-03 | A student cancels their booking (through the `giveBackSeat` function; a paid seat follows AUC-09, and the confirmation says so); a teacher cancels a session (students see it cancelled, and the inbox message names its day and time) and deletes only one nobody is in. The Tasmee' tab lists every upcoming booking: the next in full, later ones as rows. | M | ✅ | V |
 | SES-04 | A teacher edits a session's time, place and seat count (not below the seats taken). | S | ✅ | V |
 | SES-05 | A session may also offer auctioned seats (see AUC). | M | ✅ | V |
 | SES-06 | The seat carries the student's display name and a summary (pages memorized, whole juz') so the teacher can choose what to hear. | M | ✅ | V |
@@ -547,9 +547,10 @@ opens on the setup or the home.
 | ID | Requirement | Pri | Status | Src |
 |---|---|---|---|---|
 | PAY-01 | Credit packs are consumable IAP products (10, 30, 60 credits); buying needs a signed-in account. | M | ✅ | V |
-| PAY-02 | A purchase is credited only after a Cloud Function verifies the signed transaction (App Store Server Library in production; Xcode's local StoreKit in development) and records it idempotently by transaction id; the app then finishes the transaction. | M | ✅ | V |
-| PAY-03 | The wallet (balance, held) and its ledger (purchase, hold, release, spend, refund) are written only by Cloud Functions; the student sees both. | M | ✅ | V |
+| PAY-02 | A purchase is credited only after a Cloud Function verifies the signed transaction (App Store Server Library in production; Xcode's local StoreKit only on the emulators; Apple's sandbox only while the policy allows it) and records it idempotently by transaction id; the app then finishes the transaction. The purchase carries the account's token (`appAccountToken`), so only the account that made it can redeem it. | M | ✅ | V |
+| PAY-03 | The wallet (balance, held) and its ledger (purchase, hold, release, spend, refund, clawback) are written only by Cloud Functions; the student sees both. Every bidder has a wallet, so a bidder without one is known to have deleted their account. | M | ✅ | V |
 | PAY-04 | Unfinished transactions are redeemed again at launch. | M | ✅ | A |
+| PAY-05 | An App Store refund or revocation (App Store Server Notifications v2) takes the purchase's credits back once and marks the purchase revoked; the balance may go below zero and the next purchase pays it first. | M | ✅ | V |
 
 #### 3.2.21 Seat auction (AUC)
 
@@ -558,11 +559,12 @@ opens on the setup or the home.
 | AUC-01 | A session offers reserved free seats (at least one; first come first served, not biddable) and optionally auctioned seats. | M | ✅ | V |
 | AUC-02 | Auctioned seats start free: while seats remain, any bid ≥ the minimum (0) holds one. When all are held, a new bid must beat the lowest winning bid by the increment (1 credit), which outbids it. | M | ✅ | V |
 | AUC-03 | Bidding holds credits; outbid holds are released at once; a bidder may raise their bid (holding the difference); ties go to the earlier bid. | M | ✅ | V |
-| AUC-04 | Bidding closes before the session: 3 h before, or 30 min before for a session sooner than that (when 3 h would leave under 30 min to bid); a session less than 1 h away offers free seats only. A scheduled function settles it: winning holds are spent, seats and bookings created, teacher earnings recorded. | M | ✅ | V |
+| AUC-04 | Bidding closes before the session: 3 h before, or 30 min before for a session sooner than that (when 3 h would leave under 30 min to bid); a session less than 1 h away offers free seats only (fixed constants in the rules and both apps, not policy). A scheduled function settles it: winning holds are spent, seats and bookings created, teacher earnings recorded. It settles only an open session, skips and logs one that fails, and releases the holds of one cancelled while its auction stayed open. | M | ✅ | V |
 | AUC-05 | All bids go through a Cloud Function in a Firestore transaction, so a seat is never won twice. | M | ✅ | V |
 | AUC-06 | Cancelling a session releases holds (before settlement) or refunds spent credits and reverses the teacher's earnings (after). | M | ✅ | P |
 | AUC-07 | The student sees the current lowest winning bid, their own standing (winning / outbid), and is told when outbid or when they've won. | M | ✅ | V |
 | AUC-08 | A student holds a free seat or a bid in a session, not both: with a seat, the auction isn't offered; with a bid, "Book a free seat instead" lets the bid go (its credits come back) and books the seat, in one server call. | M | ✅ | V |
+| AUC-09 | A seat won at auction can't be deleted by a client; it's given back through a function that refunds it in full when the session is at least `seatRefundCutoffMinutes` (60) away (the teacher's share reversed) and not at all later; a teacher removing a student always refunds. A session with bids or seats can't be deleted, only cancelled; a deletion that slips through is repaired by a trigger. The seat count never drops below zero. | M | ✅ | V |
 
 #### 3.2.22 Teacher earnings and payouts (ERN)
 
@@ -570,7 +572,7 @@ opens on the setup or the home.
 |---|---|---|---|---|
 | ERN-01 | Each won seat's price is split: the teacher earns (1 − commission) and the app keeps the commission (20%, provisional). | M | ✅ | V, P |
 | ERN-02 | A teacher sees their earnings, payouts and the balance due, entry by entry. | M | ✅ | V |
-| ERN-03 | Payouts are made by bank transfer and recorded by an administrator. | M | ✅ | V |
+| ERN-03 | Payouts are made by bank transfer and recorded by an administrator, never for more than is due (a missing `earned` or `paidOut` counts as 0). | M | ✅ | V |
 
 #### 3.2.23 Notifications and inbox (NTF)
 
@@ -744,14 +746,16 @@ Every number below is a default, kept in one place in code, and open to tuning w
 
 | Field | Default |
 |---|---|
-| minFreeSeats | 1 |
 | minBid | 0 credits |
 | minIncrement | 1 credit |
-| biddingClosesBeforeHours | 3 |
-| lateBiddingClosesBeforeMinutes | 30 (a session sooner than 3 h 30 min) |
-| minAuctionLeadMinutes | 60 (sooner: free seats only) |
 | commissionRate | 0.20 |
+| seatRefundCutoffMinutes | 60 (a paid seat given back later isn't refunded) |
 | creditPacks | `aqra.credits.10` → 10, `aqra.credits.30` → 30, `aqra.credits.60` → 60 |
+| allowSandboxPurchases | false (true during App Review and TestFlight testing of purchases) |
+
+Fixed constants, not policy (in `firestore.rules` and both apps' session editors; nothing on the server reads them at
+run time): bidding closes 3 h before the session, or 30 min before one sooner than 3 h 30 min; a session under 1 h
+away offers free seats only; every session keeps at least one free seat.
 
 #### Video and peer
 
@@ -772,7 +776,7 @@ Every number below is a default, kept in one place in code, and open to tuning w
 | **Unit tests** (JUnit, `apps/android/app/src/test`) | The same models and policies on Android; the font engine against CoreText reference tables (made on a Mac); the forward-compatibility of the backup documents. |
 | **Snapshot renders** (`WelcomeSnapshotTests`, `AppIconRenderTests`) | Visual review of key screens and the icon. |
 | **Security-rules tests** (`backend/test`, Firestore emulator) | Every collection's read/write rules. |
-| **Function tests** (`backend/functions/test`, emulators) | Video tokens, purchases, bidding, settlement, refunds, teacher-competition scores, admin actions. |
+| **Function tests** (`backend/test`, emulators) | Video tokens, purchases and their refunds, bidding, settlement (the scheduled run included), seats given back, refunds, session deletion, teacher-competition scores, the payout script. |
 | **Simulator walkthroughs** | Two roles on two simulators against the emulators (see backend/README.md). |
 | **Human review** | A qualified hafiz proofreads all 604 pages with and without tajweed; real huffaz and sheikhs try the policies. |
 | **CI** (`.github/workflows/ci.yml`) | The iOS, Android, rules and functions suites on every pull request (iOS on a macOS runner with Xcode 26.6; the rest on Ubuntu). |

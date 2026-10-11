@@ -139,7 +139,7 @@ struct LedgerList: View {
                     HStack(spacing: 12) {
                         IconTile(icon: icon(entry.kind), tint: Palette.lavender, size: 34)
                         VStack(alignment: .leading, spacing: 1) {
-                            title(entry.kind)
+                            title(entry)
                                 .aqraFont(size: 14, weight: .bold)
                                 .foregroundStyle(Palette.ink)
                             Text(verbatim: entry.at.formatted(date: .abbreviated, time: .shortened))
@@ -162,7 +162,7 @@ struct LedgerList: View {
     private func sign(_ entry: WalletStore.Entry) -> String {
         switch entry.kind {
         case .purchase, .release, .refund, .seat: "+"
-        case .hold, .spend, .payout: "−"
+        case .hold, .spend, .clawback, .payout: "−"
         case .reversal: entry.amount < 0 ? "−" : "+"
         }
     }
@@ -174,21 +174,23 @@ struct LedgerList: View {
         case .release: "🔓"
         case .spend: "🎟️"
         case .refund: "↩️"
+        case .clawback: "↪️"
         case .seat: "🎓"
         case .reversal: "↩️"
         case .payout: "🏦"
         }
     }
 
-    private func title(_ kind: WalletStore.Entry.Kind) -> Text {
-        switch kind {
+    private func title(_ entry: WalletStore.Entry) -> Text {
+        switch entry.kind {
         case .purchase: Text("Credits bought")
         case .hold: Text("Held for a bid")
         case .release: Text("Released: outbid")
         case .spend: Text("A seat won")
-        case .refund: Text("Refunded: session cancelled")
+        case .refund: entry.isForASeatGivenBack ? Text("Refunded: seat given back") : Text("Refunded: session cancelled")
+        case .clawback: Text("Taken back: purchase refunded")
         case .seat: Text("A seat won in your session")
-        case .reversal: Text("Reversed: session cancelled")
+        case .reversal: entry.isForASeatGivenBack ? Text("Reversed: seat given back") : Text("Reversed: session cancelled")
         case .payout: Text("Paid to you")
         }
     }

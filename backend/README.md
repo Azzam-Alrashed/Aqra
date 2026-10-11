@@ -17,11 +17,16 @@ region, Belgium (`europe-west1`): Google refuses new resources in the Middle Eas
     15 minutes before the session until 3 hours after.
   - `onTasmeeRecorded`: when a teacher records a tasmee', tells the student in their inbox and scores the pages
     heard clean in that teacher's running competitions.
-  - `redeemPurchase`: credits an App Store purchase of credits once its signed transaction is verified.
-  - `placeBid`, `takeFreeSeat`, `settleAuctions` (every 5 minutes), `settleAuctionNow` (administrators),
-    `onSessionChanged`: the seat auction, a bidder's free seat taken instead, the settlement, and the releases and
-    refunds when a session is cancelled.
+  - `redeemPurchase`: credits an App Store purchase of credits once its signed transaction is verified, to the account
+    that made it. `appStoreNotifications`: Apple's App Store Server Notifications (an HTTPS endpoint); a refund or
+    revocation takes the credits back.
+  - `placeBid`, `takeFreeSeat`, `giveBackSeat`, `settleAuctions` (every 5 minutes), `settleAuctionNow`
+    (administrators), `onSessionChanged`, `onSessionDeleted`: the seat auction, a bidder's free seat taken instead, a
+    seat given back (with the refund policy for one won at auction), the settlement, and the releases and refunds when
+    a session is cancelled, or deleted behind the rules' back.
   - `onAccountDeleted`: deletes a deleted account's wallet and ledger, and its application to teach.
+  - A trigger may be delivered more than once; each records its event id in `functionEvents/{eventId}` within the
+    transaction that does its work, and a repeat does nothing. Nothing in the apps reads that collection.
 
 ### Setting up video (LiveKit Cloud)
 
@@ -148,38 +153,67 @@ read the uploads.
 
 A tasmee' session: `teacherId`, `teacherName`, `startsAt`, `place` (empty by video), `seats` (1–30), `booked`,
 `kind` (`inPerson` or `video`), `status` (`open` or `cancelled`), `createdAt`. Everyone signed in reads them. A
-vetted teacher creates, edits (never below the seats booked), cancels and deletes their own.
+vetted teacher creates, edits (never below the seats booked) and cancels their own. A session is deleted only while
+nobody is in it (`booked` 0, no active bid, no seat won); one with students or bids is cancelled through its
+`status`, which releases and refunds them. Should a session with people in it be deleted all the same (an older
+build, a script), `onSessionDeleted` does what a cancellation does, removes their bookings and deletes the
+orphaned seats and bids.
 
 - `sessions/{id}/seats/{studentUid}`: a booked seat: `bookedAt`, the student's `name`, and what they've
-  memorized (`memorizedPages`, `juzSummary`) so the teacher can choose what to hear. Seen by the student and
-  the teacher. A signed-in (not anonymous) student books for themselves while the session is open and ahead;
-  the student or the teacher can give the seat back at any time.
+  memorized (`memorizedPages`, `juzSummary`) so the teacher can choose what to hear; a seat won at auction also
+  carries `paid`, the credits it cost. Seen by the student and the teacher. A signed-in (not anonymous) student
+  books for themselves while the session is open and ahead.
 - Booking writes the seat, the student's copy under `bookings`, and `booked + 1` in one transaction; the rules
   let the count move only by one, only together with that student's own seat, and never past `seats`.
-  Cancelling does the reverse.
+- Giving a seat back goes through `giveBackSeat` (the student for their own seat; the teacher for a student's, with
+  `studentUid`): it removes the seat, the booking and, for a free seat, one from `booked`, which never drops below
+  0. The rules still let a client delete a free seat together with its count (an older build's way), but never a
+  seat won at auction: that one is refunded by the policy (below).
 
 ### Credits: `wallets/{uid}`, `purchases/{transactionId}`
 
 `wallets/{uid}` holds `balance` and `held` (credits set aside for active bids), and `ledger/{id}` every movement
-(`purchase`, `hold`, `release`, `spend`, `refund`, with `amount`, `at` and what it was for). Only the functions
-write them; their owner reads them. `purchases/{transactionId}` records each App Store purchase credited (`uid`,
-`productId`, `credits`, `environment`), so none is credited twice; no client reads it.
+(`purchase`, `hold`, `release`, `spend`, `refund`, `clawback`, with `amount`, `at` and what it was for; a `refund`
+says its `reason`: `sessionCancelled`, `seatGivenBack`, `removedByTeacher` or `sessionDeleted`). Only the functions
+write them; their owner reads them. Every bidder has a wallet, even one who never bought credits (a 0 bid makes an
+empty one), so that at settlement a bidder without a wallet is known to have deleted their account.
+`purchases/{transactionId}` records each App Store purchase credited (`uid`, `productId`, `credits`, `environment`,
+`purchasedAt`, `redeemedAt`), so none is credited twice, and `revokedAt` with `revocation` (`REFUND` or `REVOKE`)
+once Apple took it back; no client reads it.
 
 The credit packs are App Store consumables, `aqra.credits.10`, `.30` and `.60`, in `config/policy.creditPacks`.
-To test purchases without App Store Connect, run the app from Xcode: the scheme uses `apps/ios/Credits.storekit`,
-whose purchases are signed by Xcode, which `redeemPurchase` accepts only on the emulators. In production it verifies
-purchases with Apple's App Store Server Library against Apple's root certificates in `functions/certs` (see its
-README), with `APPLE_BUNDLE_ID` and `APPLE_APP_ID` (the app's App Store id) set in `functions/.env.aqra-quran`.
+
+- **Who may redeem a purchase.** The app attaches the account's token to every purchase (StoreKit's
+  `appAccountToken`: a UUID made from the uid, the first 16 bytes of its SHA-256 with the UUID version and variant
+  bits; `WalletStore.accountToken` and `credits.ts accountToken` derive the same). `redeemPurchase` credits a
+  purchase only to the account whose token it carries, and once.
+- **Which stores are trusted.** To test purchases without App Store Connect, run the app from Xcode: the scheme uses
+  `apps/ios/Credits.storekit`, whose purchases are signed by Xcode, which `redeemPurchase` accepts **only on the
+  emulators**; nothing in the policy turns that on in production. Apple's sandbox (TestFlight, App Review) is
+  refused unless `config/policy.allowSandboxPurchases` is true: turn it on for a review
+  (`npm run admin -- policy --set allowSandboxPurchases=true`) and off afterwards, so nobody fills a wallet with
+  test money. Production and sandbox purchases are verified with Apple's App Store Server Library against Apple's
+  root certificates in `functions/certs` (see its README; without them every such purchase is refused with "App
+  Store verification isn't set up"), with `APPLE_BUNDLE_ID` and `APPLE_APP_ID` (the app's App Store id) set in
+  `functions/.env.aqra-quran`.
+- **Refunds.** App Store Connect sends App Store Server Notifications (version 2) to
+  `https://europe-west1-aqra-quran.cloudfunctions.net/appStoreNotifications` (set that URL for production and for
+  the sandbox under the app's General → App Information). A `REFUND` or `REVOKE` takes the purchase's credits back
+  as a `clawback` in the ledger, once, and marks the purchase revoked so it can't be redeemed afterwards; the
+  balance may go below zero when the credits were spent meanwhile, and the next purchase pays that first. Other
+  notifications are acknowledged and ignored; one that doesn't verify is answered 401 and Apple retries it.
 
 ### The seat auction
 
 A session may offer auctioned seats beside its free ones: `auctionSeats` (1–20), `minBid`, `biddingClosesAt`
 (still ahead and at least 30 minutes before `startsAt`, which is at least an hour away; the app sets it three hours
-before, or 30 minutes before a session sooner than three and a half hours; the policy's
-`lateBiddingClosesBeforeMinutes` and `minAuctionLeadMinutes`, which the rules and the apps mirror, so changing them
-means changing those too) and `auctionState` (`open`, then `settled`, `cancelled`
-or `refunded`). The functions keep `auctionBids` (the active bids), `auctionFloor` (what the next bid must reach)
-and `auctionWon` on the session.
+before, or 30 minutes before a session sooner than three and a half hours) and `auctionState` (`open`, then
+`settled`, `cancelled` or `refunded`). Those three durations (3 h, 30 min, 60 min) and the one free seat every
+session keeps are **fixed constants**, not policy: nothing on the server reads them at run time, so they live in
+the session rules (`firestore.rules`) and in both apps' session editors (iOS `TasmeeStore.biddingClosesAt`, Android
+`TasmeeSession.biddingClosesAt`); changing them means changing all three. The functions keep `auctionBids` (the
+active bids), `auctionFloor` (what the next bid must reach) and `auctionWon` (the seats won, less those given back)
+on the session.
 
 - `sessions/{id}/bids/{uid}`: a bid (`name`, `amount`, `at`, `status`: `active`, `outbid`, `won` or `released`, and
   what the bidder has memorized). Written only by `placeBid`; seen by the bidder and the session's teacher.
@@ -189,23 +223,34 @@ and `auctionWon` on the session.
 - A student holds a free seat or a bid, not both: `placeBid` refuses a student with a seat, and the rules refuse a
   free seat beside an active bid. A bidder takes a free seat with `takeFreeSeat`, which lets the bid go (releasing
   its credits) and makes the seat, the booking and the count in one transaction.
-- When bidding closes, `settleAuctions` spends the winners' holds, makes their seats (with `paid`) and bookings,
-  and records the teacher's share in `teacherBalances`.
+- When bidding closes, `settleAuctions` spends the winners' holds, makes their seats (with `paid`) and bookings
+  (also with `paid`, so the app can say what giving the seat back means), and records the teacher's share in
+  `teacherBalances`. It settles only a session still `open`; one cancelled while its auction stayed open has its
+  holds released instead. A session that fails to settle is logged and skipped, and the rest are settled.
 - A session cancelled while bidding releases every hold; once settled, the credits paid are refunded and the
   teacher's share reversed. Everyone who had a seat is told.
+- A seat won at auction is given back only through `giveBackSeat`. Given back by its student at least
+  `seatRefundCutoffMinutes` (60) before the session, it's refunded in full (`refund`, reason `seatGivenBack`) and the
+  teacher's share reversed; given back later, the credits stay spent and the teacher keeps the share. A teacher
+  removing a student (`studentUid`) always refunds them. In a cancelled session the cancellation refunded already,
+  so only the student's booking goes.
 
 ### A teacher's earnings: `teacherBalances/{uid}`
 
 `earned` and `paidOut`, and `entries/{id}`: each won seat's share (`kind: seat`, `amount` after the commission,
-`gross`, `commission`), reversals, and payouts. Written by the functions and by `npm run admin -- payout`; read by
-the teacher and administrators. Teachers are paid by bank transfer; record each with
-`npm run admin -- payout --teacher <uid> --amount <credits> --reference "..."`.
+`gross`, `commission`), reversals (`kind: reversal`, a negative `amount`, with the `reason`: `sessionCancelled`,
+`seatGivenBack`, `removedByTeacher` or `sessionDeleted`), and payouts. Written by the functions and by
+`npm run admin -- payout`; read by the teacher and administrators. Teachers are paid by bank transfer; record each
+with `npm run admin -- payout --teacher <uid> --amount <credits> --reference "..."`, which refuses more than is
+due (a balance that was never paid out has no `paidOut`; a missing field counts as 0).
 
 ### The server's policy: `config/policy`
 
-Overrides of the defaults in `functions/src/policy.ts` (the call's window, the auction's minimum bid, increment and
-closing time, the commission, the credit packs). Everyone signed in reads it; administrators change it with
-`npm run admin -- policy --set commissionRate=0.15`.
+Overrides of the defaults in `functions/src/policy.ts`: the call's window (`joinOpensMinutesBefore`,
+`joinClosesHoursAfter`, `tokenTTLHours`), the auction's `minBid` and `minIncrement`, the `commissionRate`, the
+`seatRefundCutoffMinutes` for a paid seat given back, the `creditPacks`, and `allowSandboxPurchases`. Everyone
+signed in reads it; administrators change it with `npm run admin -- policy --set commissionRate=0.15`. When bidding
+closes and the free seat a session keeps aren't policy (see the seat auction above).
 
 ### Friends and competitions
 

@@ -1,3 +1,4 @@
+import CryptoKit
 @preconcurrency import FirebaseFirestore
 @preconcurrency import FirebaseFunctions
 import Foundation
@@ -10,12 +11,27 @@ import StoreKit
 @MainActor @Observable
 final class WalletStore {
     struct Entry: Identifiable, Hashable {
-        enum Kind: String { case purchase, hold, release, spend, refund, seat, reversal, payout }
+        /// `clawback`: credits taken back because the App Store refunded or revoked the purchase that brought them.
+        enum Kind: String { case purchase, hold, release, spend, refund, clawback, seat, reversal, payout }
 
         let id: String
         var kind: Kind
         var amount: Double
         var at: Date
+        /// Why a refund or reversal was made, when the server says: `sessionCancelled`, `seatGivenBack`,
+        /// `removedByTeacher` or `sessionDeleted`; nil on older entries (a cancelled session).
+        var reason: String?
+
+        init(id: String, kind: Kind, amount: Double, at: Date, reason: String? = nil) {
+            self.id = id
+            self.kind = kind
+            self.amount = amount
+            self.at = at
+            self.reason = reason
+        }
+
+        /// Whether a refund or reversal came from a seat given back rather than a session cancelled.
+        var isForASeatGivenBack: Bool { reason == "seatGivenBack" || reason == "removedByTeacher" }
     }
 
     /// The credit packs on sale, by product id, from the App Store; empty until loaded (or when the store can't be
@@ -97,7 +113,8 @@ final class WalletStore {
         (snapshot?.documents ?? []).compactMap { document in
             let data = TasmeeStore.dated(document.data())
             guard let kind = (data["kind"] as? String).flatMap(Entry.Kind.init), let at = data["at"] as? Date else { return nil }
-            return Entry(id: document.documentID, kind: kind, amount: (data["amount"] as? NSNumber)?.doubleValue ?? 0, at: at)
+            return Entry(id: document.documentID, kind: kind, amount: (data["amount"] as? NSNumber)?.doubleValue ?? 0, at: at,
+                         reason: data["reason"] as? String)
         }
     }
 
@@ -112,17 +129,33 @@ final class WalletStore {
         products = found.sorted { $0.price < $1.price }
     }
 
-    /// Buys a pack; the credits arrive once the server has verified the purchase.
+    /// Buys a pack; the credits arrive once the server has verified the purchase. The purchase carries this
+    /// account's token, so the server credits it to this account and no other.
     func buy(_ product: Product) async {
+        guard let uid else {
+            problem = .failed
+            return
+        }
         isPurchasing = true
         problem = nil
         defer { isPurchasing = false }
         do {
-            let result = try await product.purchase()
+            let result = try await product.purchase(options: [.appAccountToken(Self.accountToken(for: uid))])
             if case .success(let verification) = result { await redeem(verification) }
         } catch {
             problem = .failed
         }
+    }
+
+    /// The token attached to a purchase (StoreKit's `appAccountToken`), so the server redeems it only for the
+    /// account that made it: a UUID made from the account's uid, the first 16 bytes of its SHA-256 with the UUID
+    /// version and variant bits set. The server derives the same (functions/src/credits.ts, `accountToken`).
+    static func accountToken(for uid: String) -> UUID {
+        var bytes = Array(SHA256.hash(data: Data(uid.utf8)).prefix(16))
+        bytes[6] = (bytes[6] & 0x0f) | 0x50
+        bytes[8] = (bytes[8] & 0x3f) | 0x80
+        return UUID(uuid: (bytes[0], bytes[1], bytes[2], bytes[3], bytes[4], bytes[5], bytes[6], bytes[7],
+                           bytes[8], bytes[9], bytes[10], bytes[11], bytes[12], bytes[13], bytes[14], bytes[15]))
     }
 
     /// Sends a purchase to the server to be verified and credited, then finishes it with the App Store. A purchase

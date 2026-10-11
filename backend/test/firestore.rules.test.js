@@ -168,6 +168,34 @@ describe("sessions", () => {
     await assertFails(deleteDoc(doc(named("alice"), "sessions/open")));
   });
 
+  test("aTeacherCantDeleteASessionWithBids", async () => {
+    // A session with a student booked, a bid active or a seat won is cancelled through its status, never deleted:
+    // the cancellation releases the holds and refunds the seats.
+    await env.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      const auction = {
+        ...newSession(), auctionSeats: 2, minBid: 0, biddingClosesAt: inDays(1), auctionState: "open",
+      };
+      await setDoc(doc(db, "sessions/bids"), { ...auction, auctionBids: 1, auctionFloor: 1 });
+      await setDoc(doc(db, "sessions/bids/bids/alice"), { name: "Alice", amount: 3, at: Timestamp.now(), status: "active" });
+      await setDoc(doc(db, "sessions/won"), { ...auction, auctionState: "settled", auctionBids: 0, auctionWon: 1 });
+      await setDoc(doc(db, "sessions/won/seats/alice"), { bookedAt: Timestamp.now(), name: "Alice", memorizedPages: 1, paid: 3 });
+      await setDoc(doc(db, "sessions/booked"), { ...newSession(), booked: 1 });
+      await setDoc(doc(db, "sessions/booked/seats/alice"), { bookedAt: Timestamp.now(), name: "Alice", memorizedPages: 1 });
+      await setDoc(doc(db, "sessions/empty"), { ...auction, auctionBids: 0 });
+    });
+    const teacher = named("teacher");
+    await assertFails(deleteDoc(doc(teacher, "sessions/bids")));
+    await assertFails(deleteDoc(doc(teacher, "sessions/won")));
+    await assertFails(deleteDoc(doc(teacher, "sessions/booked")));
+    // Cancelling is always open to the teacher.
+    await assertSucceeds(updateDoc(doc(teacher, "sessions/bids"), { status: "cancelled" }));
+    await assertSucceeds(updateDoc(doc(teacher, "sessions/booked"), { status: "cancelled" }));
+    // A session nobody is in goes, and so does one whose auction drew no bids.
+    await assertSucceeds(deleteDoc(doc(teacher, "sessions/empty")));
+    await assertSucceeds(deleteDoc(doc(teacher, "sessions/open")));
+  });
+
   test("the teacher never sets fewer seats than the students who booked", async () => {
     await assertSucceeds(book(named("alice"), "alice", "open"));
     await assertSucceeds(book(named("bob"), "bob", "open"));
@@ -241,6 +269,36 @@ describe("seats", () => {
     await assertSucceeds(deleteDoc(doc(named("teacher"), "sessions/open/seats/bob")));
     await assertSucceeds(updateDoc(doc(named("teacher"), "sessions/open"), { booked: 0 }));
     await assertFails(deleteDoc(doc(named("carol"), "sessions/open/seats/bob")));
+  });
+
+  test("the count never drops below zero when a seat is given back", async () => {
+    // A seat whose count was lost (booked is 0 while the seat exists): giving it back can't take the count to -1.
+    await env.withSecurityRulesDisabled(async (context) => {
+      await setDoc(doc(context.firestore(), "sessions/open/seats/alice"), { bookedAt: Timestamp.now(), name: "Alice", memorizedPages: 1 });
+    });
+    await assertFails(cancelBooking(named("alice"), "alice", "open"));
+    // With the count right, the seat goes back as always.
+    await env.withSecurityRulesDisabled(async (context) => {
+      await updateDoc(doc(context.firestore(), "sessions/open"), { booked: 1 });
+    });
+    await assertSucceeds(cancelBooking(named("alice"), "alice", "open"));
+  });
+
+  test("aStudentCantDeleteAPaidSeat", async () => {
+    // A seat won at auction carries what was paid; it's given back only through the giveBackSeat function.
+    await env.withSecurityRulesDisabled(async (context) => {
+      const db = context.firestore();
+      await setDoc(doc(db, "sessions/open/seats/alice"), { bookedAt: Timestamp.now(), name: "Alice", memorizedPages: 1, paid: 5 });
+      await setDoc(doc(db, "sessions/open/seats/bob"), { bookedAt: Timestamp.now(), name: "Bob", memorizedPages: 1, paid: 0 });
+      await setDoc(doc(db, "users/alice/bookings/open"), { teacherId: "teacher", teacherName: "x", startsAt: inDays(1), place: "y", paid: 5 });
+    });
+    await assertFails(deleteDoc(doc(named("alice"), "sessions/open/seats/alice")));
+    await assertFails(cancelBooking(named("alice"), "alice", "open"));
+    // Nor the teacher, nor a seat won for nothing; the student still reads it, and may drop their own copy.
+    await assertFails(deleteDoc(doc(named("teacher"), "sessions/open/seats/alice")));
+    await assertFails(deleteDoc(doc(named("bob"), "sessions/open/seats/bob")));
+    await assertSucceeds(getDoc(doc(named("alice"), "sessions/open/seats/alice")));
+    await assertSucceeds(deleteDoc(doc(named("alice"), "users/alice/bookings/open")));
   });
 
   test("a student holding a bid books a free seat only through the functions, which let the bid go", async () => {

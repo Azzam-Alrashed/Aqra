@@ -135,8 +135,10 @@ const commands = {
     if (!flags.reference) fail("Give --reference with the bank transfer's reference.");
     await db.runTransaction(async (tx) => {
       const balanceRef = db.doc(`teacherBalances/${teacher}`);
-      const balance = (await tx.get(balanceRef)).data() ?? { earned: 0, paidOut: 0 };
-      if (balance.earned - balance.paidOut < amount) fail(`Only ${balance.earned - balance.paidOut} credits are due.`);
+      // A balance written by the functions may lack `paidOut` (never paid) or `earned` (only ever reversed): 0.
+      const balance = (await tx.get(balanceRef)).data() ?? {};
+      const due = (Number(balance.earned) || 0) - (Number(balance.paidOut) || 0);
+      if (due < amount) fail(`Only ${due} credits are due.`);
       tx.set(balanceRef, { paidOut: FieldValue.increment(amount), updatedAt: Timestamp.now() }, { merge: true });
       tx.create(balanceRef.collection("entries").doc(), {
         kind: "payout", amount: -amount, reference: flags.reference, at: Timestamp.now(),
@@ -148,8 +150,10 @@ const commands = {
 
   async balance() {
     const teacher = flags.teacher || fail("Give --teacher <uid>.");
-    const balance = (await db.doc(`teacherBalances/${teacher}`).get()).data() ?? { earned: 0, paidOut: 0 };
-    console.log(`earned ${balance.earned ?? 0} · paid out ${balance.paidOut ?? 0} · due ${(balance.earned ?? 0) - (balance.paidOut ?? 0)}`);
+    const balance = (await db.doc(`teacherBalances/${teacher}`).get()).data() ?? {};
+    const earned = Number(balance.earned) || 0;
+    const paidOut = Number(balance.paidOut) || 0;
+    console.log(`earned ${earned} · paid out ${paidOut} · due ${earned - paidOut}`);
     const entries = await db.collection(`teacherBalances/${teacher}/entries`).orderBy("at", "desc").limit(20).get();
     for (const entry of entries.docs) {
       const e = entry.data();

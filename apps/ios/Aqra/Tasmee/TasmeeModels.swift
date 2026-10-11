@@ -177,15 +177,18 @@ struct Booking: Identifiable, Hashable {
     var startsAt: Date
     var kind: TasmeeSession.Kind
     var place: String
+    /// The credits paid for a seat won at auction (the server writes it with the booking); nil for a free seat.
+    var paid: Int?
 
     init(id: String, teacherId: String, teacherName: String, startsAt: Date, kind: TasmeeSession.Kind = .inPerson,
-         place: String) {
+         place: String, paid: Int? = nil) {
         self.id = id
         self.teacherId = teacherId
         self.teacherName = teacherName
         self.startsAt = startsAt
         self.kind = kind
         self.place = place
+        self.paid = paid
     }
 
     init(_ session: TasmeeSession) {
@@ -197,7 +200,7 @@ struct Booking: Identifiable, Hashable {
         guard let teacherId = document.string("teacherId"), let startsAt = document.date("startsAt") else { return nil }
         self.init(id: id, teacherId: teacherId, teacherName: document.string("teacherName") ?? "", startsAt: startsAt,
                   kind: document.string("kind").flatMap(TasmeeSession.Kind.init) ?? .inPerson,
-                  place: document.string("place") ?? "")
+                  place: document.string("place") ?? "", paid: document.int("paid"))
     }
 
     var document: [String: Any] {

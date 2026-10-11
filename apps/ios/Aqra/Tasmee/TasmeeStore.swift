@@ -326,32 +326,12 @@ final class TasmeeStore {
         }
     }
 
-    /// Gives a seat back: removes the seat and this student's copy, and lowers the count (unless the teacher
-    /// has deleted the session meanwhile).
+    /// Gives a seat back, through the server: it removes the seat, this student's copy and, for a free seat, the
+    /// count (never below zero), and refunds a seat won at auction by the policy — in full when the session is still
+    /// more than an hour away, not at all later (docs/SRS.md AUC-09).
     func cancelBooking(_ booking: Booking) async throws {
-        guard let uid else { return }
-        try await Self.giveBackSeat(of: uid, in: booking.id)
-    }
-
-    nonisolated private static func giveBackSeat(of uid: String, in sessionId: String) async throws {
-        let database = Firestore.firestore()
-        let sessionRef = database.collection("sessions").document(sessionId)
-        let seatRef = sessionRef.collection("seats").document(uid)
-        let bookingRef = database.collection("users").document(uid).collection("bookings").document(sessionId)
-        _ = try await database.runTransaction { transaction, errorPointer in
-            do {
-                let session = try transaction.getDocument(sessionRef)
-                let seat = try transaction.getDocument(seatRef)
-                if session.exists && seat.exists {
-                    transaction.updateData(["booked": FieldValue.increment(Int64(-1))], forDocument: sessionRef)
-                }
-                if seat.exists { transaction.deleteDocument(seatRef) }
-                transaction.deleteDocument(bookingRef)
-            } catch let error as NSError {
-                errorPointer?.pointee = error
-            }
-            return nil
-        }
+        guard uid != nil else { return }
+        _ = try await Functions.functions(region: AccountStore.functionsRegion).httpsCallable("giveBackSeat").call(["sessionId": booking.id])
     }
 
     // MARK: - A teacher's side
@@ -532,20 +512,12 @@ final class TasmeeStore {
     /// inbox; and of a teacher's: the files they kept on their students, and their application with its uploads.
     func deleteAccountData(uid: String) async throws {
         let user = user(uid)
-        // Each booking goes in one write with its seat and the seat count, as the rules require.
+        // Each booking is given back through the server, as from the Tasmee' tab: the seat, the booking and the count
+        // together, and a seat won at auction by the refund policy (the rules refuse the app deleting that one).
         let bookings = try await user.collection("bookings").getDocuments()
+        let giveBack = Functions.functions(region: AccountStore.functionsRegion).httpsCallable("giveBackSeat")
         for booking in bookings.documents {
-            let batch = database.batch()
-            let session = database.collection("sessions").document(booking.documentID)
-            let seat = session.collection("seats").document(uid)
-            if try await seat.getDocument().exists {
-                batch.deleteDocument(seat)
-                if try await session.getDocument().exists {
-                    batch.updateData(["booked": FieldValue.increment(Int64(-1))], forDocument: session)
-                }
-            }
-            batch.deleteDocument(booking.reference)
-            try await batch.commit()
+            _ = try await giveBack.call(["sessionId": booking.documentID])
         }
 
         var references = try await user.collection("tasmee").getDocuments().documents.map(\.reference)

@@ -337,20 +337,14 @@ class TasmeeStore(
         }.await()
     }
 
-    /** Gives a seat back: removes the seat and this student's copy, and lowers the count (unless the session is gone). */
+    /**
+     * Gives a seat back, through the server: it removes the seat, this student's copy and, for a free seat, the count
+     * (never below zero), and refunds a seat won at auction by the policy — in full when the session is still more
+     * than an hour away, not at all later (docs/SRS.md AUC-09).
+     */
     suspend fun cancelBooking(booking: Booking) {
-        val uid = uid ?: return
-        val sessionRef = database.collection("sessions").document(booking.id)
-        val seatRef = sessionRef.collection("seats").document(uid)
-        val bookingRef = user(uid).collection("bookings").document(booking.id)
-        database.runTransaction { transaction ->
-            val session = transaction.get(sessionRef)
-            val seat = transaction.get(seatRef)
-            if (session.exists() && seat.exists()) transaction.update(sessionRef, "booked", FieldValue.increment(-1))
-            if (seat.exists()) transaction.delete(seatRef)
-            transaction.delete(bookingRef)
-            null
-        }.await()
+        uid ?: return
+        AccountStore.functions.getHttpsCallable("giveBackSeat").call(mapOf("sessionId" to booking.id)).await()
     }
 
     // MARK: - A teacher's side
@@ -563,17 +557,11 @@ class TasmeeStore(
      */
     suspend fun deleteAccountData(uid: String) {
         val user = user(uid)
-        // Each booking goes in one write with its seat and the seat count, as the rules require.
+        // Each booking is given back through the server, as from the Tasmee' tab: the seat, the booking and the count
+        // together, and a seat won at auction by the refund policy (the rules refuse the app deleting that one).
+        val giveBack = AccountStore.functions.getHttpsCallable("giveBackSeat")
         for (booking in user.collection("bookings").get().await().documents) {
-            val batch = database.batch()
-            val session = database.collection("sessions").document(booking.id)
-            val seat = session.collection("seats").document(uid)
-            if (seat.get().await().exists()) {
-                batch.delete(seat)
-                if (session.get().await().exists()) batch.update(session, "booked", FieldValue.increment(-1))
-            }
-            batch.delete(booking.reference)
-            batch.commit().await()
+            giveBack.call(mapOf("sessionId" to booking.id)).await()
         }
         val references = ArrayList<DocumentReference>()
         references += user.collection("tasmee").get().await().documents.map { it.reference }

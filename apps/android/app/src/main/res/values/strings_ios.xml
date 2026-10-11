@@ -960,6 +960,8 @@
         <item quantity="one">Recorded: %d page revised</item>
         <item quantity="other">Recorded: %d pages revised</item>
     </plurals>
+    <!-- Refunded: seat given back -->
+    <string name="refunded_seat_given_back">Refunded: seat given back</string>
     <!-- Refunded: session cancelled -->
     <string name="refunded_session_cancelled">Refunded: session cancelled</string>
     <!-- Released -->
@@ -1004,6 +1006,8 @@
     <string name="reveal_the_next_ayah">Reveal the next ayah</string>
     <!-- Revealed: %lld of %lld. Did you recite the rest from memory too? -->
     <string name="revealed_n_of_n_did_you_recite_the_rest_from">Revealed: %1$d of %2$d. Did you recite the rest from memory too?</string>
+    <!-- Reversed: seat given back -->
+    <string name="reversed_seat_given_back">Reversed: seat given back</string>
     <!-- Reversed: session cancelled -->
     <string name="reversed_session_cancelled">Reversed: session cancelled</string>
     <!-- Revise %lld pages -->
@@ -1180,6 +1184,8 @@
     <string name="take_the_stage_test">Take the stage test</string>
     <!-- Take the test again -->
     <string name="take_the_test_again">Take the test again</string>
+    <!-- Taken back: purchase refunded -->
+    <string name="taken_back_purchase_refunded">Taken back: purchase refunded</string>
     <!-- Tap a free part to take it, and tap yours when you\'ve read it. -->
     <string name="tap_a_free_part_to_take_it_and_tap_yours">Tap a free part to take it, and tap yours when you\'ve read it.</string>
     <!-- Tap a student to hear them: mark the ayat they stumble on, and the pages you heard. -->
@@ -1570,6 +1576,8 @@
     <string name="your_revision_today">Your revision today</string>
     <!-- Your seat goes back to the session. -->
     <string name="your_seat_goes_back_to_the_session">Your seat goes back to the session.</string>
+    <!-- Your seat goes back to the session. The credits you paid for it come back only if it starts in more than an hour. -->
+    <string name="your_seat_goes_back_to_the_session_the_credits_you">Your seat goes back to the session. The credits you paid for it come back only if it starts in more than an hour.</string>
     <!-- Your share of each seat won by bidding, after the app\'s commission, in credits. The team pays it by bank transfer. -->
     <string name="your_share_of_each_seat_won_by_bidding_after_the">Your share of each seat won by bidding, after the app\'s commission, in credits. The team pays it by bank transfer.</string>
     <!-- Your strength starts from it, and grows as you revise -->
