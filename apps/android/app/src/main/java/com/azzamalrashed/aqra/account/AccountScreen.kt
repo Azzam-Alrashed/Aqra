@@ -136,11 +136,12 @@ private fun AccountPage(app: AqraApp, navigator: Navigator) {
     TabPage(top = 16.dp) {
         Text(stringResource(R.string.account), style = aqraStyle(30f, Weight.heavy, Palette.ink))
         AccountCard(app)
-        if (AccountStore.isAvailable) {
+        // Credits once they mean something: bidding needs a signed-in account, so a student who hasn't signed in isn't
+        // shown a wallet they can't use (docs/SRS.md PAY-06). As on iOS.
+        val wallet = account.wallet
+        if (AccountStore.isAvailable && (account.profile?.isAnonymous == false || wallet.balance > 0 || wallet.ledger.isNotEmpty())) {
             AqraCard(Modifier.fillMaxWidth().pressable { showingWallet = true }, padding = 0.dp, radius = 24.dp) {
-                AqraRow("🪙", Palette.butter, stringResource(R.string.credits),
-                    detail = if (account.profile?.isAnonymous == false) stringResource(R.string.s_credits, WalletStore.format(account.wallet.balance))
-                    else stringResource(R.string.for_seats_won_by_bidding))
+                AqraRow("🪙", Palette.butter, stringResource(R.string.credits), detail = stringResource(R.string.s_credits, WalletStore.format(wallet.balance)))
             }
         }
 

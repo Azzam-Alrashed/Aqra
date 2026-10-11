@@ -657,8 +657,6 @@
     <string name="for_action">المدة</string>
     <!-- for seats in sessions -->
     <string name="for_seats_in_sessions">لمقاعد الجلسات</string>
-    <!-- For seats won by bidding -->
-    <string name="for_seats_won_by_bidding">للمقاعد التي تُنال بالمزايدة</string>
     <!-- for this week -->
     <string name="for_this_week">لهذا الأسبوع</string>
     <!-- Forgot -->

@@ -827,27 +827,26 @@ struct OutsideRevisionSheet: View {
                     ForEach(pages) { item in
                         let page = store.page(item.page)
                         AqraCard(padding: 12, radius: 20) {
-                            HStack(spacing: 12) {
-                                Text(verbatim: item.page.formatted())
-                                    .aqraFont(size: 17, weight: .heavy, monospacedDigit: true)
-                                    .foregroundStyle(OnboardingPalette.ink)
-                                    .frame(width: 44, height: 44)
-                                    .background(ManazilStairs.face(forJuz: page.juz).top.opacity(0.6), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
-                                Text(verbatim: store.surahNames[page.surah] ?? "")
-                                    .aqraFont(size: 15, weight: .bold)
-                                    .foregroundStyle(OnboardingPalette.ink)
-                                    .lineLimit(1)
-                                Spacer(minLength: 4)
-                                Button("No stumbles") {
-                                    let ayahs = page.ayahs.filter { memorization.isMemorized($0) }
-                                    withAnimation(.snappy) {
-                                        revision.record(page: item.page, ayahs: ayahs, stumbles: [], source: .outside, memorization: memorization)
-                                    }
-                                    if revision.plan?.items.allSatisfy(\.done) == true { dismiss() }
+                            // The two choices beside the page when they fit, under it otherwise (a longer language, a
+                            // larger text size), never cut short.
+                            ViewThatFits(in: .horizontal) {
+                                HStack(spacing: 12) {
+                                    pageBadge(item.page, juz: page.juz)
+                                    surahName(page)
+                                    Spacer(minLength: 4)
+                                    choices(item.page, page)
                                 }
-                                .buttonStyle(ChipButtonStyle(filled: true))
-                                Button("With stumbles") { onStumbles(item.page) }
-                                    .buttonStyle(ChipButtonStyle(filled: false))
+                                VStack(alignment: .leading, spacing: 10) {
+                                    HStack(spacing: 12) {
+                                        pageBadge(item.page, juz: page.juz)
+                                        surahName(page)
+                                        Spacer(minLength: 0)
+                                    }
+                                    HStack(spacing: 8) {
+                                        choices(item.page, page)
+                                        Spacer(minLength: 0)
+                                    }
+                                }
                             }
                         }
                         .accessibilityElement(children: .contain)
@@ -862,6 +861,37 @@ struct OutsideRevisionSheet: View {
         .background(OnboardingPalette.surface.ignoresSafeArea())
         .preferredColorScheme(.light)
         .presentationDetents([.medium, .large])
+    }
+
+    private func pageBadge(_ number: Int, juz: Int) -> some View {
+        Text(verbatim: number.formatted())
+            .aqraFont(size: 17, weight: .heavy, monospacedDigit: true)
+            .foregroundStyle(OnboardingPalette.ink)
+            .frame(width: 44, height: 44)
+            .background(ManazilStairs.face(forJuz: juz).top.opacity(0.6), in: RoundedRectangle(cornerRadius: 14, style: .continuous))
+    }
+
+    private func surahName(_ page: MushafPage) -> some View {
+        Text(verbatim: store.surahNames[page.surah] ?? "")
+            .aqraFont(size: 15, weight: .bold)
+            .foregroundStyle(OnboardingPalette.ink)
+            .lineLimit(1)
+    }
+
+    /// «دون تعثّر» records the page now; «بتعثّر» opens it whole to tap the stumbles.
+    @ViewBuilder private func choices(_ number: Int, _ page: MushafPage) -> some View {
+        Button("No stumbles") {
+            let ayahs = page.ayahs.filter { memorization.isMemorized($0) }
+            withAnimation(.snappy) {
+                revision.record(page: number, ayahs: ayahs, stumbles: [], source: .outside, memorization: memorization)
+            }
+            if revision.plan?.items.allSatisfy(\.done) == true { dismiss() }
+        }
+        .buttonStyle(ChipButtonStyle(filled: true))
+        .fixedSize()
+        Button("With stumbles") { onStumbles(number) }
+            .buttonStyle(ChipButtonStyle(filled: false))
+            .fixedSize()
     }
 }
 

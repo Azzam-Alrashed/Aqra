@@ -13,6 +13,7 @@ import androidx.compose.foundation.combinedClickable
 import androidx.compose.foundation.interaction.MutableInteractionSource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.FlowRow
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
@@ -459,6 +460,7 @@ private fun TodayStep(
 }
 
 /** «سجّلها»: a page of today's wird revised outside the app (in prayer, to a friend), clean or with stumbles. */
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun OutsideRevisionSheet(app: AqraApp, store: MushafStore, onDone: () -> Unit, onStumbles: (Int) -> Unit) {
     val pages = remaining(app.revision)
@@ -477,21 +479,28 @@ private fun OutsideRevisionSheet(app: AqraApp, store: MushafStore, onDone: () ->
             pages.forEach { item ->
                 val page = store.page(item.page)
                 AqraCard(Modifier.fillMaxWidth(), padding = 12.dp, radius = 20.dp) {
-                    Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                        Box(
-                            Modifier.size(44.dp).background(StepFaces.forJuz(page.juz).first.copy(alpha = 0.6f), RoundedCornerShape(14.dp)),
-                            contentAlignment = Alignment.Center,
-                        ) {
-                            Text(formatNumber(item.page), style = aqraStyle(17f, Weight.heavy, Palette.ink))
+                    // The two choices beside the page when they fit, under it otherwise (a longer language, a larger
+                    // text size), never squeezing the surah's name away. As on iOS.
+                    FlowRow(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp), verticalArrangement = Arrangement.spacedBy(10.dp),
+                        itemVerticalAlignment = Alignment.CenterVertically) {
+                        Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            Box(
+                                Modifier.size(44.dp).background(StepFaces.forJuz(page.juz).first.copy(alpha = 0.6f), RoundedCornerShape(14.dp)),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                Text(formatNumber(item.page), style = aqraStyle(17f, Weight.heavy, Palette.ink))
+                            }
+                            Text(store.surahNames[page.surah].orEmpty(), style = aqraStyle(15f, Weight.bold, Palette.ink), maxLines = 1)
                         }
-                        Text(store.surahNames[page.surah].orEmpty(), style = aqraStyle(15f, Weight.bold, Palette.ink), maxLines = 1,
-                            overflow = TextOverflow.Ellipsis, modifier = Modifier.weight(1f))
-                        ChipButton(stringResource(R.string.no_stumbles), filled = true) {
-                            val ayahs = page.ayahs.filter(app.memorization::isMemorized)
-                            app.revision.record(item.page, ayahs, emptySet(), RevisionRecord.Source.OUTSIDE, app.memorization)
-                            if (app.revision.plan?.items?.all { it.done } == true) onDone()
+                        Spacer(Modifier.weight(1f))
+                        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                            ChipButton(stringResource(R.string.no_stumbles), filled = true) {
+                                val ayahs = page.ayahs.filter(app.memorization::isMemorized)
+                                app.revision.record(item.page, ayahs, emptySet(), RevisionRecord.Source.OUTSIDE, app.memorization)
+                                if (app.revision.plan?.items?.all { it.done } == true) onDone()
+                            }
+                            ChipButton(stringResource(R.string.with_stumbles), filled = false) { onStumbles(item.page) }
                         }
-                        ChipButton(stringResource(R.string.with_stumbles), filled = false) { onStumbles(item.page) }
                     }
                 }
             }
