@@ -343,8 +343,31 @@ class TasmeeStore(
      * than an hour away, not at all later (docs/SRS.md AUC-09).
      */
     suspend fun cancelBooking(booking: Booking) {
-        uid ?: return
-        AccountStore.functions.getHttpsCallable("giveBackSeat").call(mapOf("sessionId" to booking.id)).await()
+        val uid = uid ?: return
+        giveBack(booking.id, uid)
+    }
+
+    /**
+     * Gives a seat back through the server's `giveBackSeat`; on a server from before it (the function isn't there yet),
+     * the way it used to be done: the seat, the booking and the count in one transaction, a free seat only. As on iOS.
+     */
+    private suspend fun giveBack(sessionId: String, uid: String) {
+        try {
+            AccountStore.functions.getHttpsCallable("giveBackSeat").call(mapOf("sessionId" to sessionId)).await()
+        } catch (error: FirebaseFunctionsException) {
+            if (error.code != FirebaseFunctionsException.Code.NOT_FOUND) throw error
+            val sessionRef = database.collection("sessions").document(sessionId)
+            val seatRef = sessionRef.collection("seats").document(uid)
+            val bookingRef = user(uid).collection("bookings").document(sessionId)
+            database.runTransaction { transaction ->
+                val session = transaction.get(sessionRef)
+                val seat = transaction.get(seatRef)
+                if (session.exists() && seat.exists() && (session.getLong("booked") ?: 0) > 0) transaction.update(sessionRef, "booked", FieldValue.increment(-1))
+                if (seat.exists()) transaction.delete(seatRef)
+                transaction.delete(bookingRef)
+                null
+            }.await()
+        }
     }
 
     // MARK: - A teacher's side
@@ -559,10 +582,7 @@ class TasmeeStore(
         val user = user(uid)
         // Each booking is given back through the server, as from the Tasmee' tab: the seat, the booking and the count
         // together, and a seat won at auction by the refund policy (the rules refuse the app deleting that one).
-        val giveBack = AccountStore.functions.getHttpsCallable("giveBackSeat")
-        for (booking in user.collection("bookings").get().await().documents) {
-            giveBack.call(mapOf("sessionId" to booking.id)).await()
-        }
+        for (booking in user.collection("bookings").get().await().documents) giveBack(booking.id, uid)
         val references = ArrayList<DocumentReference>()
         references += user.collection("tasmee").get().await().documents.map { it.reference }
         references += user.collection("inbox").get().await().documents.map { it.reference }
