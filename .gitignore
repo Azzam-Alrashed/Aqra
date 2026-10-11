@@ -9,6 +9,10 @@ shared/quran/qcf4/
 
 # The app's Firebase config (project aqra-quran): restore with scripts/fetch-firebase-config.sh
 apps/ios/Firebase/GoogleService-Info.plist
+# The Play upload key and its passwords (apps/android/README.md): the owner holds them, never git
+apps/android/keystore.properties
+apps/android/*.jks
+apps/android/*.keystore
 backend/node_modules/
 backend/*.log
 backend/backups/

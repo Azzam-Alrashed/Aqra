@@ -51,7 +51,9 @@ import androidx.compose.material3.SliderDefaults
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.CompositionLocalProvider
+import androidx.compose.runtime.DisposableEffect
 import androidx.compose.runtime.LaunchedEffect
+import androidx.compose.runtime.key
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
@@ -89,6 +91,7 @@ import com.azzamalrashed.aqra.ui.components.IconTile
 import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.memorization.MarkingSession
 import com.azzamalrashed.aqra.quran.MushafStore
+import com.azzamalrashed.aqra.ui.components.FactsText
 import com.azzamalrashed.aqra.ui.components.FloatingCapsule
 import com.azzamalrashed.aqra.ui.components.FloatingPanel
 import com.azzamalrashed.aqra.ui.components.MarkingButton
@@ -99,7 +102,6 @@ import com.azzamalrashed.aqra.ui.theme.MushafStyle
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
 import com.azzamalrashed.aqra.ui.util.arabicDigits
-import com.azzamalrashed.aqra.ui.util.factSeparator
 import com.azzamalrashed.aqra.ui.util.ARABIC_SEPARATOR
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.distinctUntilChanged
@@ -110,6 +112,27 @@ import androidx.compose.material.icons.rounded.Close
 import com.azzamalrashed.aqra.revision.RevisionRecord
 import com.azzamalrashed.aqra.ui.FullScreen
 import com.azzamalrashed.aqra.ui.LocalOverlays
+
+/**
+ * How the Mushaf's pager counts: one position per page, or, with facing pages, one per spread (two pages, the odd one on
+ * the right, as in the printed Madinah Mushaf). The page kept is always a page number, so the pager can start again
+ * from it whenever the count changes.
+ */
+object MushafPaging {
+    fun count(facing: Boolean): Int = if (facing) MushafStore.PAGE_COUNT / 2 else MushafStore.PAGE_COUNT
+
+    /** The pager's position for a page: its own, or its spread's. */
+    fun position(page: Int, facing: Boolean): Int = if (facing) (page - 1) / 2 else page - 1
+
+    /** The page a position shows: the page itself, or the spread's right (odd) page. */
+    fun page(position: Int, facing: Boolean): Int = if (facing) position * 2 + 1 else position + 1
+
+    /** The pages a position shows: one, or the spread's two. */
+    fun pages(position: Int, facing: Boolean): List<Int> = if (facing) listOf(position * 2 + 1, position * 2 + 2) else listOf(position + 1)
+
+    /** Whether settling on a position is no turn from [page]: the same page, or the same spread, so an even page on the left survives. */
+    fun isSamePlace(position: Int, page: Int, facing: Boolean): Boolean = position == position(page, facing)
+}
 
 /**
  * The Mushaf, opened full screen from the home on the last page read, and turned like a book (right to left). On a
@@ -152,22 +175,22 @@ fun MushafScreen(
 
     BoxWithConstraints(Modifier.fillMaxSize().background(style.paper)) {
         val facing = maxWidth > maxHeight && maxWidth >= 900.dp
-        val pageCount = if (facing) MushafStore.PAGE_COUNT / 2 else MushafStore.PAGE_COUNT
-        val pagerState = rememberPagerState(initialPage = if (facing) (lastPage - 1) / 2 else lastPage - 1) { pageCount }
+        // Turning the phone changes how the pager counts, so the pager starts afresh from the page kept, rather than
+        // keeping a position that now means another page (and writing that page down as the one read).
+        val pagerState = key(facing) { rememberPagerState(initialPage = MushafPaging.position(lastPage, facing)) { MushafPaging.count(facing) } }
         // Set when the toolbar itself moves the page, so the toolbar stays open.
         var movedByToolbar by remember { mutableStateOf(false) }
 
         fun go(page: Int) {
             movedByToolbar = page != lastPage
-            scope.launch { pagerState.scrollToPage(if (facing) (page - 1) / 2 else page - 1) }
+            scope.launch { pagerState.scrollToPage(MushafPaging.position(page, facing)) }
         }
 
-        LaunchedEffect(pagerState, facing) {
+        LaunchedEffect(pagerState) {
             snapshotFlow { pagerState.settledPage }.distinctUntilChanged().collect { settled ->
-                val page = if (facing) settled * 2 + 1 else settled + 1
-                // Only a turn to another spread moves the page, so the left (even) page survives rotation.
-                if (facing && (lastPage + 1) / 2 == settled + 1) return@collect
-                if (page == lastPage) return@collect
+                // Only a turn to another page (or spread) moves the page, so the left (even) page survives rotation.
+                if (MushafPaging.isSamePlace(settled, lastPage, facing)) return@collect
+                val page = MushafPaging.page(settled, facing)
                 val juzChanged = store.page(page).juz != store.page(lastPage).juz
                 lastPage = page
                 haptics.performHapticFeedback(if (juzChanged) HapticFeedbackType.GestureThresholdActivate else HapticFeedbackType.SegmentTick)
@@ -212,7 +235,7 @@ fun MushafScreen(
                 Box(Modifier.navigationBarsPadding()) {
                     val session = marking
                     if (session != null) {
-                        val pages = if (facing) ((lastPage + 1) / 2).let { listOf(it * 2 - 1, it * 2) } else listOf(lastPage)
+                        val pages = MushafPaging.pages(MushafPaging.position(lastPage, facing), facing)
                         MarkingBar(app, store, session, pages, style, onChooseJuzAndSurahs) {
                             app.memorization.saveNow()
                             // Marking as part of setup, Done closes the Mushaf: the daily amount and the plan follow.
@@ -315,17 +338,28 @@ fun MushafPager(
     }
 }
 
-/** The status bar hides with the Mushaf's bars, and its icons follow the page's paper. */
+/**
+ * The status bar hides with the Mushaf's bars, and its icons follow the page's paper. When the screen leaves, the bar
+ * comes back with dark icons, for the app's light surface beneath.
+ */
 @Composable
 fun SystemBars(visible: Boolean, lightIcons: Boolean) {
     val view = LocalView.current
+    val window = (view.context as? Activity)?.window
     LaunchedEffect(visible, lightIcons) {
-        val window = (view.context as? Activity)?.window ?: return@LaunchedEffect
-        val controller = WindowCompat.getInsetsController(window, view)
+        val controller = WindowCompat.getInsetsController(window ?: return@LaunchedEffect, view)
         controller.isAppearanceLightStatusBars = !lightIcons
         controller.isAppearanceLightNavigationBars = !lightIcons
         controller.systemBarsBehavior = WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
         if (visible) controller.show(WindowInsetsCompat.Type.statusBars()) else controller.hide(WindowInsetsCompat.Type.statusBars())
+    }
+    DisposableEffect(Unit) {
+        onDispose {
+            val controller = WindowCompat.getInsetsController(window ?: return@onDispose, view)
+            controller.isAppearanceLightStatusBars = true
+            controller.isAppearanceLightNavigationBars = true
+            controller.show(WindowInsetsCompat.Type.statusBars())
+        }
     }
 }
 
@@ -482,11 +516,13 @@ private fun MarkingBar(
                 }
                 val choosing = marking.choosingRangeStart || marking.rangeStart != null
                 if (unmarked.isEmpty()) {
-                    Text(
-                        pluralStringResource(R.plurals.n_ayat_memorized, app.memorization.count, app.memorization.count) +
-                            (if (choosing) "" else factSeparator() + stringResource(R.string.or_mark_from_one_ayah_to_another_with_select_a)),
-                        style = aqraStyle(12f, Weight.semibold, style.chrome), maxLines = 1,
-                    )
+                    val count = pluralStringResource(R.plurals.n_ayat_memorized, app.memorization.count, app.memorization.count)
+                    if (choosing) {
+                        Text(count, style = aqraStyle(12f, Weight.semibold, style.chrome), maxLines = 1)
+                    } else {
+                        FactsText(count, stringResource(R.string.or_mark_from_one_ayah_to_another_with_select_a),
+                            aqraStyle(12f, Weight.semibold, style.chrome), maxLines = 1)
+                    }
                 } else {
                     // An unmarked ayah loses its record; for a moment it can be brought back as it was.
                     CompositionLocalProvider(LocalLayoutDirection provides direction) {

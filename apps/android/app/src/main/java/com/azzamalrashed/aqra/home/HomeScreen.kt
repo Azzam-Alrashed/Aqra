@@ -83,6 +83,7 @@ import com.azzamalrashed.aqra.ui.components.AqraCard
 import com.azzamalrashed.aqra.ui.components.AqraChip
 import com.azzamalrashed.aqra.ui.components.AqraRowDivider
 import com.azzamalrashed.aqra.ui.components.ChipText
+import com.azzamalrashed.aqra.ui.components.FactsText
 import com.azzamalrashed.aqra.ui.components.IconTile
 import com.azzamalrashed.aqra.ui.components.TwoLineHeadline
 import com.azzamalrashed.aqra.ui.components.pressScale
@@ -520,8 +521,8 @@ private fun MushafCard(app: AqraApp, store: MushafStore, onOpen: () -> Unit) {
                 Modifier.size(40.dp, 63.dp).clip(shape).border(1.dp, MushafStyle.LIGHT.chrome.copy(alpha = 0.25f), shape))
             Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                 Text(stringResource(if (bookmark != null) R.string.your_bookmark else R.string.continue_reading), style = aqraStyle(12f, Weight.semibold, Palette.inkSoft))
-                Text(store.surahNames[page.surah].orEmpty() + factSeparator() + stringResource(R.string.page_n, page.number),
-                    style = aqraStyle(16f, Weight.heavy, Palette.ink), maxLines = 1)
+                FactsText(store.surahNames[page.surah].orEmpty(), stringResource(R.string.page_n, page.number),
+                    aqraStyle(16f, Weight.heavy, Palette.ink), maxLines = 1)
             }
             IconTile(if (bookmark != null) "🔖" else "📖", if (bookmark != null) Palette.rose else Palette.sky, size = 40.dp)
         }

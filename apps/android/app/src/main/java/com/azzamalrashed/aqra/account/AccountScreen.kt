@@ -64,6 +64,7 @@ import androidx.core.os.LocaleListCompat
 import com.azzamalrashed.aqra.AqraApp
 import com.azzamalrashed.aqra.BuildConfig
 import com.azzamalrashed.aqra.R
+import com.azzamalrashed.aqra.core.Features
 import com.azzamalrashed.aqra.credits.WalletScreen
 import com.azzamalrashed.aqra.credits.WalletStore
 import com.azzamalrashed.aqra.ui.AqraSheet
@@ -424,7 +425,7 @@ fun AqraTextField(value: String, onChange: (String) -> Unit, placeholder: String
     )
 }
 
-/** Sign in with Apple and with Google, one above the other. */
+/** Sign in with Google; and with Apple above it, once Apple sign-in is set up for Android (Features.APPLE_SIGN_IN). */
 @Composable
 fun SignInButtons(app: AqraApp) {
     val account = app.account
@@ -432,7 +433,7 @@ fun SignInButtons(app: AqraApp) {
     val scope = rememberCoroutineScope()
     Box(contentAlignment = Alignment.Center) {
         Column(Modifier.alpha(if (account.isWorking) 0.6f else 1f), verticalArrangement = Arrangement.spacedBy(10.dp)) {
-            Row(
+            if (Features.APPLE_SIGN_IN) Row(
                 Modifier.fillMaxWidth().heightIn(min = 48.dp).background(Color.Black, CircleShape)
                     .pressable(enabled = !account.isWorking) { context.findActivity()?.let { scope.launch { account.signInWithApple(it) } } },
                 verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.Center,

@@ -8,6 +8,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.lightColorScheme
+import com.azzamalrashed.aqra.account.DailyReminder
 import com.azzamalrashed.aqra.ui.AqraRoot
 import com.azzamalrashed.aqra.ui.theme.Palette
 
@@ -27,6 +28,13 @@ class MainActivity : AppCompatActivity() {
                 AqraRoot(app)
             }
         }
+    }
+
+    override fun onResume() {
+        super.onResume()
+        // The daily reminder is set again each time the app comes to the front: the device may have moved time zones,
+        // or dropped the alarm.
+        DailyReminder.refresh(this, app.prefs)
     }
 
     override fun onNewIntent(intent: Intent) {

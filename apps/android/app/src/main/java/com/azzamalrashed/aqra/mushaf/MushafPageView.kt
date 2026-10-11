@@ -138,9 +138,12 @@ fun MushafPageView(
         ) {
             val metrics = remember(maxWidth, maxHeight) { PageMetrics(maxWidth.value, maxHeight.value) }
             val fontSize = with(density) { metrics.fontSize.dp.toPx() }
-            val glyphs by produceState<PageGlyphs?>(null, page.number, fontSize) {
-                value = fonts.pageAsync(store, page.number, fontSize)
+            // Kept with the page they were made for: produceState holds its last value while the next page's glyphs are
+            // made, and a page's lines drawn with another page's words run past the end of a line.
+            val loaded by produceState<Pair<Int, PageGlyphs>?>(null, page.number, fontSize) {
+                value = page.number to fonts.pageAsync(store, page.number, fontSize)
             }
+            val glyphs = loaded?.takeIf { it.first == page.number }?.second
             val revision = options.revisionOf(page.number)
 
             // The header and footer bands.
@@ -602,4 +605,18 @@ class MemorizeFocus(
 
     /** Whether an ayah is part of what's chosen as memorized. */
     fun isChosen(ayah: Int): Boolean = ayah in memorizedPart
+
+    companion object {
+        /** Keeps what the student hid and chose while the process is away (rememberSaveable). */
+        fun saver(portion: List<Int>) = androidx.compose.runtime.saveable.listSaver<MemorizeFocus, Int>(
+            save = { listOf(if (it.choosingEnd) 1 else 0, it.end ?: 0) + it.hidden.sorted() },
+            restore = { saved ->
+                MemorizeFocus(portion).apply {
+                    choosingEnd = saved[0] == 1
+                    end = saved[1].takeIf { it > 0 }
+                    hidden = saved.drop(2).toSet()
+                }
+            },
+        )
+    }
 }

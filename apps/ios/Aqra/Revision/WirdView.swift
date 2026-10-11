@@ -78,9 +78,10 @@ struct WirdView: View {
         }
     }
 
-    /// The X: straight home from a page not yet begun; from one under way, after asking, since it isn't recorded.
+    /// The X: straight home from a page not yet begun; from one under way, after asking, since it isn't recorded. A
+    /// page logged from outside starts revealed, so there only the stumbles marked count.
     private func leave(_ session: RevisionSession) {
-        if session.revealed > 0 || !session.stumbles.isEmpty {
+        if !session.stumbles.isEmpty || (!outside && session.revealed > 0) {
             confirmingLeave = true
         } else {
             finish(session, record: false)

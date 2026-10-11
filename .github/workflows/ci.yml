@@ -81,10 +81,11 @@ jobs:
       # reference tables come from a Mac (apps/android/README.md); run it locally before a PR.
       - name: Unit tests
         run: ./gradlew :app:testDebugUnitTest -PuseFirebaseEmulator
-      # A separate Gradle run, as the README requires. Without google-services.json this release has accounts off,
-      # which is fine for a compile-and-shrink check.
+      # A separate Gradle run, as the README requires. The runner has no google-services.json, so this is a
+      # compile-and-shrink check, and says so: a release without the config otherwise fails (checkReleaseConfig). The
+      # bundle is what Play takes; it's split by ABI, density and language.
       - name: Release build
-        run: ./gradlew :app:assembleRelease
+        run: ./gradlew :app:bundleRelease -Paqra.ciRelease
       - name: Keep the R8 mapping
         uses: actions/upload-artifact@v7
         with:

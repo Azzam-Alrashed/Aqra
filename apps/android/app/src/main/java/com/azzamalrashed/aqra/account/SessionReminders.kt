@@ -30,8 +30,6 @@ object SessionReminders {
     internal const val ACTION = "com.azzamalrashed.aqra.SESSION_REMINDER"
     private const val EXTRA_ID = "session"
     private const val LEAD = 3_600_000L
-    /** Android delivers an inexact alarm within a window of at least ten minutes; this one is centred on the hour. */
-    private const val WINDOW = 10 * 60_000L
 
     @Serializable
     internal data class Reminder(val id: String, val atMillis: Long, val teacherName: String, val video: Boolean, val place: String)
@@ -60,9 +58,10 @@ object SessionReminders {
     private fun stored(prefs: Preferences): List<Reminder> =
         prefs.sessionReminders?.let { runCatching { json.decodeFromString(ListSerializer(Reminder.serializer()), it) }.getOrNull() }.orEmpty()
 
+    // Inexact, so it needs no exact-alarm permission; allowed while the device dozes, so it isn't held back for hours.
     private fun set(context: Context, reminder: Reminder) {
         context.getSystemService(AlarmManager::class.java)
-            .setWindow(AlarmManager.RTC_WAKEUP, reminder.atMillis - WINDOW / 2, WINDOW, pendingIntent(context, reminder.id))
+            .setAndAllowWhileIdle(AlarmManager.RTC_WAKEUP, reminder.atMillis, pendingIntent(context, reminder.id))
     }
 
     private fun cancel(context: Context, id: String) {

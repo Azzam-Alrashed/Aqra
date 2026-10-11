@@ -41,6 +41,8 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.listSaver
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -104,15 +106,27 @@ fun WirdScreen(
     fun session(page: Int) = RevisionSession(page, store.page(page).ayahs.filter(app.memorization::isMemorized)).also {
         if (outside) it.revealAll()
     }
-    var session by remember { mutableStateOf(session(startPage)) }
+    // The revision under way outlives the process (a call may end it in the background): its page, how far it's
+    // revealed and the stumbles marked come back as they were.
+    val sessionSaver = remember(store) {
+        listSaver<RevisionSession, Int>(
+            save = { listOf(it.page, it.revealed) + it.stumbles.sorted() },
+            restore = { saved ->
+                session(saved[0]).apply {
+                    repeat(saved[1]) { revealNext() }
+                    saved.drop(2).forEach(::markStumble)
+                }
+            },
+        )
+    }
+    var session by rememberSaveable(stateSaver = sessionSaver) { mutableStateOf(session(startPage)) }
+    var confirmingLeave by rememberSaveable { mutableStateOf(false) }
     val context = LocalContext.current
     /** Aqra following the revision by ear («سمّع بصوتك»), while the student revises aloud. */
     var listener by remember { mutableStateOf<RecitationListener?>(null) }
     var settingUpListening by remember { mutableStateOf(false) }
     /** «تم» with ayat still veiled: whether to count them too is asked once, in the panel. */
     var askingRest by remember { mutableStateOf(false) }
-    /** The X on a page already under way: leaving loses it, so it's asked first. */
-    var confirmingLeave by remember { mutableStateOf(false) }
 
     fun startListening() {
         val started = RecitationListener(session, store, app.recitationModel)
@@ -147,9 +161,11 @@ fun WirdScreen(
     LifecycleEventEffect(Lifecycle.Event.ON_PAUSE) { listener?.pause() }
 
     SystemBars(visible = true, lightIcons = style.dark)
-    /** Straight home from a page not yet begun; from one under way, after asking, since it isn't recorded. */
+    /** Straight home from a page not yet begun; from one under way, after asking, since it isn't recorded. A page logged
+     *  from outside starts revealed, so there only the stumbles marked count. */
+    val hasProgress = session.stumbles.isNotEmpty() || (!outside && session.revealed > 0)
     fun leave() {
-        if (session.revealed > 0 || session.stumbles.isNotEmpty()) confirmingLeave = true else onClose()
+        if (hasProgress) confirmingLeave = true else onClose()
     }
     // Leaving goes back home without recording the page.
     BackHandler(onBack = ::leave)

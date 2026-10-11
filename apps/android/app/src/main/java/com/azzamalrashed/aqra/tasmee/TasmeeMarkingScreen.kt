@@ -46,6 +46,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.hapticfeedback.HapticFeedbackType
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.platform.LocalHapticFeedback
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.res.pluralStringResource
@@ -75,11 +76,46 @@ import com.azzamalrashed.aqra.ui.theme.MushafStyle
 import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
+import com.azzamalrashed.aqra.ui.components.FactsText
+import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.launch
-import com.azzamalrashed.aqra.ui.util.factSeparator
+import kotlinx.coroutines.withContext
+import kotlinx.serialization.Serializable
+import kotlinx.serialization.json.Json
+import java.io.File
 
 /** What a listener marked: the pages heard, the ayat stumbled on with their types, and for a teacher, a stage test. */
 data class TasmeeResult(val pages: List<Int>, val stumbles: List<Int>, val mistakes: List<Mistake>, val test: TasmeeRecord.StageTest?)
+
+/**
+ * A marking under way, kept in a small file on the device, so a call that kills the app in the background doesn't
+ * lose twenty minutes of a teacher's hearing: it's back when the same student is opened again. Written on every
+ * change, deleted when the tasmee' is recorded or the listener leaves.
+ */
+@Serializable
+data class MarkingDraft(
+    val page: Int,
+    val heard: List<Int>,
+    val stumbles: List<Int>,
+    /** The kind of each stumble classified, by its raw name. */
+    val types: Map<Int, String>,
+    val testStage: Int? = null,
+    val testAllowedMistakes: Int? = null,
+) {
+    companion object {
+        private val json = Json { ignoreUnknownKeys = true }
+
+        /** The draft's file for a hearing: a teacher's session and student, or a friend's code. */
+        fun file(dir: File, key: String): File = File(dir, "tasmee-draft-" + key.replace(Regex("[^A-Za-z0-9_-]"), "_") + ".json")
+
+        fun read(file: File): MarkingDraft? =
+            if (!file.exists()) null else runCatching { json.decodeFromString(serializer(), file.readText()) }.getOrNull()
+
+        fun write(file: File, draft: MarkingDraft) {
+            file.writeText(json.encodeToString(serializer(), draft))
+        }
+    }
+}
 
 /**
  * Someone hearing a student — a teacher in a session, or a friend with the student's code: the Mushaf on the
@@ -95,6 +131,8 @@ fun TasmeeMarkingScreen(
     store: MushafStore,
     studentName: String,
     startPage: Int,
+    /** What this hearing is of (a session and its student, a friend's code): the name of the draft kept for it. */
+    draftKey: String,
     allowsStageTest: Boolean = false,
     onClose: () -> Unit,
     overlay: @Composable () -> Unit = {},
@@ -103,21 +141,37 @@ fun TasmeeMarkingScreen(
     val style = MushafStyle.current()
     val haptics = LocalHapticFeedback.current
     val scope = rememberCoroutineScope()
-    val pager = rememberPagerState(initialPage = startPage.coerceIn(1, MushafStore.PAGE_COUNT) - 1) { MushafStore.PAGE_COUNT }
+    val context = LocalContext.current
+    val draftFile = remember(draftKey) { MarkingDraft.file(context.filesDir, draftKey) }
+    /** The marking left unfinished for this hearing, if the app was killed during it. */
+    val draft = remember(draftFile) { MarkingDraft.read(draftFile) }
+    val pager = rememberPagerState(initialPage = (draft?.page ?: startPage).coerceIn(1, MushafStore.PAGE_COUNT) - 1) { MushafStore.PAGE_COUNT }
     val page = pager.settledPage + 1
     /** One revision per page visited, fully revealed, so a tap toggles a stumble. */
     val sessions = remember { mutableStateMapOf<Int, RevisionSession>() }
-    var heard by remember { mutableStateOf(emptySet<Int>()) }
+    var heard by remember { mutableStateOf(draft?.heard?.toSet() ?: emptySet()) }
     /** The type of each stumble the listener classified; the rest are memorization errors. */
-    var types by remember { mutableStateOf(emptyMap<Int, MistakeType>()) }
+    var types by remember {
+        mutableStateOf(draft?.types?.mapNotNull { (ayah, raw) -> MistakeType.entries.firstOrNull { it.raw == raw }?.let { ayah to it } }?.toMap() ?: emptyMap())
+    }
     var classifying by remember { mutableStateOf<Int?>(null) }
     var showingIndex by remember { mutableStateOf(false) }
     var confirmingLeave by remember { mutableStateOf(false) }
-    var stageTest by remember { mutableStateOf<TasmeeRecord.StageTest?>(null) }
+    var stageTest by remember {
+        mutableStateOf(draft?.let { kept -> kept.testStage?.let { TasmeeRecord.StageTest(it, kept.testAllowedMistakes ?: StagePolicy.STANDARD.allowedMistakesPerPage) } })
+    }
 
     fun prepare(number: Int) {
         if (number in sessions) return
         sessions[number] = RevisionSession(number, store.page(number).ayahs.toList()).also { it.revealAll() }
+    }
+    // The stumbles of the draft, back on their pages.
+    remember(draft) {
+        draft?.stumbles?.forEach { ayah ->
+            val number = store.pageOfAyah(ayah)
+            prepare(number)
+            sessions[number]?.markStumble(ayah)
+        }
     }
     LaunchedEffect(pager) {
         snapshotFlow { pager.settledPage + 1 }.collect { number ->
@@ -130,8 +184,20 @@ fun TasmeeMarkingScreen(
     // The pages heard: marked as such, or with a stumble on them.
     val recorded = heard + sessions.filterValues { it.stumbles.isNotEmpty() }.keys
     LaunchedEffect(stumbles.size) { if (stumbles.isNotEmpty()) haptics.performHapticFeedback(HapticFeedbackType.SegmentFrequentTick) }
+    // Every change goes to the draft's file; with nothing marked there's no draft.
+    LaunchedEffect(page, heard, stumbles, types, stageTest) {
+        withContext(Dispatchers.IO) {
+            if (recorded.isEmpty() && stageTest == null) draftFile.delete()
+            else MarkingDraft.write(draftFile, MarkingDraft(page, heard.sorted(), stumbles.sorted(), types.mapValues { it.value.raw }, stageTest?.stage, stageTest?.allowedMistakesPerPage))
+        }
+    }
+    /** Recorded or given up: the draft has served. */
+    fun close() {
+        draftFile.delete()
+        onClose()
+    }
 
-    fun leave() = if (recorded.isEmpty()) onClose() else confirmingLeave = true
+    fun leave() = if (recorded.isEmpty()) close() else confirmingLeave = true
     BackHandler(onBack = ::leave)
     SystemBars(visible = true, lightIcons = style.dark)
 
@@ -157,8 +223,8 @@ fun TasmeeMarkingScreen(
                 Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
                     Column(Modifier.weight(1f), verticalArrangement = Arrangement.spacedBy(2.dp)) {
                         Text(studentName, style = aqraStyle(17f, Weight.heavy, style.ink), maxLines = 1)
-                        Text(pluralStringResource(R.plurals.n_pages, recorded.size, recorded.size) + factSeparator() +
-                            pluralStringResource(R.plurals.n_stumbles, stumbles.size, stumbles.size), style = aqraStyle(12f, Weight.semibold, style.chrome))
+                        FactsText(pluralStringResource(R.plurals.n_pages, recorded.size, recorded.size),
+                            pluralStringResource(R.plurals.n_stumbles, stumbles.size, stumbles.size), aqraStyle(12f, Weight.semibold, style.chrome))
                     }
                     AnimatedVisibility(onThisPage > 0, enter = scaleIn() + fadeIn(), exit = scaleOut() + fadeOut()) {
                         Box(Modifier.height(30.dp).background(style.stumble.copy(alpha = 0.6f), CircleShape).padding(horizontal = 12.dp), contentAlignment = Alignment.Center) {
@@ -179,7 +245,7 @@ fun TasmeeMarkingScreen(
                     MarkingButton(stringResource(R.string.record_tasmee), style, Modifier.weight(1f), prominent = true, enabled = recorded.isNotEmpty()) {
                         val sorted = stumbles.sorted()
                         onRecord(TasmeeResult(recorded.sorted(), sorted, sorted.map { Mistake(it, types[it] ?: MistakeType.MEMORIZATION) }, stageTest))
-                        onClose()
+                        close()
                     }
                 }
             }
@@ -205,7 +271,7 @@ fun TasmeeMarkingScreen(
     }
     if (confirmingLeave) {
         Confirm(stringResource(R.string.leave_without_recording_q), stringResource(R.string.what_you_marked_will_be_lost), stringResource(R.string.leave),
-            onDismiss = { confirmingLeave = false }, cancel = stringResource(R.string.stay), onConfirm = onClose)
+            onDismiss = { confirmingLeave = false }, cancel = stringResource(R.string.stay), onConfirm = ::close)
     }
 }
 

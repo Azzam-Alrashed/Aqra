@@ -87,6 +87,7 @@ import com.azzamalrashed.aqra.ui.components.softShadow
 import com.azzamalrashed.aqra.ui.theme.Palette
 import com.azzamalrashed.aqra.ui.theme.Weight
 import com.azzamalrashed.aqra.ui.theme.aqraStyle
+import com.azzamalrashed.aqra.ui.util.formatDayMonth
 import com.azzamalrashed.aqra.ui.util.formatTime
 import com.azzamalrashed.aqra.ui.util.weekdayWide
 import com.google.firebase.FirebaseNetworkException
@@ -106,7 +107,6 @@ import kotlinx.coroutines.tasks.await
 import livekit.org.webrtc.RendererCommon
 import java.io.IOException
 import java.time.ZoneId
-import java.time.format.DateTimeFormatter
 import java.time.temporal.ChronoUnit
 import java.util.Date
 import java.util.Locale
@@ -259,8 +259,7 @@ fun callOpeningLabel(opens: Moment, now: Moment): String {
         CallOpening.TODAY -> stringResource(R.string.opens_today_at_s, time)
         CallOpening.TOMORROW -> stringResource(R.string.opens_tomorrow_at_s, time)
         CallOpening.THIS_WEEK -> stringResource(R.string.opens_s_at_s, weekdayWide(Date.from(opens.toInstant()), locale), time)
-        CallOpening.LATER -> stringResource(R.string.opens_on_s_at_s,
-            DateTimeFormatter.ofPattern(android.text.format.DateFormat.getBestDateTimePattern(locale, "dMMMM"), locale).format(local), time)
+        CallOpening.LATER -> stringResource(R.string.opens_on_s_at_s, formatDayMonth(opens.toInstant(), locale), time)
     }
 }
 
@@ -399,7 +398,7 @@ private fun TeacherCallScreen(app: AqraApp, store: MushafStore, session: TasmeeS
             }
         }
         hearing?.let { seat ->
-            TasmeeMarkingScreen(app, store, seat.name, startPage(seat, store), allowsStageTest = true, onClose = { hearing = null }, overlay = {
+            TasmeeMarkingScreen(app, store, seat.name, startPage(seat, store), draftKey = "${session.id}-${seat.id}", allowsStageTest = true, onClose = { hearing = null }, overlay = {
                 ParticipantTile(call.room, seat.id, seat.name,
                     Modifier.size(120.dp, 160.dp).softShadow(RoundedCornerShape(18.dp), strength = 1.2f).clip(RoundedCornerShape(18.dp)))
             }) { result ->
